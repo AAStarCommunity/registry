@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import './LandingPage.css';
+import { useState, useEffect } from "react";
+import "./LandingPage.css";
 
 export function LandingPage() {
   const [stats, setStats] = useState({
@@ -10,7 +10,12 @@ export function LandingPage() {
 
   useEffect(() => {
     // Animated counter effect
-    const animateValue = (start: number, end: number, duration: number, setter: (val: number) => void) => {
+    const animateValue = (
+      start: number,
+      end: number,
+      duration: number,
+      setter: (val: number) => void,
+    ) => {
       const startTime = Date.now();
       const timer = setInterval(() => {
         const elapsed = Date.now() - startTime;
@@ -23,9 +28,15 @@ export function LandingPage() {
 
     // Simulate loading statistics
     setTimeout(() => {
-      animateValue(0, 156, 2000, (val) => setStats(prev => ({ ...prev, totalPaymasters: val })));
-      animateValue(0, 89234, 2500, (val) => setStats(prev => ({ ...prev, totalTransactions: val })));
-      animateValue(0, 4567, 2000, (val) => setStats(prev => ({ ...prev, totalGasSaved: val })));
+      animateValue(0, 156, 2000, (val) =>
+        setStats((prev) => ({ ...prev, totalPaymasters: val })),
+      );
+      animateValue(0, 89234, 2500, (val) =>
+        setStats((prev) => ({ ...prev, totalTransactions: val })),
+      );
+      animateValue(0, 4567, 2000, (val) =>
+        setStats((prev) => ({ ...prev, totalGasSaved: val })),
+      );
     }, 500);
   }, []);
 
@@ -44,7 +55,8 @@ export function LandingPage() {
             </p>
             <p className="hero-description">
               Community-driven Paymaster network enabling seamless Web3 UX.
-              Deploy your own Paymaster, earn fees, and help users transact without ETH.
+              Deploy your own Paymaster, earn fees, and help users transact
+              without ETH.
             </p>
             <div className="hero-ctas">
               <a href="/explorer" className="cta-button primary">
@@ -66,7 +78,6 @@ export function LandingPage() {
             />
           </div>
         </div>
-        <img src="/triangle.svg" alt="" className="hero-triangle" />
       </section>
 
       {/* Live Statistics */}
@@ -78,12 +89,16 @@ export function LandingPage() {
             <div className="stat-icon">🏪</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{stats.totalTransactions.toLocaleString()}</div>
+            <div className="stat-value">
+              {stats.totalTransactions.toLocaleString()}
+            </div>
             <div className="stat-label">Gasless Transactions</div>
             <div className="stat-icon">⚡</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">${stats.totalGasSaved.toLocaleString()}</div>
+            <div className="stat-value">
+              ${stats.totalGasSaved.toLocaleString()}
+            </div>
             <div className="stat-label">Gas Fees Saved</div>
             <div className="stat-icon">💰</div>
           </div>
@@ -98,8 +113,9 @@ export function LandingPage() {
             <div className="feature-icon">🎯</div>
             <h3 className="feature-title">True Decentralization</h3>
             <p className="feature-description">
-              No single point of failure. Community-operated Paymasters registered on-chain
-              via smart contracts. Anyone can launch, anyone can use.
+              No single point of failure. Community-operated Paymasters
+              registered on-chain via smart contracts. Anyone can launch, anyone
+              can use.
             </p>
             <ul className="feature-list">
               <li>✓ Permissionless registration</li>
@@ -126,8 +142,8 @@ export function LandingPage() {
             <div className="feature-icon">🚀</div>
             <h3 className="feature-title">Developer Friendly</h3>
             <p className="feature-description">
-              ERC-4337 compliant with simple integration. Drop-in solution for any dApp.
-              Full TypeScript SDK and React hooks.
+              ERC-4337 compliant with simple integration. Drop-in solution for
+              any dApp. Full TypeScript SDK and React hooks.
             </p>
             <ul className="feature-list">
               <li>✓ 5-minute integration</li>
@@ -143,14 +159,18 @@ export function LandingPage() {
         <div className="cta-content">
           <h2 className="cta-title">Ready to Build the Future?</h2>
           <p className="cta-description">
-            Join the SuperPaymaster ecosystem. Launch your Paymaster, integrate gasless transactions,
-            or explore the registry to find the perfect solution for your dApp.
+            Join the SuperPaymaster ecosystem. Launch your Paymaster, integrate
+            gasless transactions, or explore the registry to find the perfect
+            solution for your dApp.
           </p>
           <div className="cta-buttons">
             <a href="/launch-guide" className="cta-button large primary">
               🚀 Launch Your Paymaster
             </a>
-            <a href="https://demo.superpaymaster.xyz" className="cta-button large secondary">
+            <a
+              href="https://demo.superpaymaster.xyz"
+              className="cta-button large secondary"
+            >
               🎮 Try Live Demo
             </a>
           </div>
@@ -167,24 +187,40 @@ export function LandingPage() {
           <div className="footer-section">
             <h4>Resources</h4>
             <ul>
-              <li><a href="/docs">Documentation</a></li>
-              <li><a href="/developer">Developer Portal</a></li>
-              <li><a href="/launch-guide">Launch Guide</a></li>
+              <li>
+                <a href="/docs">Documentation</a>
+              </li>
+              <li>
+                <a href="/developer">Developer Portal</a>
+              </li>
+              <li>
+                <a href="/launch-guide">Launch Guide</a>
+              </li>
             </ul>
           </div>
           <div className="footer-section">
             <h4>Community</h4>
             <ul>
-              <li><a href="https://github.com/AAStarCommunity">GitHub</a></li>
-              <li><a href="https://twitter.com/AAStarCommunity">Twitter</a></li>
-              <li><a href="/discord">Discord</a></li>
+              <li>
+                <a href="https://github.com/AAStarCommunity">GitHub</a>
+              </li>
+              <li>
+                <a href="https://twitter.com/AAStarCommunity">Twitter</a>
+              </li>
+              <li>
+                <a href="/discord">Discord</a>
+              </li>
             </ul>
           </div>
           <div className="footer-section">
             <h4>Legal</h4>
             <ul>
-              <li><a href="/terms">Terms of Service</a></li>
-              <li><a href="/privacy">Privacy Policy</a></li>
+              <li>
+                <a href="/terms">Terms of Service</a>
+              </li>
+              <li>
+                <a href="/privacy">Privacy Policy</a>
+              </li>
             </ul>
           </div>
         </div>
