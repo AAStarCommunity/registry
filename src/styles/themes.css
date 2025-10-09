@@ -1,0 +1,201 @@
+/* Theme Variables */
+:root[data-theme="light"] {
+  /* 宁静的淡蓝色和白色 */
+  --bg-primary: #f0f4f8;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e3f2fd;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border-color: #e0e0e0;
+  --accent-primary: #667eea;
+  --accent-secondary: #4a90e2;
+  --success: #4caf50;
+  --error: #f44336;
+  --warning: #ffc107;
+  --shadow: rgba(0, 0, 0, 0.1);
+  --card-bg: #ffffff;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --button-hover-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+:root[data-theme="dark"] {
+  /* 黑色和灰色 */
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2d2d2d;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --border-color: #3a3a3a;
+  --accent-primary: #7c93f5;
+  --accent-secondary: #5ca3e6;
+  --success: #66bb6a;
+  --error: #ef5350;
+  --warning: #ffca28;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --card-bg: #1e1e1e;
+  --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --button-hover-shadow: 0 4px 12px rgba(124, 147, 245, 0.6);
+}
+
+/* Apply theme colors globally */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Card styles */
+.card {
+  background-color: var(--card-bg);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+/* Text colors */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+p, span, div {
+  color: inherit;
+}
+
+.subtitle,
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Buttons */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+}
+
+.btn-primary:hover:not(:disabled) {
+  box-shadow: var(--button-hover-shadow);
+}
+
+.btn-secondary {
+  background-color: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+/* Borders and dividers */
+.tabs {
+  border-bottom: 2px solid var(--border-color);
+}
+
+.tab {
+  color: var(--text-secondary);
+}
+
+.tab:hover {
+  color: var(--accent-primary);
+}
+
+.tab-active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
+}
+
+/* Code blocks */
+pre {
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color);
+}
+
+:root[data-theme="dark"] pre {
+  background-color: #1e1e1e !important;
+}
+
+/* Messages */
+.message {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Wallet info */
+.wallet-info {
+  background-color: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  padding: 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+/* Links */
+a {
+  color: var(--accent-primary);
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--accent-secondary);
+}
+
+/* Input fields */
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--accent-primary);
+  outline: none;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.3s ease;
+  box-shadow: var(--card-shadow);
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: rotate(180deg) scale(1.1);
+  box-shadow: 0 4px 12px var(--shadow);
+}
+
+/* Dark mode specific adjustments */
+:root[data-theme="dark"] .demo-container header {
+  background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+}
+
+:root[data-theme="dark"] .role-selector button {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+:root[data-theme="dark"] .role-selector button.active {
+  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+  color: white;
+  border-color: var(--accent-primary);
+}
+
+:root[data-theme="dark"] .role-selector button:hover {
+  background-color: var(--bg-tertiary);
+  border-color: var(--accent-primary);
+}
