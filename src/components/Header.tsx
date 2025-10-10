@@ -8,7 +8,6 @@ export function Header() {
     { path: "/", label: "Home" },
     { path: "/developer", label: "Developers" },
     { path: "/operator", label: "Operators" },
-    { path: "/launch-guide", label: "Launch Guide" },
     { path: "/explorer", label: "Explorer" },
     { path: "https://demo.aastar.io", label: "Demo", external: true },
   ];
