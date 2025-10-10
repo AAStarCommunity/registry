@@ -168,7 +168,7 @@ export function LandingPage() {
               🚀 Launch Your Paymaster
             </a>
             <a
-              href="https://demo.superpaymaster.xyz"
+              href="https://demo.aastar.io"
               className="cta-button large secondary"
             >
               🎮 Try Live Demo
