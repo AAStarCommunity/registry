@@ -32,12 +32,12 @@ export function UserGasRecords() {
 
     // Validate address
     if (!inputAddress) {
-      alert("请输入钱包地址");
+      alert("Please enter a wallet address");
       return;
     }
 
     if (!ethers.isAddress(inputAddress)) {
-      alert("无效的钱包地址格式");
+      alert("Invalid wallet address format");
       return;
     }
 
@@ -75,8 +75,11 @@ export function UserGasRecords() {
     <div className="user-gas-records">
       {/* Header */}
       <div className="page-header">
-        <h1>🔍 查询 Gas 使用记录</h1>
-        <p>输入钱包地址查看该用户的 Gas 赞助统计和交易历史</p>
+        <h1>🔍 Query Gas Usage Records</h1>
+        <p>
+          Enter a wallet address to view gas sponsorship statistics and
+          transaction history
+        </p>
       </div>
 
       {/* Search Form */}
@@ -84,17 +87,17 @@ export function UserGasRecords() {
         <form onSubmit={handleSubmit} className="search-form">
           <input
             type="text"
-            placeholder="输入钱包地址 (0x...)"
+            placeholder="Enter wallet address (0x...)"
             value={inputAddress}
             onChange={(e) => setInputAddress(e.target.value)}
             className="address-input"
           />
           <button type="submit" disabled={isLoading} className="search-btn">
-            {isLoading ? "查询中..." : "🔍 查询"}
+            {isLoading ? "Querying..." : "🔍 Query"}
           </button>
           {queryAddress && (
             <button type="button" onClick={handleClear} className="clear-btn">
-              ✖ 清除
+              ✖ Clear
             </button>
           )}
         </form>
@@ -103,9 +106,9 @@ export function UserGasRecords() {
       {/* Results */}
       {error && (
         <div className="error-message">
-          <h3>❌ 查询失败</h3>
+          <h3>❌ Query Failed</h3>
           <p>{error.message}</p>
-          <button onClick={refresh}>重试</button>
+          <button onClick={refresh}>Retry</button>
         </div>
       )}
 
@@ -114,9 +117,9 @@ export function UserGasRecords() {
           {/* Cache Status */}
           {analytics && (
             <div className="cache-info">
-              <span>数据更新于: {cacheAge}</span>
+              <span>Last updated: {cacheAge}</span>
               <button onClick={refresh} className="refresh-link">
-                🔄 刷新
+                🔄 Refresh
               </button>
             </div>
           )}
@@ -125,7 +128,7 @@ export function UserGasRecords() {
           {userStats ? (
             <>
               <div className="user-stats-section">
-                <h2>📊 用户统计</h2>
+                <h2>📊 User Statistics</h2>
                 <div className="stats-grid">
                   <div className="stat-card">
                     <div className="stat-icon">🚀</div>
@@ -133,7 +136,7 @@ export function UserGasRecords() {
                       <div className="stat-value">
                         {userStats.totalOperations.toLocaleString()}
                       </div>
-                      <div className="stat-label">总交易数</div>
+                      <div className="stat-label">Total Operations</div>
                     </div>
                   </div>
 
@@ -143,7 +146,7 @@ export function UserGasRecords() {
                       <div className="stat-value">
                         {formatGasValue(userStats.totalGasSponsored)}
                       </div>
-                      <div className="stat-label">总赞助 Gas</div>
+                      <div className="stat-label">Total Gas Sponsored</div>
                     </div>
                   </div>
 
@@ -153,7 +156,7 @@ export function UserGasRecords() {
                       <div className="stat-value">
                         {formatPntValue(userStats.totalPntPaid)}
                       </div>
-                      <div className="stat-label">总支付 PNT</div>
+                      <div className="stat-label">Total PNT Paid</div>
                     </div>
                   </div>
 
@@ -163,7 +166,7 @@ export function UserGasRecords() {
                       <div className="stat-value">
                         {formatGasValue(userStats.averageGasPerOperation)}
                       </div>
-                      <div className="stat-label">平均 Gas/交易</div>
+                      <div className="stat-label">Avg Gas/Operation</div>
                     </div>
                   </div>
                 </div>
@@ -171,13 +174,13 @@ export function UserGasRecords() {
                 {/* Timeline */}
                 <div className="timeline">
                   <div className="timeline-item">
-                    <span className="timeline-label">首次交易:</span>
+                    <span className="timeline-label">First Transaction:</span>
                     <span className="timeline-value">
                       {formatTimestamp(userStats.firstTransaction)}
                     </span>
                   </div>
                   <div className="timeline-item">
-                    <span className="timeline-label">最近交易:</span>
+                    <span className="timeline-label">Latest Transaction:</span>
                     <span className="timeline-value">
                       {formatTimestamp(userStats.lastTransaction)}
                     </span>
@@ -187,17 +190,19 @@ export function UserGasRecords() {
                 {/* Comparison with Global Average */}
                 {analytics && analytics.totalOperations > 0 && (
                   <div className="comparison">
-                    <h3>📈 与全局平均对比</h3>
+                    <h3>📈 Comparison with Global Average</h3>
                     <div className="comparison-grid">
                       <div className="comparison-item">
-                        <span className="comparison-label">平均 Gas/交易:</span>
+                        <span className="comparison-label">
+                          Avg Gas/Operation:
+                        </span>
                         <div className="comparison-values">
                           <span className="user-value">
-                            用户:{" "}
+                            User:{" "}
                             {formatGasValue(userStats.averageGasPerOperation)}
                           </span>
                           <span className="global-value">
-                            全局:{" "}
+                            Global:{" "}
                             {formatGasValue(
                               (
                                 BigInt(analytics.totalGasSponsored) /
@@ -208,7 +213,7 @@ export function UserGasRecords() {
                         </div>
                       </div>
                       <div className="comparison-item">
-                        <span className="comparison-label">用户占比:</span>
+                        <span className="comparison-label">User Share:</span>
                         <span className="percentage">
                           {(
                             (userStats.totalOperations /
@@ -225,17 +230,19 @@ export function UserGasRecords() {
 
               {/* Transaction History */}
               <div className="transactions-section">
-                <h2>📝 交易历史 (最近 {userTransactions.length} 条)</h2>
+                <h2>
+                  📝 Transaction History (Latest {userTransactions.length})
+                </h2>
                 {userTransactions.length > 0 ? (
                   <table className="transactions-table">
                     <thead>
                       <tr>
-                        <th>时间</th>
+                        <th>Time</th>
                         <th>Gas Token</th>
-                        <th>实际 Gas</th>
-                        <th>PNT 支付</th>
-                        <th>Gas/PNT 比率</th>
-                        <th>交易哈希</th>
+                        <th>Actual Gas</th>
+                        <th>PNT Paid</th>
+                        <th>Gas/PNT Ratio</th>
+                        <th>Tx Hash</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -280,17 +287,21 @@ export function UserGasRecords() {
                   </table>
                 ) : (
                   <p className="empty-state">
-                    该用户暂无交易记录 (可能不在最近20条内)
+                    No transaction records for this user (may not be in latest
+                    20)
                   </p>
                 )}
               </div>
             </>
           ) : (
             <div className="no-data">
-              <h3>📭 未找到数据</h3>
-              <p>该地址尚未使用 SuperPaymaster 进行 Gas 赞助</p>
+              <h3>📭 No Data Found</h3>
+              <p>
+                This address has not used SuperPaymaster for gas sponsorship
+              </p>
               <p className="hint">
-                💡 确保地址正确且已经发起过至少一次赞助交易
+                💡 Ensure the address is correct and has made at least one
+                sponsored transaction
               </p>
             </div>
           )}
@@ -301,8 +312,8 @@ export function UserGasRecords() {
       {!queryAddress && !isLoading && (
         <div className="initial-state">
           <div className="initial-icon">🔍</div>
-          <h3>开始查询</h3>
-          <p>在上方输入框中输入钱包地址,查看该用户的 Gas 使用统计</p>
+          <h3>Start Query</h3>
+          <p>Enter a wallet address above to view gas usage statistics</p>
         </div>
       )}
 

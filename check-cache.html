@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Check Registry Cache</title>
+</head>
+<body>
+  <h1>Registry Cache Inspector</h1>
+  <button onclick="checkCache()">检查缓存</button>
+  <button onclick="clearAllCache()">清除所有缓存</button>
+  <pre id="output"></pre>
+
+  <script>
+    function checkCache() {
+      const output = document.getElementById('output');
+      let result = '=== Registry Cache Status ===\n\n';
+
+      // Get all localStorage keys with spm_ prefix
+      const cacheKeys = Object.keys(localStorage).filter(k => k.startsWith('spm_'));
+
+      result += `Total Caches: ${cacheKeys.length}\n\n`;
+
+      cacheKeys.forEach(key => {
+        try {
+          const data = JSON.parse(localStorage.getItem(key));
+          const age = Math.floor((Date.now() - data.timestamp) / 1000);
+          const expired = age > data.ttl;
+
+          result += `Key: ${key}\n`;
+          result += `  Age: ${age}s / ${data.ttl}s\n`;
+          result += `  Status: ${expired ? '❌ EXPIRED' : '✅ VALID'}\n`;
+
+          if (key.includes('global')) {
+            result += `  Total Operations: ${data.data.totalOperations}\n`;
+            result += `  Unique Users: ${data.data.uniqueUsers}\n`;
+          } else if (key.includes('user')) {
+            const userAddr = key.split('user-')[1];
+            result += `  User: ${userAddr}\n`;
+          }
+
+          result += '\n';
+        } catch (e) {
+          result += `Key: ${key} - ERROR: ${e.message}\n\n`;
+        }
+      });
+
+      output.textContent = result;
+    }
+
+    function clearAllCache() {
+      const keys = Object.keys(localStorage).filter(k => k.startsWith('spm_'));
+      keys.forEach(k => localStorage.removeItem(k));
+      alert(`Cleared ${keys.length} cache entries`);
+      checkCache();
+    }
+
+    // Auto check on load
+    window.onload = checkCache;
+  </script>
+</body>
+</html>
