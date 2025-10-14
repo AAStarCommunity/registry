@@ -75,7 +75,9 @@ export function UserGasRecords() {
         )
       : [];
 
-  const cacheAge = analytics ? formatCacheAge(analytics.lastUpdated) : "";
+  const cacheAge = analytics?.lastUpdated
+    ? formatCacheAge(analytics.lastUpdated)
+    : "Unknown";
 
   return (
     <div className="user-gas-records">
@@ -337,7 +339,7 @@ export function UserGasRecords() {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .user-gas-records {
           max-width: 1200px;
           margin: 0 auto;

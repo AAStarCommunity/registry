@@ -6,7 +6,7 @@ export function Header() {
   const location = useLocation();
   const [analyticsDropdownOpen, setAnalyticsDropdownOpen] = useState(false);
 
-  const navItems = [
+  const navItems: Array<{ path: string; label: string; external?: boolean }> = [
     { path: "/", label: "Home" },
     { path: "/developer", label: "Developers" },
     { path: "/operator", label: "Operators" },

@@ -6,7 +6,7 @@
  * @module utils/cache
  */
 
-const CACHE_PREFIX = 'spm_';
+const CACHE_PREFIX = "spm_";
 const DEFAULT_TTL = 3600; // 1 hour in seconds
 
 export interface CachedData<T> {
@@ -52,25 +52,22 @@ export function loadFromCache<T>(key: string): CachedData<T> | null {
 export function saveToCache<T>(
   key: string,
   data: T,
-  ttl: number = DEFAULT_TTL
+  ttl: number = DEFAULT_TTL,
 ): void {
   try {
     const cacheData: CachedData<T> = {
       data,
       timestamp: Date.now(),
-      ttl
+      ttl,
     };
 
-    localStorage.setItem(
-      `${CACHE_PREFIX}${key}`,
-      JSON.stringify(cacheData)
-    );
+    localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(cacheData));
   } catch (error) {
     console.error(`[Cache] Failed to save to cache (${key}):`, error);
 
     // Handle quota exceeded error
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      console.warn('[Cache] localStorage quota exceeded, clearing old caches');
+    if (error instanceof DOMException && error.name === "QuotaExceededError") {
+      console.warn("[Cache] localStorage quota exceeded, clearing old caches");
       clearOldCaches();
 
       // Try again after clearing
@@ -78,14 +75,17 @@ export function saveToCache<T>(
         const cacheData: CachedData<T> = {
           data,
           timestamp: Date.now(),
-          ttl
+          ttl,
         };
         localStorage.setItem(
           `${CACHE_PREFIX}${key}`,
-          JSON.stringify(cacheData)
+          JSON.stringify(cacheData),
         );
       } catch (retryError) {
-        console.error('[Cache] Failed to save even after clearing:', retryError);
+        console.error(
+          "[Cache] Failed to save even after clearing:",
+          retryError,
+        );
       }
     }
   }
@@ -112,21 +112,20 @@ export function clearCache(pattern?: string): void {
     if (!pattern) {
       // Clear all SPM caches
       Object.keys(localStorage)
-        .filter(key => key.startsWith(CACHE_PREFIX))
-        .forEach(key => localStorage.removeItem(key));
+        .filter((key) => key.startsWith(CACHE_PREFIX))
+        .forEach((key) => localStorage.removeItem(key));
 
-      console.log('[Cache] Cleared all SuperPaymaster caches');
+      console.log("[Cache] Cleared all SuperPaymaster caches");
     } else {
       // Clear caches matching pattern
-      const fullPattern = `${CACHE_PREFIX}${pattern}`;
       Object.keys(localStorage)
-        .filter(key => key.startsWith(CACHE_PREFIX) && key.includes(pattern))
-        .forEach(key => localStorage.removeItem(key));
+        .filter((key) => key.startsWith(CACHE_PREFIX) && key.includes(pattern))
+        .forEach((key) => localStorage.removeItem(key));
 
       console.log(`[Cache] Cleared caches matching pattern: ${pattern}`);
     }
   } catch (error) {
-    console.error('[Cache] Failed to clear cache:', error);
+    console.error("[Cache] Failed to clear cache:", error);
   }
 }
 
@@ -141,8 +140,8 @@ export function clearOldCaches(): void {
 
     // Collect all SPM caches with timestamps
     Object.keys(localStorage)
-      .filter(key => key.startsWith(CACHE_PREFIX))
-      .forEach(key => {
+      .filter((key) => key.startsWith(CACHE_PREFIX))
+      .forEach((key) => {
         try {
           const cached = localStorage.getItem(key);
           if (cached) {
@@ -166,7 +165,7 @@ export function clearOldCaches(): void {
 
     console.log(`[Cache] Cleared ${toRemove} old caches`);
   } catch (error) {
-    console.error('[Cache] Failed to clear old caches:', error);
+    console.error("[Cache] Failed to clear old caches:", error);
   }
 }
 
@@ -184,8 +183,8 @@ export function getCacheStats(): {
   const caches: Array<{ key: string; timestamp: number; size: number }> = [];
 
   Object.keys(localStorage)
-    .filter(key => key.startsWith(CACHE_PREFIX))
-    .forEach(key => {
+    .filter((key) => key.startsWith(CACHE_PREFIX))
+    .forEach((key) => {
       try {
         const cached = localStorage.getItem(key);
         if (cached) {
@@ -193,7 +192,7 @@ export function getCacheStats(): {
           caches.push({
             key,
             timestamp: parsed.timestamp || 0,
-            size: new Blob([cached]).size
+            size: new Blob([cached]).size,
           });
         }
       } catch (error) {
@@ -202,13 +201,13 @@ export function getCacheStats(): {
     });
 
   const totalSize = caches.reduce((sum, c) => sum + c.size, 0);
-  const timestamps = caches.map(c => c.timestamp).filter(t => t > 0);
+  const timestamps = caches.map((c) => c.timestamp).filter((t) => t > 0);
 
   return {
     totalCaches: caches.length,
     totalSize,
     oldestCache: timestamps.length > 0 ? Math.min(...timestamps) : null,
-    newestCache: timestamps.length > 0 ? Math.max(...timestamps) : null
+    newestCache: timestamps.length > 0 ? Math.max(...timestamps) : null,
   };
 }
 

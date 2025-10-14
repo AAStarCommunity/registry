@@ -1,6 +1,4 @@
-import React from "react";
 import { useGasAnalytics } from "../../hooks/useGasAnalytics";
-import { ethers } from "ethers";
 import { formatCacheAge } from "../../utils/cache";
 
 const ETHERSCAN_BASE_URL =
@@ -148,7 +146,7 @@ export function AnalyticsDashboard() {
                       <div
                         className="trend-bar"
                         style={{ height: `${height}%` }}
-                        title={`${trend.date}\nOperations: ${trend.operations}\nGas: ${formatGasValue(trend.gasSponsored)}\nPNT: ${formatPntValue(trend.pntPaid)}`}
+                        title={`${trend.date}\nOperations: ${trend.operations}\nGas: ${formatGasValue(trend.gas)}\nPNT: ${formatPntValue(trend.pnt)}`}
                       >
                         <span className="bar-value">{trend.operations}</span>
                       </div>
@@ -321,7 +319,7 @@ export function AnalyticsDashboard() {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .analytics-dashboard {
           max-width: 1400px;
           margin: 0 auto;
