@@ -22,61 +22,69 @@ export function AnalyticsDashboard() {
     enableBackgroundRefresh: true,
   });
 
-  if (isLoading && !analytics) {
-    return (
-      <div className="analytics-dashboard loading">
-        <div className="spinner"></div>
-        <p>加载 Gas 统计数据中...</p>
-      </div>
-    );
-  }
+  // Use default values for safe rendering (will be updated after cache loads)
+  const safeAnalytics = analytics || {
+    totalOperations: 0,
+    totalGasSponsored: "0",
+    totalPntPaid: "0",
+    uniqueUsers: 0,
+    activePaymasters: 0,
+    paymasterStats: [],
+    topUsers: [],
+    recentTransactions: [],
+    dailyTrends: [],
+  };
 
+  // Debug: log render state
+  console.log("🎨 Dashboard render:", {
+    isLoading,
+    hasError: !!error,
+    hasAnalytics: !!analytics,
+    totalOps: safeAnalytics.totalOperations,
+  });
+
+  // Show error
   if (error) {
     return (
       <div className="analytics-dashboard error">
-        <h2>❌ 加载失败</h2>
+        <h2>❌ Loading Failed</h2>
         <p>{error.message}</p>
-        <button onClick={refresh}>重试</button>
+        <button onClick={refresh}>Retry</button>
       </div>
     );
   }
 
-  if (!analytics) {
-    return (
-      <div className="analytics-dashboard empty">
-        <h2>📊 暂无数据</h2>
-        <p>尚未检测到任何 Gas 赞助交易</p>
-      </div>
-    );
-  }
-
-  const formatGasValue = (wei: string) => {
-    return `${ethers.formatEther(wei)} ETH`;
+  // Values from analytics are already formatted strings, just add units
+  const formatGasValue = (formattedEth: string) => {
+    return `${formattedEth} ETH`;
   };
 
-  const formatPntValue = (pnt: string) => {
-    return `${ethers.formatUnits(pnt, 18)} PNT`;
+  const formatPntValue = (formattedPnt: string) => {
+    return `${formattedPnt} PNT`;
   };
 
   const formatTimestamp = (ts: number) => {
     return new Date(ts * 1000).toLocaleString("zh-CN");
   };
 
-  const cacheAge = formatCacheAge(analytics.lastUpdated);
+  // Safe access to lastUpdated with fallback
+  const cacheAge = analytics?.lastUpdated
+    ? formatCacheAge(analytics.lastUpdated)
+    : "Unknown";
 
   return (
     <div className="analytics-dashboard">
       {/* Header */}
       <div className="dashboard-header">
         <div>
-          <h1>📊 SuperPaymaster Gas 统计</h1>
+          <h1>📊 SuperPaymaster Gas Analytics</h1>
           <p className="cache-status">
-            最后更新: {cacheAge}
-            {isLoading && <span className="refreshing"> (刷新中...)</span>}
+            Last updated: {cacheAge}
+            {isLoading && <span className="refreshing"> (refreshing...)</span>}
           </p>
         </div>
         <button onClick={refresh} disabled={isLoading} className="refresh-btn">
-          🔄 刷新数据
+          🔄 Refresh Data
         </button>
       </div>
 
@@ -86,9 +94,9 @@ export function AnalyticsDashboard() {
           <div className="stat-icon">🚀</div>
           <div className="stat-content">
             <div className="stat-value">
-              {analytics.totalOperations.toLocaleString()}
+              {safeAnalytics.totalOperations.toLocaleString()}
             </div>
-            <div className="stat-label">总交易数</div>
+            <div className="stat-label">Total Operations</div>
           </div>
         </div>
 
@@ -96,9 +104,9 @@ export function AnalyticsDashboard() {
           <div className="stat-icon">⛽</div>
           <div className="stat-content">
             <div className="stat-value">
-              {formatGasValue(analytics.totalGasSponsored)}
+              {formatGasValue(safeAnalytics.totalGasSponsored)}
             </div>
-            <div className="stat-label">总赞助 Gas</div>
+            <div className="stat-label">Total Gas Sponsored</div>
           </div>
         </div>
 
@@ -106,9 +114,9 @@ export function AnalyticsDashboard() {
           <div className="stat-icon">💰</div>
           <div className="stat-content">
             <div className="stat-value">
-              {formatPntValue(analytics.totalPntPaid)}
+              {formatPntValue(safeAnalytics.totalPntPaid)}
             </div>
-            <div className="stat-label">总支付 PNT</div>
+            <div className="stat-label">Total PNT Paid</div>
           </div>
         </div>
 
@@ -116,64 +124,109 @@ export function AnalyticsDashboard() {
           <div className="stat-icon">👥</div>
           <div className="stat-content">
             <div className="stat-value">
-              {analytics.uniqueUsers.toLocaleString()}
+              {safeAnalytics.uniqueUsers.toLocaleString()}
             </div>
-            <div className="stat-label">独立用户数</div>
+            <div className="stat-label">Unique Users</div>
           </div>
         </div>
       </div>
 
       {/* Daily Trends Chart */}
       <div className="section">
-        <h2>📈 每日趋势 (最近30天)</h2>
+        <h2>📈 Daily Trends (Last 30 Days)</h2>
         <div className="daily-trends">
-          {analytics.dailyTrends.length > 0 ? (
+          {safeAnalytics.dailyTrends.length > 0 ? (
             <div className="trends-chart">
-              {analytics.dailyTrends.map((trend, index) => {
+              {(() => {
                 const maxOps = Math.max(
-                  ...analytics.dailyTrends.map((t) => t.operations),
+                  ...safeAnalytics.dailyTrends.map((t) => t.operations),
                 );
-                const height = (trend.operations / maxOps) * 100;
-
-                return (
-                  <div key={trend.date} className="trend-bar-container">
-                    <div
-                      className="trend-bar"
-                      style={{ height: `${height}%` }}
-                      title={`${trend.date}\n交易数: ${trend.operations}\nGas: ${formatGasValue(trend.gasSponsored)}\nPNT: ${formatPntValue(trend.pntPaid)}`}
-                    >
-                      <span className="bar-value">{trend.operations}</span>
+                return safeAnalytics.dailyTrends.map((trend) => {
+                  const height = (trend.operations / maxOps) * 100;
+                  return (
+                    <div key={trend.date} className="trend-bar-container">
+                      <div
+                        className="trend-bar"
+                        style={{ height: `${height}%` }}
+                        title={`${trend.date}\nOperations: ${trend.operations}\nGas: ${formatGasValue(trend.gasSponsored)}\nPNT: ${formatPntValue(trend.pntPaid)}`}
+                      >
+                        <span className="bar-value">{trend.operations}</span>
+                      </div>
+                      <div className="trend-date">{trend.date.slice(5)}</div>
                     </div>
-                    <div className="trend-date">{trend.date.slice(5)}</div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           ) : (
-            <p className="empty-state">暂无每日数据</p>
+            <p className="empty-state">No daily data available</p>
+          )}
+        </div>
+      </div>
+
+      {/* Paymaster Statistics */}
+      <div className="section">
+        <h2>💳 Active Paymasters ({safeAnalytics.activePaymasters})</h2>
+        <div className="paymasters-list">
+          {safeAnalytics.paymasterStats.length > 0 ? (
+            <table className="paymasters-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Paymaster Address</th>
+                  <th>Operations</th>
+                  <th>Total Gas Sponsored</th>
+                  <th>Total PNT Collected</th>
+                  <th>Unique Users</th>
+                </tr>
+              </thead>
+              <tbody>
+                {safeAnalytics.paymasterStats.map((pm, index) => (
+                  <tr key={pm.address}>
+                    <td className="rank">#{index + 1}</td>
+                    <td className="address">
+                      <a
+                        href={`${ETHERSCAN_BASE_URL}/address/${pm.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={pm.address}
+                      >
+                        {pm.address.slice(0, 8)}...{pm.address.slice(-6)}
+                      </a>
+                    </td>
+                    <td>{pm.operations.toLocaleString()}</td>
+                    <td>{formatGasValue(pm.totalGas)}</td>
+                    <td>{formatPntValue(pm.totalPnt)}</td>
+                    <td>{pm.uniqueUsers.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="empty-state">No active Paymasters found</p>
           )}
         </div>
       </div>
 
       {/* Top Users */}
       <div className="section">
-        <h2>🏆 Top 10 用户</h2>
+        <h2>🏆 Top 10 Users</h2>
         <div className="top-users">
-          {analytics.topUsers.length > 0 ? (
+          {safeAnalytics.topUsers.length > 0 ? (
             <table className="users-table">
               <thead>
                 <tr>
-                  <th>排名</th>
-                  <th>地址</th>
-                  <th>交易数</th>
-                  <th>总 Gas</th>
-                  <th>总 PNT</th>
-                  <th>平均 Gas</th>
-                  <th>最后交易</th>
+                  <th>Rank</th>
+                  <th>Address</th>
+                  <th>Operations</th>
+                  <th>Total Gas</th>
+                  <th>Total PNT</th>
+                  <th>Avg Gas</th>
+                  <th>Last Tx</th>
                 </tr>
               </thead>
               <tbody>
-                {analytics.topUsers.map((user, index) => (
+                {safeAnalytics.topUsers.map((user, index) => (
                   <tr key={user.address}>
                     <td className="rank">
                       {index === 0 && "🥇"}
@@ -187,80 +240,83 @@ export function AnalyticsDashboard() {
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        {user.address.slice(0, 6)}...{user.address.slice(-4)}
+                        {user.address.slice(0, 6)}...
+                        {user.address.slice(-4)}
                       </a>
                     </td>
-                    <td>{user.stats.totalOperations.toLocaleString()}</td>
-                    <td>{formatGasValue(user.stats.totalGasSponsored)}</td>
-                    <td>{formatPntValue(user.stats.totalPntPaid)}</td>
-                    <td>{formatGasValue(user.stats.averageGasPerOperation)}</td>
-                    <td>{formatTimestamp(user.stats.lastTransaction)}</td>
+                    <td>{user.operations.toLocaleString()}</td>
+                    <td>{formatGasValue(user.totalGas)}</td>
+                    <td>{formatPntValue(user.totalPnt)}</td>
+                    <td>{formatGasValue(user.avgGasPerOp)}</td>
+                    <td>{formatTimestamp(user.lastTxTime)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           ) : (
-            <p className="empty-state">暂无用户数据</p>
+            <p className="empty-state">No user data available</p>
           )}
         </div>
       </div>
 
       {/* Recent Transactions */}
       <div className="section">
-        <h2>🕐 最近交易 (最近20条)</h2>
+        <h2>🕐 Recent Transactions (Last 20)</h2>
         <div className="recent-transactions">
-          {analytics.recentTransactions.length > 0 ? (
+          {safeAnalytics.recentTransactions.length > 0 ? (
             <table className="transactions-table">
               <thead>
                 <tr>
-                  <th>时间</th>
-                  <th>用户</th>
+                  <th>Time</th>
+                  <th>User</th>
                   <th>Gas Token</th>
-                  <th>实际 Gas</th>
-                  <th>PNT 支付</th>
-                  <th>交易哈希</th>
+                  <th>Actual Gas</th>
+                  <th>PNT Paid</th>
+                  <th>Tx Hash</th>
                 </tr>
               </thead>
               <tbody>
-                {analytics.recentTransactions.map((tx, index) => (
-                  <tr key={`${tx.transactionHash}-${index}`}>
-                    <td>{formatTimestamp(tx.timestamp)}</td>
-                    <td className="address">
-                      <a
-                        href={`${ETHERSCAN_BASE_URL}/address/${tx.user}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {tx.user.slice(0, 6)}...{tx.user.slice(-4)}
-                      </a>
-                    </td>
-                    <td className="address">
-                      <a
-                        href={`${ETHERSCAN_BASE_URL}/address/${tx.gasToken}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {tx.gasToken.slice(0, 6)}...{tx.gasToken.slice(-4)}
-                      </a>
-                    </td>
-                    <td>{formatGasValue(tx.actualGasCost)}</td>
-                    <td>{formatPntValue(tx.pntAmount)}</td>
-                    <td className="address">
-                      <a
-                        href={`${ETHERSCAN_BASE_URL}/tx/${tx.transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {tx.transactionHash.slice(0, 10)}...
-                        {tx.transactionHash.slice(-8)}
-                      </a>
-                    </td>
-                  </tr>
-                ))}
+                {safeAnalytics.recentTransactions
+                  .slice(0, 20)
+                  .map((tx, index) => (
+                    <tr key={`${tx.transactionHash}-${index}`}>
+                      <td>{formatTimestamp(tx.timestamp)}</td>
+                      <td className="address">
+                        <a
+                          href={`${ETHERSCAN_BASE_URL}/address/${tx.user}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {tx.user.slice(0, 6)}...{tx.user.slice(-4)}
+                        </a>
+                      </td>
+                      <td className="address">
+                        <a
+                          href={`${ETHERSCAN_BASE_URL}/address/${tx.gasToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {tx.gasToken.slice(0, 6)}...{tx.gasToken.slice(-4)}
+                        </a>
+                      </td>
+                      <td>{formatGasValue(tx.actualGasCost)}</td>
+                      <td>{formatPntValue(tx.pntAmount)}</td>
+                      <td className="address">
+                        <a
+                          href={`${ETHERSCAN_BASE_URL}/tx/${tx.transactionHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {tx.transactionHash.slice(0, 10)}...
+                          {tx.transactionHash.slice(-8)}
+                        </a>
+                      </td>
+                    </tr>
+                  ))}
               </tbody>
             </table>
           ) : (
-            <p className="empty-state">暂无交易记录</p>
+            <p className="empty-state">No transaction records</p>
           )}
         </div>
       </div>
@@ -432,12 +488,14 @@ export function AnalyticsDashboard() {
           white-space: nowrap;
         }
 
+        .paymasters-table,
         .users-table,
         .transactions-table {
           width: 100%;
           border-collapse: collapse;
         }
 
+        .paymasters-table th,
         .users-table th,
         .transactions-table th {
           background: #f5f5f5;
@@ -447,12 +505,14 @@ export function AnalyticsDashboard() {
           border-bottom: 2px solid #ddd;
         }
 
+        .paymasters-table td,
         .users-table td,
         .transactions-table td {
           padding: 0.75rem 1rem;
           border-bottom: 1px solid #eee;
         }
 
+        .paymasters-table tbody tr:hover,
         .users-table tbody tr:hover,
         .transactions-table tbody tr:hover {
           background: #f9f9f9;
