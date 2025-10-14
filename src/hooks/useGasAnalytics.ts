@@ -350,6 +350,12 @@ async function queryPaymasterRange(
 
 /*==============================================================================
   MAIN QUERY FUNCTION
+
+  Current: Queries blockchain RPC for historical data
+  TODO: Replace with KV DB query for initial cache load
+        - fetchAllPaymastersAnalytics() should check KV DB first
+        - Only query RPC for blocks not in KV DB
+        - This will significantly reduce initialization time for new users
 ==============================================================================*/
 
 export async function fetchAllPaymastersAnalytics(
@@ -711,8 +717,9 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
       // Step 1: Load from cache immediately and display
       console.log("📦 Loading from cache...");
       const cache = loadEventsCache();
+      const hasCachedData = Object.keys(cache).length > 0;
 
-      if (Object.keys(cache).length > 0) {
+      if (hasCachedData) {
         // Has cache: display immediately
         setIsLoading(false);
 
@@ -739,12 +746,17 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
           hasLastUpdated: !!cachedAnalytics.lastUpdated,
         });
       } else {
-        // No cache: show loading
+        // No cache: keep loading state, will initialize from RPC
+        // TODO: Future - initialize from KV DB instead of RPC query
+        console.log("⚠️ No local cache found, initializing from blockchain...");
         setIsLoading(true);
       }
 
-      // Step 2: Background query for new blocks
-      console.log("🔄 Background sync: checking for new blocks...");
+      // Step 2: Background query (or initial query if no cache)
+      const queryAction = hasCachedData
+        ? "Background sync"
+        : "Initial cache build";
+      console.log(`🔄 ${queryAction}: querying blockchain...`);
       const freshAnalytics = await fetchAllPaymastersAnalytics();
 
       // Step 3: Update display with fresh data
@@ -762,7 +774,10 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
         });
       }
 
-      console.log("✅ Background sync complete, setting fresh analytics:", {
+      const completionMsg = hasCachedData
+        ? "✅ Background sync complete"
+        : "✅ Initial cache built successfully";
+      console.log(`${completionMsg}, setting fresh analytics:`, {
         totalOperations: freshAnalytics.totalOperations,
         uniqueUsers: freshAnalytics.uniqueUsers,
         hasLastUpdated: !!freshAnalytics.lastUpdated,
