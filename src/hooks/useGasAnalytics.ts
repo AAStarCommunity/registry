@@ -94,6 +94,17 @@ export interface UserStats {
   lastTx: number;
 }
 
+// Formatted version for UI display
+export interface FormattedUserStats {
+  totalOperations: number;
+  totalGasSponsored: string; // Formatted ETH
+  totalPntPaid: string; // Formatted PNT
+  averageGasPerOperation: string; // Formatted ETH
+  firstTransaction: number; // Timestamp
+  lastTransaction: number; // Timestamp
+  paymasters: string[]; // List of Paymaster addresses used
+}
+
 export interface GasAnalytics {
   // Global Stats
   totalOperations: number;
@@ -642,12 +653,54 @@ interface UseGasAnalyticsOptions {
   enableBackgroundRefresh?: boolean;
 }
 
+/**
+ * Compute user-specific statistics from cache
+ */
+function computeUserStats(
+  cache: EventsCache,
+  userAddress: string,
+): FormattedUserStats | null {
+  // Get all events for this user across all Paymasters
+  const userEvents = Object.values(cache)
+    .flatMap((pm) => pm.events)
+    .filter((e) => e.user.toLowerCase() === userAddress.toLowerCase());
+
+  if (userEvents.length === 0) {
+    return null;
+  }
+
+  const totalGas = userEvents.reduce(
+    (sum, e) => sum + BigInt(e.actualGasCost),
+    0n,
+  );
+  const totalPnt = userEvents.reduce((sum, e) => sum + BigInt(e.pntAmount), 0n);
+  const avgGas = totalGas / BigInt(userEvents.length);
+
+  const timestamps = userEvents.map((e) => e.timestamp);
+  const firstTx = Math.min(...timestamps);
+  const lastTx = Math.max(...timestamps);
+
+  // Get unique Paymasters used by this user
+  const paymasters = [...new Set(userEvents.map((e) => e.paymasterAddress))];
+
+  return {
+    totalOperations: userEvents.length,
+    totalGasSponsored: ethers.formatEther(totalGas),
+    totalPntPaid: ethers.formatUnits(totalPnt, 18),
+    averageGasPerOperation: ethers.formatEther(avgGas),
+    firstTransaction: firstTx,
+    lastTransaction: lastTx,
+    paymasters,
+  };
+}
+
 export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
   // Support both old signature (string) and new signature (options object)
   const userAddress =
     typeof options === "string" ? options : options?.userAddress;
 
   const [analytics, setAnalytics] = useState<GasAnalytics | null>(null);
+  const [userStats, setUserStats] = useState<FormattedUserStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -663,21 +716,21 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
         // Has cache: display immediately
         setIsLoading(false);
 
-        let cachedAnalytics;
+        // Compute analytics (always use full cache for global stats)
+        const cachedAnalytics = computeAnalyticsFromCache(cache);
+        setAnalytics(cachedAnalytics);
+
+        // If querying specific user, compute user stats
         if (userAddress) {
-          const userEvents = Object.values(cache)
-            .flatMap((pm) => pm.events)
-            .filter((e) => e.user.toLowerCase() === userAddress.toLowerCase());
-          const userCache: EventsCache = {
-            "user-filter": {
-              address: userAddress,
-              events: userEvents,
-              queriedRanges: [],
-            },
-          };
-          cachedAnalytics = computeAnalyticsFromCache(userCache);
+          const cachedUserStats = computeUserStats(cache, userAddress);
+          setUserStats(cachedUserStats);
+          console.log("✅ Setting cached user stats:", {
+            address: userAddress,
+            hasStats: !!cachedUserStats,
+            operations: cachedUserStats?.totalOperations || 0,
+          });
         } else {
-          cachedAnalytics = computeAnalyticsFromCache(cache);
+          setUserStats(null);
         }
 
         console.log("✅ Setting cached analytics:", {
@@ -685,7 +738,6 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
           uniqueUsers: cachedAnalytics.uniqueUsers,
           hasLastUpdated: !!cachedAnalytics.lastUpdated,
         });
-        setAnalytics(cachedAnalytics);
       } else {
         // No cache: show loading
         setIsLoading(true);
@@ -693,25 +745,21 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
 
       // Step 2: Background query for new blocks
       console.log("🔄 Background sync: checking for new blocks...");
-      const data = await fetchAllPaymastersAnalytics();
+      const freshAnalytics = await fetchAllPaymastersAnalytics();
 
       // Step 3: Update display with fresh data
-      let freshAnalytics;
+      setAnalytics(freshAnalytics);
+
+      // If querying specific user, recompute user stats with fresh data
       if (userAddress) {
         const updatedCache = loadEventsCache();
-        const userEvents = Object.values(updatedCache)
-          .flatMap((pm) => pm.events)
-          .filter((e) => e.user.toLowerCase() === userAddress.toLowerCase());
-        const userCache: EventsCache = {
-          "user-filter": {
-            address: userAddress,
-            events: userEvents,
-            queriedRanges: [],
-          },
-        };
-        freshAnalytics = computeAnalyticsFromCache(userCache);
-      } else {
-        freshAnalytics = data;
+        const freshUserStats = computeUserStats(updatedCache, userAddress);
+        setUserStats(freshUserStats);
+        console.log("✅ Background sync complete, setting fresh user stats:", {
+          address: userAddress,
+          hasStats: !!freshUserStats,
+          operations: freshUserStats?.totalOperations || 0,
+        });
       }
 
       console.log("✅ Background sync complete, setting fresh analytics:", {
@@ -719,7 +767,6 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
         uniqueUsers: freshAnalytics.uniqueUsers,
         hasLastUpdated: !!freshAnalytics.lastUpdated,
       });
-      setAnalytics(freshAnalytics);
       setIsLoading(false);
     } catch (err: any) {
       setError(
@@ -736,6 +783,7 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
 
   return {
     analytics,
+    userStats,
     isLoading,
     error,
     refetch: fetchData,
