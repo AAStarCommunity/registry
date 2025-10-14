@@ -49,12 +49,18 @@ export function UserGasRecords() {
     setQueryAddress(undefined);
   };
 
-  const formatGasValue = (wei: string) => {
-    return `${ethers.formatEther(wei)} ETH`;
+  // Format userStats (already formatted strings, just add units)
+  const formatUserStatsValue = (formattedValue: string, unit: string) => {
+    return `${formattedValue} ${unit}`;
   };
 
-  const formatPntValue = (pnt: string) => {
-    return `${ethers.formatUnits(pnt, 18)} PNT`;
+  // Format transaction data (BigInt strings, need to convert)
+  const formatGasValue = (weiString: string) => {
+    return `${ethers.formatEther(weiString)} ETH`;
+  };
+
+  const formatPntValue = (pntString: string) => {
+    return `${ethers.formatUnits(pntString, 18)} PNT`;
   };
 
   const formatTimestamp = (ts: number) => {
@@ -144,7 +150,10 @@ export function UserGasRecords() {
                     <div className="stat-icon">⛽</div>
                     <div className="stat-content">
                       <div className="stat-value">
-                        {formatGasValue(userStats.totalGasSponsored)}
+                        {formatUserStatsValue(
+                          userStats.totalGasSponsored,
+                          "ETH",
+                        )}
                       </div>
                       <div className="stat-label">Total Gas Sponsored</div>
                     </div>
@@ -154,7 +163,7 @@ export function UserGasRecords() {
                     <div className="stat-icon">💰</div>
                     <div className="stat-content">
                       <div className="stat-value">
-                        {formatPntValue(userStats.totalPntPaid)}
+                        {formatUserStatsValue(userStats.totalPntPaid, "PNT")}
                       </div>
                       <div className="stat-label">Total PNT Paid</div>
                     </div>
@@ -164,7 +173,10 @@ export function UserGasRecords() {
                     <div className="stat-icon">📊</div>
                     <div className="stat-content">
                       <div className="stat-value">
-                        {formatGasValue(userStats.averageGasPerOperation)}
+                        {formatUserStatsValue(
+                          userStats.averageGasPerOperation,
+                          "ETH",
+                        )}
                       </div>
                       <div className="stat-label">Avg Gas/Operation</div>
                     </div>
@@ -199,16 +211,24 @@ export function UserGasRecords() {
                         <div className="comparison-values">
                           <span className="user-value">
                             User:{" "}
-                            {formatGasValue(userStats.averageGasPerOperation)}
+                            {formatUserStatsValue(
+                              userStats.averageGasPerOperation,
+                              "ETH",
+                            )}
                           </span>
                           <span className="global-value">
                             Global:{" "}
-                            {formatGasValue(
-                              (
-                                BigInt(analytics.totalGasSponsored) /
-                                BigInt(analytics.totalOperations)
-                              ).toString(),
-                            )}
+                            {(() => {
+                              const totalGasWei = ethers.parseEther(
+                                analytics.totalGasSponsored,
+                              );
+                              const avgGasWei =
+                                totalGasWei / BigInt(analytics.totalOperations);
+                              return formatUserStatsValue(
+                                ethers.formatEther(avgGasWei),
+                                "ETH",
+                              );
+                            })()}
                           </span>
                         </div>
                       </div>
