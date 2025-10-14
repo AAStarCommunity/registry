@@ -384,6 +384,7 @@ export async function fetchAllPaymastersAnalytics(
     savePaymastersList(paymasters);
   } catch (error) {
     console.error("❌ Failed to query Registry, using cached list");
+    console.error("Error details:", error);
     paymasters = loadPaymastersList();
 
     if (paymasters.length === 0) {
