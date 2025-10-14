@@ -4,6 +4,8 @@ import { DeveloperPortal } from "./pages/DeveloperPortal";
 import { OperatorsPortal } from "./pages/OperatorsPortal";
 import { LaunchGuide } from "./pages/LaunchGuide";
 import { RegistryExplorer } from "./pages/RegistryExplorer";
+import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
+import { UserGasRecords } from "./pages/analytics/UserGasRecords";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -22,6 +24,11 @@ function App() {
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/launch-guide" element={<LaunchGuide />} />
             <Route path="/explorer" element={<RegistryExplorer />} />
+            <Route
+              path="/analytics/dashboard"
+              element={<AnalyticsDashboard />}
+            />
+            <Route path="/analytics/user" element={<UserGasRecords />} />
           </Routes>
         </main>
         <Footer />

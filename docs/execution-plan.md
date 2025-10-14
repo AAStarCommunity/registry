@@ -74,7 +74,7 @@ function postOp(
 - ❌ 批量测试账户初始化
 
 #### 4. RPC 和网络
-- **Sepolia RPC**: `https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N`
+- **Sepolia RPC**: `https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY`
 - **Chain ID**: 11155111
 - **Block Explorer**: `https://sepolia.etherscan.io`
 
@@ -258,7 +258,7 @@ export const NETWORKS = {
   sepolia: {
     chainId: 11155111,
     name: "Sepolia",
-    rpcUrl: "https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N",
+    rpcUrl: "https://eth-sepolia.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY",
     blockExplorer: "https://sepolia.etherscan.io",
     nativeCurrency: {
       name: "Sepolia ETH",
