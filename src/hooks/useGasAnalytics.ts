@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
+import { getProvider } from "../utils/rpc-provider";
 
 /*==============================================================================
   CORRECT ANALYTICS ARCHITECTURE
@@ -28,10 +29,6 @@ const REGISTRY_ABI = [
 const PAYMASTER_ABI = [
   "event GasPaymentProcessed(address indexed user, address indexed gasToken, uint256 pntAmount, uint256 gasCostWei, uint256 actualGasCost)",
 ];
-
-// RPC Configuration
-const RPC_URL =
-  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 
 // Cache Keys - include Registry address to separate v1.2 and v1.3 caches
 const getCacheKeys = (registryAddress: string) => ({
@@ -369,7 +366,7 @@ export async function fetchAllPaymastersAnalytics(
   fromBlock?: number,
   toBlock?: number,
 ): Promise<GasAnalytics> {
-  const provider = new ethers.JsonRpcProvider(RPC_URL);
+  const provider = getProvider();
 
   console.log("🔍 Fetching Analytics from ALL Paymasters");
   console.log("=".repeat(70));
