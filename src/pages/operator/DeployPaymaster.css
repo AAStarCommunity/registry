@@ -1,0 +1,186 @@
+/* DeployPaymaster Component Styles */
+
+.deploy-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Typography */
+.deploy-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.deploy-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+/* Wallet Connection Section */
+.wallet-section {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.wallet-section-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.wallet-connected {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wallet-connected-icon {
+  color: #16a34a;
+}
+
+.wallet-address {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+/* Form Sections */
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Form Field */
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.form-label-required {
+  color: #ef4444;
+  margin-left: 0.25rem;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  background-color: white;
+  color: var(--text-primary);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-help-text {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+/* Error Message */
+.deploy-error {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background-color: #fee2e2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #dc2626;
+  font-size: 0.875rem;
+}
+
+/* Buttons */
+.deploy-buttons {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 1rem;
+}
+
+.deploy-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.deploy-button.primary {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.deploy-button.primary:hover:not(:disabled) {
+  background-color: #2563eb;
+}
+
+.deploy-button:disabled {
+  background-color: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.connect-button {
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.connect-button:hover {
+  background-color: #2563eb;
+}
+
+/* Info Box */
+.deploy-info-box {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background-color: #eff6ff;
+  border-radius: 0.5rem;
+}
+
+.deploy-info-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.deploy-info-list {
+  list-style: none;
+  padding: 0;
+}
+
+.deploy-info-list li {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+  line-height: 1.5;
+}
