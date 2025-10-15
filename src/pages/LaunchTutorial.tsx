@@ -1,7 +1,7 @@
 import { useState } from "react";
-import "./LaunchGuide.css";
+import "./LaunchTutorial.css";
 
-export function LaunchGuide() {
+export function LaunchTutorial() {
   const [activeSection, setActiveSection] = useState("overview");
 
   const sections = [
@@ -20,8 +20,8 @@ export function LaunchGuide() {
       {/* Sidebar TOC */}
       <aside className="guide-sidebar">
         <div className="sidebar-header">
-          <h2>🚀 Launch Guide</h2>
-          <p>Complete Paymaster Setup</p>
+          <h2>🚀 Launch Tutorial</h2>
+          <p>Practice Paymaster Setup (Testnet Only)</p>
         </div>
         <nav className="sidebar-nav">
           {sections.map((section) => (
@@ -52,10 +52,12 @@ export function LaunchGuide() {
         {/* Overview */}
         {activeSection === "overview" && (
           <section className="content-section">
-            <h1>Launch Your Community Paymaster</h1>
+            <h1>Launch Tutorial - Practice on Testnet</h1>
             <p className="lead">
-              This guide will walk you through deploying and configuring your
-              own PaymasterV4 contract on Sepolia testnet. Total time: ~15-30
+              This tutorial guides you through deploying and configuring a
+              PaymasterV4 contract on Sepolia testnet for learning purposes. For
+              production deployment, use{" "}
+              <a href="/operator/deploy">Operator Portal</a>. Total time: ~15-30
               minutes.
             </p>
 
@@ -201,21 +203,14 @@ export function LaunchGuide() {
               </p>
             </div>
 
-            <h2>Option A: Using Demo Interface (Recommended)</h2>
+            <h2>Option A: Using Operator Portal (Recommended)</h2>
             <div className="instructions">
               <ol>
                 <li>
-                  <strong>Open Operator Demo</strong>
+                  <strong>Open Operator Portal</strong>
                   <p>
-                    Navigate to{" "}
-                    <a
-                      href="https://demo.aastar.io"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      demo.aastar.io
-                    </a>{" "}
-                    and select "Operator" tab
+                    Navigate to <a href="/operator/deploy">Operator Portal</a>{" "}
+                    and select "Deploy New Paymaster"
                   </p>
                 </li>
                 <li>
@@ -456,23 +451,30 @@ await signer.sendTransaction({
               </p>
             </div>
 
-            <h2>Using Demo Interface</h2>
+            <h2>Testing Your Paymaster</h2>
             <div className="instructions">
+              <p>You can test your Paymaster by:</p>
               <ol>
                 <li>
-                  Go to{" "}
+                  Using the{" "}
                   <a
                     href="https://demo.aastar.io"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
                     End User Demo
-                  </a>
+                  </a>{" "}
+                  (external testnet playground)
                 </li>
                 <li>Create an AA account</li>
                 <li>Claim SBT and PNT tokens</li>
                 <li>Send a gasless transaction using your Paymaster</li>
               </ol>
+              <div className="info-box small">
+                <strong>Note:</strong> This tutorial is for testnet learning
+                only. For production deployment on mainnet, use{" "}
+                <a href="/operator/deploy">Operator Portal</a>.
+              </div>
             </div>
 
             <h2>What to Verify</h2>

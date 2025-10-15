@@ -14,8 +14,8 @@ export function OperatorsPortal() {
             <a href="/operator/deploy" className="cta-button primary">
               🚀 Deploy Now
             </a>
-            <a href="/launch-guide" className="cta-button secondary">
-              📖 Launch Guide
+            <a href="/launch-tutorial" className="cta-button secondary">
+              📖 Launch Tutorial
             </a>
           </div>
         </div>

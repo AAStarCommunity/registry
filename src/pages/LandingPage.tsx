@@ -194,7 +194,7 @@ export function LandingPage() {
                 <a href="/developer">Developer Portal</a>
               </li>
               <li>
-                <a href="/launch-guide">Launch Guide</a>
+                <a href="/launch-tutorial">Launch Tutorial</a>
               </li>
             </ul>
           </div>

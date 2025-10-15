@@ -111,8 +111,8 @@ export function Header() {
             </svg>
             GitHub
           </a>
-          <Link to="/launch-guide" className="cta-button">
-            Launch Paymaster
+          <Link to="/operator/deploy" className="cta-button">
+            Deploy Now
           </Link>
         </div>
       </div>

@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { LandingPage } from "./pages/LandingPage";
 import { DeveloperPortal } from "./pages/DeveloperPortal";
 import { OperatorsPortal } from "./pages/OperatorsPortal";
-import { LaunchGuide } from "./pages/LaunchGuide";
+import { LaunchTutorial } from "./pages/LaunchTutorial";
 import { RegistryExplorer } from "./pages/RegistryExplorer";
 import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
 import { UserGasRecords } from "./pages/analytics/UserGasRecords";
@@ -25,7 +25,8 @@ function App() {
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/operator/deploy" element={<OperatorPortal />} />
-            <Route path="/launch-guide" element={<LaunchGuide />} />
+            <Route path="/launch-guide" element={<LaunchTutorial />} />
+            <Route path="/launch-tutorial" element={<LaunchTutorial />} />
             <Route path="/explorer" element={<RegistryExplorer />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />
             <Route
