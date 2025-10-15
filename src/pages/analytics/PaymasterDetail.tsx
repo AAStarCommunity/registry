@@ -142,14 +142,22 @@ export function PaymasterDetail() {
     );
   }
 
-  if (!registryInfo || registryInfo.paymasterAddress === ethers.ZeroAddress) {
+  // Check if Paymaster has any analytics data (even if not registered)
+  const hasAnalyticsData = paymasterStats && paymasterStats.operations > 0;
+
+  // Allow display if either registered in Registry OR has analytics data
+  if (
+    !hasAnalyticsData &&
+    (!registryInfo || registryInfo.paymasterAddress === ethers.ZeroAddress)
+  ) {
     return (
       <div className="paymaster-detail-page">
         <div className="error-state">
           <h2>❌ Paymaster Not Found</h2>
           <p>Address: {address}</p>
           <p>
-            This Paymaster is not registered in the SuperPaymaster Registry.
+            This Paymaster is not registered in the SuperPaymaster Registry and
+            has no transaction history.
           </p>
           <Link to="/analytics" className="back-link">
             ← Back to Analytics
@@ -159,6 +167,10 @@ export function PaymasterDetail() {
     );
   }
 
+  // Determine if Paymaster is registered
+  const isRegistered =
+    registryInfo && registryInfo.paymasterAddress !== ethers.ZeroAddress;
+
   return (
     <div className="paymaster-detail-page">
       <div className="page-header">
@@ -166,6 +178,12 @@ export function PaymasterDetail() {
           ← Back to Analytics
         </Link>
         <h1>Paymaster Information</h1>
+        {!isRegistered && (
+          <div className="warning-banner">
+            ⚠️ This Paymaster is not registered in the SuperPaymaster Registry.
+            Only analytics data is available.
+          </div>
+        )}
         {analytics?.lastUpdated && (
           <p className="cache-age">
             Last updated: {formatCacheAge(analytics.lastUpdated)}
@@ -180,7 +198,9 @@ export function PaymasterDetail() {
           <div className="info-item">
             <label>Name:</label>
             <span className="name">
-              {registryInfo.name || "Unnamed Paymaster"}
+              {isRegistered
+                ? registryInfo.name || "Unnamed Paymaster"
+                : "Unregistered Paymaster"}
             </span>
           </div>
           <div className="info-item">
@@ -195,46 +215,56 @@ export function PaymasterDetail() {
             </a>
           </div>
           <div className="info-item">
-            <label>Status:</label>
+            <label>Registry Status:</label>
             <span
-              className={`status ${registryInfo.isActive ? "active" : "inactive"}`}
+              className={`status ${isRegistered ? (registryInfo.isActive ? "active" : "inactive") : "unregistered"}`}
             >
-              {registryInfo.isActive ? "🟢 Active" : "🔴 Inactive"}
+              {isRegistered
+                ? registryInfo.isActive
+                  ? "🟢 Active"
+                  : "🔴 Inactive"
+                : "⚪ Not Registered"}
             </span>
           </div>
-          <div className="info-item">
-            <label>Fee Rate:</label>
-            <span>{Number(registryInfo.feeRate) / 100}%</span>
-          </div>
+          {isRegistered && (
+            <div className="info-item">
+              <label>Fee Rate:</label>
+              <span>{Number(registryInfo.feeRate) / 100}%</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Stake & Reputation Card */}
-      <div className="info-card">
-        <h2>💰 Stake & Reputation</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Staked Amount:</label>
-            <span className="value">
-              {formatEther(registryInfo.stakedAmount)} ETH/PNT
-            </span>
-          </div>
-          <div className="info-item">
-            <label>Reputation Score:</label>
-            <span className="value">{registryInfo.reputation.toString()}</span>
-          </div>
-          <div className="info-item">
-            <label>Success Rate:</label>
-            <span className="value">{successRate}%</span>
-          </div>
-          <div className="info-item">
-            <label>Total Attempts:</label>
-            <span className="value">
-              {registryInfo.totalAttempts.toString()}
-            </span>
+      {/* Stake & Reputation Card - Only show if registered */}
+      {isRegistered && (
+        <div className="info-card">
+          <h2>💰 Stake & Reputation</h2>
+          <div className="info-grid">
+            <div className="info-item">
+              <label>Staked Amount:</label>
+              <span className="value">
+                {formatEther(registryInfo.stakedAmount)} ETH/PNT
+              </span>
+            </div>
+            <div className="info-item">
+              <label>Reputation Score:</label>
+              <span className="value">
+                {registryInfo.reputation.toString()}
+              </span>
+            </div>
+            <div className="info-item">
+              <label>Success Rate:</label>
+              <span className="value">{successRate}%</span>
+            </div>
+            <div className="info-item">
+              <label>Total Attempts:</label>
+              <span className="value">
+                {registryInfo.totalAttempts.toString()}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Performance Metrics Card */}
       {paymasterStats && (
@@ -269,20 +299,22 @@ export function PaymasterDetail() {
         </div>
       )}
 
-      {/* Timeline Card */}
-      <div className="info-card">
-        <h2>⏰ Timeline</h2>
-        <div className="info-grid">
-          <div className="info-item">
-            <label>Registered At:</label>
-            <span>{formatTimestamp(Number(registryInfo.registeredAt))}</span>
-          </div>
-          <div className="info-item">
-            <label>Last Active:</label>
-            <span>{formatTimestamp(Number(registryInfo.lastActiveAt))}</span>
+      {/* Timeline Card - Only show if registered */}
+      {isRegistered && (
+        <div className="info-card">
+          <h2>⏰ Timeline</h2>
+          <div className="info-grid">
+            <div className="info-item">
+              <label>Registered At:</label>
+              <span>{formatTimestamp(Number(registryInfo.registeredAt))}</span>
+            </div>
+            <div className="info-item">
+              <label>Last Active:</label>
+              <span>{formatTimestamp(Number(registryInfo.lastActiveAt))}</span>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Recent Transactions Card */}
       <div className="info-card">
@@ -377,6 +409,16 @@ export function PaymasterDetail() {
           margin: 0.5rem 0;
         }
 
+        .warning-banner {
+          background: #fff3cd;
+          border: 1px solid #ffc107;
+          border-radius: 8px;
+          padding: 1rem;
+          margin: 1rem 0;
+          color: #856404;
+          font-weight: 500;
+        }
+
         .cache-age {
           color: #718096;
           font-size: 0.875rem;
@@ -456,6 +498,11 @@ export function PaymasterDetail() {
         .status.inactive {
           background: #fed7d7;
           color: #742a2a;
+        }
+
+        .status.unregistered {
+          background: #e2e8f0;
+          color: #4a5568;
         }
 
         .value {
