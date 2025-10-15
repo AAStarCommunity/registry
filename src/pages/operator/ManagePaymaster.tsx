@@ -1,0 +1,522 @@
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+
+interface ManagePaymasterProps {
+  paymasterAddress: string;
+  onBackToStart?: () => void;
+}
+
+const PAYMASTER_V4_1_ABI = [
+  'function owner() view returns (address)',
+  'function registry() view returns (address)',
+  'function setRegistry(address) external',
+  'function deactivateFromRegistry() external',
+  'function isRegistrySet() view returns (bool)',
+  'function isActiveInRegistry() view returns (bool)',
+  'function treasury() view returns (address)',
+  'function setTreasury(address) external',
+  'function gasToUSDRate() view returns (uint256)',
+  'function setGasToUSDRate(uint256) external',
+  'function pntPriceUSD() view returns (uint256)',
+  'function setPntPriceUSD(uint256) external',
+  'function serviceFeeRate() view returns (uint256)',
+  'function setServiceFeeRate(uint256) external',
+  'function pause() external',
+  'function unpause() external',
+  'function paused() view returns (bool)',
+];
+
+const REGISTRY_ABI = [
+  'function isPaymasterActive(address) view returns (bool)',
+  'function paymasters(address) view returns (address, string, uint256, uint256, uint256, bool, uint256, uint256, uint256, uint256)',
+];
+
+const ENTRY_POINT_ABI = [
+  'function getDepositInfo(address) view returns (uint256 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime)',
+];
+
+const ENTRY_POINT_V07 = '0x0000000071727De22E5E9d8BAf0edAc6f37da032';
+
+export function ManagePaymaster({ paymasterAddress, onBackToStart }: ManagePaymasterProps) {
+  const [isOwner, setIsOwner] = useState(false);
+  const [isActive, setIsActive] = useState(false);
+  const [registrySet, setRegistrySet] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+
+  const [depositBalance, setDepositBalance] = useState('0');
+  const [stakeBalance, setStakeBalance] = useState('0');
+  const [gTokenStake, setGTokenStake] = useState('0');
+  const [treasury, setTreasury] = useState('');
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'status' | 'registry' | 'params'>('status');
+
+  const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS || '';
+
+  // Load Paymaster status
+  useEffect(() => {
+    loadPaymasterStatus();
+  }, [paymasterAddress]);
+
+  async function loadPaymasterStatus() {
+    if (!window.ethereum) {
+      setError('Please install MetaMask');
+      return;
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const paymaster = new ethers.Contract(
+        paymasterAddress,
+        PAYMASTER_V4_1_ABI,
+        provider
+      );
+
+      // Check ownership
+      const owner = await paymaster.owner();
+      setIsOwner(owner.toLowerCase() === userAddress.toLowerCase());
+
+      // Check registry status
+      try {
+        const regSet = await paymaster.isRegistrySet();
+        setRegistrySet(regSet);
+
+        if (regSet) {
+          const active = await paymaster.isActiveInRegistry();
+          setIsActive(active);
+        }
+      } catch (err) {
+        // PaymasterV4 doesn't have these methods
+        console.log('Not a V4_1 contract, checking registry directly');
+
+        if (registryAddress) {
+          const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, provider);
+          const active = await registry.isPaymasterActive(paymasterAddress);
+          setIsActive(active);
+          setRegistrySet(active); // If active, registry must be set
+        }
+      }
+
+      // Check pause status
+      try {
+        const paused = await paymaster.paused();
+        setIsPaused(paused);
+      } catch (err) {
+        // Might not have pause functionality
+      }
+
+      // Load treasury
+      const treasuryAddr = await paymaster.treasury();
+      setTreasury(treasuryAddr);
+
+      // Load EntryPoint balances
+      const entryPoint = new ethers.Contract(
+        ENTRY_POINT_V07,
+        ENTRY_POINT_ABI,
+        provider
+      );
+      const depositInfo = await entryPoint.getDepositInfo(paymasterAddress);
+      setDepositBalance(ethers.formatEther(depositInfo.deposit));
+      setStakeBalance(ethers.formatEther(depositInfo.stake));
+
+      // Load GToken stake from Registry
+      if (registryAddress) {
+        try {
+          const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, provider);
+          const pmInfo = await registry.paymasters(paymasterAddress);
+          setGTokenStake(ethers.formatUnits(pmInfo[2], 18)); // gTokenStake
+        } catch (err) {
+          console.log('Failed to load Registry info:', err);
+        }
+      }
+
+    } catch (err: any) {
+      console.error('Failed to load status:', err);
+      setError('Failed to load Paymaster status: ' + err.message);
+    }
+  }
+
+  // Set Registry
+  async function handleSetRegistry() {
+    if (!registryAddress) {
+      setError('Registry address not configured in environment variables');
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const paymaster = new ethers.Contract(
+        paymasterAddress,
+        PAYMASTER_V4_1_ABI,
+        signer
+      );
+
+      const tx = await paymaster.setRegistry(registryAddress);
+      await tx.wait();
+
+      alert('✅ Registry set successfully!');
+      setRegistrySet(true);
+      await loadPaymasterStatus();
+
+    } catch (err: any) {
+      console.error('Set Registry failed:', err);
+      setError('Failed to set Registry: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Deactivate from Registry
+  async function handleDeactivate() {
+    if (!confirm(
+      '⚠️ Confirm Deactivation\n\n' +
+      'This will:\n' +
+      '• Stop accepting new gas payment requests\n' +
+      '• Continue processing existing transactions\n' +
+      '• Allow you to complete unstake and exit\n\n' +
+      'Continue?'
+    )) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const paymaster = new ethers.Contract(
+        paymasterAddress,
+        PAYMASTER_V4_1_ABI,
+        signer
+      );
+
+      const tx = await paymaster.deactivateFromRegistry();
+      await tx.wait();
+
+      alert(
+        '✅ Deactivation Successful!\n\n' +
+        'Status: Inactive (stopped accepting new requests)\n\n' +
+        'Next Steps:\n' +
+        '1. Wait for all transactions to settle\n' +
+        '2. Call unstake() to unlock stake\n' +
+        '3. Call withdrawStake() to retrieve ETH\n\n' +
+        'Note: Reactivation requires Registry approval'
+      );
+
+      setIsActive(false);
+      await loadPaymasterStatus();
+
+    } catch (err: any) {
+      console.error('Deactivate failed:', err);
+      setError('Deactivation failed: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Pause/Unpause
+  async function handleTogglePause() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const paymaster = new ethers.Contract(
+        paymasterAddress,
+        PAYMASTER_V4_1_ABI,
+        signer
+      );
+
+      const tx = isPaused
+        ? await paymaster.unpause()
+        : await paymaster.pause();
+      await tx.wait();
+
+      alert(`✅ Paymaster ${isPaused ? 'unpaused' : 'paused'} successfully!`);
+      setIsPaused(!isPaused);
+
+    } catch (err: any) {
+      console.error('Toggle pause failed:', err);
+      setError(`Failed to ${isPaused ? 'unpause' : 'pause'}: ` + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (!isOwner && window.ethereum) {
+    return (
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Step 5: Manage Paymaster</h2>
+        <div className="p-6 bg-red-50 border border-red-200 rounded-lg text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h3 className="text-2xl font-bold text-red-700 mb-2">Not Owner</h3>
+          <p className="text-gray-700 mb-4">
+            You are not the owner of this Paymaster contract.
+          </p>
+          {onBackToStart && (
+            <button
+              onClick={onBackToStart}
+              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            >
+              Back to Start
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <h2 className="text-2xl font-bold mb-4">Step 5: Manage Paymaster</h2>
+      <p className="text-gray-600 mb-6">
+        Monitor and manage your Paymaster configuration and Registry status.
+      </p>
+
+      {/* Tabs */}
+      <div className="mb-6 flex gap-2 border-b">
+        <button
+          onClick={() => setActiveTab('status')}
+          className={`px-4 py-2 font-semibold ${
+            activeTab === 'status'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500'
+          }`}
+        >
+          Status
+        </button>
+        <button
+          onClick={() => setActiveTab('registry')}
+          className={`px-4 py-2 font-semibold ${
+            activeTab === 'registry'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500'
+          }`}
+        >
+          Registry Management
+        </button>
+        <button
+          onClick={() => setActiveTab('params')}
+          className={`px-4 py-2 font-semibold ${
+            activeTab === 'params'
+              ? 'border-b-2 border-blue-500 text-blue-600'
+              : 'text-gray-500'
+          }`}
+        >
+          Parameters
+        </button>
+      </div>
+
+      {/* Status Tab */}
+      {activeTab === 'status' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <StatusCard
+              title="EntryPoint Deposit"
+              value={`${depositBalance} ETH`}
+              status="info"
+            />
+            <StatusCard
+              title="EntryPoint Stake"
+              value={`${stakeBalance} ETH`}
+              status="info"
+            />
+            <StatusCard
+              title="GToken Stake"
+              value={`${gTokenStake} GToken`}
+              status="info"
+            />
+            <StatusCard
+              title="Registry Status"
+              value={isActive ? 'Active 🟢' : 'Inactive 🔴'}
+              status={isActive ? 'success' : 'warning'}
+            />
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600 mb-1">Treasury Address</div>
+            <div className="font-mono text-sm">{treasury}</div>
+          </div>
+
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="text-sm text-gray-600 mb-1">Pause Status</div>
+            <div className="flex items-center justify-between">
+              <span className="font-semibold">
+                {isPaused ? '⏸️ Paused' : '▶️ Active'}
+              </span>
+              <button
+                onClick={handleTogglePause}
+                disabled={loading}
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300"
+              >
+                {isPaused ? 'Unpause' : 'Pause'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Registry Management Tab */}
+      {activeTab === 'registry' && (
+        <div className="space-y-6">
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <h3 className="font-semibold mb-2">Registry Configuration</h3>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span>Registry Set:</span>
+                <span className="font-semibold">
+                  {registrySet ? '✅ Yes' : '⚠️ No'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span>Active Status:</span>
+                <span className="font-semibold">
+                  {isActive ? '🟢 Active' : '🔴 Inactive'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {!registrySet && (
+            <div>
+              <h3 className="font-semibold mb-3">Set Registry Address</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Connect your Paymaster to the SuperPaymaster Registry.
+              </p>
+              <button
+                onClick={handleSetRegistry}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
+              >
+                {loading ? 'Setting...' : '🔗 Set Registry'}
+              </button>
+            </div>
+          )}
+
+          {registrySet && isActive && (
+            <div>
+              <h3 className="font-semibold mb-3 text-red-600">⚠️ Deactivate from Registry</h3>
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg mb-4">
+                <p className="text-sm text-gray-700 mb-2">
+                  <strong>What happens when you deactivate:</strong>
+                </p>
+                <ul className="text-sm text-gray-700 space-y-1 ml-4">
+                  <li>• ❌ Stop accepting new gas payment requests</li>
+                  <li>• ✅ Continue processing existing transactions</li>
+                  <li>• ✅ Can proceed with unstake and withdrawal</li>
+                  <li>• ⚠️ Reactivation requires Registry approval</li>
+                </ul>
+              </div>
+
+              <button
+                onClick={handleDeactivate}
+                disabled={loading}
+                className="w-full px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 font-semibold"
+              >
+                {loading ? 'Deactivating...' : '🔴 Deactivate from Registry'}
+              </button>
+            </div>
+          )}
+
+          {registrySet && !isActive && (
+            <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
+              <h3 className="font-semibold mb-3">ℹ️ Paymaster Deactivated</h3>
+              <p className="text-sm text-gray-700 mb-4">
+                Your Paymaster is currently inactive in the Registry.
+              </p>
+
+              <div className="space-y-2 mb-4">
+                <h4 className="font-semibold">Complete Exit Flow:</h4>
+                <ol className="text-sm text-gray-700 space-y-1 ml-4">
+                  <li>1. ✅ Deactivate (Completed)</li>
+                  <li>2. ⏳ Wait for all transactions to settle</li>
+                  <li>3. ⏳ Call unstake() to unlock stake</li>
+                  <li>4. ⏳ Call withdrawStake() to retrieve ETH</li>
+                </ol>
+              </div>
+
+              <div className="p-3 bg-white border rounded">
+                <p className="text-sm font-semibold mb-1">Reactivation:</p>
+                <p className="text-xs text-gray-600">
+                  Controlled by Registry. Requires meeting qualification criteria
+                  (minimum stake, reputation, etc.)
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Parameters Tab */}
+      {activeTab === 'params' && (
+        <div>
+          <p className="text-gray-600 mb-4">
+            Parameter adjustment features coming soon:
+          </p>
+          <ul className="text-sm text-gray-600 space-y-2 ml-4">
+            <li>• Treasury address</li>
+            <li>• Gas to USD rate</li>
+            <li>• PNT price USD</li>
+            <li>• Service fee rate</li>
+            <li>• Max gas cost cap</li>
+            <li>• Min token balance</li>
+            <li>• SBT/GasToken management</li>
+          </ul>
+        </div>
+      )}
+
+      {/* Error message */}
+      {error && (
+        <div className="mt-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* Back button */}
+      {onBackToStart && (
+        <div className="mt-6">
+          <button
+            onClick={onBackToStart}
+            className="px-6 py-3 bg-gray-300 rounded-lg hover:bg-gray-400"
+          >
+            Back to Start
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Status card component
+function StatusCard({
+  title,
+  value,
+  status
+}: {
+  title: string;
+  value: string;
+  status: 'info' | 'success' | 'warning';
+}) {
+  const bgColor = {
+    info: 'bg-blue-50 border-blue-200',
+    success: 'bg-green-50 border-green-200',
+    warning: 'bg-yellow-50 border-yellow-200',
+  }[status];
+
+  return (
+    <div className={`p-4 border rounded-lg ${bgColor}`}>
+      <div className="text-sm text-gray-600 mb-1">{title}</div>
+      <div className="text-xl font-bold">{value}</div>
+    </div>
+  );
+}

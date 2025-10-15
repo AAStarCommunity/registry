@@ -7,6 +7,7 @@ import { RegistryExplorer } from "./pages/RegistryExplorer";
 import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
 import { UserGasRecords } from "./pages/analytics/UserGasRecords";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
+import { OperatorPortal } from "./pages/operator/OperatorPortal";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -23,6 +24,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
+            <Route path="/operator/deploy" element={<OperatorPortal />} />
             <Route path="/launch-guide" element={<LaunchGuide />} />
             <Route path="/explorer" element={<RegistryExplorer />} />
             <Route path="/analytics" element={<AnalyticsDashboard />} />

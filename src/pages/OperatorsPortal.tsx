@@ -1,4 +1,4 @@
-import './OperatorsPortal.css';
+import "./OperatorsPortal.css";
 
 export function OperatorsPortal() {
   return (
@@ -11,10 +11,18 @@ export function OperatorsPortal() {
             Deploy in 15 minutes. Start earning fees from gasless transactions.
           </p>
           <div className="hero-ctas">
-            <a href="/launch-guide" className="cta-button primary">
-              🚀 Launch Guide
+            <a href="/operator/deploy" className="cta-button primary">
+              🚀 Deploy Now
             </a>
-            <a href="https://demo.aastar.io" className="cta-button secondary" target="_blank" rel="noopener noreferrer">
+            <a href="/launch-guide" className="cta-button secondary">
+              📖 Launch Guide
+            </a>
+            <a
+              href="https://demo.aastar.io"
+              className="cta-button secondary"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               🎮 Try Demo
             </a>
           </div>
@@ -30,7 +38,8 @@ export function OperatorsPortal() {
               <div className="benefit-icon">💰</div>
               <h3>Earn Service Fees</h3>
               <p>
-                Collect 2% service fee on every gasless transaction. The more users, the more revenue.
+                Collect 2% service fee on every gasless transaction. The more
+                users, the more revenue.
               </p>
               <div className="example-box">
                 <div className="example-label">Example:</div>
@@ -44,7 +53,8 @@ export function OperatorsPortal() {
               <div className="benefit-icon">🎯</div>
               <h3>Serve Your Community</h3>
               <p>
-                Provide gasless transactions for your users, DAO members, or NFT holders.
+                Provide gasless transactions for your users, DAO members, or NFT
+                holders.
               </p>
               <ul className="benefit-list">
                 <li>✓ Custom token requirements (SBT gating)</li>
@@ -57,7 +67,8 @@ export function OperatorsPortal() {
               <div className="benefit-icon">🛡️</div>
               <h3>Full Control & Security</h3>
               <p>
-                You own and control your Paymaster. Set your own rules, fees, and supported tokens.
+                You own and control your Paymaster. Set your own rules, fees,
+                and supported tokens.
               </p>
               <ul className="benefit-list">
                 <li>✓ Non-custodial treasury</li>
@@ -78,7 +89,10 @@ export function OperatorsPortal() {
               <div className="flow-number">1</div>
               <div className="flow-content">
                 <h3>Deploy Paymaster</h3>
-                <p>Use our factory contract to deploy your PaymasterV4 in one transaction</p>
+                <p>
+                  Use our factory contract to deploy your PaymasterV4 in one
+                  transaction
+                </p>
               </div>
             </div>
             <div className="flow-arrow">→</div>
@@ -122,15 +136,21 @@ export function OperatorsPortal() {
               <div className="revenue-formula">
                 <div className="formula-item">
                   <span className="formula-label">User Pays:</span>
-                  <span className="formula-value">Gas Cost (in PNT) + Service Fee (2%)</span>
+                  <span className="formula-value">
+                    Gas Cost (in PNT) + Service Fee (2%)
+                  </span>
                 </div>
                 <div className="formula-item">
                   <span className="formula-label">You Receive:</span>
-                  <span className="formula-value">Service Fee (2% of gas cost)</span>
+                  <span className="formula-value">
+                    Service Fee (2% of gas cost)
+                  </span>
                 </div>
                 <div className="formula-item">
                   <span className="formula-label">Network:</span>
-                  <span className="formula-value">Gas cost (you sponsor with ETH)</span>
+                  <span className="formula-value">
+                    Gas cost (you sponsor with ETH)
+                  </span>
                 </div>
               </div>
 
@@ -147,7 +167,9 @@ export function OperatorsPortal() {
                   </div>
                   <div className="tx-line highlight">
                     <span>Your revenue:</span>
-                    <span><strong>$0.05</strong></span>
+                    <span>
+                      <strong>$0.05</strong>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -162,11 +184,21 @@ export function OperatorsPortal() {
                 </div>
                 <div className="calc-input">
                   <label>Avg Gas Cost (USD):</label>
-                  <input type="number" step="0.01" defaultValue="2.50" id="avgGas" />
+                  <input
+                    type="number"
+                    step="0.01"
+                    defaultValue="2.50"
+                    id="avgGas"
+                  />
                 </div>
                 <div className="calc-input">
                   <label>Service Fee (%):</label>
-                  <input type="number" step="0.1" defaultValue="2" id="feeRate" />
+                  <input
+                    type="number"
+                    step="0.1"
+                    defaultValue="2"
+                    id="feeRate"
+                  />
                 </div>
                 <div className="calc-result">
                   <div className="result-line">
@@ -244,7 +276,8 @@ export function OperatorsPortal() {
               </div>
               <h3>🎮 Gaming DAO</h3>
               <p>
-                Provides gasless transactions for 5,000+ active players. Integrated with their NFT marketplace.
+                Provides gasless transactions for 5,000+ active players.
+                Integrated with their NFT marketplace.
               </p>
             </div>
 
@@ -261,7 +294,8 @@ export function OperatorsPortal() {
               </div>
               <h3>🖼️ NFT Community</h3>
               <p>
-                Serves NFT holders with gasless minting and trading. SBT-gated access.
+                Serves NFT holders with gasless minting and trading. SBT-gated
+                access.
               </p>
             </div>
 
@@ -278,7 +312,8 @@ export function OperatorsPortal() {
               </div>
               <h3>🏛️ DeFi Protocol</h3>
               <p>
-                Enables gasless swaps and staking for their token holders. 10,000+ users.
+                Enables gasless swaps and staking for their token holders.
+                10,000+ users.
               </p>
             </div>
           </div>
@@ -289,7 +324,9 @@ export function OperatorsPortal() {
       <section className="op-cta-section">
         <div className="content-container">
           <h2>Ready to Launch?</h2>
-          <p>Join the decentralized Paymaster network and start earning today</p>
+          <p>
+            Join the decentralized Paymaster network and start earning today
+          </p>
           <div className="cta-buttons">
             <a href="/launch-guide" className="cta-button large primary">
               🚀 Launch Your Paymaster
@@ -299,7 +336,15 @@ export function OperatorsPortal() {
             </a>
           </div>
           <p className="cta-note">
-            Questions? Join our <a href="https://discord.gg/aastar" target="_blank" rel="noopener noreferrer">Discord</a> community
+            Questions? Join our{" "}
+            <a
+              href="https://discord.gg/aastar"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Discord
+            </a>{" "}
+            community
           </p>
         </div>
       </section>
