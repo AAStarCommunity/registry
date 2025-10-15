@@ -33,12 +33,12 @@ const PAYMASTER_ABI = [
 const RPC_URL =
   import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 
-// Cache Keys
-const CACHE_KEYS = {
-  PAYMASTERS: "analytics_paymasters_list",
-  EVENTS: "analytics_events_by_paymaster",
-  LAST_SYNC: "analytics_last_sync_time",
-};
+// Cache Keys - include Registry address to separate v1.2 and v1.3 caches
+const getCacheKeys = (registryAddress: string) => ({
+  PAYMASTERS: `analytics_paymasters_list_${registryAddress.toLowerCase()}`,
+  EVENTS: `analytics_events_by_paymaster_${registryAddress.toLowerCase()}`,
+  LAST_SYNC: `analytics_last_sync_time_${registryAddress.toLowerCase()}`,
+});
 
 // Query Configuration
 const CHUNK_SIZE = 10; // Alchemy free tier: max 10 blocks per query
@@ -143,8 +143,9 @@ export interface GasAnalytics {
   CACHE UTILITIES
 ==============================================================================*/
 
-function loadEventsCache(): EventsCache {
+function loadEventsCache(registryAddress: string): EventsCache {
   try {
+    const CACHE_KEYS = getCacheKeys(registryAddress);
     const cached = localStorage.getItem(CACHE_KEYS.EVENTS);
     return cached ? JSON.parse(cached) : {};
   } catch (error) {
@@ -153,8 +154,9 @@ function loadEventsCache(): EventsCache {
   }
 }
 
-function saveEventsCache(cache: EventsCache): void {
+function saveEventsCache(cache: EventsCache, registryAddress: string): void {
   try {
+    const CACHE_KEYS = getCacheKeys(registryAddress);
     localStorage.setItem(CACHE_KEYS.EVENTS, JSON.stringify(cache));
     localStorage.setItem(CACHE_KEYS.LAST_SYNC, Date.now().toString());
   } catch (error) {
@@ -162,8 +164,9 @@ function saveEventsCache(cache: EventsCache): void {
   }
 }
 
-function loadPaymastersList(): string[] {
+function loadPaymastersList(registryAddress: string): string[] {
   try {
+    const CACHE_KEYS = getCacheKeys(registryAddress);
     const cached = localStorage.getItem(CACHE_KEYS.PAYMASTERS);
     return cached ? JSON.parse(cached) : [];
   } catch (error) {
@@ -171,8 +174,12 @@ function loadPaymastersList(): string[] {
   }
 }
 
-function savePaymastersList(paymasters: string[]): void {
+function savePaymastersList(
+  paymasters: string[],
+  registryAddress: string,
+): void {
   try {
+    const CACHE_KEYS = getCacheKeys(registryAddress);
     localStorage.setItem(CACHE_KEYS.PAYMASTERS, JSON.stringify(paymasters));
   } catch (error) {
     console.error("Failed to save Paymasters list:", error);
@@ -381,11 +388,11 @@ export async function fetchAllPaymastersAnalytics(
     console.log(`✅ Found ${paymasters.length} active Paymasters`);
     paymasters.forEach((pm, i) => console.log(`  ${i + 1}. ${pm}`));
 
-    savePaymastersList(paymasters);
+    savePaymastersList(paymasters, REGISTRY_ADDRESS);
   } catch (error) {
     console.error("❌ Failed to query Registry, using cached list");
     console.error("Error details:", error);
-    paymasters = loadPaymastersList();
+    paymasters = loadPaymastersList(REGISTRY_ADDRESS);
 
     if (paymasters.length === 0) {
       throw new Error("No Paymasters available");
@@ -396,7 +403,7 @@ export async function fetchAllPaymastersAnalytics(
   // TODO: Future enhancement - load from KV DB instead of localStorage
   // const cache = await loadFromKVDB();
   console.log("\n💾 Step 2: Load existing cache...");
-  const cache = loadEventsCache();
+  const cache = loadEventsCache(REGISTRY_ADDRESS);
   console.log(`Cached Paymasters: ${Object.keys(cache).length}`);
 
   // Step 3: Determine block range (incremental query)
@@ -508,7 +515,7 @@ export async function fetchAllPaymastersAnalytics(
 
   // Step 5: Save cache
   console.log("\n💾 Step 5: Save cache...");
-  saveEventsCache(cache);
+  saveEventsCache(cache, REGISTRY_ADDRESS);
   console.log("✅ Cache saved");
 
   // Step 6: Compute statistics from cache
@@ -718,7 +725,7 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
 
         // Step 1: Load from cache immediately and display
         console.log("📦 Loading from cache...");
-        const cache = loadEventsCache();
+        const cache = loadEventsCache(REGISTRY_ADDRESS);
         const hasCachedData = Object.keys(cache).length > 0;
 
         if (hasCachedData) {
@@ -776,7 +783,7 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
 
         // If querying specific user, recompute user stats with fresh data
         if (userAddress) {
-          const updatedCache = loadEventsCache();
+          const updatedCache = loadEventsCache(REGISTRY_ADDRESS);
           const freshUserStats = computeUserStats(updatedCache, userAddress);
           setUserStats(freshUserStats);
           console.log(
