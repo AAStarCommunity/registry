@@ -9,6 +9,7 @@ import { UserGasRecords } from "./pages/analytics/UserGasRecords";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { OperatorPortal } from "./pages/operator/OperatorPortal";
 import { TestStep1 } from "./pages/operator/deploy-v2/TestStep1";
+import { TestStep2 } from "./pages/operator/deploy-v2/TestStep2";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -41,6 +42,7 @@ function App() {
             />
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/test-step1" element={<TestStep1 />} />
+            <Route path="/test-step2" element={<TestStep2 />} />
           </Routes>
         </main>
         <Footer />

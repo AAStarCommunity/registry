@@ -1,0 +1,344 @@
+.wallet-status {
+  padding: 1.5rem;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.wallet-status.disconnected {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3rem;
+  gap: 1rem;
+}
+
+.wallet-status.disconnected .status-icon {
+  font-size: 3rem;
+}
+
+.wallet-status.disconnected .status-message {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+/* Wallet Address Section */
+.wallet-address-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.section-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.75rem;
+}
+
+.wallet-address {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 6px;
+  color: white;
+}
+
+.address-icon {
+  font-size: 1.5rem;
+}
+
+.address-text {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  flex: 1;
+}
+
+.copy-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  padding: 0.35rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.copy-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+/* Balance Checks */
+.balance-checks {
+  margin-bottom: 2rem;
+}
+
+.balance-item {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  border: 2px solid #e0e0e0;
+  transition: all 0.2s;
+}
+
+.balance-item.sufficient {
+  border-color: #27ae60;
+  background: linear-gradient(135deg, #f0fff4 0%, #f0f9ff 100%);
+}
+
+.balance-item.insufficient {
+  border-color: #e74c3c;
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+}
+
+.balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.balance-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.icon-success {
+  font-size: 1.2rem;
+}
+
+.icon-error {
+  font-size: 1.2rem;
+}
+
+.icon-warning {
+  font-size: 1.2rem;
+}
+
+.balance-value {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #333;
+}
+
+.balance-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.balance-required {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.balance-action {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-button {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.action-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.action-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.balance-help {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Contract Status */
+.contract-status {
+  margin-bottom: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+.contract-info {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid #667eea;
+}
+
+.contract-item {
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+}
+
+.contract-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.contract-name {
+  font-weight: 600;
+  color: #333;
+}
+
+.contract-status-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.status-deployed {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #27ae60;
+}
+
+.status-not-deployed {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f39c12;
+}
+
+.contract-address {
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #666;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  border: 1px solid #ddd;
+}
+
+.contract-help {
+  font-size: 0.8rem;
+  color: #888;
+  font-style: italic;
+}
+
+/* Status Summary */
+.status-summary {
+  padding: 1.25rem;
+  border-radius: 6px;
+  margin-top: 1.5rem;
+}
+
+.summary-success {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 2px solid #28a745;
+}
+
+.summary-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  padding: 1rem;
+  border-radius: 6px;
+  border: 2px solid #ffc107;
+}
+
+.summary-icon {
+  font-size: 1.5rem;
+}
+
+.summary-text {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wallet-status {
+    padding: 1rem;
+  }
+
+  .balance-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .balance-value {
+    font-size: 1rem;
+  }
+
+  .balance-details {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+
+  .summary-success,
+  .summary-warning {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+/* Loading State */
+.wallet-status.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+.loading-spinner {
+  font-size: 2rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
