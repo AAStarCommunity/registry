@@ -6,6 +6,7 @@ import { LaunchGuide } from "./pages/LaunchGuide";
 import { RegistryExplorer } from "./pages/RegistryExplorer";
 import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
 import { UserGasRecords } from "./pages/analytics/UserGasRecords";
+import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ThemeToggle } from "./components/ThemeToggle";
@@ -24,11 +25,17 @@ function App() {
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/launch-guide" element={<LaunchGuide />} />
             <Route path="/explorer" element={<RegistryExplorer />} />
+            <Route path="/analytics" element={<AnalyticsDashboard />} />
             <Route
               path="/analytics/dashboard"
               element={<AnalyticsDashboard />}
             />
             <Route path="/analytics/user" element={<UserGasRecords />} />
+            <Route
+              path="/analytics/user/:address"
+              element={<UserGasRecords />}
+            />
+            <Route path="/paymaster/:address" element={<PaymasterDetail />} />
           </Routes>
         </main>
         <Footer />

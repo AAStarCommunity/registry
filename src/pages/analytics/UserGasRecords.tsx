@@ -2,9 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useGasAnalytics } from "../../hooks/useGasAnalytics";
 import { ethers } from "ethers";
 import { formatCacheAge } from "../../utils/cache";
-
-const ETHERSCAN_BASE_URL =
-  import.meta.env.VITE_ETHERSCAN_BASE_URL || "${ETHERSCAN_BASE_URL}";
+import {
+  getEtherscanAddressUrl,
+  getEtherscanTxUrl,
+} from "../../utils/etherscan";
 
 /**
  * User Gas Records Page
@@ -314,7 +315,7 @@ export function UserGasRecords() {
                             <td>{formatTimestamp(tx.timestamp)}</td>
                             <td className="address">
                               <a
-                                href={`${ETHERSCAN_BASE_URL}/address/${tx.gasToken}`}
+                                href={getEtherscanAddressUrl(tx.gasToken)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
@@ -327,7 +328,7 @@ export function UserGasRecords() {
                             <td>{ratio.toString()}%</td>
                             <td className="address">
                               <a
-                                href={`${ETHERSCAN_BASE_URL}/tx/${tx.transactionHash}`}
+                                href={getEtherscanTxUrl(tx.transactionHash)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >

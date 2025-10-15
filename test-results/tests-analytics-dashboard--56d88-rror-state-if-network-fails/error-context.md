@@ -1,0 +1,111 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e3]:
+  - button "Toggle theme" [ref=e4] [cursor=pointer]: 🌙
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "⚡ SuperPaymaster Registry" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e8]: ⚡
+        - generic [ref=e9]:
+          - generic [ref=e10]: SuperPaymaster
+          - generic [ref=e11]: Registry
+      - navigation [ref=e12]:
+        - link "Home" [ref=e13] [cursor=pointer]:
+          - /url: /
+        - link "Developers" [ref=e14] [cursor=pointer]:
+          - /url: /developer
+        - link "Operators" [ref=e15] [cursor=pointer]:
+          - /url: /operator
+        - link "Explorer" [ref=e16] [cursor=pointer]:
+          - /url: /explorer
+        - button "Analytics ▾" [ref=e18] [cursor=pointer]
+      - generic [ref=e19]:
+        - link "GitHub" [ref=e20] [cursor=pointer]:
+          - /url: https://github.com/AAStarCommunity
+          - img [ref=e21]
+          - text: GitHub
+        - link "Launch Paymaster" [ref=e23] [cursor=pointer]:
+          - /url: /launch-guide
+  - main [ref=e24]:
+    - generic [ref=e25]:
+      - heading "❌ Loading Failed" [level=2] [ref=e26]
+      - paragraph [ref=e27]: No Paymasters available
+      - button "Retry" [ref=e28]
+  - contentinfo [ref=e29]:
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - generic [ref=e32]:
+          - generic [ref=e33]:
+            - generic [ref=e34]: ⚡
+            - generic [ref=e35]: SuperPaymaster
+          - paragraph [ref=e36]: Decentralized gas payment infrastructure for ERC-4337 Account Abstraction
+          - generic [ref=e37]:
+            - link "GitHub" [ref=e38] [cursor=pointer]:
+              - /url: https://github.com/AAStarCommunity
+              - img [ref=e39]
+            - link "Twitter" [ref=e41] [cursor=pointer]:
+              - /url: https://twitter.com/AAStarCommunity
+              - img [ref=e42]
+            - link "Discord" [ref=e44] [cursor=pointer]:
+              - /url: https://discord.gg/aastar
+              - img [ref=e45]
+        - generic [ref=e47]:
+          - heading "Resources" [level=4] [ref=e48]
+          - list [ref=e49]:
+            - listitem [ref=e50]:
+              - link "Developer Portal" [ref=e51] [cursor=pointer]:
+                - /url: /developer
+            - listitem [ref=e52]:
+              - link "Operators Portal" [ref=e53] [cursor=pointer]:
+                - /url: /operator
+            - listitem [ref=e54]:
+              - link "Launch Guide" [ref=e55] [cursor=pointer]:
+                - /url: /launch-guide
+            - listitem [ref=e56]:
+              - link "Explorer" [ref=e57] [cursor=pointer]:
+                - /url: /explorer
+            - listitem [ref=e58]:
+              - link "Documentation" [ref=e59] [cursor=pointer]:
+                - /url: https://docs.aastar.io
+        - generic [ref=e60]:
+          - heading "Community" [level=4] [ref=e61]
+          - list [ref=e62]:
+            - listitem [ref=e63]:
+              - link "GitHub" [ref=e64] [cursor=pointer]:
+                - /url: https://github.com/AAStarCommunity
+            - listitem [ref=e65]:
+              - link "Discord" [ref=e66] [cursor=pointer]:
+                - /url: https://discord.gg/aastar
+            - listitem [ref=e67]:
+              - link "Twitter" [ref=e68] [cursor=pointer]:
+                - /url: https://twitter.com/AAStarCommunity
+            - listitem [ref=e69]:
+              - link "Demo Playground" [ref=e70] [cursor=pointer]:
+                - /url: https://demo.aastar.io
+        - generic [ref=e71]:
+          - heading "Legal" [level=4] [ref=e72]
+          - list [ref=e73]:
+            - listitem [ref=e74]:
+              - link "Terms of Service" [ref=e75] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e76]:
+              - link "Privacy Policy" [ref=e77] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e78]:
+              - link "Security" [ref=e79] [cursor=pointer]:
+                - /url: /security
+            - listitem [ref=e80]:
+              - link "Contact" [ref=e81] [cursor=pointer]:
+                - /url: mailto:contact@aastar.io
+      - generic [ref=e82]:
+        - paragraph [ref=e83]: © 2025 AAStar Community. Built with ❤️ for Account Abstraction.
+        - paragraph [ref=e84]:
+          - text: Powered by
+          - strong [ref=e85]: ERC-4337
+          - text: ·
+          - strong [ref=e86]: Ethereum
+          - text: ·
+          - strong [ref=e87]: Sepolia
+```

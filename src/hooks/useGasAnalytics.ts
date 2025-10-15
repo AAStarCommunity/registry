@@ -711,87 +711,105 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      setError(null);
+  const fetchData = useCallback(
+    async (forceRefresh: boolean = false) => {
+      try {
+        setError(null);
 
-      // Step 1: Load from cache immediately and display
-      console.log("📦 Loading from cache...");
-      const cache = loadEventsCache();
-      const hasCachedData = Object.keys(cache).length > 0;
+        // Step 1: Load from cache immediately and display
+        console.log("📦 Loading from cache...");
+        const cache = loadEventsCache();
+        const hasCachedData = Object.keys(cache).length > 0;
 
-      if (hasCachedData) {
-        // Has cache: display immediately
-        setIsLoading(false);
+        if (hasCachedData) {
+          // Has cache: display immediately
+          setIsLoading(false);
 
-        // Compute analytics (always use full cache for global stats)
-        const cachedAnalytics = computeAnalyticsFromCache(cache);
-        setAnalytics(cachedAnalytics);
+          // Compute analytics (always use full cache for global stats)
+          const cachedAnalytics = computeAnalyticsFromCache(cache);
+          setAnalytics(cachedAnalytics);
 
-        // If querying specific user, compute user stats
-        if (userAddress) {
-          const cachedUserStats = computeUserStats(cache, userAddress);
-          setUserStats(cachedUserStats);
-          console.log("✅ Setting cached user stats:", {
-            address: userAddress,
-            hasStats: !!cachedUserStats,
-            operations: cachedUserStats?.totalOperations || 0,
+          // If querying specific user, compute user stats
+          if (userAddress) {
+            const cachedUserStats = computeUserStats(cache, userAddress);
+            setUserStats(cachedUserStats);
+            console.log("✅ Setting cached user stats:", {
+              address: userAddress,
+              hasStats: !!cachedUserStats,
+              operations: cachedUserStats?.totalOperations || 0,
+            });
+          } else {
+            setUserStats(null);
+          }
+
+          console.log("✅ Setting cached analytics:", {
+            totalOperations: cachedAnalytics.totalOperations,
+            uniqueUsers: cachedAnalytics.uniqueUsers,
+            hasLastUpdated: !!cachedAnalytics.lastUpdated,
           });
+
+          // Stop here if not forced refresh (avoid 429 errors)
+          if (!forceRefresh) {
+            console.log(
+              "💡 Using cached data, skip background sync to avoid RPC 429",
+            );
+            return;
+          }
         } else {
-          setUserStats(null);
+          // No cache: keep loading state, will initialize from RPC
+          // TODO: Future - initialize from KV DB instead of RPC query
+          console.log(
+            "⚠️ No local cache found, initializing from blockchain...",
+          );
+          setIsLoading(true);
         }
 
-        console.log("✅ Setting cached analytics:", {
-          totalOperations: cachedAnalytics.totalOperations,
-          uniqueUsers: cachedAnalytics.uniqueUsers,
-          hasLastUpdated: !!cachedAnalytics.lastUpdated,
+        // Step 2: Background query (or initial query if no cache)
+        const queryAction = hasCachedData
+          ? "Background sync (force refresh)"
+          : "Initial cache build";
+        console.log(`🔄 ${queryAction}: querying blockchain...`);
+        const freshAnalytics = await fetchAllPaymastersAnalytics();
+
+        // Step 3: Update display with fresh data
+        setAnalytics(freshAnalytics);
+
+        // If querying specific user, recompute user stats with fresh data
+        if (userAddress) {
+          const updatedCache = loadEventsCache();
+          const freshUserStats = computeUserStats(updatedCache, userAddress);
+          setUserStats(freshUserStats);
+          console.log(
+            "✅ Background sync complete, setting fresh user stats:",
+            {
+              address: userAddress,
+              hasStats: !!freshUserStats,
+              operations: freshUserStats?.totalOperations || 0,
+            },
+          );
+        }
+
+        const completionMsg = hasCachedData
+          ? "✅ Background sync complete"
+          : "✅ Initial cache built successfully";
+        console.log(`${completionMsg}, setting fresh analytics:`, {
+          totalOperations: freshAnalytics.totalOperations,
+          uniqueUsers: freshAnalytics.uniqueUsers,
+          hasLastUpdated: !!freshAnalytics.lastUpdated,
         });
-      } else {
-        // No cache: keep loading state, will initialize from RPC
-        // TODO: Future - initialize from KV DB instead of RPC query
-        console.log("⚠️ No local cache found, initializing from blockchain...");
-        setIsLoading(true);
+        setIsLoading(false);
+      } catch (err: any) {
+        setError(
+          err instanceof Error
+            ? err
+            : new Error(err.message || "Unknown error"),
+        );
+        console.error("Failed to fetch analytics:", err);
+        setIsLoading(false);
       }
-
-      // Step 2: Background query (or initial query if no cache)
-      const queryAction = hasCachedData
-        ? "Background sync"
-        : "Initial cache build";
-      console.log(`🔄 ${queryAction}: querying blockchain...`);
-      const freshAnalytics = await fetchAllPaymastersAnalytics();
-
-      // Step 3: Update display with fresh data
-      setAnalytics(freshAnalytics);
-
-      // If querying specific user, recompute user stats with fresh data
-      if (userAddress) {
-        const updatedCache = loadEventsCache();
-        const freshUserStats = computeUserStats(updatedCache, userAddress);
-        setUserStats(freshUserStats);
-        console.log("✅ Background sync complete, setting fresh user stats:", {
-          address: userAddress,
-          hasStats: !!freshUserStats,
-          operations: freshUserStats?.totalOperations || 0,
-        });
-      }
-
-      const completionMsg = hasCachedData
-        ? "✅ Background sync complete"
-        : "✅ Initial cache built successfully";
-      console.log(`${completionMsg}, setting fresh analytics:`, {
-        totalOperations: freshAnalytics.totalOperations,
-        uniqueUsers: freshAnalytics.uniqueUsers,
-        hasLastUpdated: !!freshAnalytics.lastUpdated,
-      });
-      setIsLoading(false);
-    } catch (err: any) {
-      setError(
-        err instanceof Error ? err : new Error(err.message || "Unknown error"),
-      );
-      console.error("Failed to fetch analytics:", err);
-      setIsLoading(false);
-    }
-  }, [userAddress]);
+    },
+    [userAddress],
+  );
 
   useEffect(() => {
     fetchData();
@@ -802,7 +820,7 @@ export function useGasAnalytics(options?: UseGasAnalyticsOptions | string) {
     userStats,
     isLoading,
     error,
-    refetch: fetchData,
-    refresh: fetchData, // Alias for backward compatibility
+    refetch: () => fetchData(true), // Force refresh when manually called
+    refresh: () => fetchData(true), // Alias for backward compatibility
   };
 }

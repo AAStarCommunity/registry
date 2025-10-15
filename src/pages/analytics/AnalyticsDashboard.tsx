@@ -1,8 +1,10 @@
+import { Link } from "react-router-dom";
 import { useGasAnalytics } from "../../hooks/useGasAnalytics";
 import { formatCacheAge } from "../../utils/cache";
-
-const ETHERSCAN_BASE_URL =
-  import.meta.env.VITE_ETHERSCAN_BASE_URL || "${ETHERSCAN_BASE_URL}";
+import {
+  getEtherscanAddressUrl,
+  getEtherscanTxUrl,
+} from "../../utils/etherscan";
 
 /**
  * Admin Dashboard for PaymasterV4 Gas Analytics
@@ -183,13 +185,21 @@ export function AnalyticsDashboard() {
                   <tr key={pm.address}>
                     <td className="rank">#{index + 1}</td>
                     <td className="address">
-                      <a
-                        href={`${ETHERSCAN_BASE_URL}/address/${pm.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title={pm.address}
+                      <Link
+                        to={`/paymaster/${pm.address}`}
+                        className="paymaster-link"
+                        title="View Paymaster Details"
                       >
                         {pm.address.slice(0, 8)}...{pm.address.slice(-6)}
+                      </Link>
+                      <a
+                        href={getEtherscanAddressUrl(pm.address)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title="View on Etherscan"
+                        className="etherscan-icon"
+                      >
+                        🔗
                       </a>
                     </td>
                     <td>{pm.operations.toLocaleString()}</td>
@@ -234,7 +244,7 @@ export function AnalyticsDashboard() {
                     </td>
                     <td className="address">
                       <a
-                        href={`${ETHERSCAN_BASE_URL}/address/${user.address}`}
+                        href={getEtherscanAddressUrl(user.address)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
@@ -281,7 +291,7 @@ export function AnalyticsDashboard() {
                       <td>{formatTimestamp(tx.timestamp)}</td>
                       <td className="address">
                         <a
-                          href={`${ETHERSCAN_BASE_URL}/address/${tx.user}`}
+                          href={getEtherscanAddressUrl(tx.user)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -290,7 +300,7 @@ export function AnalyticsDashboard() {
                       </td>
                       <td className="address">
                         <a
-                          href={`${ETHERSCAN_BASE_URL}/address/${tx.gasToken}`}
+                          href={getEtherscanAddressUrl(tx.gasToken)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -301,7 +311,7 @@ export function AnalyticsDashboard() {
                       <td>{formatPntValue(tx.pntAmount)}</td>
                       <td className="address">
                         <a
-                          href={`${ETHERSCAN_BASE_URL}/tx/${tx.transactionHash}`}
+                          href={getEtherscanTxUrl(tx.transactionHash)}
                           target="_blank"
                           rel="noopener noreferrer"
                         >
@@ -316,6 +326,18 @@ export function AnalyticsDashboard() {
           ) : (
             <p className="empty-state">No transaction records</p>
           )}
+        </div>
+
+        {/* View More on JiffyScan */}
+        <div className="section-footer">
+          <a
+            href="https://jiffyscan.xyz/recentUserOps?network=sepolia&pageNo=1&pageSize=25"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="view-more-link"
+          >
+            📊 View More on JiffyScan →
+          </a>
         </div>
       </div>
 
@@ -521,6 +543,36 @@ export function AnalyticsDashboard() {
           text-align: center;
         }
 
+        .address {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+
+        .address .paymaster-link {
+          color: #667eea;
+          text-decoration: none;
+          font-family: monospace;
+          font-weight: 600;
+          transition: color 0.3s;
+        }
+
+        .address .paymaster-link:hover {
+          color: #764ba2;
+          text-decoration: underline;
+        }
+
+        .address .etherscan-icon {
+          font-size: 0.875rem;
+          text-decoration: none;
+          opacity: 0.6;
+          transition: opacity 0.3s;
+        }
+
+        .address .etherscan-icon:hover {
+          opacity: 1;
+        }
+
         .address a {
           color: #0066cc;
           text-decoration: none;
@@ -536,6 +588,30 @@ export function AnalyticsDashboard() {
           color: #999;
           padding: 2rem;
           font-style: italic;
+        }
+
+        .section-footer {
+          margin-top: 1.5rem;
+          padding-top: 1rem;
+          border-top: 1px solid #eee;
+          text-align: center;
+        }
+
+        .view-more-link {
+          display: inline-block;
+          padding: 0.75rem 1.5rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          text-decoration: none;
+          border-radius: 8px;
+          font-weight: 600;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 6px rgba(102, 126, 234, 0.25);
+        }
+
+        .view-more-link:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 12px rgba(102, 126, 234, 0.35);
         }
 
         .loading,
