@@ -27,59 +27,121 @@ export function PaymasterDetail() {
 
   const [registryInfo, setRegistryInfo] = useState<any>(null);
   const [loadingRegistry, setLoadingRegistry] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch Paymaster info from Registry contract
+  // LocalStorage cache key for this Paymaster
+  const CACHE_KEY = `paymaster_registry_${address?.toLowerCase()}`;
+  const CACHE_EXPIRY = 5 * 60 * 1000; // 5 minutes
+
+  // Load cached data first, then optionally fetch fresh data
   useEffect(() => {
     if (!address) return;
 
-    const fetchRegistryInfo = async () => {
+    // Try to load from cache first
+    const loadCachedData = () => {
       try {
-        setLoadingRegistry(true);
-        const provider = getProvider();
+        const cached = localStorage.getItem(CACHE_KEY);
+        if (cached) {
+          const { data, timestamp } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
 
-        const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS;
-        const registryAbi = [
-          "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
-          "function isPaymasterActive(address paymaster) view returns (bool)",
-        ];
-
-        const registry = new ethers.Contract(
-          registryAddress,
-          registryAbi,
-          provider,
-        );
-
-        // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
-        const info = await registry.getPaymasterInfo(address);
-        const isActive = await registry.isPaymasterActive(address);
-
-        // Check if actually registered (name not empty)
-        if (info.name && info.name.length > 0) {
-          setRegistryInfo({
-            paymasterAddress: address,
-            name: info.name,
-            feeRate: info.feeRate,
-            stakedAmount: BigInt(0), // Not available in getPaymasterInfo
-            reputation: BigInt(0), // Not available in getPaymasterInfo
-            isActive: isActive,
-            successCount: info.successCount,
-            totalAttempts: info.totalAttempts,
-            registeredAt: BigInt(0), // Not available in getPaymasterInfo
-            lastActiveAt: BigInt(0), // Not available in getPaymasterInfo
-          });
-        } else {
-          // Not registered - set to null
-          setRegistryInfo(null);
+          if (age < CACHE_EXPIRY) {
+            console.log(
+              `✅ Using cached registry data (age: ${Math.floor(age / 1000)}s)`,
+            );
+            setRegistryInfo(data);
+            setLoadingRegistry(false);
+            return true;
+          }
         }
       } catch (err) {
-        console.error("Failed to fetch registry info:", err);
-      } finally {
-        setLoadingRegistry(false);
+        console.error("Failed to load cache:", err);
       }
+      return false;
     };
 
-    fetchRegistryInfo();
+    // Load cache first
+    const hasCache = loadCachedData();
+
+    // If no cache, fetch from RPC
+    if (!hasCache) {
+      fetchRegistryInfo();
+    }
   }, [address]);
+
+  // Fetch Paymaster info from Registry contract
+  const fetchRegistryInfo = async () => {
+    if (!address) return;
+
+    try {
+      setLoadingRegistry(true);
+      const provider = getProvider();
+
+      const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS;
+      const registryAbi = [
+        "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+        "function isPaymasterActive(address paymaster) view returns (bool)",
+      ];
+
+      const registry = new ethers.Contract(
+        registryAddress,
+        registryAbi,
+        provider,
+      );
+
+      // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
+      const info = await registry.getPaymasterInfo(address);
+      const isActive = await registry.isPaymasterActive(address);
+
+      let registryData = null;
+      // Check if actually registered (name not empty)
+      if (info.name && info.name.length > 0) {
+        registryData = {
+          paymasterAddress: address,
+          name: info.name,
+          feeRate: Number(info.feeRate), // Convert BigInt to Number for caching
+          stakedAmount: "0", // Store as string to avoid BigInt serialization
+          reputation: "0", // Store as string to avoid BigInt serialization
+          isActive: isActive,
+          successCount: Number(info.successCount), // Convert BigInt to Number
+          totalAttempts: Number(info.totalAttempts), // Convert BigInt to Number
+          registeredAt: "0", // Store as string
+          lastActiveAt: "0", // Store as string
+        };
+      }
+
+      setRegistryInfo(registryData);
+
+      // Cache the result (now safe to stringify)
+      try {
+        localStorage.setItem(
+          CACHE_KEY,
+          JSON.stringify({
+            data: registryData,
+            timestamp: Date.now(),
+          }),
+        );
+        console.log("✅ Registry data cached");
+      } catch (err) {
+        console.error("Failed to cache data:", err);
+      }
+    } catch (err) {
+      console.error("Failed to fetch registry info:", err);
+    } finally {
+      setLoadingRegistry(false);
+    }
+  };
+
+  // Handle manual refresh
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      // Refresh both registry info and analytics
+      await Promise.all([fetchRegistryInfo(), refresh()]);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   // Get Paymaster stats from analytics
   const paymasterStats = analytics?.paymasterStats.find(
@@ -106,7 +168,13 @@ export function PaymasterDetail() {
     return new Date(timestamp * 1000).toLocaleString();
   };
 
-  const formatEther = (value: bigint) => {
+  const formatEther = (value: bigint | string | number) => {
+    if (typeof value === "string") {
+      return ethers.formatEther(value);
+    }
+    if (typeof value === "number") {
+      return value.toString();
+    }
     return ethers.formatEther(value);
   };
 
@@ -186,7 +254,16 @@ export function PaymasterDetail() {
         <Link to="/analytics" className="back-link">
           ← Back to Analytics
         </Link>
-        <h1>Paymaster Information</h1>
+        <div className="title-row">
+          <h1>Paymaster Information</h1>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="refresh-button"
+          >
+            {isRefreshing ? "🔄 Refreshing..." : "🔄 Refresh"}
+          </button>
+        </div>
         {!isRegistered && (
           <div className="warning-banner">
             ⚠️ This Paymaster is not registered in the SuperPaymaster Registry.
@@ -196,6 +273,10 @@ export function PaymasterDetail() {
         {analytics?.lastUpdated && (
           <p className="cache-age">
             Last updated: {formatCacheAge(analytics.lastUpdated)}
+            {" • "}
+            <span className="cache-hint">
+              Click refresh to update from blockchain
+            </span>
           </p>
         )}
       </div>
@@ -412,10 +493,41 @@ export function PaymasterDetail() {
           color: #764ba2;
         }
 
+        .title-row {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+        }
+
         .page-header h1 {
           font-size: 2rem;
           color: #2d3748;
           margin: 0.5rem 0;
+          flex: 1;
+        }
+
+        .refresh-button {
+          padding: 0.5rem 1rem;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s;
+          font-size: 0.875rem;
+          white-space: nowrap;
+        }
+
+        .refresh-button:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .refresh-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         .warning-banner {
@@ -431,6 +543,11 @@ export function PaymasterDetail() {
         .cache-age {
           color: #718096;
           font-size: 0.875rem;
+        }
+
+        .cache-hint {
+          color: #a0aec0;
+          font-style: italic;
         }
 
         .info-card {

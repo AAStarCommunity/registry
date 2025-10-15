@@ -4,9 +4,17 @@ import { ConfigurePaymaster } from "./ConfigurePaymaster";
 import { StakeEntryPoint } from "./StakeEntryPoint";
 import { RegisterToRegistry } from "./RegisterToRegistry";
 import { ManagePaymaster } from "./ManagePaymaster";
+import { FindPaymaster } from "./FindPaymaster";
 import "./OperatorPortal.css";
 
-type Step = "select" | "deploy" | "configure" | "stake" | "register" | "manage";
+type Step =
+  | "select"
+  | "find"
+  | "deploy"
+  | "configure"
+  | "stake"
+  | "register"
+  | "manage";
 
 interface PaymasterState {
   address?: string;
@@ -35,13 +43,13 @@ export function OperatorPortal() {
     if (mode === "new") {
       setCurrentStep("deploy");
     } else {
-      // For existing paymaster, prompt user for address
-      const address = prompt("Enter your Paymaster contract address:");
-      if (address && address.trim()) {
-        setPaymasterState({ address: address.trim() });
-        setCurrentStep("manage");
-      }
+      setCurrentStep("find");
     }
+  };
+
+  const handleFindComplete = (address: string) => {
+    setPaymasterState({ ...paymasterState, address });
+    setCurrentStep("manage");
   };
 
   const handleDeployComplete = (address: string, owner: string) => {
@@ -120,6 +128,13 @@ export function OperatorPortal() {
       {/* Step content */}
       <div className="operator-content-card">
         {currentStep === "select" && <SelectMode onSelect={handleSelectMode} />}
+
+        {currentStep === "find" && (
+          <FindPaymaster
+            onComplete={handleFindComplete}
+            onBack={handleBackToStart}
+          />
+        )}
 
         {currentStep === "deploy" && (
           <DeployPaymaster onComplete={handleDeployComplete} />

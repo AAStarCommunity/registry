@@ -35,6 +35,7 @@ export function DeployPaymaster({ onComplete }: DeployPaymasterProps) {
   const [deploying, setDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
+  const [testAddress, setTestAddress] = useState("");
 
   // Connect wallet
   const connectWallet = async () => {
@@ -131,20 +132,26 @@ export function DeployPaymaster({ onComplete }: DeployPaymasterProps) {
       // await paymaster.waitForDeployment();
       // const address = await paymaster.getAddress();
 
-      // Temporary simulation for development
-      alert(
-        "⚠️ Deployment simulation\n\nIn production, this will deploy PaymasterV4_1 contract.\n\nFor now, you can test with an existing Paymaster address.",
-      );
+      // TODO: Replace with actual PaymasterV4_1 factory deployment
+      // const factory = new ethers.ContractFactory(ABI, BYTECODE, signer);
+      // const paymaster = await factory.deploy(
+      //   ENTRY_POINT_V07,
+      //   connectedAddress,
+      //   config.treasury,
+      //   gasToUSDRate,
+      //   pntPriceUSD,
+      //   serviceFeeRate,
+      //   maxGasCostCap,
+      //   minTokenBalance
+      // );
+      // await paymaster.waitForDeployment();
+      // const address = await paymaster.getAddress();
 
-      // For testing, allow entering existing Paymaster address
-      const existingAddress = prompt(
-        "Enter existing PaymasterV4_1 address for testing:",
+      // Temporary: For testing with existing Paymaster
+      setError(
+        "⚠️ Deployment simulation mode: In production, this will deploy PaymasterV4_1 contract. " +
+          "For testing, please enter an existing PaymasterV4_1 address below.",
       );
-      if (existingAddress && ethers.isAddress(existingAddress)) {
-        onComplete(existingAddress, connectedAddress);
-      } else {
-        setError("Invalid address provided");
-      }
     } catch (err: any) {
       console.error("Deployment error:", err);
       setError("Deployment failed: " + err.message);
@@ -257,7 +264,44 @@ export function DeployPaymaster({ onComplete }: DeployPaymasterProps) {
         </button>
       </div>
 
-      {/* Info box */}
+      {/* Temporary test input - will be removed in production */}
+      {error && error.includes("simulation mode") && (
+        <div className="test-input-section">
+          <h3 className="test-input-title">🧪 Testing Mode</h3>
+          <p className="test-input-subtitle">
+            Enter an existing PaymasterV4_1 address to continue with the setup
+            flow:
+          </p>
+          <div className="test-input-group">
+            <input
+              type="text"
+              value={testAddress}
+              onChange={(e) => setTestAddress(e.target.value)}
+              placeholder="0x..."
+              className="test-input"
+            />
+            <button
+              onClick={() => {
+                if (
+                  testAddress &&
+                  ethers.isAddress(testAddress) &&
+                  connectedAddress
+                ) {
+                  onComplete(testAddress, connectedAddress);
+                } else {
+                  setError("Please enter a valid address");
+                }
+              }}
+              disabled={!testAddress || !connectedAddress}
+              className="test-button"
+            >
+              Continue with Test Address
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Info boxes */}
       <div className="deploy-info-box">
         <h4 className="deploy-info-title">💡 Deployment Info</h4>
         <ul className="deploy-info-list">
@@ -266,6 +310,58 @@ export function DeployPaymaster({ onComplete }: DeployPaymasterProps) {
           <li>• Treasury address can be changed later</li>
           <li>• All parameters can be adjusted after deployment</li>
         </ul>
+      </div>
+
+      <div className="deploy-info-box stake-info">
+        <h4 className="deploy-info-title">📋 Next Steps: Stake Options</h4>
+        <p className="stake-info-intro">
+          After deployment, you'll need to stake to participate in the
+          ecosystem. Choose one of two options:
+        </p>
+
+        <div className="stake-option">
+          <h5 className="stake-option-title">
+            ✅ Option 1: Standard ERC-4337 Flow (Recommended for ETH holders)
+          </h5>
+          <ul className="stake-option-list">
+            <li>1. Stake ETH to EntryPoint (ERC-4337 standard requirement)</li>
+            <li>2. Deposit ETH to EntryPoint for gas sponsorship</li>
+            <li>3. Stake GToken to Governance Stake Contract</li>
+          </ul>
+          <p className="stake-option-note">
+            ✨ Best for: Operators with ETH who want full control over
+            EntryPoint deposits
+          </p>
+        </div>
+
+        <div className="stake-option">
+          <h5 className="stake-option-title">
+            ⚡ Option 2: Fast Stake Flow (Recommended for GToken holders)
+          </h5>
+          <ul className="stake-option-list">
+            <li>1. Stake GToken to Governance Stake Contract</li>
+            <li>
+              2. Deposit PNTs (Protocol will convert GToken→ETH automatically)
+            </li>
+          </ul>
+          <p className="stake-option-note">
+            ✨ Best for: Operators with GToken who prefer simplified flow. The
+            protocol automatically handles ETH conversion for EntryPoint
+            requirements.
+          </p>
+        </div>
+
+        <div className="stake-warning">
+          <strong>⚠️ Important:</strong>
+          <ul className="stake-warning-list">
+            <li>• Staking is required to accept gas payment requests</li>
+            <li>
+              • GToken stake provides reputation and acts as slash collateral
+            </li>
+            <li>• Minimum stake amounts are set by governance</li>
+            <li>• Choose the flow that matches your token holdings</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
