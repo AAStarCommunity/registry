@@ -1,0 +1,278 @@
+/* Container and layout */
+.register-container {
+  /* Main container styles */
+}
+
+/* Headings */
+.register-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.register-subtitle {
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+/* Already registered success state */
+.success-container {
+  padding: 1.5rem;
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.success-emoji {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.success-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #15803d;
+  margin-bottom: 0.5rem;
+}
+
+.success-text {
+  color: #374151;
+  margin-bottom: 1rem;
+}
+
+.success-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #22c55e;
+  color: white;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.success-button:hover {
+  background-color: #16a34a;
+}
+
+/* Balance display */
+.balance-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.balance-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.balance-amount {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #2563eb;
+}
+
+.balance-warning {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: #dc2626;
+}
+
+/* Section containers */
+.section-container {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+}
+
+.section-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.section-description {
+  font-size: 0.875rem;
+  color: #4b5563;
+  margin-bottom: 0.75rem;
+}
+
+/* Get GToken buttons */
+.gtoken-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.gtoken-button {
+  flex: 1;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background-color: white;
+  cursor: pointer;
+  text-align: center;
+}
+
+.gtoken-button:hover {
+  background-color: #f9fafb;
+}
+
+.gtoken-button-title {
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.gtoken-button-subtitle {
+  font-size: 0.75rem;
+  color: #4b5563;
+}
+
+/* Approve section */
+.approve-controls {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.approve-input-group {
+  flex: 1;
+}
+
+.input-label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.stake-input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.input-hint {
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.approve-button {
+  padding: 0.5rem 1.5rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.approve-button:hover {
+  background-color: #2563eb;
+}
+
+.approve-button:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* Register section */
+.metadata-group {
+  margin-bottom: 1rem;
+}
+
+.metadata-textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.register-button {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  background-color: #22c55e;
+  color: white;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.register-button:hover {
+  background-color: #16a34a;
+}
+
+.register-button:disabled {
+  background-color: #d1d5db;
+  cursor: not-allowed;
+}
+
+/* Info box */
+.info-box {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #eff6ff;
+  border-radius: 0.5rem;
+}
+
+.info-box-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.info-box-list {
+  font-size: 0.875rem;
+  color: #374151;
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+.info-box-list li {
+  margin-bottom: 0.25rem;
+}
+
+/* Error message */
+.error-message {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.5rem;
+  color: #b91c1c;
+}
+
+/* Navigation buttons */
+.navigation-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.back-button {
+  padding: 0.75rem 1.5rem;
+  background-color: #d1d5db;
+  border-radius: 0.5rem;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.back-button:hover {
+  background-color: #9ca3af;
+}
+
+.back-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
