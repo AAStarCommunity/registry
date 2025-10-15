@@ -40,7 +40,8 @@ export function PaymasterDetail() {
 
         const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS;
         const registryAbi = [
-          "function getPaymasterFullInfo(address) view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+          "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+          "function isPaymasterActive(address paymaster) view returns (bool)",
         ];
 
         const registry = new ethers.Contract(
@@ -49,19 +50,28 @@ export function PaymasterDetail() {
           provider,
         );
 
-        const info = await registry.getPaymasterFullInfo(address);
-        setRegistryInfo({
-          paymasterAddress: info.paymasterAddress,
-          name: info.name,
-          feeRate: info.feeRate,
-          stakedAmount: info.stakedAmount,
-          reputation: info.reputation,
-          isActive: info.isActive,
-          successCount: info.successCount,
-          totalAttempts: info.totalAttempts,
-          registeredAt: info.registeredAt,
-          lastActiveAt: info.lastActiveAt,
-        });
+        // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
+        const info = await registry.getPaymasterInfo(address);
+        const isActive = await registry.isPaymasterActive(address);
+
+        // Check if actually registered (name not empty)
+        if (info.name && info.name.length > 0) {
+          setRegistryInfo({
+            paymasterAddress: address,
+            name: info.name,
+            feeRate: info.feeRate,
+            stakedAmount: BigInt(0), // Not available in getPaymasterInfo
+            reputation: BigInt(0), // Not available in getPaymasterInfo
+            isActive: isActive,
+            successCount: info.successCount,
+            totalAttempts: info.totalAttempts,
+            registeredAt: BigInt(0), // Not available in getPaymasterInfo
+            lastActiveAt: BigInt(0), // Not available in getPaymasterInfo
+          });
+        } else {
+          // Not registered - set to null
+          setRegistryInfo(null);
+        }
       } catch (err) {
         console.error("Failed to fetch registry info:", err);
       } finally {
@@ -146,10 +156,7 @@ export function PaymasterDetail() {
   const hasAnalyticsData = paymasterStats && paymasterStats.operations > 0;
 
   // Allow display if either registered in Registry OR has analytics data
-  if (
-    !hasAnalyticsData &&
-    (!registryInfo || registryInfo.paymasterAddress === ethers.ZeroAddress)
-  ) {
+  if (!hasAnalyticsData && (!registryInfo || !registryInfo.paymasterAddress)) {
     return (
       <div className="paymaster-detail-page">
         <div className="error-state">
@@ -169,7 +176,10 @@ export function PaymasterDetail() {
 
   // Determine if Paymaster is registered
   const isRegistered =
-    registryInfo && registryInfo.paymasterAddress !== ethers.ZeroAddress;
+    registryInfo &&
+    registryInfo.paymasterAddress &&
+    registryInfo.name &&
+    registryInfo.name.length > 0;
 
   return (
     <div className="paymaster-detail-page">
