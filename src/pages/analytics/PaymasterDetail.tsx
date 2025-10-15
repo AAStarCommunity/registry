@@ -7,6 +7,7 @@ import {
   getEtherscanTxUrl,
 } from "../../utils/etherscan";
 import { formatCacheAge } from "../../utils/cache";
+import { getProvider } from "../../utils/rpc-provider";
 
 /**
  * Paymaster Detail Page
@@ -34,9 +35,7 @@ export function PaymasterDetail() {
     const fetchRegistryInfo = async () => {
       try {
         setLoadingRegistry(true);
-        const provider = new ethers.JsonRpcProvider(
-          import.meta.env.VITE_SEPOLIA_RPC_URL,
-        );
+        const provider = getProvider();
 
         const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS;
         const registryAbi = [
