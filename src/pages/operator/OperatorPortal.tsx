@@ -35,7 +35,12 @@ export function OperatorPortal() {
     if (mode === "new") {
       setCurrentStep("deploy");
     } else {
-      setCurrentStep("manage");
+      // For existing paymaster, prompt user for address
+      const address = prompt("Enter your Paymaster contract address:");
+      if (address && address.trim()) {
+        setPaymasterState({ address: address.trim() });
+        setCurrentStep("manage");
+      }
     }
   };
 
