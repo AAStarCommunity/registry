@@ -39,6 +39,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Get private RPC URL from environment variable (NOT exposed to frontend)
   const privateRpcUrl = process.env.SEPOLIA_RPC_URL;
 
+  // Debug: Log environment variable status (without revealing the full URL)
+  if (privateRpcUrl) {
+    const maskedUrl = privateRpcUrl.replace(/\/v2\/.*$/, "/v2/***");
+    console.log(`🔐 Private RPC configured: ${maskedUrl}`);
+  } else {
+    console.log(`⚠️ SEPOLIA_RPC_URL environment variable not found`);
+    console.log(
+      `   Available env vars: ${Object.keys(process.env)
+        .filter((k) => k.includes("RPC"))
+        .join(", ")}`,
+    );
+  }
+
   let lastError: Error | null = null;
 
   // Try private RPC first if configured
