@@ -9,7 +9,7 @@ export function LaunchTutorial() {
     { id: "prerequisites", title: "✅ Prerequisites", icon: "✅" },
     { id: "step1", title: "Step 1: Deploy Paymaster", icon: "🚀" },
     { id: "step2", title: "Step 2: Configure Tokens", icon: "🪙" },
-    { id: "step3", title: "Step 3: Fund Treasury", icon: "💰" },
+    { id: "step3", title: "Step 3: Stake to EntryPoint", icon: "⚡" },
     { id: "step4", title: "Step 4: Test Transaction", icon: "🧪" },
     { id: "step5", title: "Step 5: Register & Launch", icon: "🎉" },
     { id: "faq", title: "❓ FAQ", icon: "❓" },
@@ -369,57 +369,198 @@ await paymaster.setServiceFeeRate(200);`}</pre>
           </section>
         )}
 
-        {/* Step 3: Fund Treasury */}
+        {/* Step 3: Stake to EntryPoint */}
         {activeSection === "step3" && (
           <section className="content-section">
-            <h1>💰 Step 3: Fund Treasury</h1>
+            <h1>⚡ Step 3: Stake to EntryPoint</h1>
 
             <div className="step-intro">
               <p>
-                Deposit ETH to your Paymaster treasury to sponsor gas for users.
+                ERC-4337 requires Paymasters to stake ETH to the EntryPoint
+                contract. We provide two approaches: Standard ERC-4337 flow and
+                our improved Quick Stake flow.
               </p>
             </div>
 
-            <h2>Why Fund Treasury?</h2>
+            <h2>Understanding Staking Requirements</h2>
             <div className="info-box">
+              <h4>Why Stake?</h4>
               <p>
-                Your Paymaster sponsors gas fees in ETH, then collects payment
-                in PNT from users. The treasury needs ETH balance to pay for
-                gas.
+                EntryPoint requires Paymaster operators to stake ETH as
+                collateral to prevent spam and ensure service quality. This is
+                an ERC-4337 standard requirement.
               </p>
             </div>
 
-            <h2>Deposit ETH</h2>
+            <h2>Approach 1: Standard ERC-4337 Flow</h2>
             <div className="instructions">
+              <p>
+                Traditional 3-step process following ERC-4337 specification:
+              </p>
+
+              <h3>Step 3.1: Stake ETH to EntryPoint</h3>
               <div className="code-block">
-                <pre>{`// Send ETH to your Paymaster contract
-await signer.sendTransaction({
-  to: PAYMASTER_ADDRESS,
-  value: ethers.parseEther("0.1") // 0.1 ETH
-});`}</pre>
+                <pre>{`// Stake ETH to EntryPoint (minimum: 0.1 ETH)
+const entryPoint = new ethers.Contract(ENTRY_POINT_ADDRESS, ENTRY_POINT_ABI, signer);
+await entryPoint.addStake(
+  PAYMASTER_ADDRESS,
+  86400, // unstake delay: 1 day
+  { value: ethers.parseEther("0.1") }
+);`}</pre>
+              </div>
+
+              <h3>Step 3.2: Deposit ETH for Gas Sponsorship</h3>
+              <div className="code-block">
+                <pre>{`// Deposit ETH to sponsor user transactions
+await entryPoint.depositTo(
+  PAYMASTER_ADDRESS,
+  { value: ethers.parseEther("0.5") }
+);`}</pre>
+              </div>
+
+              <h3>Step 3.3: Stake Gas Tokens (PNT)</h3>
+              <div className="code-block">
+                <pre>{`// Stake PNT tokens as payment reserve
+const pntToken = new ethers.Contract(PNT_ADDRESS, ERC20_ABI, signer);
+await pntToken.approve(PAYMASTER_ADDRESS, ethers.parseEther("1000"));
+
+const paymaster = new ethers.Contract(PAYMASTER_ADDRESS, PAYMASTER_ABI, signer);
+await paymaster.stakeGasToken(
+  PNT_ADDRESS,
+  ethers.parseEther("1000")
+);`}</pre>
               </div>
 
               <div className="info-box small">
-                <strong>Recommended Initial Deposit:</strong> 0.1 ETH
-                <br />
-                This can sponsor ~100 transactions (avg 0.001 ETH per tx)
+                <strong>Total Required:</strong>
+                <ul>
+                  <li>0.1 ETH - EntryPoint stake (locked, refundable)</li>
+                  <li>0.5 ETH - Gas sponsorship deposit (refillable)</li>
+                  <li>1000 PNT - Gas token reserve</li>
+                </ul>
               </div>
             </div>
 
-            <h2>Monitor Treasury Balance</h2>
+            <h2>Approach 2: Quick Stake Flow (Recommended) 🚀</h2>
             <div className="instructions">
-              <p>Check your treasury balance on Etherscan:</p>
+              <p>
+                Our improved flow combines stake calculation with GToken+PNT
+                staking,
+                <strong> eliminating the need for repeated ETH deposits</strong>
+                :
+              </p>
+
+              <h3>How It Works</h3>
+              <div className="info-box">
+                <p>
+                  By staking <strong>GTokens</strong> (stable-value gas tokens)
+                  and <strong>PNTs</strong>, the Paymaster can:
+                </p>
+                <ul>
+                  <li>
+                    ✅ Automatically convert GTokens to ETH for gas sponsorship
+                  </li>
+                  <li>✅ Maintain liquidity through PNT/xPNT pools</li>
+                  <li>✅ Only need to refill PNTs (not ETH) in the future</li>
+                </ul>
+                <p>
+                  <strong>Key Assumption:</strong> GTokens have relatively
+                  stable value, ensuring sustainable ETH conversion for gas
+                  sponsorship.
+                </p>
+              </div>
+
+              <h3>Single-Step Stake</h3>
               <div className="code-block">
-                <code>
-                  https://sepolia.etherscan.io/address/YOUR_PAYMASTER_ADDRESS
-                </code>
+                <pre>{`// Quick Stake: Only stake GToken + deposit PNTs
+const paymaster = new ethers.Contract(PAYMASTER_ADDRESS, PAYMASTER_ABI, signer);
+
+// Approve tokens
+const gToken = new ethers.Contract(GTOKEN_ADDRESS, ERC20_ABI, signer);
+const pntToken = new ethers.Contract(PNT_ADDRESS, ERC20_ABI, signer);
+
+await gToken.approve(PAYMASTER_ADDRESS, ethers.parseEther("500"));
+await pntToken.approve(PAYMASTER_ADDRESS, ethers.parseEther("1000"));
+
+// Combined stake operation
+await paymaster.quickStake(
+  GTOKEN_ADDRESS,
+  ethers.parseEther("500"), // GToken stake
+  PNT_ADDRESS,
+  ethers.parseEther("1000") // PNT deposit
+);`}</pre>
+              </div>
+
+              <div className="success-box">
+                <h4>✨ Advantages</h4>
+                <ul>
+                  <li>
+                    🎯 <strong>No ETH maintenance</strong> - Just refill PNTs
+                    when low
+                  </li>
+                  <li>
+                    ⚡ <strong>Faster setup</strong> - Single transaction vs 3
+                    transactions
+                  </li>
+                  <li>
+                    💰 <strong>Cost efficient</strong> - Saves gas on multiple
+                    approvals
+                  </li>
+                  <li>
+                    🔄 <strong>Sustainable</strong> - GToken liquidity ensures
+                    continuous operation
+                  </li>
+                </ul>
               </div>
 
               <div className="warning-box">
-                <strong>⚠️ Important:</strong> Monitor your treasury balance
-                regularly. When it runs low, deposit more ETH to continue
-                sponsoring transactions.
+                <h4>⚠️ Requirements</h4>
+                <ul>
+                  <li>GToken must have stable market value</li>
+                  <li>PNT/xPNT pool must have sufficient liquidity</li>
+                  <li>Monitor PNT balance and refill when needed</li>
+                </ul>
               </div>
+            </div>
+
+            <h2>Comparison</h2>
+            <div className="instructions">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Aspect</th>
+                    <th>Standard Flow</th>
+                    <th>Quick Stake Flow</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Transactions</td>
+                    <td>3 separate txs</td>
+                    <td>1 combined tx</td>
+                  </tr>
+                  <tr>
+                    <td>Initial Deposit</td>
+                    <td>0.6 ETH + 1000 PNT</td>
+                    <td>500 GToken + 1000 PNT</td>
+                  </tr>
+                  <tr>
+                    <td>Future Refills</td>
+                    <td>Both ETH and PNT</td>
+                    <td>Only PNT</td>
+                  </tr>
+                  <tr>
+                    <td>Gas Costs</td>
+                    <td>Higher (3 txs)</td>
+                    <td>Lower (1 tx)</td>
+                  </tr>
+                  <tr>
+                    <td>Complexity</td>
+                    <td>Medium</td>
+                    <td>Low</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <div className="button-group">

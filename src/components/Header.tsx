@@ -112,7 +112,7 @@ export function Header() {
             GitHub
           </a>
           <Link to="/operator/deploy" className="cta-button">
-            Deploy Now
+            Launch Paymaster
           </Link>
         </div>
       </div>
