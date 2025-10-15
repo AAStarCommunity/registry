@@ -79,80 +79,77 @@ export function OperatorPortal() {
       {/* Progress indicator */}
       <div className="progress-container">
         <div className="progress-steps">
-            <StepIndicator
-              step={1}
-              label="Deploy"
-              active={currentStep === "deploy"}
-              completed={!!paymasterState.address}
-            />
-            <StepIndicator
-              step={2}
-              label="Configure"
-              active={currentStep === "configure"}
-              completed={!!paymasterState.sbtAddress}
-            />
-            <StepIndicator
-              step={3}
-              label="Stake"
-              active={currentStep === "stake"}
-              completed={!!paymasterState.entryPointDeposited}
-            />
-            <StepIndicator
-              step={4}
-              label="Register"
-              active={currentStep === "register"}
-              completed={!!paymasterState.registryRegistered}
-            />
-            <StepIndicator
-              step={5}
-              label="Manage"
-              active={currentStep === "manage"}
-              completed={false}
-            />
-          </div>
+          <StepIndicator
+            step={1}
+            label="Deploy"
+            active={currentStep === "deploy"}
+            completed={!!paymasterState.address}
+          />
+          <StepIndicator
+            step={2}
+            label="Configure"
+            active={currentStep === "configure"}
+            completed={!!paymasterState.sbtAddress}
+          />
+          <StepIndicator
+            step={3}
+            label="Stake"
+            active={currentStep === "stake"}
+            completed={!!paymasterState.entryPointDeposited}
+          />
+          <StepIndicator
+            step={4}
+            label="Register"
+            active={currentStep === "register"}
+            completed={!!paymasterState.registryRegistered}
+          />
+          <StepIndicator
+            step={5}
+            label="Manage"
+            active={currentStep === "manage"}
+            completed={false}
+          />
         </div>
+      </div>
 
       {/* Step content */}
       <div className="operator-content-card">
-          {currentStep === "select" && (
-            <SelectMode onSelect={handleSelectMode} />
-          )}
+        {currentStep === "select" && <SelectMode onSelect={handleSelectMode} />}
 
-          {currentStep === "deploy" && (
-            <DeployPaymaster onComplete={handleDeployComplete} />
-          )}
+        {currentStep === "deploy" && (
+          <DeployPaymaster onComplete={handleDeployComplete} />
+        )}
 
-          {currentStep === "configure" && paymasterState.address && (
-            <ConfigurePaymaster
-              paymasterAddress={paymasterState.address}
-              onComplete={handleConfigureComplete}
-              onBack={() => setCurrentStep("deploy")}
-            />
-          )}
+        {currentStep === "configure" && paymasterState.address && (
+          <ConfigurePaymaster
+            paymasterAddress={paymasterState.address}
+            onComplete={handleConfigureComplete}
+            onBack={() => setCurrentStep("deploy")}
+          />
+        )}
 
-          {currentStep === "stake" && paymasterState.address && (
-            <StakeEntryPoint
-              paymasterAddress={paymasterState.address}
-              onComplete={handleStakeComplete}
-              onBack={() => setCurrentStep("configure")}
-            />
-          )}
+        {currentStep === "stake" && paymasterState.address && (
+          <StakeEntryPoint
+            paymasterAddress={paymasterState.address}
+            onComplete={handleStakeComplete}
+            onBack={() => setCurrentStep("configure")}
+          />
+        )}
 
-          {currentStep === "register" && paymasterState.address && (
-            <RegisterToRegistry
-              paymasterAddress={paymasterState.address}
-              onComplete={handleRegisterComplete}
-              onBack={() => setCurrentStep("stake")}
-            />
-          )}
+        {currentStep === "register" && paymasterState.address && (
+          <RegisterToRegistry
+            paymasterAddress={paymasterState.address}
+            onComplete={handleRegisterComplete}
+            onBack={() => setCurrentStep("stake")}
+          />
+        )}
 
-          {currentStep === "manage" && paymasterState.address && (
-            <ManagePaymaster
-              paymasterAddress={paymasterState.address}
-              onBackToStart={handleBackToStart}
-            />
-          )}
-        </div>
+        {currentStep === "manage" && paymasterState.address && (
+          <ManagePaymaster
+            paymasterAddress={paymasterState.address}
+            onBackToStart={handleBackToStart}
+          />
+        )}
       </div>
     </div>
   );
