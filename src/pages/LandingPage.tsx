@@ -62,14 +62,6 @@ export function LandingPage() {
               <a href="/explorer" className="cta-button primary">
                 🔍 Explore Registry
               </a>
-              <a
-                href="https://demo.aastar.io"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cta-button primary"
-              >
-                🎮 Try Demo
-              </a>
               <a href="/developer" className="cta-button secondary">
                 👨‍💻 Developer Portal
               </a>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useGasAnalytics } from "../../hooks/useGasAnalytics";
 import { ethers } from "ethers";
 import { formatCacheAge } from "../../utils/cache";
@@ -10,7 +10,7 @@ const ETHERSCAN_BASE_URL =
  * User Gas Records Page
  *
  * Features:
- * - Input wallet address to query
+ * - Input wallet address to query with history
  * - Display user-specific statistics
  * - Show transaction history
  * - Compare with global average
@@ -21,6 +21,19 @@ export function UserGasRecords() {
   const [queryAddress, setQueryAddress] = useState<string | undefined>(
     undefined,
   );
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  // Load history from localStorage on component mount
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem("gasUsageSearchHistory");
+      if (storedHistory) {
+        setSearchHistory(JSON.parse(storedHistory));
+      }
+    } catch (error) {
+      console.error("Failed to parse search history from localStorage", error);
+    }
+  }, []);
 
   const { analytics, userStats, isLoading, error, refresh } = useGasAnalytics({
     userAddress: queryAddress,
@@ -39,6 +52,20 @@ export function UserGasRecords() {
     if (!ethers.isAddress(inputAddress)) {
       alert("Invalid wallet address format");
       return;
+    }
+
+    // Update search history
+    try {
+      const newHistory = [
+        inputAddress,
+        ...searchHistory.filter(
+          (item) => item.toLowerCase() !== inputAddress.toLowerCase(),
+        ),
+      ].slice(0, 10); // Keep the 10 most recent unique entries
+      setSearchHistory(newHistory);
+      localStorage.setItem("gasUsageSearchHistory", JSON.stringify(newHistory));
+    } catch (error) {
+      console.error("Failed to save search history to localStorage", error);
     }
 
     setQueryAddress(inputAddress);
@@ -99,7 +126,13 @@ export function UserGasRecords() {
             value={inputAddress}
             onChange={(e) => setInputAddress(e.target.value)}
             className="address-input"
+            list="address-history"
           />
+          <datalist id="address-history">
+            {searchHistory.map((item) => (
+              <option key={item} value={item} />
+            ))}
+          </datalist>
           <button type="submit" disabled={isLoading} className="search-btn">
             {isLoading ? "Querying..." : "🔍 Query"}
           </button>
