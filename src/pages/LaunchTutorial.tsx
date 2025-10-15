@@ -9,7 +9,7 @@ export function LaunchTutorial() {
     { id: "prerequisites", title: "✅ Prerequisites", icon: "✅" },
     { id: "step1", title: "Step 1: Deploy Paymaster", icon: "🚀" },
     { id: "step2", title: "Step 2: Configure Tokens", icon: "🪙" },
-    { id: "step3", title: "Step 3: Stake to EntryPoint", icon: "⚡" },
+    { id: "step3", title: "Step 3: Stake to EntryPoint&Registry", icon: "⚡" },
     { id: "step4", title: "Step 4: Test Transaction", icon: "🧪" },
     { id: "step5", title: "Step 5: Register & Launch", icon: "🎉" },
     { id: "faq", title: "❓ FAQ", icon: "❓" },
@@ -372,7 +372,7 @@ await paymaster.setServiceFeeRate(200);`}</pre>
         {/* Step 3: Stake to EntryPoint */}
         {activeSection === "step3" && (
           <section className="content-section">
-            <h1>⚡ Step 3: Stake to EntryPoint</h1>
+            <h1>⚡ Step 3: Stake to EntryPoint&Registry</h1>
 
             <div className="step-intro">
               <p>
