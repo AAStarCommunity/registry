@@ -17,14 +17,6 @@ export function OperatorsPortal() {
             <a href="/launch-guide" className="cta-button secondary">
               📖 Launch Guide
             </a>
-            <a
-              href="https://demo.aastar.io"
-              className="cta-button secondary"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              🎮 Try Demo
-            </a>
           </div>
         </div>
       </section>
