@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "concurrently \"pnpm:dev:vite\" \"pnpm:dev:vercel\" --names \"vite,vercel\" --prefix-colors \"cyan,magenta\"",
     "dev:vite": "vite",
-    "dev:vercel": "vercel dev --listen 3000",
+    "dev:vercel": "vercel dev --listen 3000 --yes",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

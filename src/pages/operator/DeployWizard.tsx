@@ -2,8 +2,8 @@ import { useState } from 'react';
 import './DeployWizard.css';
 
 // Import step components
-import Step1_ConfigForm from './deploy-v2/steps/Step1_ConfigForm';
-import Step2_WalletCheck from './deploy-v2/steps/Step2_WalletCheck';
+import { Step1_ConfigForm } from './deploy-v2/steps/Step1_ConfigForm';
+import { Step2_WalletCheck } from './deploy-v2/steps/Step2_WalletCheck';
 import { Step3_StakeOption } from './deploy-v2/steps/Step3_StakeOption';
 import { Step4_ResourcePrep } from './deploy-v2/steps/Step4_ResourcePrep';
 import { Step5_StakeEntryPoint } from './deploy-v2/steps/Step5_StakeEntryPoint';
@@ -179,9 +179,20 @@ export function DeployWizard() {
       <div className="wizard-content">
         {currentStep === 1 && (
           <Step1_ConfigForm
-            config={config}
-            onConfigChange={setConfig}
-            onComplete={handleStep1Complete}
+            onNext={(formConfig) => {
+              // Update config with form data
+              setConfig({
+                ...config,
+                ...formConfig,
+              });
+              // For now, we'll simulate deployment completion
+              // In real implementation, this would deploy the contract
+              handleStep1Complete('0x1234567890123456789012345678901234567890', '0x1234567890123456789012345678901234567890');
+            }}
+            onCancel={() => {
+              // Navigate back to operator portal
+              window.location.href = '/operator';
+            }}
           />
         )}
 
