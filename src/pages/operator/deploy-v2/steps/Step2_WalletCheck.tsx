@@ -6,12 +6,12 @@ import type { DeployConfig } from "./Step1_ConfigForm";
 import "./Step2_WalletCheck.css";
 
 export interface Step2Props {
-  config: DeployConfig;
-  onNext: () => void;
+  paymasterAddress: string;
+  onNext: (walletStatus: WalletStatusType) => void;
   onBack: () => void;
 }
 
-export function Step2_WalletCheck({ config, onNext, onBack }: Step2Props) {
+export function Step2_WalletCheck({ paymasterAddress, onNext, onBack }: Step2Props) {
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,23 +95,15 @@ export function Step2_WalletCheck({ config, onNext, onBack }: Step2Props) {
         </p>
       </div>
 
-      {/* Config Summary */}
+      {/* Paymaster Info */}
       <div className="config-summary">
-        <div className="summary-title">📋 Configuration Summary</div>
+        <div className="summary-title">📋 Paymaster Deployed</div>
         <div className="summary-content">
           <div className="summary-item">
-            <span className="summary-label">Community:</span>
-            <span className="summary-value">{config.communityName}</span>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Treasury:</span>
+            <span className="summary-label">Address:</span>
             <span className="summary-value address">
-              {config.treasury.slice(0, 6)}...{config.treasury.slice(-4)}
+              {paymasterAddress.slice(0, 6)}...{paymasterAddress.slice(-4)}
             </span>
-          </div>
-          <div className="summary-item">
-            <span className="summary-label">Service Fee:</span>
-            <span className="summary-value">{config.serviceFeeRate}%</span>
           </div>
         </div>
       </div>
@@ -195,7 +187,7 @@ export function Step2_WalletCheck({ config, onNext, onBack }: Step2Props) {
         </button>
         <button
           className="btn-next"
-          onClick={onNext}
+          onClick={() => walletStatus && onNext(walletStatus)}
           disabled={!canProceed()}
           title={
             !canProceed()

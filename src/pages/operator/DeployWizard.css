@@ -1,0 +1,268 @@
+/* DeployWizard styles */
+
+.deploy-wizard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+/* Header */
+.wizard-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.wizard-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.wizard-subtitle {
+  font-size: 18px;
+  color: #6b7280;
+}
+
+/* Progress indicator */
+.wizard-progress {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 60px;
+  position: relative;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.progress-step-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: 3px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  z-index: 2;
+}
+
+.progress-step.active .progress-step-circle {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  transform: scale(1.1);
+}
+
+.progress-step.completed .progress-step-circle {
+  background: #10b981;
+  border-color: #10b981;
+  color: white;
+}
+
+.progress-step-label {
+  text-align: center;
+}
+
+.progress-step-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.progress-step-number {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.progress-step.active .progress-step-title {
+  color: #667eea;
+}
+
+.progress-step.completed .progress-step-title {
+  color: #10b981;
+}
+
+.progress-step-line {
+  position: absolute;
+  top: 30px;
+  left: calc(50% + 30px);
+  right: calc(-50% + 30px);
+  height: 3px;
+  background: #e5e7eb;
+  z-index: 1;
+}
+
+.progress-step.completed + .progress-step .progress-step-line {
+  background: #10b981;
+}
+
+/* Wizard content */
+.wizard-content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  margin-bottom: 40px;
+  min-height: 400px;
+}
+
+/* Step placeholder */
+.step-placeholder {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.step-placeholder h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+.step-placeholder p {
+  font-size: 16px;
+  color: #6b7280;
+  margin-bottom: 32px;
+}
+
+/* Button group */
+.button-group {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.button {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.button.secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+
+.button.secondary:hover {
+  background: #e5e7eb;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Help section */
+.wizard-help {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 32px;
+  border-left: 4px solid #667eea;
+}
+
+.wizard-help h3 {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: #111827;
+}
+
+.wizard-help ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.wizard-help li {
+  margin-bottom: 12px;
+}
+
+.wizard-help a {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.wizard-help a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .wizard-progress {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .progress-step {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .progress-step-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+    margin-right: 16px;
+    margin-bottom: 0;
+  }
+
+  .progress-step-label {
+    text-align: left;
+    flex: 1;
+  }
+
+  .progress-step-line {
+    display: none;
+  }
+
+  .wizard-content {
+    padding: 24px;
+  }
+
+  .button-group {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+}
