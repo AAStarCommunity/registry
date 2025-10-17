@@ -3661,3 +3661,220 @@ docs/
 **更新时间**: 2025-10-17 18:15 CST  
 **报告生成人**: Claude AI  
 **版本**: v2.3 (新增用户指南文档)
+
+## Phase 2.2.2 - 添加真实截图到用户指南
+
+**时间**: 2025-10-17 18:30 CST  
+**耗时**: 15 分钟
+
+### 新增内容
+
+#### 1. 真实截图（10 张）
+
+使用 Playwright 自动捕获了应用的真实界面截图：
+
+| 截图 | 说明 | 文件大小 |
+|------|------|----------|
+| `01-landing-page.png` | 主页 | 436K |
+| `02-operator-portal.png` | 操作员门户 | 969K |
+| `03-developer-portal.png` | 开发者门户 | 448K |
+| `04-explorer.png` | 浏览器 | 478K |
+| `07-manage-config-tab.png` | 配置 Tab | 322K |
+| `08-manage-entrypoint-tab.png` | EntryPoint Tab | 267K |
+| `09-manage-registry-tab.png` | Registry Tab | 252K |
+| `10-manage-tokens-tab.png` | Token Management Tab | 280K |
+
+**总大小**: ~3.4 MB
+
+#### 2. 截图生成脚本
+
+创建了两个自动化脚本：
+
+**`scripts/capture-screenshots.ts`** (主要页面):
+```typescript
+// 捕获主要页面截图
+- Landing Page
+- Operator Portal
+- Developer Portal
+- Explorer
+- Manage Overview
+```
+
+**`scripts/capture-manage-tabs.ts`** (管理界面):
+```typescript
+// 捕获管理界面的 4 个 Tab
+- Configuration Tab
+- EntryPoint Tab
+- Registry Tab
+- Token Management Tab
+```
+
+使用 MetaMask Mock 确保数据一致性。
+
+#### 3. 带截图的用户指南
+
+创建了 `USER_GUIDE_WITH_SCREENSHOTS.md`:
+
+**特点**:
+- ✅ 10 张真实截图
+- ✅ 每个主要功能都有配图
+- ✅ 简化的文档结构
+- ✅ 中文界面说明
+- ✅ 完整的代码示例
+
+**章节**:
+1. 应用概述
+2. 主页 - 快速导览 📸
+3. 操作员门户 - 部署和管理 📸
+4. 管理 Paymaster - 完整指南 📸（4 个 Tab）
+5. 开发者门户 - 集成指南 📸
+6. 浏览器 - 查找 Paymaster 📸
+
+#### 4. 截图说明文档
+
+创建了 `screenshots/README.md`:
+- 截图列表和说明
+- Markdown 引用方法
+- 每张截图的详细内容描述
+- 截图生成脚本使用说明
+
+### 技术实现
+
+#### 截图捕获流程
+
+```typescript
+// 1. 启动浏览器
+const browser = await chromium.launch();
+const page = await browser.newPage({
+  viewport: { width: 1280, height: 720 }
+});
+
+// 2. 注入 MetaMask Mock
+await page.addInitScript(getEthereumMockScript());
+
+// 3. 访问页面
+await page.goto('http://localhost:5173/operator/manage?address=...');
+await page.waitForTimeout(3000);
+
+// 4. 捕获截图
+await page.screenshot({
+  path: 'docs/screenshots/07-manage-config-tab.png',
+  fullPage: true
+});
+```
+
+**关键配置**:
+- 分辨率: 1280x720（标准桌面）
+- 格式: PNG（高质量）
+- 完整页面: `fullPage: true`
+- Mock 数据: 使用与测试相同的 Mock
+
+### 文件结构
+
+```
+docs/
+├── Changes.md                          # 开发历程
+├── DEV_SETUP.md                       # 开发环境设置
+├── USER_GUIDE.md                      # 原用户指南（ASCII 图示）
+├── USER_GUIDE_WITH_SCREENSHOTS.md     # 带截图的用户指南（新增）
+└── screenshots/                       # 截图目录（新增）
+    ├── README.md                      # 截图说明
+    ├── 01-landing-page.png
+    ├── 02-operator-portal.png
+    ├── 03-developer-portal.png
+    ├── 04-explorer.png
+    ├── 07-manage-config-tab.png
+    ├── 08-manage-entrypoint-tab.png
+    ├── 09-manage-registry-tab.png
+    └── 10-manage-tokens-tab.png
+
+scripts/
+├── capture-screenshots.ts              # 主页面截图脚本（新增）
+└── capture-manage-tabs.ts             # 管理界面截图脚本（新增）
+```
+
+### 使用方式
+
+#### 查看带截图的指南
+
+```bash
+# 在编辑器中打开
+code docs/USER_GUIDE_WITH_SCREENSHOTS.md
+
+# 或在终端查看
+cat docs/USER_GUIDE_WITH_SCREENSHOTS.md
+```
+
+#### 重新生成截图
+
+```bash
+# 生成所有主要页面截图
+npx tsx scripts/capture-screenshots.ts
+
+# 只生成管理界面截图
+npx tsx scripts/capture-manage-tabs.ts
+```
+
+### 截图示例
+
+**主页截图** (`01-landing-page.png`):
+- 标题: SuperPaymaster Registry
+- 统计数据: 114 Paymasters、52,648 Transactions、$3,368 Saved
+- 三个入口按钮
+- 特性介绍卡片
+- Call to Action
+
+**管理界面 - 配置 Tab** (`07-manage-config-tab.png`):
+- Owner Badge: 👑 Owner
+- 7 个配置参数表格
+- 每个参数都有 [Edit] 按钮
+- Pause Control 区域
+- Refresh Data 按钮
+
+### 对比 ASCII vs 真实截图
+
+#### Before（ASCII 艺术图）
+```
+┌─────────────────────────────────────────┐
+│  Manage Paymaster                       │
+│  [Configuration] [EntryPoint] ...       │
+└─────────────────────────────────────────┘
+```
+
+#### After（真实截图）
+```markdown
+![Manage Configuration Tab](screenshots/07-manage-config-tab.png)
+```
+
+**优势**:
+- ✅ 显示真实的 UI 设计和颜色
+- ✅ 用户可以看到实际的按钮、表格样式
+- ✅ 更直观、更易理解
+- ✅ 可以看到 Mock 数据的实际展示
+
+### 总结
+
+现在我们有三个版本的文档：
+
+1. **USER_GUIDE.md** - 完整详细版（8,500 字，ASCII 图示）
+   - 适合：喜欢文字描述的用户
+   - 优点：所有细节都有详细说明
+
+2. **USER_GUIDE_WITH_SCREENSHOTS.md** - 简化图文版（新增）
+   - 适合：快速上手的用户
+   - 优点：真实截图，一目了然
+
+3. **screenshots/README.md** - 截图说明
+   - 适合：开发者和维护者
+   - 优点：详细的截图内容描述
+
+**推荐使用**: 
+- 新用户: `USER_GUIDE_WITH_SCREENSHOTS.md`
+- 高级用户: `USER_GUIDE.md`
+- 开发者: 所有文档 + `screenshots/README.md`
+
+---
+
+**更新时间**: 2025-10-17 18:30 CST  
+**报告生成人**: Claude AI  
+**版本**: v2.4 (添加真实截图)
