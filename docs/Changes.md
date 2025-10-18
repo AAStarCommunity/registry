@@ -4247,3 +4247,231 @@ const [config, setConfig] = useState<DeployConfig>({
 **更新时间**: 2025-10-18 01:30 CST  
 **报告生成人**: Claude AI  
 **版本**: Phase 2.3 Complete - Multi-Network Support & Tutorial Update
+
+---
+
+## 🐛 Bug Fix - RPC Proxy 500 Error
+
+**日期**: 2025-10-18  
+**分支**: bug-fix  
+**问题**: Analytics Dashboard 和 User Gas Records 页面报错  
+
+### 问题描述
+
+当使用 `pnpm run dev:vite` 启动开发服务器时,分析页面出现大量错误:
+
+```
+Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+POST http://localhost:5173/api/rpc-proxy net::ERR_ABORTED 500
+JsonRpcProvider failed to detect network and cannot start up
+```
+
+### 根本原因
+
+使用 `pnpm run dev:vite` 只启动了 Vite 前端服务 (5173),没有启动 Vercel API 服务 (3000)。
+
+应用架构需要**双服务模式**:
+1. **Vite** (5173) - 前端应用
+2. **Vercel** (3000) - API endpoints,包括 `/api/rpc-proxy`
+
+### 解决方案
+
+#### 1. 恢复双服务模式
+
+**正确启动方式**:
+```bash
+# ✅ 正确 - 同时启动两个服务
+pnpm run dev
+
+# ❌ 错误 - 只启动 Vite,会导致 RPC proxy 失败
+pnpm run dev:vite
+```
+
+#### 2. 服务配置
+
+`package.json` 中的脚本已正确配置:
+```json
+{
+  "scripts": {
+    "dev": "concurrently \"pnpm:dev:vite\" \"pnpm:dev:vercel\" --names \"vite,vercel\" --prefix-colors \"cyan,magenta\"",
+    "dev:vite": "vite",
+    "dev:vercel": "vercel dev --listen 3000 --yes"
+  }
+}
+```
+
+#### 3. Vite 代理配置
+
+`vite.config.ts` 中已正确配置代理:
+```typescript
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000", // Vercel dev server
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+```
+
+### 工作流程
+
+**开发环境**:
+```
+用户浏览器 → http://localhost:5173
+             ↓
+         Vite Dev Server (5173)
+             ↓ (代理 /api/* 请求)
+         Vercel Dev Server (3000)
+             ↓
+         RPC Proxy Handler (api/rpc-proxy.ts)
+             ↓
+         Public/Private RPC Endpoints
+```
+
+**生产环境** (Vercel):
+```
+用户浏览器 → https://registry.aastar.io
+             ↓
+         Vercel Edge Network
+             ↓ (自动路由)
+         /api/* → Serverless Functions
+         /*     → Static Assets (Vite build)
+```
+
+### RPC Proxy 特性
+
+#### 混合模式
+
+`api/rpc-proxy.ts` 支持混合模式:
+
+1. **私有 RPC** (优先):
+   ```bash
+   # .env.local (不提交到 git)
+   SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+   ```
+
+2. **公共 RPC** (fallback):
+   - https://rpc.sepolia.org
+   - https://ethereum-sepolia.publicnode.com
+   - https://sepolia.drpc.org
+   - https://rpc2.sepolia.org
+   - https://eth-sepolia.public.blastapi.io
+
+#### 安全性
+
+✅ **私钥保护**:
+- RPC URL 和 API Key 存储在服务器环境变量
+- 前端代码**永不**接触私钥
+- 所有 RPC 请求通过代理转发
+
+❌ **不要**在前端直接使用 RPC URL:
+```typescript
+// ❌ 错误 - 暴露 API Key
+const provider = new ethers.JsonRpcProvider(
+  'https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY'
+);
+
+// ✅ 正确 - 通过代理
+const provider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+```
+
+### 测试验证
+
+#### 1. RPC Proxy 测试
+```bash
+# 测试代理是否工作
+curl -X POST 'http://localhost:5173/api/rpc-proxy' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+
+# 预期输出:
+# {"jsonrpc":"2.0","id":1,"result":"0xaa36a7"}
+# (0xaa36a7 = 11155111 = Sepolia chain ID)
+```
+
+#### 2. 浏览器测试
+1. 启动服务: `pnpm run dev`
+2. 访问: http://localhost:5173/operator/manage?address=0x1234567890123456789012345678901234567890
+3. 打开开发者工具 → Network
+4. 应该看到 `/api/rpc-proxy` 请求返回 200 OK
+
+### 文件变更
+
+| 文件 | 变更 | 说明 |
+|------|------|------|
+| README.md | 完全重写 | 添加详细的开发服务器说明 |
+| docs/Changes.md | 新增章节 | Bug fix 报告 |
+
+### 更新内容
+
+#### README.md 新增章节:
+- 🚀 Quick Start - 正确启动方式
+- 📋 Available Scripts - 脚本说明
+- 🔧 Configuration - 环境变量配置
+- 🐛 Troubleshooting - RPC Proxy 错误排查
+- 📁 Project Structure - 项目结构说明
+
+#### 关键警告:
+```
+**IMPORTANT**: Always use `pnpm run dev` to start the development server, 
+**not** `pnpm run dev:vite`.
+```
+
+### 开发者注意事项
+
+#### ✅ DO (推荐做法)
+
+1. **使用 `pnpm run dev`**
+   - 自动启动 Vite + Vercel 两个服务
+   - 确保 RPC proxy 正常工作
+
+2. **私钥保护**
+   - 将 RPC URL 放在 `.env.local` (已在 .gitignore)
+   - 通过 `/api/rpc-proxy` 访问 RPC
+
+3. **测试前检查**
+   - 确保两个服务都在运行
+   - 检查端口: Vite (5173), Vercel (3000)
+
+#### ❌ DON'T (避免错误)
+
+1. **不要使用 `pnpm run dev:vite` 单独启动**
+   - 会导致 RPC proxy 500 错误
+   - Analytics 和 User Records 页面会崩溃
+
+2. **不要在前端代码中硬编码 RPC URL**
+   - 会暴露 API Key
+   - 使用 `/api/rpc-proxy` 代理
+
+3. **不要提交 `.env.local` 到 git**
+   - 包含私钥,不应公开
+   - 已在 .gitignore 中排除
+
+### 下一步
+
+#### 短期
+- ✅ 更新 README.md 说明正确启动方式
+- ✅ 添加 Troubleshooting 章节
+- ✅ 验证 RPC proxy 工作正常
+
+#### 中期
+- [ ] 添加启动脚本健康检查
+- [ ] 自动检测端口占用并提示
+- [ ] 优化错误提示信息
+
+#### 长期
+- [ ] 支持多网络 RPC proxy (Mainnet, OP, etc.)
+- [ ] 添加 RPC 请求缓存
+- [ ] 监控 RPC 使用量和限流
+
+---
+
+**修复时间**: 2025-10-18 12:20 CST  
+**修复人**: Claude AI  
+**分支**: bug-fix  
+**状态**: 已修复,待合并到 main
