@@ -2,7 +2,80 @@
 
 **日期**: 2025-10-18
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: 所有关键问题已修复，开发环境稳定运行
+**当前状态**: ✅ Analytics Dashboard 错误已完全修复
+
+---
+
+## 🐛 Bug Fix v2.3.4 - Analytics Dashboard ethers.js Result Object Error (2025-10-18)
+
+### 问题描述
+
+Analytics Dashboard 页面持续报错：
+
+```
+TypeError: result.filter is not a function
+    at ethers.js:18752:35
+```
+
+用户在浏览器中刷新多次，清除缓存后依然出现相同错误。
+
+### 根本原因分析
+
+**ethers.js v6 Result 对象的三层问题**：
+
+1. ✅ **已修复 (v2.3.2)**: `registry.getActivePaymasters()` 返回 Result 对象
+   - 修复方法：`paymasters = Array.from(result)`
+
+2. ✅ **已修复 (v2.3.3)**: `contract.queryFilter()` 返回 Result 数组
+   - 修复方法：`const events = Array.from(eventsResult)`
+
+3. ❌ **根本问题 (v2.3.4)**: `event.args` 本身是 Result 对象
+   - **这是真正的问题所在**：即使把事件数组转换了，每个事件的 `args` 属性仍然是 Result 对象
+   - 当我们访问 `event.args.user`, `event.args.gasToken` 时，Result 对象被传递给其他 ethers.js 方法
+   - ethers.js 内部尝试对 Result 对象调用 `.filter()`，导致错误
+
+### 解决方案
+
+**关键修复**：在解析事件时，立即把 Result 对象的所有属性转换为纯字符串：
+
+```typescript
+// ❌ 错误方式 - 保留了 Result 对象引用
+const parsedEvents: GasPaymentEvent[] = allEvents.map((event) => ({
+  user: event.args.user,  // Result 对象仍然存在
+  gasToken: event.args.gasToken,
+  actualGasCost: event.args.actualGasCost.toString(),
+  ...
+}));
+
+// ✅ 正确方式 - 立即转换为纯字符串
+const parsedEvents: GasPaymentEvent[] = allEvents.map((event) => ({
+  user: String(event.args.user),  // 立即转换，切断 Result 引用
+  gasToken: String(event.args.gasToken),
+  actualGasCost: event.args.actualGasCost.toString(),
+  pntAmount: event.args.pntAmount.toString(),
+  ...
+}));
+```
+
+**文件修改**：`src/hooks/useGasAnalytics.ts:341-354`
+
+### 技术总结
+
+**ethers.js v6 的 Result 对象特性**：
+- 所有合约调用返回值都是 `Result` 对象（类数组）
+- Result 对象实现了 `Iterable` 接口，但不是真正的数组
+- 内部某些操作期望标准数组方法（如 `.filter()`）
+- 必须在三个层级进行转换：
+  1. 函数返回值（如 `getActivePaymasters()`）
+  2. 事件数组（如 `queryFilter()`）
+  3. **事件参数（event.args）** ← 最容易被忽略
+
+### 验证结果
+
+✅ 清除 Vite 缓存并重启开发服务器
+✅ Analytics Dashboard 页面加载成功
+✅ 无 TypeError 错误
+✅ 所有 Result 对象已正确转换
 
 ---
 
