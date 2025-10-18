@@ -25,7 +25,10 @@ class ProxyRpcProvider extends ethers.JsonRpcProvider {
 
   private _proxyUrl: string;
 
-  async _send(payload: any): Promise<any> {
+  async _send(payload: any | any[]): Promise<any[]> {
+    // ethers.js v6 _send method signature:
+    // _send(payload: JsonRpcPayload | Array<JsonRpcPayload>): Promise<Array<JsonRpcResult>>
+
     const response = await fetch(this._proxyUrl, {
       method: "POST",
       headers: {
@@ -38,7 +41,16 @@ class ProxyRpcProvider extends ethers.JsonRpcProvider {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    return await response.json();
+    const jsonResponse = await response.json();
+
+    // JSON-RPC response format: { jsonrpc: "2.0", id: 1, result: ... } or { error: ... }
+    // ethers.js v6 expects an array of results, even for single requests
+    if (Array.isArray(jsonResponse)) {
+      return jsonResponse;
+    }
+
+    // Single response, wrap in array
+    return [jsonResponse];
   }
 }
 
