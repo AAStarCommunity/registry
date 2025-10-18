@@ -338,16 +338,20 @@ async function queryPaymasterRange(
   );
 
   // Parse events
-  const parsedEvents: GasPaymentEvent[] = allEvents.map((event) => ({
-    paymasterAddress,
-    user: event.args.user,
-    gasToken: event.args.gasToken,
-    actualGasCost: event.args.actualGasCost.toString(),
-    pntAmount: event.args.pntAmount.toString(),
-    blockNumber: event.blockNumber,
-    transactionHash: event.transactionHash,
-    timestamp: blockTimestamps.get(event.blockNumber) || 0,
-  }));
+  const parsedEvents: GasPaymentEvent[] = allEvents.map((event) => {
+    // ethers.js v6: event.args is a Result object, access by named properties
+    // then convert to string to avoid keeping Result object references
+    return {
+      paymasterAddress,
+      user: String(event.args.user),
+      gasToken: String(event.args.gasToken),
+      actualGasCost: event.args.actualGasCost.toString(),
+      pntAmount: event.args.pntAmount.toString(),
+      blockNumber: event.blockNumber,
+      transactionHash: event.transactionHash,
+      timestamp: blockTimestamps.get(event.blockNumber) || 0,
+    };
+  });
 
   console.log(`  Found ${parsedEvents.length} events`);
 
