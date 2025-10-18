@@ -7,8 +7,8 @@ export function Header() {
   const navItems: Array<{ path: string; label: string; external?: boolean }> = [
     { path: "/", label: "Home" },
     { path: "/developer", label: "Developers" },
-    { path: "/operator", label: "Operators" },
     { path: "/explorer", label: "Explorer" },
+    { path: "/operator", label: "Operators" },
   ];
 
   const isActive = (path: string) => {
