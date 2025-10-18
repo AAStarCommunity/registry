@@ -2,7 +2,95 @@
 
 **日期**: 2025-10-18
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: Analytics Dashboard修复完成，100%测试通过
+**当前状态**: 所有关键问题已修复，开发环境稳定运行
+
+---
+
+## 🐛 Bug Fix v2.3.3 - Environment Variable Not Loaded (2025-10-18)
+
+### 问题描述
+
+Vercel dev 服务器启动时显示警告：
+
+```
+⚠️ SEPOLIA_RPC_URL environment variable not found
+```
+
+即使 `.env.local` 中已经配置了该变量，Vercel dev 仍然无法读取。
+
+### 根本原因
+
+**Vercel 环境变量加载优先级**:
+1. `.env` - Vercel dev 优先读取
+2. `.env.local` - Vite 读取，但 Vercel dev 可能不读取
+3. 命令行环境变量
+
+`.env.local` 中虽然配置了 `SEPOLIA_RPC_URL`，但 Vercel dev 需要从 `.env` 文件读取。
+
+### 解决方案
+
+创建 `.env` 文件（已在 `.gitignore` 中，不会提交到 git）：
+
+```bash
+# .env (本地开发专用，不提交)
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+```
+
+**重启开发服务器**:
+```bash
+# 停止所有服务
+lsof -ti :3000 | xargs kill -9
+lsof -ti :5173 | xargs kill -9
+
+# 重新启动
+pnpm run dev
+```
+
+### 验证结果
+
+重启后，Vercel dev 正确读取环境变量:
+
+```
+🔐 Private RPC configured: https://eth-sepolia.g.alchemy.com/v2/***
+🔐 Trying private RPC endpoint...
+✅ Private RPC request successful
+```
+
+**测试 RPC proxy**:
+```bash
+curl -X POST 'http://localhost:5173/api/rpc-proxy' \
+  -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","method":"eth_chainId","params":[],"id":1}'
+
+# Response: {"jsonrpc":"2.0","id":1,"result":"0xaa36a7"}
+```
+
+### 重要说明
+
+**环境变量文件优先级**:
+- `.env` - 本地开发专用，添加到 `.gitignore`
+- `.env.local` - Vite 使用，Vercel 可能不读取
+- `.env.example` - 模板文件，提交到 git
+
+**生产环境配置**:
+- 在 Vercel Dashboard 配置环境变量
+- Settings → Environment Variables → Add
+- 不需要提交 `.env` 文件
+
+### Git 提交
+
+```bash
+git add .env docs/Changes.md
+git commit -m "fix: create .env for Vercel dev environment variables
+
+- Create .env file for local development
+- Ensures Vercel dev can read SEPOLIA_RPC_URL
+- Resolves environment variable not found warning
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
 
 ---
 
