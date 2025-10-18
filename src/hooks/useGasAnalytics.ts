@@ -293,7 +293,9 @@ async function queryPaymasterRange(
     const batchResults = await Promise.allSettled(
       batch.map(async ({ start, end }) => {
         const filter = contract.filters.GasPaymentProcessed();
-        const events = await contract.queryFilter(filter, start, end);
+        const eventsResult = await contract.queryFilter(filter, start, end);
+        // ethers.js v6 returns Result object, convert to array
+        const events = Array.from(eventsResult);
         return { start, end, events };
       }),
     );
