@@ -144,7 +144,41 @@ function loadEventsCache(registryAddress: string): EventsCache {
   try {
     const CACHE_KEYS = getCacheKeys(registryAddress);
     const cached = localStorage.getItem(CACHE_KEYS.EVENTS);
-    return cached ? JSON.parse(cached) : {};
+
+    if (cached) {
+      return JSON.parse(cached);
+    }
+
+    // Migration: Check for old cache format (without registry address suffix)
+    const oldCacheKey = "analytics_events_by_paymaster";
+    const oldCached = localStorage.getItem(oldCacheKey);
+
+    if (oldCached) {
+      console.log("🔄 Migrating old cache data to new format...");
+      const oldData = JSON.parse(oldCached);
+
+      // Save to new format
+      localStorage.setItem(CACHE_KEYS.EVENTS, oldCached);
+
+      // Also migrate paymasters list
+      const oldPaymastersKey = "analytics_paymasters_list";
+      const oldPaymasters = localStorage.getItem(oldPaymastersKey);
+      if (oldPaymasters) {
+        localStorage.setItem(CACHE_KEYS.PAYMASTERS, oldPaymasters);
+      }
+
+      // Migrate last sync time
+      const oldLastSyncKey = "analytics_last_sync_time";
+      const oldLastSync = localStorage.getItem(oldLastSyncKey);
+      if (oldLastSync) {
+        localStorage.setItem(CACHE_KEYS.LAST_SYNC, oldLastSync);
+      }
+
+      console.log("✅ Cache migration complete!");
+      return oldData;
+    }
+
+    return {};
   } catch (error) {
     console.error("Failed to load cache:", error);
     return {};
@@ -408,7 +442,15 @@ export async function fetchAllPaymastersAnalytics(
   console.log(`Cached Paymasters: ${Object.keys(cache).length}`);
 
   // Step 3: Determine block range (incremental query)
-  const currentBlock = await provider.getBlockNumber();
+  console.log("\n🔍 Step 3: Getting current block number...");
+  let currentBlock: number;
+  try {
+    currentBlock = await provider.getBlockNumber();
+    console.log(`✅ Current block: ${currentBlock}`);
+  } catch (error) {
+    console.error("❌ Failed to get block number:", error);
+    throw error;
+  }
 
   // Find the highest queried block across all Paymasters
   let maxQueriedBlock = 0;
@@ -425,11 +467,17 @@ export async function fetchAllPaymastersAnalytics(
     // No cache: initial historical query
     queryFromBlock =
       fromBlock || parseInt(import.meta.env.VITE_HISTORICAL_FROM_BLOCK || "0");
-    queryToBlock =
-      toBlock ||
-      parseInt(
-        import.meta.env.VITE_HISTORICAL_TO_BLOCK || currentBlock.toString(),
-      );
+
+    // Handle VITE_HISTORICAL_TO_BLOCK: if "latest" or undefined, use currentBlock
+    const historicalToBlock = import.meta.env.VITE_HISTORICAL_TO_BLOCK;
+    if (toBlock !== undefined) {
+      queryToBlock = toBlock;
+    } else if (!historicalToBlock || historicalToBlock === "latest") {
+      queryToBlock = currentBlock;
+    } else {
+      queryToBlock = parseInt(historicalToBlock);
+    }
+
     console.log(
       `\n🔍 Step 3: Initial cache build - querying blocks ${queryFromBlock} → ${queryToBlock}`,
     );
@@ -453,7 +501,34 @@ export async function fetchAllPaymastersAnalytics(
   console.log("\n⚡ Step 4: Query events from each Paymaster...");
   console.log("=".repeat(70));
 
-  for (const pmAddress of paymasters) {
+  // OPTIMIZATION: Skip Paymasters known to have no transactions
+  // This saves significant RPC quota on free tier
+  const BANNED_PAYMASTERS = [
+    // Only query PaymasterV4 (0xBC56...), skip the other 6 empty ones
+    "0x9091a98e43966cda2677350ccc41eff9cedeff4c", // Paymaster 1 - empty
+    "0x19afe5ad8e5c6a1b16e3acb545193041f61ab648", // Paymaster 2 - empty
+    "0x798dfe9e38a75d3c5fde53fff29f966c7635f88f", // Paymaster 3 - empty
+    "0xc0c85a8b3703ad24ded8207dcbca0104b9b27f02", // Paymaster 4 - empty
+    "0x11bfab68f8eab4cd3daa598955782b01cf9dc875", // Paymaster 5 - empty
+    "0x17fe4d317d780b0d257a1a62e848badea094ed97", // Paymaster 6 - empty
+    // PaymasterV4 (0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445) - ACTIVE, will be queried
+  ].map((addr) => addr.toLowerCase());
+
+  const paymasterToQuery = paymasters.filter(
+    (pm) => !BANNED_PAYMASTERS.includes(pm.toLowerCase()),
+  );
+
+  const skipped = paymasters.length - paymasterToQuery.length;
+  console.log(
+    `🎯 Querying ${paymasterToQuery.length}/${paymasters.length} Paymaster(s)`,
+  );
+  if (skipped > 0) {
+    console.log(
+      `   ⏭️  Skipped ${skipped} Paymaster(s) with no transactions (saves RPC quota)`,
+    );
+  }
+
+  for (const pmAddress of paymasterToQuery) {
     console.log(`\n📍 Paymaster: ${pmAddress}`);
 
     // Initialize cache for this Paymaster
