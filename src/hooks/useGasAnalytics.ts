@@ -39,8 +39,8 @@ const getCacheKeys = (registryAddress: string) => ({
 
 // Query Configuration
 const CHUNK_SIZE = 10; // Alchemy free tier: max 10 blocks per query
-const BATCH_SIZE = 10; // Process 10 chunks in parallel
-const DELAY_BETWEEN_BATCHES_MS = 1000; // 1s delay between batches
+const BATCH_SIZE = 3; // Reduced from 10: lower concurrency to avoid rate limits
+const DELAY_BETWEEN_BATCHES_MS = 2000; // Increased from 1000ms: longer delay to stay under rate limit
 
 /*==============================================================================
   TYPE DEFINITIONS
