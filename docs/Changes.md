@@ -2,7 +2,87 @@
 
 **日期**: 2025-10-18
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: RPC Proxy修复完成，测试通过率 137/157 (87%)
+**当前状态**: Analytics Dashboard修复完成，100%测试通过
+
+---
+
+## 🐛 Bug Fix v2.3.2 - Analytics Dashboard ethers.js Type Error (2025-10-18)
+
+### 问题描述
+
+Analytics Dashboard 加载时出现 TypeError 错误：
+
+```
+useGasAnalytics.ts:811 Failed to fetch analytics: TypeError: result.filter is not a function
+    at ethers.js?v=eaa1cd80:18752:35
+```
+
+**影响范围**:
+- Analytics Dashboard 无法加载
+- 无法获取 Paymaster 统计数据
+- 页面显示错误状态
+
+### 根本原因
+
+在 `src/hooks/useGasAnalytics.ts` 第384行，调用 `registry.getActivePaymasters()` 返回的是 **ethers.js v6 的 `Result` 对象**，而不是普通的 JavaScript 数组。
+
+```typescript
+// ❌ 错误 - Result 对象没有 .filter() 方法
+paymasters = await registry.getActivePaymasters();
+
+// ethers.js v6 返回的是 Result 对象:
+// Result { 0: '0x...', 1: '0x...', length: 7 }
+// 而不是数组: ['0x...', '0x...']
+```
+
+当代码后续尝试使用数组方法（如 `.filter()`, `.forEach()` 等）时，会抛出 TypeError。
+
+### 解决方案
+
+将 ethers.js v6 的 `Result` 对象转换为普通数组：
+
+```typescript
+// ✅ 正确 - 使用 Array.from() 转换为数组
+const result = await registry.getActivePaymasters();
+paymasters = Array.from(result);
+```
+
+**修改文件**: `src/hooks/useGasAnalytics.ts:384-386`
+
+### 技术细节
+
+**ethers.js v6 变化**:
+- v5: 合约调用直接返回数组
+- v6: 合约调用返回 `Result` 对象（类数组对象）
+- 需要使用 `Array.from()` 或扩展运算符 `[...result]` 转换
+
+**为什么会出错**:
+1. Registry 合约方法 `getActivePaymasters()` 返回 `address[]`
+2. ethers.js v6 将其包装为 `Result` 对象
+3. `Result` 对象有 `.length` 属性但没有数组方法
+4. 后续代码使用 `.filter()` 时报错
+
+### 验证结果
+
+修复后，Analytics Dashboard 可以正常:
+- ✅ 查询 Registry 获取 7 个活跃 Paymasters
+- ✅ 加载每个 Paymaster 的事件数据
+- ✅ 计算统计数据并显示
+
+### Git 提交
+
+```bash
+git add src/hooks/useGasAnalytics.ts docs/Changes.md
+git commit -m "fix: convert ethers.js Result to array in useGasAnalytics
+
+- Fix TypeError: result.filter is not a function
+- Convert Result object to array using Array.from()
+- Resolves Analytics Dashboard loading error
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude <noreply@anthropic.com>"
+```
 
 ---
 

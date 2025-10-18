@@ -381,7 +381,9 @@ export async function fetchAllPaymastersAnalytics(
 
   let paymasters: string[];
   try {
-    paymasters = await registry.getActivePaymasters();
+    // ethers.js v6 returns a Result object, convert to array
+    const result = await registry.getActivePaymasters();
+    paymasters = Array.from(result);
     console.log(`✅ Found ${paymasters.length} active Paymasters`);
     paymasters.forEach((pm, i) => console.log(`  ${i + 1}. ${pm}`));
 
