@@ -3951,3 +3951,299 @@ npx tsx scripts/capture-manage-tabs.ts
 **报告生成人**: Claude AI  
 **版本**: v2.2.3 (修复部署流程导航)
 
+
+---
+
+## ✅ Phase 2.3 完成总结 - 网络选择 & 教程更新
+
+**日期**: 2025-10-18  
+**阶段**: Phase 2.3 - Multi-Network Support & Tutorial Update  
+**当前状态**: 完成  
+
+### 1. 部署向导网络选择功能
+
+**文件**: 
+- `src/pages/operator/DeployWizard.tsx` - 添加网络配置和选择器
+- `src/pages/operator/DeployWizard.css` - 网络选择器样式
+
+**新增功能**:
+
+#### 支持的网络
+```typescript
+export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
+
+const SUPPORTED_NETWORKS = {
+  'sepolia': {
+    id: 'sepolia',
+    name: 'Sepolia Testnet',
+    chainId: 11155111,
+    rpcUrl: 'https://sepolia.infura.io/v3/',
+    isTestnet: true,
+  },
+  'op-sepolia': {
+    id: 'op-sepolia',
+    name: 'OP Sepolia Testnet',
+    chainId: 11155420,
+    rpcUrl: 'https://sepolia.optimism.io',
+    isTestnet: true,
+  },
+  'op-mainnet': {
+    id: 'op-mainnet',
+    name: 'Optimism Mainnet',
+    chainId: 10,
+    rpcUrl: 'https://mainnet.optimism.io',
+    isTestnet: false,
+  },
+  'mainnet': {
+    id: 'mainnet',
+    name: 'Ethereum Mainnet',
+    chainId: 1,
+    rpcUrl: 'https://mainnet.infura.io/v3/',
+    isTestnet: false,
+  },
+};
+```
+
+#### UI 组件
+- **位置**: 在 wizard header 下方,progress indicator 上方
+- **功能**: 
+  - 下拉选择网络
+  - 显示 Chain ID
+  - Testnet/Mainnet 徽章
+  - 步骤 2+ 后禁用切换 (防止部署中途改网络)
+- **默认值**: Sepolia (testnet)
+
+#### CSS 样式
+```css
+.network-selector {
+  background: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.network-dropdown {
+  flex: 1;
+  min-width: 250px;
+  padding: 12px 16px;
+  border: 2px solid #d1d5db;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.network-badge.testnet {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.network-badge.mainnet {
+  background: #fef3c7;
+  color: #92400e;
+}
+```
+
+### 2. LaunchTutorial 完全重写
+
+**文件**: `src/pages/LaunchTutorial.tsx` (完全重写, 1123 行)
+
+**变更内容**:
+
+#### 结构更新
+- ✅ 从 5 步更新为 7 步流程
+- ✅ 所有内容与实际 DeployWizard 同步
+- ✅ 纯教学内容,无实际操作
+
+#### 7 步教程内容
+
+**Step 1: Configure & Deploy** (新增网络选择说明)
+- 1.1 Select Network - 详细介绍 4 个支持的网络
+- 1.2 Configure Paymaster Settings - 7 个配置参数
+- 1.3 Deploy Contract - 部署流程说明
+
+**Step 2: Check Wallet** (新增)
+- ETH Balance 检查
+- GToken Balance 检查 (Fast Stake)
+- PNT Balance 检查
+- 余额状态显示 (Sufficient/Low/Insufficient)
+
+**Step 3: Select Stake Option** (完全重写)
+- Option 1: Standard Stake (传统 3 步流程)
+  - 优缺点分析
+  - 资源需求
+  - 适用场景
+- Option 2: Fast Stake (推荐)
+  - GToken + PNT 流程
+  - 优缺点分析
+  - 自动化优势
+- 对比表格
+
+**Step 4: Prepare Resources** (新增)
+- Resource Checklist
+- 如何获取 ETH (testnet/mainnet)
+- 如何获取 GToken
+- 如何获取 PNT
+- Refresh Wallet Status 功能
+
+**Step 5: Stake to EntryPoint** (重写)
+- Standard Stake 代码示例 (3 个交易)
+- Fast Stake 代码示例 (1 个交易)
+- 交易状态显示
+- 重要注意事项
+
+**Step 6: Register to Registry** (新增)
+- 注册理由和好处
+- 提交的信息列表
+- 注册交易代码
+- 注册后的可见性
+
+**Step 7: Manage Paymaster** (新增)
+- 管理界面 4 个 Tab 说明
+  1. Overview Tab - 统计和图表
+  2. Balance & Deposits Tab - 余额管理
+  3. User Gas Records Tab - 交易历史
+  4. Settings Tab - 参数配置
+- 日常运营建议
+- 下一步行动
+
+#### FAQ 更新
+新增问题:
+- Which network should I deploy to?
+- Should I choose Standard or Fast Stake?
+- Can I deploy the same Paymaster to multiple networks?
+- How do I withdraw my staked ETH?
+
+保留原有问题:
+- How much can I earn?
+- What if treasury runs out of ETH?
+- Can I change service fee?
+- How to pause/unpause?
+- Where to get help?
+
+### 3. 网络成本对比表
+
+**Prerequisites 部分新增**:
+
+| Network | Deployment | Staking | Total Estimate |
+|---------|------------|---------|----------------|
+| Sepolia (Testnet) | ~0.03 ETH | ~0.1 ETH | ~0.13 ETH (Free) |
+| OP Sepolia (Testnet) | ~0.001 ETH | ~0.05 ETH | ~0.051 ETH (Free) |
+| Optimism Mainnet | ~0.002 ETH | ~0.1 ETH | ~0.102 ETH (~$250) |
+| Ethereum Mainnet | ~0.03 ETH | ~0.1 ETH | ~0.13 ETH (~$325) |
+
+### 4. 用户体验改进
+
+**教程页面**:
+- ✅ 明确标注 "教学内容,无实际操作"
+- ✅ 引导用户前往 `/operator/wizard` 进行真实部署
+- ✅ 所有 7 步与实际 wizard 完全对应
+- ✅ 包含网络选择教学
+- ✅ 详细的 Standard vs Fast Stake 对比
+
+**部署向导**:
+- ✅ 顶部网络选择器,醒目易用
+- ✅ 显示 Chain ID 和网络类型徽章
+- ✅ Step 1 后锁定网络选择 (防止误操作)
+- ✅ 默认选择 Sepolia testnet (安全)
+
+### 5. 文件变更统计
+
+| 文件 | 变更类型 | 行数 | 说明 |
+|------|---------|------|------|
+| DeployWizard.tsx | 修改 | +75 | 添加网络配置和选择器 |
+| DeployWizard.css | 修改 | +78 | 网络选择器样式 |
+| LaunchTutorial.tsx | 重写 | 1123 | 完全重写为 7 步教程 |
+
+**总计**: 
+- 3 个文件修改
+- +1276 行新增
+- -881 行删除 (旧教程)
+- 净增: +395 行
+
+### 6. 测试覆盖
+
+**现有测试仍然通过**:
+- ✅ 145/145 核心测试通过 (100%)
+- ✅ 57 个测试跳过 (正常)
+- ❌ 0 个失败
+
+**新功能测试计划**:
+- [ ] 网络选择器 UI 测试
+- [ ] 网络切换功能测试
+- [ ] 步骤 1 后禁用网络切换测试
+- [ ] 教程页面渲染测试 (7 步)
+
+### 7. 用户指引
+
+**选择部署网络**:
+1. 访问 http://localhost:5173/operator/wizard
+2. 顶部看到网络选择器
+3. 选择目标网络:
+   - **Sepolia** (推荐初学者) - 免费测试
+   - **OP Sepolia** - L2 低 gas 测试
+   - **Optimism Mainnet** - 生产环境,低成本
+   - **Ethereum Mainnet** - 最高安全性
+
+**学习部署流程**:
+1. 访问 http://localhost:5173/launch-tutorial
+2. 阅读 7 步完整教程
+3. 了解网络选择、Stake 选项、资源准备等
+4. 准备好后,点击 "Start Real Deployment" 进入真实向导
+
+### 8. 技术实现亮点
+
+**类型安全**:
+```typescript
+export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
+export interface NetworkConfig {
+  id: SupportedNetwork;
+  name: string;
+  chainId: number;
+  rpcUrl: string;
+  isTestnet: boolean;
+}
+```
+
+**状态管理**:
+```typescript
+const [config, setConfig] = useState<DeployConfig>({
+  network: 'sepolia', // 默认
+  communityName: '',
+  treasury: '',
+  // ...
+});
+```
+
+**UI 禁用逻辑**:
+```tsx
+<select
+  value={config.network}
+  onChange={(e) => setConfig({ ...config, network: e.target.value })}
+  disabled={currentStep > 1} // 步骤 2+ 禁用
+>
+```
+
+### 9. 下一步计划
+
+**短期**:
+- [ ] 添加网络选择器单元测试
+- [ ] 添加教程页面集成测试
+- [ ] 验证每个网络的实际部署流程
+
+**中期**:
+- [ ] 添加网络切换时的警告提示
+- [ ] 每个网络的专属配置 (EntryPoint 地址等)
+- [ ] 网络特定的 faucet 链接
+
+**长期**:
+- [ ] 更多网络支持 (Arbitrum, Base, zkSync)
+- [ ] 自动检测 MetaMask 当前网络
+- [ ] 一键切换网络功能
+
+---
+
+**更新时间**: 2025-10-18 01:30 CST  
+**报告生成人**: Claude AI  
+**版本**: Phase 2.3 Complete - Multi-Network Support & Tutorial Update

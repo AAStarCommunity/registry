@@ -27,7 +27,51 @@ import { checkWalletStatus } from './deploy-v2/utils/walletChecker';
  * - Step 7: Manage Paymaster 🔄
  */
 
+export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
+
+export interface NetworkConfig {
+  id: SupportedNetwork;
+  name: string;
+  chainId: number;
+  rpcUrl: string;
+  isTestnet: boolean;
+}
+
+export const SUPPORTED_NETWORKS: Record<SupportedNetwork, NetworkConfig> = {
+  'sepolia': {
+    id: 'sepolia',
+    name: 'Sepolia Testnet',
+    chainId: 11155111,
+    rpcUrl: 'https://sepolia.infura.io/v3/',
+    isTestnet: true,
+  },
+  'op-sepolia': {
+    id: 'op-sepolia',
+    name: 'OP Sepolia Testnet',
+    chainId: 11155420,
+    rpcUrl: 'https://sepolia.optimism.io',
+    isTestnet: true,
+  },
+  'op-mainnet': {
+    id: 'op-mainnet',
+    name: 'Optimism Mainnet',
+    chainId: 10,
+    rpcUrl: 'https://mainnet.optimism.io',
+    isTestnet: false,
+  },
+  'mainnet': {
+    id: 'mainnet',
+    name: 'Ethereum Mainnet',
+    chainId: 1,
+    rpcUrl: 'https://mainnet.infura.io/v3/',
+    isTestnet: false,
+  },
+};
+
 export interface DeployConfig {
+  // Network selection (new)
+  network: SupportedNetwork;
+
   // Step 1: Configuration
   communityName: string;
   treasury: string;
@@ -70,6 +114,7 @@ const STEPS = [
 export function DeployWizard() {
   const [currentStep, setCurrentStep] = useState(1);
   const [config, setConfig] = useState<DeployConfig>({
+    network: 'sepolia', // Default to Sepolia testnet
     communityName: '',
     treasury: '',
     gasToUSDRate: '4500',
@@ -148,6 +193,37 @@ export function DeployWizard() {
         <p className="wizard-subtitle">
           Complete 7-step wizard to deploy and register your community Paymaster
         </p>
+      </div>
+
+      {/* Network Selector */}
+      <div className="network-selector">
+        <label htmlFor="network-select" className="network-label">
+          Select Network:
+        </label>
+        <select
+          id="network-select"
+          className="network-dropdown"
+          value={config.network}
+          onChange={(e) => setConfig({ ...config, network: e.target.value as SupportedNetwork })}
+          disabled={currentStep > 1}
+        >
+          {Object.values(SUPPORTED_NETWORKS).map((network) => (
+            <option key={network.id} value={network.id}>
+              {network.name} {network.isTestnet ? '(Testnet)' : '(Mainnet)'}
+            </option>
+          ))}
+        </select>
+        <div className="network-info">
+          <span className="network-chain-id">
+            Chain ID: {SUPPORTED_NETWORKS[config.network].chainId}
+          </span>
+          {SUPPORTED_NETWORKS[config.network].isTestnet && (
+            <span className="network-badge testnet">TESTNET</span>
+          )}
+          {!SUPPORTED_NETWORKS[config.network].isTestnet && (
+            <span className="network-badge mainnet">MAINNET</span>
+          )}
+        </div>
       </div>
 
       {/* Progress indicator */}
