@@ -3,9 +3,7 @@ import { LandingPage } from "./pages/LandingPage";
 import { DeveloperPortal } from "./pages/DeveloperPortal";
 import { OperatorsPortal } from "./pages/OperatorsPortal";
 import { LaunchTutorial } from "./pages/LaunchTutorial";
-import { RegistryExplorer } from "./pages/RegistryExplorer";
-import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
-import { UserGasRecords } from "./pages/analytics/UserGasRecords";
+import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { DeployWizard } from "./pages/operator/DeployWizard";
 import { ManagePaymasterFull } from "./pages/operator/ManagePaymasterFull";
@@ -31,17 +29,19 @@ function App() {
             <Route path="/operator/manage" element={<ManagePaymasterFull />} />
             <Route path="/launch-guide" element={<LaunchTutorial />} />
             <Route path="/launch-tutorial" element={<LaunchTutorial />} />
-            <Route path="/explorer" element={<RegistryExplorer />} />
-            <Route path="/analytics" element={<AnalyticsDashboard />} />
-            <Route
-              path="/analytics/dashboard"
-              element={<AnalyticsDashboard />}
-            />
-            <Route path="/analytics/user" element={<UserGasRecords />} />
-            <Route
-              path="/analytics/user/:address"
-              element={<UserGasRecords />}
-            />
+
+            {/* Explorer Hub - with 3 sub-views */}
+            <Route path="/explorer" element={<ExplorerHub />} />
+            <Route path="/explorer/dashboard" element={<ExplorerHub />} />
+            <Route path="/explorer/user" element={<ExplorerHub />} />
+            <Route path="/explorer/user/:address" element={<ExplorerHub />} />
+
+            {/* Legacy Analytics routes - redirect to Explorer */}
+            <Route path="/analytics" element={<ExplorerHub />} />
+            <Route path="/analytics/dashboard" element={<ExplorerHub />} />
+            <Route path="/analytics/user" element={<ExplorerHub />} />
+            <Route path="/analytics/user/:address" element={<ExplorerHub />} />
+
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-pnts" element={<GetPNTs />} />

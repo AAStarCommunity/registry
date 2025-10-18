@@ -1,0 +1,153 @@
+.explorer-hub {
+  width: 100%;
+  min-height: calc(100vh - 200px);
+}
+
+/* Navigation Tabs */
+.explorer-nav-tabs {
+  display: flex;
+  gap: 1rem;
+  padding: 2rem 2rem 0;
+  max-width: 1400px;
+  margin: 0 auto;
+  border-bottom: 2px solid var(--border-color, #e5e7eb);
+}
+
+.explorer-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  margin-bottom: -2px;
+}
+
+.explorer-tab:hover {
+  background: var(--hover-bg, #f9fafb);
+  border-bottom-color: var(--border-color, #d1d5db);
+}
+
+.explorer-tab.active {
+  background: var(--active-bg, #f3f4f6);
+  border-bottom-color: var(--primary-color, #3b82f6);
+}
+
+.explorer-tab .tab-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.explorer-tab .tab-content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.explorer-tab .tab-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+}
+
+.explorer-tab .tab-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.explorer-tab.active .tab-label {
+  color: var(--primary-color, #3b82f6);
+}
+
+/* Content Area */
+.explorer-content {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .explorer-nav-tabs {
+    flex-direction: column;
+    gap: 0;
+    padding: 1rem;
+  }
+
+  .explorer-tab {
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+    padding: 1rem;
+  }
+
+  .explorer-tab.active {
+    background: var(--primary-color, #3b82f6);
+    color: white;
+  }
+
+  .explorer-tab.active .tab-label {
+    color: white;
+  }
+
+  .explorer-tab.active .tab-description {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .explorer-tab .tab-icon {
+    font-size: 1.5rem;
+  }
+
+  .explorer-tab .tab-label {
+    font-size: 0.9375rem;
+  }
+
+  .explorer-tab .tab-description {
+    font-size: 0.8125rem;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .explorer-nav-tabs {
+    border-bottom-color: #374151;
+  }
+
+  .explorer-tab:hover {
+    background: #1f2937;
+    border-bottom-color: #4b5563;
+  }
+
+  .explorer-tab.active {
+    background: #111827;
+    border-bottom-color: #3b82f6;
+  }
+
+  .explorer-tab .tab-label {
+    color: #f3f4f6;
+  }
+
+  .explorer-tab .tab-description {
+    color: #9ca3af;
+  }
+
+  .explorer-tab.active .tab-label {
+    color: #60a5fa;
+  }
+}

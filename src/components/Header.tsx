@@ -1,29 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
-import { useState } from "react";
 import "./Header.css";
 
 export function Header() {
   const location = useLocation();
-  const [analyticsDropdownOpen, setAnalyticsDropdownOpen] = useState(false);
 
   const navItems: Array<{ path: string; label: string; external?: boolean }> = [
     { path: "/", label: "Home" },
     { path: "/developer", label: "Developers" },
     { path: "/operator", label: "Operators" },
     { path: "/explorer", label: "Explorer" },
-  ];
-
-  const analyticsItems = [
-    {
-      path: "/analytics/dashboard",
-      label: "📊 Dashboard",
-      description: "Global statistics",
-    },
-    {
-      path: "/analytics/user",
-      label: "🔍 User Records",
-      description: "Query user gas usage",
-    },
   ];
 
   const isActive = (path: string) => {
@@ -66,37 +51,6 @@ export function Header() {
               </Link>
             ),
           )}
-
-          {/* Analytics Dropdown */}
-          <div
-            className="nav-dropdown"
-            onMouseEnter={() => setAnalyticsDropdownOpen(true)}
-            onMouseLeave={() => setAnalyticsDropdownOpen(false)}
-          >
-            <button
-              className={`nav-link dropdown-trigger ${isActive("/analytics") ? "active" : ""}`}
-              onClick={() => setAnalyticsDropdownOpen(!analyticsDropdownOpen)}
-            >
-              Analytics ▾
-            </button>
-            {analyticsDropdownOpen && (
-              <div className="dropdown-menu">
-                {analyticsItems.map((item) => (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    className={`dropdown-item ${location.pathname === item.path ? "active" : ""}`}
-                    onClick={() => setAnalyticsDropdownOpen(false)}
-                  >
-                    <div className="dropdown-item-label">{item.label}</div>
-                    <div className="dropdown-item-description">
-                      {item.description}
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </nav>
 
         <div className="header-actions">
