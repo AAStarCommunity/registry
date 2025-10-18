@@ -511,3 +511,155 @@
     gap: 1rem;
   }
 }
+
+/* Manage Section */
+.manage-section {
+  padding: 6rem 2rem;
+  background: var(--bg-primary);
+}
+
+.manage-section h2 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.section-subtitle {
+  text-align: center;
+  font-size: 1.125rem;
+  opacity: 0.8;
+  margin-bottom: 3rem;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.manage-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 4rem;
+}
+
+.manage-card {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 16px;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.manage-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.manage-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.manage-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.manage-card p {
+  line-height: 1.6;
+  opacity: 0.85;
+  margin-bottom: 1rem;
+}
+
+.feature-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 1rem;
+}
+
+.feature-list li {
+  padding: 0.5rem 0;
+  opacity: 0.8;
+}
+
+.manage-form {
+  max-width: 800px;
+  margin: 0 auto;
+  background: var(--card-bg);
+  padding: 3rem;
+  border-radius: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+.manage-form h3 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  text-align: center;
+}
+
+.manage-form > p {
+  text-align: center;
+  opacity: 0.8;
+  margin-bottom: 2rem;
+}
+
+.address-form {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.address-input {
+  flex: 1;
+  padding: 1rem 1.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  font-size: 1rem;
+  font-family: 'Monaco', 'Courier New', monospace;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: border-color 0.3s ease;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.address-input::placeholder {
+  opacity: 0.5;
+  font-size: 0.875rem;
+}
+
+.address-form button {
+  flex-shrink: 0;
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-note {
+  text-align: center;
+  font-size: 0.95rem;
+  opacity: 0.7;
+  margin-top: 1.5rem;
+}
+
+@media (max-width: 768px) {
+  .address-form {
+    flex-direction: column;
+  }
+
+  .manage-form {
+    padding: 2rem 1.5rem;
+  }
+  
+  .manage-section h2 {
+    font-size: 2rem;
+  }
+}

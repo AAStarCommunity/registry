@@ -11,8 +11,11 @@ export function OperatorsPortal() {
             Deploy in 15 minutes. Start earning fees from gasless transactions.
           </p>
           <div className="hero-ctas">
-            <a href="/operator/deploy" className="cta-button primary">
+            <a href="/operator/wizard" className="cta-button primary">
               🚀 Deploy Now
+            </a>
+            <a href="#manage-existing" className="cta-button secondary">
+              ⚙️ Manage Existing
             </a>
             <a href="/launch-tutorial" className="cta-button secondary">
               📖 Launch Tutorial
@@ -250,6 +253,80 @@ export function OperatorsPortal() {
         </div>
       </section>
 
+      {/* Manage Existing Paymaster */}
+      <section className="manage-section" id="manage-existing">
+        <div className="content-container">
+          <h2>Manage Your Paymaster</h2>
+          <p className="section-subtitle">
+            Already deployed a Paymaster? Access the management dashboard to configure, monitor, and optimize your setup.
+          </p>
+
+          <div className="manage-grid">
+            <div className="manage-card">
+              <div className="manage-icon">⚙️</div>
+              <h3>Configuration</h3>
+              <p>Update service fees, treasury address, gas rates, and token requirements</p>
+              <ul className="feature-list">
+                <li>✓ Edit 7 configuration parameters</li>
+                <li>✓ Pause/unpause functionality</li>
+                <li>✓ Real-time updates</li>
+              </ul>
+            </div>
+
+            <div className="manage-card">
+              <div className="manage-icon">💰</div>
+              <h3>EntryPoint Balance</h3>
+              <p>Monitor and manage your ETH balance for sponsoring user transactions</p>
+              <ul className="feature-list">
+                <li>✓ View current balance</li>
+                <li>✓ Check stake status</li>
+                <li>✓ Deposit ETH for gas</li>
+              </ul>
+            </div>
+
+            <div className="manage-card">
+              <div className="manage-icon">🎫</div>
+              <h3>Token Management</h3>
+              <p>Configure supported SBTs and Gas Tokens for your community</p>
+              <ul className="feature-list">
+                <li>✓ Add/remove SBT tokens</li>
+                <li>✓ Manage gas token list</li>
+                <li>✓ Check token status</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="manage-form">
+            <h3>Enter Management Dashboard</h3>
+            <p>Enter your Paymaster contract address to access the management interface:</p>
+            <form className="address-form" onSubmit={(e) => {
+              e.preventDefault();
+              const address = (e.target as any).paymasterAddress.value;
+              if (address && address.startsWith('0x')) {
+                window.location.href = `/operator/manage?address=${address}`;
+              } else {
+                alert('Please enter a valid Ethereum address starting with 0x');
+              }
+            }}>
+              <input
+                type="text"
+                name="paymasterAddress"
+                placeholder="0x1234567890123456789012345678901234567890"
+                className="address-input"
+                pattern="^0x[a-fA-F0-9]{40}$"
+                required
+              />
+              <button type="submit" className="cta-button primary">
+                Go to Dashboard →
+              </button>
+            </form>
+            <p className="form-note">
+              💡 Don't have the address? Check your deployment transaction or Registry listing.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Success Stories */}
       <section className="success-section">
         <div className="content-container">
@@ -320,7 +397,7 @@ export function OperatorsPortal() {
             Join the decentralized Paymaster network and start earning today
           </p>
           <div className="cta-buttons">
-            <a href="/launch-guide" className="cta-button large primary">
+            <a href="/operator/wizard" className="cta-button large primary">
               🚀 Launch Your Paymaster
             </a>
             <a href="/explorer" className="cta-button large secondary">

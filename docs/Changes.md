@@ -3878,3 +3878,76 @@ npx tsx scripts/capture-manage-tabs.ts
 **更新时间**: 2025-10-17 18:30 CST  
 **报告生成人**: Claude AI  
 **版本**: v2.4 (添加真实截图)
+
+## Phase 2.2.3 - 修复部署流程导航链接
+
+**时间**: 2025-10-18 00:00 CST  
+**耗时**: 5 分钟
+
+### 问题描述
+
+用户反馈"无法完成启动 Paymaster 流程"。经检查发现 Operator Portal 页面的部署按钮指向错误路径。
+
+### 根本原因
+
+`OperatorsPortal.tsx` 中的部署按钮链接到 `/operator/deploy`，但实际的 7 步部署向导在 `/operator/wizard` 路径。
+
+### 修复内容
+
+**修改文件**: `src/pages/OperatorsPortal.tsx`
+
+1. **Hero 区域按钮** (line 14)
+   ```diff
+   - <a href="/operator/deploy" className="cta-button primary">
+   + <a href="/operator/wizard" className="cta-button primary">
+   ```
+
+2. **CTA 区域按钮** (line 400)
+   ```diff
+   - <a href="/launch-guide" className="cta-button large primary">
+   + <a href="/operator/wizard" className="cta-button large primary">
+   ```
+
+### 路由映射总结
+
+| 用途 | 路径 | 组件 | 说明 |
+|------|------|------|------|
+| Operator Portal 首页 | `/operator` | OperatorsPortal | 介绍和入口页 |
+| 部署向导（7 步） | `/operator/wizard` | DeployWizard | ✅ Phase 2.1.5 完成 |
+| 管理已部署的 PM | `/operator/manage?address=0x...` | ManagePaymasterFull | ✅ Phase 2.1.6 完成 |
+| 教程和学习指南 | `/launch-tutorial` | LaunchTutorial | 详细教程页面 |
+
+### 验证步骤
+
+1. ✅ 访问 http://localhost:5173/operator
+2. ✅ 点击 "🚀 Deploy Now" → 跳转到 `/operator/wizard`
+3. ✅ 看到 7 步部署向导界面
+4. ✅ 可以正常进行部署流程
+
+### 用户指引
+
+现在用户可以通过以下路径启动 Paymaster 部署：
+
+**方法 1: 通过 Operator Portal**
+1. 访问 http://localhost:5173/operator
+2. 点击 "🚀 Deploy Now" 或滚动到底部点击 "🚀 Launch Your Paymaster"
+3. 进入 7 步部署向导
+
+**方法 2: 直接访问向导**
+- http://localhost:5173/operator/wizard
+
+**方法 3: 阅读教程**
+- http://localhost:5173/launch-tutorial
+
+### 相关文档
+
+- 部署向导实现: Phase 2.1.5 完成报告
+- 管理界面实现: Phase 2.1.6 完成报告
+- 完整测试覆盖: 48/48 测试通过 (100%)
+
+---
+
+**更新时间**: 2025-10-18 00:00 CST  
+**报告生成人**: Claude AI  
+**版本**: v2.2.3 (修复部署流程导航)
+

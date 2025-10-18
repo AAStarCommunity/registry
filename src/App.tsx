@@ -7,10 +7,7 @@ import { RegistryExplorer } from "./pages/RegistryExplorer";
 import { AnalyticsDashboard } from "./pages/analytics/AnalyticsDashboard";
 import { UserGasRecords } from "./pages/analytics/UserGasRecords";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
-import { OperatorPortal } from "./pages/operator/OperatorPortal";
 import { DeployWizard } from "./pages/operator/DeployWizard";
-import { TestStep1 } from "./pages/operator/deploy-v2/TestStep1";
-import { TestStep2 } from "./pages/operator/deploy-v2/TestStep2";
 import { ManagePaymasterFull } from "./pages/operator/ManagePaymasterFull";
 import GetGToken from "./pages/resources/GetGToken";
 import GetPNTs from "./pages/resources/GetPNTs";
@@ -30,7 +27,6 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
-            <Route path="/operator/deploy" element={<OperatorPortal />} />
             <Route path="/operator/wizard" element={<DeployWizard />} />
             <Route path="/operator/manage" element={<ManagePaymasterFull />} />
             <Route path="/launch-guide" element={<LaunchTutorial />} />
@@ -47,8 +43,6 @@ function App() {
               element={<UserGasRecords />}
             />
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
-            <Route path="/test-step1" element={<TestStep1 />} />
-            <Route path="/test-step2" element={<TestStep2 />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-pnts" element={<GetPNTs />} />
           </Routes>
