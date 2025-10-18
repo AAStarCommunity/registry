@@ -35,41 +35,36 @@ export function ExplorerHub() {
 
   return (
     <div className="explorer-hub">
-      {/* Navigation Tabs */}
-      <div className="explorer-nav-tabs">
-        <button
-          className={`explorer-tab ${currentView === "explorer" ? "active" : ""}`}
-          onClick={() => switchView("explorer")}
-        >
-          <span className="tab-icon">🔍</span>
-          <div className="tab-content">
-            <span className="tab-label">Paymaster Explorer</span>
-            <span className="tab-description">Browse registered Paymasters</span>
+      {/* Hero Section */}
+      <section className="explorer-hero">
+        <div className="hero-content-wrapper">
+          <h1>Paymaster Registry Explorer</h1>
+          <p className="hero-subtitle">
+            Browse registered Paymasters, analyze global statistics, and track
+            user gas usage
+          </p>
+          <div className="hero-ctas">
+            <button
+              onClick={() => switchView("explorer")}
+              className={`cta-button ${currentView === "explorer" ? "primary" : "secondary"}`}
+            >
+              🔍 Paymaster Registry
+            </button>
+            <button
+              onClick={() => switchView("dashboard")}
+              className={`cta-button ${currentView === "dashboard" ? "primary" : "secondary"}`}
+            >
+              📊 Analytics Dashboard
+            </button>
+            <button
+              onClick={() => switchView("user")}
+              className={`cta-button ${currentView === "user" ? "primary" : "secondary"}`}
+            >
+              👤 User Records
+            </button>
           </div>
-        </button>
-
-        <button
-          className={`explorer-tab ${currentView === "dashboard" ? "active" : ""}`}
-          onClick={() => switchView("dashboard")}
-        >
-          <span className="tab-icon">📊</span>
-          <div className="tab-content">
-            <span className="tab-label">Analytics Dashboard</span>
-            <span className="tab-description">Global statistics & trends</span>
-          </div>
-        </button>
-
-        <button
-          className={`explorer-tab ${currentView === "user" ? "active" : ""}`}
-          onClick={() => switchView("user")}
-        >
-          <span className="tab-icon">👤</span>
-          <div className="tab-content">
-            <span className="tab-label">User Records</span>
-            <span className="tab-description">Query user gas usage</span>
-          </div>
-        </button>
-      </div>
+        </div>
+      </section>
 
       {/* Content Area */}
       <div className="explorer-content">

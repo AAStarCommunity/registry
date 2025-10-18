@@ -124,31 +124,24 @@ export function RegistryExplorer() {
 
   return (
     <div className="registry-explorer">
-      {/* Hero Section */}
-      <section className="explorer-hero">
-        <div className="hero-content">
-          <h1>Paymaster Registry Explorer</h1>
-          <p>
-            Browse and discover active paymasters on the SuperPaymaster network
-          </p>
-
-          <div className="stats-bar">
-            <div className="stat-item">
-              <div className="stat-value">{paymasters.length}</div>
-              <div className="stat-label">Active Paymasters</div>
+      {/* Stats Bar */}
+      <section className="stats-section">
+        <div className="stats-bar">
+          <div className="stat-item">
+            <div className="stat-value">{paymasters.length}</div>
+            <div className="stat-label">Active Paymasters</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">
+              {paymasters
+                .reduce((sum, pm) => sum + pm.totalTransactions, 0)
+                .toLocaleString()}
             </div>
-            <div className="stat-item">
-              <div className="stat-value">
-                {paymasters
-                  .reduce((sum, pm) => sum + pm.totalTransactions, 0)
-                  .toLocaleString()}
-              </div>
-              <div className="stat-label">Total Transactions</div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-value">148.6 ETH</div>
-              <div className="stat-label">Total Gas Sponsored</div>
-            </div>
+            <div className="stat-label">Total Transactions</div>
+          </div>
+          <div className="stat-item">
+            <div className="stat-value">148.6 ETH</div>
+            <div className="stat-label">Total Gas Sponsored</div>
           </div>
         </div>
       </section>
