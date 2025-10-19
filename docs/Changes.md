@@ -2,7 +2,26 @@
 
 **日期**: 2025-10-19
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: ✅ Registry ABI 错误已修复
+**当前状态**: ✅ v2.3.6 - 标签按钮激活状态颜色优化完成
+
+---
+
+## 🎨 v2.3.6 - 标签按钮激活状态优化 (2025-10-19)
+
+### 优化内容
+
+ManagePaymasterFull 页面的四个标签按钮（Configuration、EntryPoint、Registry、Token Management）在激活状态下的颜色从深紫色改为浅紫色，提升视觉体验。
+
+**修改详情**：
+- 激活状态颜色从 `#667eea`（深紫色）改为 `#a5b4fc`（浅紫色）
+- 底部边框颜色同步调整
+
+**修改文件**：
+- `src/pages/operator/ManagePaymasterFull.css`: 第 142-145 行
+
+**效果**：
+- ✅ 激活标签显示为浅色，更加醒目
+- ✅ 与整体 UI 风格保持一致
 
 ---
 
@@ -18,28 +37,29 @@ missing revert data (action="call", data=null, reason=null, transaction={ "data"
 
 **根本原因**：
 - Registry v1.2 合约**没有 `paymasterStakes(address)` 函数**
-- 错误的 ABI 定义导致调用不存在的函数
-- 正确的函数应该是 `getPaymasterFullInfo(address)`，返回完整的 PaymasterInfo 结构体
+- REGISTRY_CONTRACT_INTERFACE.md 文档中的 ABI 是错误的（`getPaymasterFullInfo` 也不存在）
+- 正确的函数应该是 `getPaymasterInfo(address)`，参考 Step6_RegisterRegistry.tsx
 
 **解决方案**：
 
 ```typescript
-// ❌ 错误的 ABI
+// ❌ 错误的 ABI (来自错误的文档)
 const REGISTRY_ABI = [
-  "function paymasterStakes(address paymaster) view returns (uint256)",
+  "function getPaymasterFullInfo(address _paymaster) external view returns (tuple(...))",
 ];
 
-// ✅ 正确的 ABI
+// ✅ 正确的 ABI (来自 Step6_RegisterRegistry.tsx)
 const REGISTRY_ABI = [
-  "function getPaymasterFullInfo(address _paymaster) external view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+  "function getPaymasterInfo(address paymasterAddress) external view returns (tuple(address owner, uint256 gTokenStake, uint256 reputation, uint256 totalOperations, bool isActive, string metadata))",
 ];
 
-// ❌ 错误的调用
-const stake = await registry.paymasterStakes(paymasterAddress);
-
-// ✅ 正确的调用
+// ❌ 错误的调用和字段名
 const info = await registry.getPaymasterFullInfo(paymasterAddress);
 const stake = ethers.formatEther(info.stakedAmount);
+
+// ✅ 正确的调用和字段名
+const info = await registry.getPaymasterInfo(paymasterAddress);
+const stake = ethers.formatEther(info.gTokenStake);
 ```
 
 **修改文件**：

@@ -52,7 +52,7 @@ const ENTRY_POINT_ABI = [
 ];
 
 const REGISTRY_ABI = [
-  "function getPaymasterFullInfo(address _paymaster) external view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+  "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
 ];
 
 interface PaymasterConfig {
@@ -178,10 +178,12 @@ export function ManagePaymasterFull() {
 
       // Load Registry info
       const registry = new ethers.Contract(REGISTRY_V1_2, REGISTRY_ABI, provider);
-      const info = await registry.getPaymasterFullInfo(paymasterAddress);
+      const info = await registry.getPaymasterInfo(paymasterAddress);
 
+      // Note: The actual Registry contract doesn't return stake info in getPaymasterInfo
+      // It only returns: feeRate, isActive, successCount, totalAttempts, name
       setRegistryInfo({
-        stake: ethers.formatEther(info.stakedAmount),
+        stake: "N/A", // Stake info not available in current Registry contract
       });
 
       setLoading(false);
