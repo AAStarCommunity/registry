@@ -1,6 +1,33 @@
 import "./OperatorsPortal.css";
 
 export function OperatorsPortal() {
+  const handleManageClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    const manageForm = document.querySelector('.manage-form');
+    if (manageForm) {
+      // Scroll to the form with some top padding
+      manageForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Wait for scroll to complete, then add highlight animation (delay 1 second)
+      setTimeout(() => {
+        manageForm.classList.add('highlight-pulse');
+
+        // Focus on the input field after first pulse
+        setTimeout(() => {
+          const input = document.querySelector('.address-input') as HTMLInputElement;
+          if (input) {
+            input.focus();
+          }
+        }, 800);
+
+        // Remove highlight class after animation completes (2 pulses = 3 seconds)
+        setTimeout(() => {
+          manageForm.classList.remove('highlight-pulse');
+        }, 3000);
+      }, 1000);
+    }
+  };
+
   return (
     <div className="operators-portal">
       {/* Hero Section */}
@@ -14,7 +41,7 @@ export function OperatorsPortal() {
             <a href="/operator/wizard" className="cta-button primary">
               🚀 Deploy Now
             </a>
-            <a href="#manage-existing" className="cta-button secondary">
+            <a href="#manage-existing" className="cta-button secondary" onClick={handleManageClick}>
               ⚙️ Manage Existing
             </a>
             <a href="/launch-tutorial" className="cta-button secondary">

@@ -2,7 +2,47 @@
 
 **日期**: 2025-10-19
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: ✅ v2.3.6 - 标签按钮激活状态颜色优化完成
+**当前状态**: ✅ v2.3.7 - Operator 页面滚动体验优化完成
+
+---
+
+## 🎨 v2.3.7 - Operator 页面 "Manage Existing" 滚动优化 (2025-10-19)
+
+### 问题描述
+
+用户点击 Operator 页面顶部的 "Manage Existing" 按钮后，"Enter Management Dashboard" 表单区域在视野之外，需要手动向下滚动才能看到输入框。
+
+### 优化内容
+
+1. **平滑滚动**: 点击 "Manage Existing" 按钮后，页面自动平滑滚动到管理表单区域
+2. **视觉高亮**: 添加 1.5 秒的脉冲高亮动画，让表单更醒目
+3. **自动聚焦**: 滚动完成后自动聚焦到地址输入框，提升输入体验
+4. **居中显示**: 表单滚动到视窗中央位置，确保完整可见
+
+**修改文件**：
+- `src/pages/OperatorsPortal.tsx`: 添加 `handleManageClick` 处理函数
+- `src/pages/OperatorsPortal.css`: 添加高亮动画和滚动边距
+
+**技术实现**：
+```typescript
+// 平滑滚动到表单，居中显示
+manageForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+// 添加高亮脉冲动画
+manageForm.classList.add('highlight-pulse');
+
+// 1.5秒后自动聚焦输入框并移除动画
+setTimeout(() => {
+  input.focus();
+  manageForm.classList.remove('highlight-pulse');
+}, 1500);
+```
+
+**效果**：
+- ✅ 点击后自动滚动到表单，无需手动滚动
+- ✅ 高亮动画吸引用户注意力
+- ✅ 自动聚焦输入框，即可开始输入
+- ✅ 表单始终在视野中央，体验流畅
 
 ---
 
