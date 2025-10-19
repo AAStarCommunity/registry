@@ -1,8 +1,78 @@
 # Registry DApp 开发进度报告
 
-**日期**: 2025-10-18
+**日期**: 2025-10-19
 **阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: ✅ Analytics Dashboard 错误已完全修复
+**当前状态**: ✅ Registry ABI 错误已修复
+
+---
+
+## 🐛 Bug Fix v2.3.5 - Registry ABI & UI 修复 (2025-10-19)
+
+### 问题 1: Registry 调用错误
+
+访问 `/operator/manage?address=0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445` 时出现错误：
+
+```
+missing revert data (action="call", data=null, reason=null, transaction={ "data": "0x0e76091b000000000000000000000000bc56d82374c3cdf1234fa67e28af9d3e31a9d445", "to": "0x838da93c815a6E45Aa50429529da9106C0621eF0" }
+```
+
+**根本原因**：
+- Registry v1.2 合约**没有 `paymasterStakes(address)` 函数**
+- 错误的 ABI 定义导致调用不存在的函数
+- 正确的函数应该是 `getPaymasterFullInfo(address)`，返回完整的 PaymasterInfo 结构体
+
+**解决方案**：
+
+```typescript
+// ❌ 错误的 ABI
+const REGISTRY_ABI = [
+  "function paymasterStakes(address paymaster) view returns (uint256)",
+];
+
+// ✅ 正确的 ABI
+const REGISTRY_ABI = [
+  "function getPaymasterFullInfo(address _paymaster) external view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+];
+
+// ❌ 错误的调用
+const stake = await registry.paymasterStakes(paymasterAddress);
+
+// ✅ 正确的调用
+const info = await registry.getPaymasterFullInfo(paymasterAddress);
+const stake = ethers.formatEther(info.stakedAmount);
+```
+
+**修改文件**：
+- `src/pages/operator/ManagePaymasterFull.tsx`: 第 54-56 行 (ABI) 和 第 179-185 行 (调用逻辑)
+
+### 问题 2: 标签按钮不可见
+
+ManagePaymasterFull 页面的四个标签按钮（Configuration、EntryPoint、Registry、Token Management）在未激活状态下颜色太浅，与背景颜色接近，难以看清。
+
+**解决方案**：
+- 将标签按钮默认颜色从 `#666`（中灰色）改为 `#333`（深灰色）
+
+**修改文件**：
+- `src/pages/operator/ManagePaymasterFull.css`: 第 133 行
+
+### 问题 3: Wizard 页面 Chain ID 背景色太深看不到
+
+DeployWizard 页面的 Chain ID 文字颜色与背景色对比度不足，难以看清。
+
+**解决方案**：
+- 将文字颜色从 `#6b7280` 改为 `#374151`（更深的颜色）
+- 添加浅灰色背景 `#e5e7eb`
+- 添加内边距和圆角，使 Chain ID 更醒目
+- 增加字体粗细
+
+**修改文件**：
+- `src/pages/operator/DeployWizard.css`: 第 85-93 行
+
+### 验证结果
+
+✅ Registry stake 信息正常显示
+✅ 标签按钮在所有状态下清晰可见
+✅ Chain ID 显示清晰，易于阅读
 
 ---
 

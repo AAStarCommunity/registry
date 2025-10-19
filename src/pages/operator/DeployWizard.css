@@ -84,8 +84,12 @@
 
 .network-chain-id {
   font-size: 14px;
-  color: #6b7280;
+  color: #374151;
   font-family: 'Monaco', 'Courier New', monospace;
+  background: #e5e7eb;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 600;
 }
 
 .network-badge {
