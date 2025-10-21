@@ -51,22 +51,22 @@ export function LandingPage() {
               <span className="gradient-text">Registry</span>
             </h1>
             <p className="hero-subtitle">
-              Decentralized Gasless Transaction Infrastructure for Ethereum
+              Decentralized Gasless Transaction Ethereum Infra
             </p>
             <p className="hero-description">
               Community-driven Paymaster network enabling seamless Web3 UX.
-              Deploy your own Paymaster, earn fees, and help users transact
+              Deploy your own Paymaster, earn fees, and users do transact
               without ETH.
             </p>
             <div className="hero-ctas">
-              <a href="/explorer" className="cta-button primary">
+              <a href="/operator" className="cta-button primary">
+                🏪 Operator Portal
+              </a>
+              <a href="/explorer" className="cta-button secondary">
                 🔍 Explore Registry
               </a>
               <a href="/developer" className="cta-button secondary">
                 👨‍💻 Developer Portal
-              </a>
-              <a href="/operator" className="cta-button secondary">
-                🏪 Operator Portal
               </a>
             </div>
           </div>
