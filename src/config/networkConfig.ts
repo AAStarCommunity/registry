@@ -52,7 +52,7 @@ const sepoliaConfig: NetworkConfig = {
     paymasterV4: import.meta.env.VITE_PAYMASTER_V4_ADDRESS || "0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445",
     registry: import.meta.env.VITE_REGISTRY_ADDRESS || "0x838da93c815a6E45Aa50429529da9106C0621eF0",
     pntToken: import.meta.env.VITE_PNT_TOKEN_ADDRESS || "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
-    gToken: import.meta.env.VITE_GTOKEN_ADDRESS || "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
+    gToken: import.meta.env.VITE_GTOKEN_ADDRESS || "0x868F843723a98c6EECC4BF0aF3352C53d5004147",
     gasTokenFactory: import.meta.env.VITE_GASTOKEN_FACTORY_ADDRESS || "0x6720Dc8ce5021bC6F3F126054556b5d3C125101F",
     sbtContract: import.meta.env.VITE_SBT_CONTRACT_ADDRESS || "0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f",
     usdtContract: import.meta.env.VITE_USDT_CONTRACT_ADDRESS || "0x14EaC6C3D49AEDff3D59773A7d7bfb50182bCfDc",
@@ -64,10 +64,10 @@ const sepoliaConfig: NetworkConfig = {
       import.meta.env.VITE_SEPOLIA_ETH_FAUCET || "https://sepoliafaucet.com",
       import.meta.env.VITE_SEPOLIA_ETH_FAUCET_2 || "https://www.alchemy.com/faucets/ethereum-sepolia",
     ],
-    gTokenFaucet: import.meta.env.VITE_SEPOLIA_GTOKEN_FAUCET || "https://faucet.aastar.xyz/gtoken",
-    pntFaucet: import.meta.env.VITE_SEPOLIA_PNT_FAUCET || "https://faucet.aastar.xyz/pnt",
+    gTokenFaucet: import.meta.env.VITE_SEPOLIA_GTOKEN_FAUCET || "https://faucet.aastar.io/",
+    pntFaucet: import.meta.env.VITE_SEPOLIA_PNT_FAUCET || "https://faucet.aastar.io/",
     uniswapGToken: import.meta.env.VITE_UNISWAP_GTOKEN || "https://app.uniswap.org",
-    superPaymasterDex: import.meta.env.VITE_SUPERPAYMASTER_DEX || "https://dex.superpaymaster.io",
+    superPaymasterDex: import.meta.env.VITE_SUPERPAYMASTER_DEX || "https://dex.aastar.io/",
   },
 
   requirements: {
@@ -99,7 +99,7 @@ const mainnetConfig: NetworkConfig = {
   resources: {
     ethFaucets: [], // No faucets on mainnet
     uniswapGToken: "https://app.uniswap.org",
-    superPaymasterDex: "https://dex.superpaymaster.io",
+    superPaymasterDex: "https://dex.aastar.io/",
   },
 
   requirements: {

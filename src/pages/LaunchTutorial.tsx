@@ -619,7 +619,7 @@ export function LaunchTutorial() {
                 <ul>
                   <li>Swap on Uniswap or other DEXes</li>
                   <li>Contact your community treasury</li>
-                  <li>Check the AAStar community Discord for test tokens</li>
+                  <li>Check the AAStar community for test tokens</li>
                 </ul>
               </div>
 
@@ -628,7 +628,7 @@ export function LaunchTutorial() {
                 <ul>
                   <li>Claim from community faucet</li>
                   <li>Purchase from DEX</li>
-                  <li>Request from AAStar Discord</li>
+                  <li>Request from AAStar community</li>
                 </ul>
               </div>
             </div>
@@ -949,7 +949,7 @@ registry.registerPaymaster(
               <ol>
                 <li>
                   <strong>Promote Your Paymaster</strong>
-                  <p>Share in your community Discord, Twitter, etc.</p>
+                  <p>Share in your community on social media</p>
                 </li>
                 <li>
                   <strong>Integrate in Your dApp</strong>
@@ -957,7 +957,7 @@ registry.registerPaymaster(
                 </li>
                 <li>
                   <strong>Join the Community</strong>
-                  <p>Connect with other operators on <a href="https://discord.gg/aastar" target="_blank" rel="noopener noreferrer">Discord</a></p>
+                  <p>Connect with other operators</p>
                 </li>
                 <li>
                   <strong>Monitor & Optimize</strong>
@@ -972,14 +972,6 @@ registry.registerPaymaster(
               </a>
               <a href="/explorer" className="cta-button secondary">
                 View Registry
-              </a>
-              <a
-                href="https://discord.gg/aastar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="cta-button secondary"
-              >
-                Join Community
               </a>
             </div>
 
@@ -1080,15 +1072,7 @@ registry.registerPaymaster(
             <div className="faq-item">
               <h3>Where can I get help?</h3>
               <p>
-                Join our{" "}
-                <a
-                  href="https://discord.gg/aastar"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Discord community
-                </a>{" "}
-                for support. Check{" "}
+                Check{" "}
                 <a
                   href="https://docs.aastar.io"
                   target="_blank"
@@ -1096,7 +1080,7 @@ registry.registerPaymaster(
                 >
                   documentation
                 </a>{" "}
-                for detailed guides.
+                for detailed guides and support resources.
               </p>
             </div>
 

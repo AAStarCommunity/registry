@@ -26,7 +26,7 @@ const GetGToken: React.FC = () => {
           <button onClick={handleGoBack} className="back-button">
             ← Back
           </button>
-          <h1>Get GToken</h1>
+          <h1>Get Governance Token</h1>
           <p className="subtitle">
             GToken is required for staking in the SuperPaymaster ecosystem
           </p>
@@ -54,6 +54,16 @@ const GetGToken: React.FC = () => {
             <li>
               <strong>Fee Discounts</strong>: Get lower protocol fees with higher stake
             </li>
+            <li>
+              <a
+                href="https://www.mushroom.box/docs/#/tokenomics-en"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: '#667eea', textDecoration: 'none' }}
+              >
+                📖 More about Governance Token →
+              </a>
+            </li>
           </ul>
         </section>
 
@@ -63,11 +73,11 @@ const GetGToken: React.FC = () => {
           <div className="contract-info">
             <div className="info-row">
               <span className="label">Token Name:</span>
-              <span className="value">GToken (Governance Token V2)</span>
+              <span className="value">GToken (Governance Token)</span>
             </div>
             <div className="info-row">
               <span className="label">Symbol:</span>
-              <span className="value">PNTv2</span>
+              <span className="value">GToken</span>
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
@@ -232,7 +242,7 @@ const GetGToken: React.FC = () => {
                     type: "ERC20",
                     options: {
                       address: config.contracts.gToken,
-                      symbol: "PNTv2",
+                      symbol: "GToken",
                       decimals: 18,
                     },
                   },
@@ -255,7 +265,7 @@ const GetGToken: React.FC = () => {
                   <strong>Token Address:</strong> {config.contracts.gToken}
                 </li>
                 <li>
-                  <strong>Token Symbol:</strong> PNTv2
+                  <strong>Token Symbol:</strong> GToken
                 </li>
                 <li>
                   <strong>Decimals:</strong> 18
@@ -291,10 +301,10 @@ const GetGToken: React.FC = () => {
           <details className="faq-item">
             <summary>Do I earn rewards for staking GToken?</summary>
             <p>
-              Yes! As a Paymaster operator, you earn protocol fees from sponsored
-              transactions. The more transactions you process, the more rewards you
-              earn. Higher GToken stake also qualifies you for additional governance
-              rewards.
+              No! As a Paymaster operator, you earn service fees from sponsored
+              transactions. The more transactions you process, the more revenue you
+              earn. Higher GToken stake only qualifies you for additional opportunity
+              to be choosed.
             </p>
           </details>
 

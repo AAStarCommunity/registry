@@ -1,0 +1,248 @@
+/* Legal Pages Styles */
+
+.legal-page {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.legal-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--card-bg, #ffffff);
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.legal-container h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary, #1a1a1a);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.legal-container .subtitle {
+  font-size: 1.125rem;
+  color: var(--text-secondary, #666);
+  margin-bottom: 2rem;
+}
+
+.last-updated {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.5rem 0;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s;
+}
+
+.back-button:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.legal-section {
+  margin: 2.5rem 0;
+}
+
+.legal-section h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text-primary, #1a1a1a);
+}
+
+.legal-section p {
+  line-height: 1.8;
+  color: var(--text-primary, #333);
+  margin-bottom: 1rem;
+}
+
+.legal-section ul {
+  margin: 1rem 0;
+  padding-left: 1.5rem;
+}
+
+.legal-section li {
+  margin: 0.75rem 0;
+  line-height: 1.8;
+  color: var(--text-primary, #333);
+}
+
+.legal-section a {
+  color: #667eea;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.legal-section a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+.warning-box {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.warning-box strong {
+  color: #856404;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.warning-box ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.warning-box li {
+  color: #856404;
+  margin: 0.5rem 0;
+}
+
+.info-box {
+  background: #d1ecf1;
+  border: 2px solid #17a2b8;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1.5rem 0;
+}
+
+.info-box strong {
+  color: #0c5460;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.info-box ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.info-box li {
+  color: #0c5460;
+  margin: 0.5rem 0;
+}
+
+.note {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #666);
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+/* Contact Page Specific Styles */
+
+.contact-card {
+  background: var(--bg-secondary, #f8f9fa);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+  border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.contact-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.contact-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.contact-item strong {
+  display: block;
+  font-size: 1.125rem;
+  color: var(--text-primary, #1a1a1a);
+  margin-bottom: 0.5rem;
+}
+
+.contact-item p {
+  margin: 0.25rem 0;
+  color: var(--text-primary, #333);
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .legal-container {
+    background: #1e1e2e;
+  }
+
+  .legal-container h1,
+  .legal-section h2 {
+    color: #e0e0e0;
+  }
+
+  .legal-section p,
+  .legal-section li {
+    color: #c0c0c0;
+  }
+
+  .last-updated {
+    color: #999;
+    border-bottom-color: #333;
+  }
+
+  .contact-card {
+    background: #2a2a3a;
+    border-color: #444;
+  }
+
+  .contact-item strong {
+    color: #e0e0e0;
+  }
+
+  .contact-item p {
+    color: #c0c0c0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .legal-page {
+    padding: 1rem;
+  }
+
+  .legal-container {
+    padding: 2rem 1.5rem;
+  }
+
+  .legal-container h1 {
+    font-size: 2rem;
+  }
+
+  .legal-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}

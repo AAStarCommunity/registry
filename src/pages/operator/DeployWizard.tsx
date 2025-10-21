@@ -363,11 +363,6 @@ export function DeployWizard() {
               🎮 Try the Interactive Demo
             </a>
           </li>
-          <li>
-            <a href="https://discord.gg/aastar" target="_blank" rel="noopener noreferrer">
-              💬 Ask in Discord
-            </a>
-          </li>
         </ul>
       </div>
     </div>

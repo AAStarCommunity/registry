@@ -294,14 +294,6 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
               rel="noopener noreferrer"
             >
               完整教程
-            </a>{" "}
-            或加入我们的{" "}
-            <a
-              href="https://discord.gg/superpaymaster"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Discord 社区
             </a>
             。
           </p>

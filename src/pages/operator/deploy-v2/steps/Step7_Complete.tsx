@@ -230,14 +230,6 @@ export function Step7_Complete({
           >
             🎮 Try Demo
           </a>
-          <a
-            href="https://discord.gg/aastar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="resource-link"
-          >
-            💬 Join Discord
-          </a>
         </div>
       </div>
 

@@ -2,7 +2,147 @@
 
 **日期**: 2025-10-21
 **阶段**: Phase 2.4 - Launch Paymaster Feature
-**当前状态**: ✅ v2.3.8 - 首页文案优化与 Operator Portal 按钮提升完成
+**当前状态**: ✅ v2.3.9 - 内容清理、法律页面完善与配置更新完成
+
+---
+
+## 🔧 v2.3.9 - 内容清理、法律页面完善与配置更新 (2025-10-21)
+
+### 主要更新
+
+#### 1. 路由与导航优化
+- **修复 /demo 路由**: 添加自动重定向到 /launch-tutorial
+- **移除 Discord 相关内容**: 清理所有 Discord 社交链接和引用
+  - 从 Footer、LandingPage 等组件中移除 Discord 链接
+  - 从 OperatorsPortal、LaunchTutorial、DeployWizard 等页面移除引用
+  - 从 Step3_StakeOption、Step7_Complete 等组件中移除
+  - 从 DeveloperPortal 移除 Discord 专用内容
+
+#### 2. 法律页面完善
+创建完整的法律声明和联系页面（符合 Web3 开源项目的保守免责原则）：
+
+**新增页面**：
+- `src/pages/legal/TermsOfService.tsx` - 服务条款
+  - 开源软件免责声明
+  - 区块链风险告知
+  - 用户责任说明
+  - 无担保条款
+
+- `src/pages/legal/PrivacyPolicy.tsx` - 隐私政策
+  - 隐私优先原则
+  - 不收集个人信息声明
+  - 区块链公开数据说明
+  - 第三方服务说明
+
+- `src/pages/legal/Security.tsx` - 安全声明
+  - 实验性软件警告
+  - 用户安全责任
+  - 最佳实践建议
+  - 漏洞报告机制
+
+- `src/pages/legal/Contact.tsx` - 联系我们
+  - 社区联系方式
+  - 官方渠道信息
+  - 资源链接
+  - 响应时间说明
+
+**路由配置**：
+- 在 App.tsx 中添加法律页面路由（/terms, /privacy, /security, /contact）
+- 更新 Footer 中的链接为内部路由
+
+#### 3. GToken 配置与页面更新
+
+**配置更新** (`src/config/networkConfig.ts`):
+- **GToken 合约地址更新**: `0x868F843723a98c6EECC4BF0aF3352C53d5004147`
+- **Faucet 链接更新**: `https://faucet.aastar.io/`
+- **DEX 链接更新**: `https://dex.aastar.io/`
+
+**GetGToken 页面更新** (`src/pages/resources/GetGToken.tsx`):
+- **页面标题**: "Get GToken" → "Get Governance Token"
+- **Token Symbol**: "PNTv2" → "GToken"
+- **Token Name**: "Governance Token V2" → "Governance Token"
+- **添加文档链接**: "More about Governance Token" → `https://www.mushroom.box/docs/#/tokenomics-en`
+- **FAQ 修改**:
+  - "Yes! As a Paymaster operator, you earn protocol fees..."
+  - → "No! As a Paymaster operator, you earn service fees from sponsored transactions. Higher GToken stake only qualifies you for additional opportunity to be choosed."
+- **MetaMask 集成**: 更新 symbol 为 "GToken"
+
+#### 4. PNT Token 页面更新
+
+**GetPNTs 页面更新** (`src/pages/resources/GetPNTs.tsx`):
+- **Method 2 重命名**: "Swap with GToken" → "Buy aPNTs from Shops"
+  - 新链接: `https://shop.aastar.io`
+  - 费率: "1 aPNTs = 0.02U (testnet rate, dynamic)"
+- **Method 3 汇率更新**:
+  - 从 "1 ETH = 50,000 PNT"
+  - 改为 "1 ETH = 225,000 PNT"
+  - 链接更新为 `https://dex.aastar.io/`
+- **FAQ 汇率同步更新**: 50,000 PNT → 225,000 PNT
+
+#### 5. 部署流程优化
+
+**Step 2 显示修复** (`src/pages/operator/deploy-v2/steps/Step2_WalletCheck.tsx`):
+- **问题**: 标题显示 "Paymaster Deployed" 造成误解
+- **修复**:
+  - 标题: "Paymaster Deployed" → "Paymaster Configuration"
+  - 地址标签: "Address" → "Planned Address"
+- **效果**: 明确表示这是配置阶段，而非部署完成
+
+### 修改文件清单
+
+**配置文件**:
+- `src/config/networkConfig.ts` - GToken 地址、Faucet、DEX 链接
+
+**路由与应用**:
+- `src/App.tsx` - 添加 /demo 重定向和法律页面路由
+
+**组件与页面**:
+- `src/components/Footer.tsx` - 移除 Discord、更新法律链接
+- `src/pages/LandingPage.tsx` - 移除 Discord
+- `src/pages/OperatorsPortal.tsx` - 移除 Discord
+- `src/pages/LaunchTutorial.tsx` - 移除 Discord
+- `src/pages/DeveloperPortal.tsx` - 移除 Discord、更新社区链接
+- `src/pages/operator/DeployWizard.tsx` - 移除 Discord
+- `src/pages/operator/deploy-v2/steps/Step2_WalletCheck.tsx` - 修复显示
+- `src/pages/operator/deploy-v2/steps/Step3_StakeOption.tsx` - 移除 Discord
+- `src/pages/operator/deploy-v2/steps/Step7_Complete.tsx` - 移除 Discord
+
+**资源页面**:
+- `src/pages/resources/GetGToken.tsx` - 全面更新
+- `src/pages/resources/GetPNTs.tsx` - 全面更新
+
+**新增法律页面**:
+- `src/pages/legal/TermsOfService.tsx`
+- `src/pages/legal/PrivacyPolicy.tsx`
+- `src/pages/legal/Security.tsx`
+- `src/pages/legal/Contact.tsx`
+- `src/pages/legal/Legal.css`
+
+### 关键链接更新
+
+| 类型 | 旧链接 | 新链接 |
+|------|--------|--------|
+| GToken Faucet | `https://faucet.aastar.xyz/gtoken` | `https://faucet.aastar.io/` |
+| PNT Faucet | `https://faucet.aastar.xyz/pnt` | `https://faucet.aastar.io/` |
+| DEX | `https://dex.superpaymaster.io` | `https://dex.aastar.io/` |
+| Shop | - | `https://shop.aastar.io` |
+| Tokenomics | - | `https://www.mushroom.box/docs/#/tokenomics-en` |
+
+### 效果总结
+
+✅ **用户体验改善**:
+- 移除无效的 Discord 链接，避免用户困惑
+- 完善法律声明，明确责任和风险
+- 修复 Step 2 误导性显示
+
+✅ **配置更新**:
+- GToken 合约地址更新到最新版本
+- 所有资源链接指向正确的域名
+
+✅ **文案优化**:
+- Token symbol 统一使用正确名称
+- 汇率信息更新到最新数值
+- FAQ 答案更准确反映实际情况
 
 ---
 
@@ -5001,3 +5141,73 @@ curl -X POST 'http://localhost:5173/api/rpc-proxy' \
 **修复人**: Claude AI  
 **分支**: bug-fix  
 **状态**: 已修复,待合并到 main
+
+---
+
+## Discord 相关内容清理
+
+**日期**: 2025-10-21  
+**任务**: 移除所有 Discord 相关的链接和引用  
+**执行人**: Claude AI
+
+### 修改的文件
+
+已从以下6个文件中移除所有 Discord 相关内容:
+
+1. **OperatorsPortal.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/OperatorsPortal.tsx`)
+   - 移除了底部 CTA 区域的 Discord 链接和文本
+   - 修改前: "Questions? Join our Discord community"
+   - 修改后: "Questions? Check our documentation for help"
+
+2. **LaunchTutorial.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/LaunchTutorial.tsx`)
+   - 移除了获取 GToken 和 PNT 说明中的 Discord 引用
+     - "Check the AAStar community Discord for test tokens" → "Check the AAStar community for test tokens"
+     - "Request from AAStar Discord" → "Request from AAStar community"
+   - 移除了"Next Steps"中的 Discord 推广建议
+     - "Share in your community Discord, Twitter, etc." → "Share in your community on social media"
+   - 移除了"Join the Community"中的 Discord 链接
+     - "Connect with other operators on Discord" → "Connect with other operators"
+   - 移除了 CTA 按钮中的"Join Community" Discord 按钮
+   - 移除了 FAQ 中的 Discord 链接
+     - "Join our Discord community for support" → "Check documentation for detailed guides and support resources"
+
+3. **DeployWizard.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/DeployWizard.tsx`)
+   - 移除了帮助区域的"Ask in Discord"链接
+   - 只保留了"Read the Deployment Guide"和"Try the Interactive Demo"
+
+4. **Step7_Complete.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step7_Complete.tsx`)
+   - 移除了资源网格中的"Join Discord"资源卡片
+   - 只保留了 Deployment Guide、API Reference 和 Try Demo
+
+5. **Step3_StakeOption.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step3_StakeOption.tsx`)
+   - 移除了帮助区域中的 Discord 社区链接
+   - 修改前: "查看完整教程或加入我们的 Discord 社区"
+   - 修改后: "查看完整教程"
+
+6. **DeveloperPortal.tsx** (`/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/DeveloperPortal.tsx`)
+   - 修改了 Discord Community 资源卡片
+   - 标题: "Discord Community" → "Developer Community"
+   - 描述保持不变: "Get help from developers"
+   - 链接: `https://discord.gg/aastar` → `https://docs.aastar.io`
+   - 按钮文本: "Join Discord →" → "View Community →"
+
+### 清理原则
+
+- **不删除整个版块**: 如果 Discord 只是多个社区链接之一,只移除 Discord 特定部分
+- **保持功能完整**: 用通用的社区引用或文档链接替换 Discord 链接
+- **用户体验优先**: 确保用户仍然能够找到帮助和支持资源
+
+### 影响范围
+
+- ✅ 所有面向用户的门户页面
+- ✅ 部署向导流程
+- ✅ 完成步骤和资源页面
+- ✅ 开发者门户
+
+### 测试建议
+
+1. 检查所有修改页面的链接是否正常工作
+2. 确认用户体验没有明显降级
+3. 验证替代的帮助资源链接可访问
+
+**状态**: ✅ 已完成

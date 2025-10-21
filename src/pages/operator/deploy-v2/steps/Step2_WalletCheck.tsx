@@ -97,10 +97,10 @@ export function Step2_WalletCheck({ paymasterAddress, onNext, onBack }: Step2Pro
 
       {/* Paymaster Info */}
       <div className="config-summary">
-        <div className="summary-title">📋 Paymaster Deployed</div>
+        <div className="summary-title">📋 Paymaster Configuration</div>
         <div className="summary-content">
           <div className="summary-item">
-            <span className="summary-label">Address:</span>
+            <span className="summary-label">Planned Address:</span>
             <span className="summary-value address">
               {paymasterAddress.slice(0, 6)}...{paymasterAddress.slice(-4)}
             </span>

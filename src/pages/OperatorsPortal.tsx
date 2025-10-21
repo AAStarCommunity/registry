@@ -432,15 +432,7 @@ export function OperatorsPortal() {
             </a>
           </div>
           <p className="cta-note">
-            Questions? Join our{" "}
-            <a
-              href="https://discord.gg/aastar"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Discord
-            </a>{" "}
-            community
+            Questions? Check our documentation for help
           </p>
         </div>
       </section>

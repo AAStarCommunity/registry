@@ -207,9 +207,6 @@ export function LandingPage() {
               <li>
                 <a href="https://twitter.com/AAStarCommunity">Twitter</a>
               </li>
-              <li>
-                <a href="/discord">Discord</a>
-              </li>
             </ul>
           </div>
           <div className="footer-section">

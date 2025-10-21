@@ -233,10 +233,10 @@ export function GaslessTransfer() {
             </div>
             <div className="resource-card">
               <div className="resource-icon">💬</div>
-              <h3>Discord Community</h3>
+              <h3>Developer Community</h3>
               <p>Get help from developers</p>
-              <a href="https://discord.gg/aastar" target="_blank" rel="noopener noreferrer" className="resource-link">
-                Join Discord →
+              <a href="https://docs.aastar.io" target="_blank" rel="noopener noreferrer" className="resource-link">
+                View Community →
               </a>
             </div>
             <div className="resource-card">

@@ -127,25 +127,20 @@ const GetPNTs: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 2: Swap with GToken</h3>
+                  <h3>Method 2: Buy aPNTs from Shops</h3>
                 </div>
-                <p>Exchange your GToken for PNTs on our DEX</p>
+                <p>Buy your PNTs Token from our Web3 Shops</p>
                 <ul>
-                  <li>1 GToken = 10 PNT (testnet rate)</li>
-                  <li>Instant swap with auto-approval</li>
+                  <li>1 aPNTs = 0.02U (testnet rate, dynamic)</li>
                 </ul>
-                {config.resources.superPaymasterDex ? (
-                  <a
-                    href={config.resources.superPaymasterDex}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="action-button secondary"
-                  >
-                    Swap GToken for PNT →
-                  </a>
-                ) : (
-                  <p className="coming-soon">DEX coming soon</p>
-                )}
+                <a
+                  href="https://shop.aastar.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button secondary"
+                >
+                  Buy aPNTs from Shops →
+                </a>
               </div>
 
               <div className="method-card">
@@ -154,21 +149,17 @@ const GetPNTs: React.FC = () => {
                 </div>
                 <p>Buy PNTs with testnet ETH</p>
                 <ul>
-                  <li>Fixed rate: 1 ETH = 50,000 PNT</li>
+                  <li>Fixed rate: 1 ETH = 225,000 PNT</li>
                   <li>Practice trading before mainnet</li>
                 </ul>
-                {config.resources.superPaymasterDex ? (
-                  <a
-                    href={config.resources.superPaymasterDex}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="action-button secondary"
-                  >
-                    Go to Test DEX →
-                  </a>
-                ) : (
-                  <p className="coming-soon">DEX coming soon</p>
-                )}
+                <a
+                  href="https://dex.aastar.io/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button secondary"
+                >
+                  Go to Test DEX →
+                </a>
               </div>
             </>
           ) : (
@@ -303,7 +294,7 @@ const GetPNTs: React.FC = () => {
             <summary>What's the exchange rate between PNT and ETH?</summary>
             <p>
               The exchange rate is dynamic and managed by the protocol's reserve
-              system. On testnet, the default rate is approximately 1 ETH = 50,000 PNT.
+              system. On testnet, the default rate is approximately 1 ETH = 225,000 PNT.
               On mainnet, rates are determined by market conditions and protocol
               reserves to ensure fair pricing.
             </p>
