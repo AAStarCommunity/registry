@@ -1,8 +1,51 @@
 # Registry DApp 开发进度报告
 
-**日期**: 2025-10-19
-**阶段**: Phase 2.3 - Bug Fix & Testing
-**当前状态**: ✅ v2.3.7 - Operator 页面滚动体验优化完成
+**日期**: 2025-10-21
+**阶段**: Phase 2.4 - Launch Paymaster Feature
+**当前状态**: ✅ v2.3.8 - 首页文案优化与 Operator Portal 按钮提升完成
+
+---
+
+## 🎨 v2.3.8 - 首页文案优化与 Operator Portal 按钮提升 (2025-10-21)
+
+### 优化内容
+
+#### 1. 首页文案简化
+- **副标题优化**:
+  - 从 "Decentralized Gasless Transaction Infrastructure for Ethereum"
+  - 简化为 "Decentralized Gasless Transaction Ethereum Infra"
+  - 更简洁易读，适合首屏展示
+
+- **描述文案调整**:
+  - 从 "and help users transact without ETH"
+  - 改为 "and users do transact without ETH"
+  - 更直接的动作表述
+
+#### 2. Operator Portal 按钮提升优先级
+- 将 "🏪 Operator Portal" 按钮移至第一位
+- 设置为主按钮样式（primary）
+- 突出 Operator 入口，引导用户启动 Paymaster
+
+#### 3. Operator 页面按钮文本优化
+- 从 "🚀 Deploy Now" 改为 "🚀 Launch now"
+- 保持火箭图标，更简洁的动作词
+
+**修改文件**：
+- `src/pages/LandingPage.tsx`: 首页文案与按钮顺序
+- `src/pages/OperatorsPortal.tsx`: Launch 按钮文本
+
+**当前按钮布局**：
+```tsx
+// 首页 Hero Section 按钮顺序
+1. 🏪 Operator Portal (primary)
+2. 🔍 Explore Registry (secondary)
+3. 👨‍💻 Developer Portal (secondary)
+```
+
+**效果**：
+- ✅ 首页文案更简洁清晰
+- ✅ Operator Portal 入口更突出
+- ✅ 引导用户优先关注 Paymaster 启动功能
 
 ---
 
