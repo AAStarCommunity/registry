@@ -39,7 +39,7 @@ export function OperatorsPortal() {
           </p>
           <div className="hero-ctas">
             <a href="/operator/wizard" className="cta-button primary">
-              🚀 Deploy Now
+              🚀 Launch now
             </a>
             <a href="#manage-existing" className="cta-button secondary" onClick={handleManageClick}>
               ⚙️ Manage Existing
