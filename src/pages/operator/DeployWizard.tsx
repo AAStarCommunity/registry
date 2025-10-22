@@ -354,13 +354,8 @@ export function DeployWizard() {
         <h3>💡 Need Help?</h3>
         <ul>
           <li>
-            <a href="/docs/deployment-guide" target="_blank" rel="noopener noreferrer">
+            <a href="/launch-tutorial" target="_blank" rel="noopener noreferrer">
               📚 Read the Deployment Guide
-            </a>
-          </li>
-          <li>
-            <a href="/demo?role=operator" target="_blank" rel="noopener noreferrer">
-              🎮 Try the Interactive Demo
             </a>
           </li>
         </ul>
