@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './DeployWizard.css';
 
 // Import step components
@@ -113,6 +113,7 @@ const STEPS = [
 
 export function DeployWizard() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isTestMode, setIsTestMode] = useState(false);
   const [config, setConfig] = useState<DeployConfig>({
     network: 'sepolia', // Default to Sepolia testnet
     communityName: '',
@@ -123,6 +124,39 @@ export function DeployWizard() {
     maxGasCostCap: '0.1',
     minTokenBalance: '100',
   });
+
+  // Check for test mode on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const testMode = params.get('testMode') === 'true';
+    setIsTestMode(testMode);
+
+    // In test mode, pre-populate config with mock data and skip to Step 2
+    if (testMode) {
+      setConfig((prev) => ({
+        ...prev,
+        communityName: 'E2E Test Community',
+        treasury: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        paymasterAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        owner: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        walletStatus: {
+          eth: 1.5,
+          gtoken: 1200,
+          pnts: 800,
+          apnts: 600,
+          hasMetamask: true,
+          hasEnoughETH: true,
+          hasEnoughGToken: true,
+          hasEnoughPNTs: true,
+          hasEnoughAPNTs: true,
+          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        },
+      }));
+      // Auto-advance to Step 2 in test mode
+      setCurrentStep(2);
+      console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
+    }
+  }, []);
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
@@ -277,6 +311,7 @@ export function DeployWizard() {
             paymasterAddress={config.paymasterAddress}
             onNext={handleStep2Complete}
             onBack={handleBack}
+            isTestMode={isTestMode}
           />
         )}
 

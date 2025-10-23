@@ -47,34 +47,40 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     console.log('✅ Step 1: Configuration form submitted successfully');
   });
 
-  test('Full Flow: Steps 1-3 (without wallet connection)', async ({ page }) => {
-    // === STEP 1: Configure ===
-    console.log('Starting Step 1: Configure');
+  test('Full Flow: Steps 2-3 (with test mode auto-skip Step 1)', async ({ page }) => {
+    // Navigate with testMode enabled - should auto-skip to Step 2
+    await page.goto('/operator/wizard?testMode=true');
+    await page.waitForLoadState('networkidle');
 
-    // Fill Step 1 form
-    await page.locator('input[name="communityName"], input[id="communityName"]').fill(TEST_CONFIG.communityName);
-    await page.locator('input[name="treasury"], input[id="treasury"]').fill(TEST_CONFIG.treasury);
+    console.log('🧪 Test Mode: Should auto-skip to Step 2');
 
-    // Click Next
-    await page.locator('button:has-text("Next"), button.btn-next').first().click();
+    // Wait for test mode initialization
+    await page.waitForTimeout(1000);
 
-    // Wait for Step 2
+    // === STEP 2: Wallet Check (Test Mode - Auto Mock) ===
+    console.log('Verifying Step 2: Wallet Check (Test Mode)');
+
+    // In test mode, should auto-advance to Step 2 with mock wallet data
+    const step2Indicator = page.locator('h2, h3').first();
+    await expect(step2Indicator).toContainText(/wallet|check/i, { timeout: TEST_CONFIG.timeout });
+
+    console.log('✅ Step 2: Test mode wallet mock active');
+
+    // Click Next to proceed to Step 3
+    const nextButton2 = page.locator('button:has-text("Next"), button.btn-next, button[type="submit"]').first();
+    await expect(nextButton2).toBeVisible({ timeout: 5000 });
+    await nextButton2.click();
     await page.waitForTimeout(2000);
 
-    console.log('✅ Step 1 completed');
+    console.log('✅ Step 2 completed, proceeding to Step 3');
 
-    // === STEP 2: Wallet Check ===
-    console.log('Starting Step 2: Wallet Check');
+    // === STEP 3: Stake Option ===
+    console.log('Verifying Step 3: Stake Option');
 
-    // Check if Step 2 is displayed (wallet connection UI)
-    // Note: This will likely show "Connect Wallet" button
-    const step2Indicator = page.locator('h2, h3, .step-title').first();
-    await expect(step2Indicator).toContainText(/wallet|connect/i, { timeout: TEST_CONFIG.timeout });
+    const step3Indicator = page.locator('h2, h3').first();
+    await expect(step3Indicator).toContainText(/stake|option|choose/i, { timeout: TEST_CONFIG.timeout });
 
-    console.log('⚠️  Step 2: Wallet connection required (test cannot proceed without wallet mock)');
-
-    // For now, just verify we reached Step 2
-    // Full wallet integration test would require MetaMask mock
+    console.log('✅ Step 3: Reached stake option selection');
   });
 });
 

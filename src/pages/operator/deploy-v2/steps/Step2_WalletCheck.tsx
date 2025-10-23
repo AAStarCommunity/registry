@@ -9,9 +9,10 @@ export interface Step2Props {
   paymasterAddress: string;
   onNext: (walletStatus: WalletStatusType) => void;
   onBack: () => void;
+  isTestMode?: boolean;
 }
 
-export function Step2_WalletCheck({ paymasterAddress, onNext, onBack }: Step2Props) {
+export function Step2_WalletCheck({ paymasterAddress, onNext, onBack, isTestMode = false }: Step2Props) {
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,9 +23,28 @@ export function Step2_WalletCheck({ paymasterAddress, onNext, onBack }: Step2Pro
 
   // Check wallet on mount
   useEffect(() => {
+    // In test mode, use mock wallet data and auto-proceed
+    if (isTestMode) {
+      const mockWalletStatus: WalletStatusType = {
+        eth: 1.5,
+        gtoken: 1200,
+        pnts: 800,
+        apnts: 600,
+        hasMetamask: true,
+        hasEnoughETH: true,
+        hasEnoughGToken: true,
+        hasEnoughPNTs: true,
+        hasEnoughAPNTs: true,
+        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+      };
+      setWalletStatus(mockWalletStatus);
+      console.log('🧪 Test Mode: Using mock wallet data');
+      return;
+    }
+
     handleCheckWallet();
     loadNetworkInfo();
-  }, []);
+  }, [isTestMode]);
 
   const loadNetworkInfo = async () => {
     try {
