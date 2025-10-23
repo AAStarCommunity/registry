@@ -140,17 +140,24 @@ export function DeployWizard() {
         paymasterAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
         owner: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
         walletStatus: {
-          eth: 1.5,
-          gtoken: 1200,
-          pnts: 800,
-          apnts: 600,
-          hasMetamask: true,
+          isConnected: true,
+          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+          ethBalance: '1.5',
+          gTokenBalance: '1200',
+          pntsBalance: '800',
+          aPNTsBalance: '600',
+          hasSBTContract: false,
+          hasGasTokenContract: false,
           hasEnoughETH: true,
           hasEnoughGToken: true,
           hasEnoughPNTs: true,
           hasEnoughAPNTs: true,
-          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+          requiredETH: '0.1',
+          requiredGToken: '100',
+          requiredPNTs: '1000',
+          requiredAPNTs: '1000',
         },
+        resourcesReady: true,  // Pre-set resources as ready in test mode
       }));
       // Auto-advance to Step 2 in test mode
       setCurrentStep(2);

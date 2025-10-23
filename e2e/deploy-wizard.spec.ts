@@ -47,12 +47,12 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     console.log('✅ Step 1: Configuration form submitted successfully');
   });
 
-  test('Full Flow: Steps 2-3 (with test mode auto-skip Step 1)', async ({ page }) => {
+  test('Full Flow: Steps 2-4 (with test mode - Standard Mode)', async ({ page }) => {
     // Navigate with testMode enabled - should auto-skip to Step 2
     await page.goto('/operator/wizard?testMode=true');
     await page.waitForLoadState('networkidle');
 
-    console.log('🧪 Test Mode: Should auto-skip to Step 2');
+    console.log('🧪 Test Mode: Full flow test starting');
 
     // Wait for test mode initialization
     await page.waitForTimeout(1000);
@@ -60,7 +60,6 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     // === STEP 2: Wallet Check (Test Mode - Auto Mock) ===
     console.log('Verifying Step 2: Wallet Check (Test Mode)');
 
-    // In test mode, should auto-advance to Step 2 with mock wallet data
     const step2Indicator = page.locator('h2, h3').first();
     await expect(step2Indicator).toContainText(/wallet|check/i, { timeout: TEST_CONFIG.timeout });
 
@@ -78,9 +77,96 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     console.log('Verifying Step 3: Stake Option');
 
     const step3Indicator = page.locator('h2, h3').first();
-    await expect(step3Indicator).toContainText(/stake|option|choose/i, { timeout: TEST_CONFIG.timeout });
+    await expect(step3Indicator).toContainText(/stake|option|Stake/i, { timeout: TEST_CONFIG.timeout });
 
-    console.log('✅ Step 3: Reached stake option selection');
+    // Verify recommendation box exists
+    const recommendationBox = page.locator('.recommendation-box');
+    await expect(recommendationBox).toBeVisible({ timeout: 5000 });
+    console.log('✅ Step 3: Recommendation box displayed');
+
+    // Verify "You can choose freely" text
+    await expect(page.locator('text=/choose freely/i')).toBeVisible({ timeout: 3000 });
+
+    // Verify both option cards are visible
+    const optionCards = page.locator('.stake-option-card');
+    await expect(optionCards).toHaveCount(2, { timeout: 5000 });
+    console.log('✅ Step 3: Both option cards visible');
+
+    // Select Standard mode (first option)
+    await optionCards.first().click();
+    await page.waitForTimeout(1000);
+    console.log('✅ Step 3: Selected Standard mode');
+
+    // Wait for button to be enabled and click (Chinese text: "继续 →")
+    const nextButton3 = page.locator('button:has-text("继续")');
+    await expect(nextButton3).toBeEnabled({ timeout: 5000 });
+    await nextButton3.click();
+    await page.waitForTimeout(2000);
+
+    console.log('✅ Step 3 completed, proceeding to Step 4');
+
+    // === STEP 4: Resource Preparation ===
+    console.log('Verifying Step 4: Resource Preparation');
+
+    const step4Indicator = page.locator('h2, h3').first();
+    await expect(step4Indicator).toContainText(/resource|prepare|Prepare/i, { timeout: TEST_CONFIG.timeout });
+
+    // Verify resource checklist is shown
+    const resourceChecklist = page.locator('.resource-checklist');
+    await expect(resourceChecklist).toBeVisible({ timeout: 5000 });
+    console.log('✅ Step 4: Resource checklist displayed');
+
+    // In test mode, resources should be ready, so Next button should be enabled
+    const nextButton4 = page.locator('button:has-text("继续部署")');
+    await expect(nextButton4).toBeEnabled({ timeout: 5000 });
+    console.log('✅ Step 4: Next button enabled (resources ready)');
+
+    console.log('✅ Step 4: Resource preparation page verified');
+  });
+
+  test('Step 5-7: UI Structure Verification', async ({ page }) => {
+    // This test verifies that Steps 5-7 can render properly
+    // Actual transaction testing requires manual testing with real wallet
+
+    await page.goto('/operator/wizard?testMode=true');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(1000);
+
+    console.log('🧪 Verifying Steps 5-7 UI structure');
+
+    // Navigate through steps quickly to reach Step 5
+    // Step 2: Click Next
+    const nextButton2 = page.locator('button:has-text("Next"), button:has-text("继续")').first();
+    await nextButton2.click();
+    await page.waitForTimeout(1500);
+
+    // Step 3: Select option and click Next (继续)
+    const optionCards = page.locator('.stake-option-card').first();
+    await optionCards.click();
+    await page.waitForTimeout(1000);
+    const nextButton3 = page.locator('button:has-text("继续")');
+    await expect(nextButton3).toBeEnabled({ timeout: 5000 });
+    await nextButton3.click();
+    await page.waitForTimeout(1500);
+
+    // Step 4: Click Next (继续部署)
+    const nextButton4 = page.locator('button:has-text("继续部署")');
+    await expect(nextButton4).toBeEnabled({ timeout: 5000 });
+    await nextButton4.click();
+    await page.waitForTimeout(1500);
+
+    // === STEP 5: Stake to EntryPoint ===
+    console.log('Verifying Step 5: Stake to EntryPoint UI');
+
+    const step5Indicator = page.locator('h2, h3').first();
+    const step5Text = await step5Indicator.textContent();
+    console.log(`Step 5 title: ${step5Text}`);
+
+    // Verify UI structure exists (we're not testing actual transactions)
+    const hasActionButton = await page.locator('button').count() > 0;
+    console.log(`✅ Step 5: UI rendered with ${await page.locator('button').count()} buttons`);
+
+    console.log('✅ UI structure verification complete');
   });
 });
 

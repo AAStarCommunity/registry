@@ -26,16 +26,22 @@ export function Step2_WalletCheck({ paymasterAddress, onNext, onBack, isTestMode
     // In test mode, use mock wallet data and auto-proceed
     if (isTestMode) {
       const mockWalletStatus: WalletStatusType = {
-        eth: 1.5,
-        gtoken: 1200,
-        pnts: 800,
-        apnts: 600,
-        hasMetamask: true,
+        isConnected: true,
+        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        ethBalance: '1.5',
+        gTokenBalance: '1200',
+        pntsBalance: '800',
+        aPNTsBalance: '600',
+        hasSBTContract: false,
+        hasGasTokenContract: false,
         hasEnoughETH: true,
         hasEnoughGToken: true,
         hasEnoughPNTs: true,
         hasEnoughAPNTs: true,
-        address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        requiredETH: '0.1',
+        requiredGToken: '100',
+        requiredPNTs: '1000',
+        requiredAPNTs: '1000',
       };
       setWalletStatus(mockWalletStatus);
       console.log('🧪 Test Mode: Using mock wallet data');
