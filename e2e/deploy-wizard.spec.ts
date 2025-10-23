@@ -25,7 +25,7 @@ import { test, expect, Page } from '@playwright/test';
 // Test configuration
 const TEST_CONFIG = {
   communityName: 'E2E Test Community',
-  treasury: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+  treasury: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045', // Vitalik's address - valid EIP-55 checksum
   timeout: 10000, // 10 seconds for step transitions
 };
 
@@ -112,8 +112,8 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
       await deployButton.first().click();
       console.log('🔄 Waiting for Step 4 to appear...');
 
-      // Wait for Step 4 heading to appear (increased timeout)
-      await page.waitForSelector('h2:has-text("Select Stake Option"), h2:has-text("质押"), h3:has-text("Select Stake Option"), h3:has-text("质押")', { timeout: 15000 });
+      // Wait for Step 4 heading to appear (match actual Chinese heading)
+      await page.waitForSelector('h2:has-text("选择"), h2:has-text("Stake")', { timeout: 15000 });
       console.log('✅ Step 3: Deployment initiated (mock)');
     } else {
       console.log('⚠️  Step 3: Deploy button not found (may auto-deploy in test mode)');

@@ -54,8 +54,8 @@ export function Step3_DeployPaymaster({
         console.log("🧪 Test Mode: Using mock deployment");
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate deployment delay
 
-        const mockPaymasterAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
-        const mockOwner = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+        const mockPaymasterAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
+        const mockOwner = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
 
         console.log("🧪 Test Mode: Mock deployment complete, calling onNext");
         setIsDeploying(false);
@@ -149,7 +149,7 @@ export function Step3_DeployPaymaster({
   const handleTestDeploy = () => {
     setIsDeploying(true);
     setTimeout(() => {
-      const mockAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+      const mockAddress = "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045";
       onNext(mockAddress, mockAddress);
     }, 2000);
   };

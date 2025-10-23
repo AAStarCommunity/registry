@@ -136,12 +136,12 @@ export function DeployWizard() {
       setConfig((prev) => ({
         ...prev,
         communityName: 'E2E Test Community',
-        treasury: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-        paymasterAddress: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
-        owner: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+        treasury: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        paymasterAddress: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
+        owner: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
         walletStatus: {
           isConnected: true,
-          address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
+          address: '0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045',
           ethBalance: '1.5',
           gTokenBalance: '1200',
           pntsBalance: '800',
@@ -167,7 +167,9 @@ export function DeployWizard() {
 
   const handleNext = () => {
     if (currentStep < STEPS.length) {
-      setCurrentStep(currentStep + 1);
+      const nextStep = currentStep + 1;
+      console.log(`🎯 handleNext: ${currentStep} → ${nextStep}`);
+      setCurrentStep(nextStep);
     }
   };
 
@@ -306,11 +308,19 @@ export function DeployWizard() {
         {currentStep === 2 && config.walletStatus && (
           <Step2_ConfigForm
             onNext={(formConfig: DeployConfig) => {
-              // Update config with form data
+              // Update config with form data, preserving walletStatus
+              console.log('📝 Step 2 onNext called');
+              console.log('  Current config.walletStatus:', config.walletStatus ? 'EXISTS' : 'MISSING');
+              console.log('  FormConfig keys:', Object.keys(formConfig));
+
               setConfig({
                 ...config,
                 ...formConfig,
+                // Explicitly preserve walletStatus from current config
+                walletStatus: config.walletStatus,
               });
+
+              console.log('  Config updated, calling handleNext');
               handleNext();
             }}
             onBack={handleBack}
@@ -323,13 +333,16 @@ export function DeployWizard() {
             config={config}
             chainId={SUPPORTED_NETWORKS[config.network].chainId}
             onNext={(paymasterAddress: string, owner: string) => {
-              // Update config with deployed contract info
-              setConfig({
-                ...config,
+              // Update config with deployed contract info and advance to next step atomically
+              console.log('📝 Step 3 onNext called - paymasterAddress:', paymasterAddress);
+              setConfig((prevConfig) => ({
+                ...prevConfig,
                 paymasterAddress,
                 owner,
-              });
-              handleNext();
+              }));
+              // Advance step immediately
+              setCurrentStep(4);
+              console.log('🎯 Advanced to Step 4');
             }}
             onBack={handleBack}
             isTestMode={isTestMode}
@@ -337,7 +350,15 @@ export function DeployWizard() {
         )}
 
         {/* Step 4: Stake Option - 选择质押选项 */}
-        {currentStep === 4 && config.paymasterAddress && config.walletStatus && (
+        {currentStep === 4 && (() => {
+          console.log('🔍 Step 4 render check:', {
+            currentStep,
+            hasPaymasterAddress: !!config.paymasterAddress,
+            paymasterAddress: config.paymasterAddress,
+            hasWalletStatus: !!config.walletStatus,
+          });
+          return config.paymasterAddress && config.walletStatus;
+        })() && (
           <Step4_StakeOption
             walletStatus={config.walletStatus}
             onNext={handleStep3Complete}

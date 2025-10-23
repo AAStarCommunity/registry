@@ -23,11 +23,12 @@ interface Step4Props {
   onBack: () => void;
 }
 
-export const Step4_StakeOption: React.FC<Step3Props> = ({
+export const Step4_StakeOption: React.FC<Step4Props> = ({
   walletStatus,
   onNext,
   onBack,
 }) => {
+  console.log('🔍 Step4_StakeOption mounted');
   const config = getCurrentNetworkConfig();
   const [selectedOption, setSelectedOption] = useState<StakeOptionType | null>(
     null
