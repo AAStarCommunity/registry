@@ -10,14 +10,14 @@
 
 | 文件名 | 说明 | 尺寸 |
 |--------|------|------|
-| `00-landing-page.png` | 🏠 主页 - 入口页面 | 452K |
-| `01-step1-configuration.png` | ⚙️ Step 1: 配置部署参数 | 334K |
-| `02-step2-wallet-check.png` | 💰 Step 2: 钱包资源检查 | 522K |
-| `03a-step3-stake-option.png` | 🎯 Step 3: 质押选项（未选择） | 675K |
-| `03b-step3-stake-selected.png` | ✅ Step 3: 标准模式已选中 | 831K |
+| `00-landing-page.png` | 🏠 主页 - Launch Paymaster 入口 | 452K |
+| `01-step1-configuration.png` | ⚙️ Step 1: Configuration - 配置参数 | 334K |
+| `02-step2-wallet-check.png` | 💼 Step 2: Check Wallet - 钱包资源检查 | 522K |
+| `03a-step3-stake-option.png` | ⚡ Step 3: Select Stake Option（未选择） | 675K |
+| `03b-step3-stake-selected.png` | ⚡ Step 3: Standard 模式已选中 | 831K |
 | `03c-step3-super-mode-selected.png` | ⚡ Step 3: Super 模式已选中 | 856K |
-| `04-step4-resource-preparation.png` | 📦 Step 4: 资源准备检查 | 525K |
-| `05-step5-deposit-entrypoint.png` | 💸 Step 5: 存款到 EntryPoint | 276K |
+| `04-step4-resource-preparation.png` | 📦 Step 4: Prepare Resources - 资源准备 | 525K |
+| `05-step5-deposit-entrypoint.png` | 🔒 Step 5: Stake - 质押界面 | 276K |
 
 ### 移动端 (Mobile - 375x812)
 
@@ -30,13 +30,15 @@
 ### Wizard 流程说明
 
 **完整 7 步流程**:
-1. **Step 1 - Configure Deployment**: 配置 Community Name、Treasury 等基础参数
-2. **Step 2 - Wallet Check**: 检查 ETH、GToken、PNTs、aPNTs 余额
-3. **Step 3 - Stake Option**: 选择 Standard 或 Super 模式
-4. **Step 4 - Resource Preparation**: 验证所需资源是否就绪
-5. **Step 5 - Deposit to EntryPoint**: 向 EntryPoint v0.7 存入 ETH (Standard) 或质押到 SuperPaymaster (Super)
-6. **Step 6 - Register to Registry**: 注册到 SuperPaymaster Registry
-7. **Step 7 - Complete**: 部署完成,显示交易链接
+1. **⚙️ Step 1 - Configuration**: 配置 Paymaster 部署参数
+2. **💼 Step 2 - Check Wallet**: 检查 ETH、GToken、PNTs、aPNTs 余额
+3. **⚡ Step 3 - Select Stake Option**: 选择 Standard 或 Super 模式
+4. **📦 Step 4 - Prepare Resources**: 验证所需资源是否就绪
+5. **🔒 Step 5 - Stake**: 根据 Step 3 选择动态路由
+   - Standard 模式 → Stake to EntryPoint v0.7
+   - Super 模式 → Stake to SuperPaymaster V2
+6. **📝 Step 6 - Register to Registry**: 注册到 SuperPaymaster Registry
+7. **🚀 Step 7 - Manage Paymaster**: 部署完成,进入管理界面
 
 **Test Mode**: 使用 `?testMode=true` 参数可跳过真实钱包连接,使用 Mock 数据进行测试。
 

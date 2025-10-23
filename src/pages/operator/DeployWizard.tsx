@@ -18,11 +18,11 @@ import { checkWalletStatus } from './deploy-v2/utils/walletChecker';
  * DeployWizard - Complete 7-step deployment flow
  *
  * Phase 2.1.4 & 2.1.5 Implementation:
- * - Step 1: Configure and deploy Paymaster ✅
- * - Step 2: Check wallet balances ✅
- * - Step 3: Select stake option (Standard/Fast) ✅
- * - Step 4: Prepare resources (check/acquire) ✅
- * - Step 5: Stake to EntryPoint 🔄
+ * - Step 1: Configuration ✅
+ * - Step 2: Check Wallet ✅
+ * - Step 3: Select Stake Option (Standard/Super) ✅
+ * - Step 4: Prepare Resources ✅
+ * - Step 5: Stake (routes to EntryPoint or SuperPaymaster) ✅
  * - Step 6: Register to Registry 🔄
  * - Step 7: Manage Paymaster 🔄
  */
@@ -102,13 +102,13 @@ export interface DeployConfig {
 }
 
 const STEPS = [
-  { id: 1, title: 'Deploy Contract', icon: '🚀' },
+  { id: 1, title: 'Configuration', icon: '⚙️' },
   { id: 2, title: 'Check Wallet', icon: '💼' },
   { id: 3, title: 'Select Stake Option', icon: '⚡' },
   { id: 4, title: 'Prepare Resources', icon: '📦' },
-  { id: 5, title: 'Stake to EntryPoint', icon: '🔒' },
+  { id: 5, title: 'Stake', icon: '🔒' },
   { id: 6, title: 'Register to Registry', icon: '📝' },
-  { id: 7, title: 'Manage Paymaster', icon: '⚙️' },
+  { id: 7, title: 'Manage Paymaster', icon: '🚀' },
 ];
 
 export function DeployWizard() {
