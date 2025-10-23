@@ -2,14 +2,61 @@
 
 本目录包含 SuperPaymaster Registry 应用的真实界面截图。
 
-## 截图列表
+## 📸 Wizard 部署流程截图 (Deploy Wizard Flow)
+
+完整的 7 步 Paymaster 部署向导界面截图,包括桌面版和移动端。
+
+### 桌面版 (Desktop - 1920x1080)
 
 | 文件名 | 说明 | 尺寸 |
 |--------|------|------|
-| `01-landing-page.png` | 主页 - 显示平台统计和功能入口 | 436K |
+| `00-landing-page.png` | 🏠 主页 - 入口页面 | 452K |
+| `01-step1-configuration.png` | ⚙️ Step 1: 配置部署参数 | 334K |
+| `02-step2-wallet-check.png` | 💰 Step 2: 钱包资源检查 | 522K |
+| `03a-step3-stake-option.png` | 🎯 Step 3: 质押选项（未选择） | 675K |
+| `03b-step3-stake-selected.png` | ✅ Step 3: 标准模式已选中 | 831K |
+| `03c-step3-super-mode-selected.png` | ⚡ Step 3: Super 模式已选中 | 856K |
+| `04-step4-resource-preparation.png` | 📦 Step 4: 资源准备检查 | 525K |
+| `05-step5-deposit-entrypoint.png` | 💸 Step 5: 存款到 EntryPoint | 276K |
+
+### 移动端 (Mobile - 375x812)
+
+| 文件名 | 说明 | 尺寸 |
+|--------|------|------|
+| `mobile-00-landing.png` | 📱 主页（移动端） | 386K |
+| `mobile-01-step1.png` | 📱 Step 1: 配置（移动端） | 289K |
+| `mobile-03-step3.png` | 📱 Step 3: 质押选项（移动端） | 570K |
+
+### Wizard 流程说明
+
+**完整 7 步流程**:
+1. **Step 1 - Configure Deployment**: 配置 Community Name、Treasury 等基础参数
+2. **Step 2 - Wallet Check**: 检查 ETH、GToken、PNTs、aPNTs 余额
+3. **Step 3 - Stake Option**: 选择 Standard 或 Super 模式
+4. **Step 4 - Resource Preparation**: 验证所需资源是否就绪
+5. **Step 5 - Deposit to EntryPoint**: 向 EntryPoint v0.7 存入 ETH (Standard) 或质押到 SuperPaymaster (Super)
+6. **Step 6 - Register to Registry**: 注册到 SuperPaymaster Registry
+7. **Step 7 - Complete**: 部署完成,显示交易链接
+
+**Test Mode**: 使用 `?testMode=true` 参数可跳过真实钱包连接,使用 Mock 数据进行测试。
+
+---
+
+## 📋 其他界面截图
+
+### 门户和浏览器
+
+| 文件名 | 说明 | 尺寸 |
+|--------|------|------|
+| `01-landing-page.png` | 主页（旧版）- 显示平台统计和功能入口 | 436K |
 | `02-operator-portal.png` | 操作员门户 - 部署和管理 Paymaster | 969K |
 | `03-developer-portal.png` | 开发者门户 - 集成文档和工具 | 448K |
 | `04-explorer.png` | 浏览器 - 查找已注册的 Paymaster | 478K |
+
+### 管理界面
+
+| 文件名 | 说明 | 尺寸 |
+|--------|------|------|
 | `05-manage-overview.png` | 管理概览（旧版） | 82K |
 | `06-manage-config-tab.png` | 配置 Tab（旧版） | 82K |
 | `07-manage-config-tab.png` | 配置 Tab - 7 个可编辑参数 | 322K |
@@ -136,10 +183,23 @@
 
 ## 截图生成脚本
 
-### 自动生成所有截图
+### 🚀 自动生成 Wizard 流程截图
 
 ```bash
-# 运行完整截图脚本
+# 生成所有 Wizard 流程截图（桌面版 + 移动端）
+npx playwright test e2e/capture-wizard-screenshots.spec.ts --project=chromium
+
+# 只生成主要流程截图
+npx playwright test e2e/capture-wizard-screenshots.spec.ts --project=chromium -g "Capture complete wizard flow"
+
+# 只生成移动端截图
+npx playwright test e2e/capture-wizard-screenshots.spec.ts --project=chromium -g "Capture mobile views"
+```
+
+### 自动生成其他界面截图
+
+```bash
+# 运行完整截图脚本（门户和管理界面）
 npx tsx scripts/capture-screenshots.ts
 
 # 只捕获管理界面
@@ -167,14 +227,19 @@ await browser.close();
 
 ## 注意事项
 
-1. **分辨率**: 所有截图使用 1280x720 分辨率
+1. **分辨率**:
+   - 桌面版: 1920x1080 (Wizard 流程)
+   - 移动端: 375x812 (iPhone X)
+   - 门户界面: 1280x720 (旧版截图)
 2. **格式**: PNG 格式，保证清晰度
 3. **完整页面**: 使用 `fullPage: true` 捕获完整页面
-4. **Mock 数据**: 截图使用 MetaMask Mock 生成测试数据
-5. **更新**: 如果 UI 有变化，重新运行截图脚本
+4. **Test Mode**: Wizard 流程截图使用 `?testMode=true` 参数，绕过真实钱包连接
+5. **Mock 数据**: 截图使用 Mock 数据生成测试界面
+6. **更新**: 如果 UI 有变化，重新运行对应的截图脚本
 
 ## 版本
 
 - **创建日期**: 2025-10-17
-- **版本**: v1.0
+- **更新日期**: 2025-10-23 (添加 Wizard 流程截图)
+- **版本**: v1.1
 - **作者**: AAStar Community
