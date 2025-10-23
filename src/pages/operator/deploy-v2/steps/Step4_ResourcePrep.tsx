@@ -18,7 +18,7 @@ import "./Step4_ResourcePrep.css";
 
 interface Step4Props {
   walletStatus: WalletStatus;
-  selectedOption: "standard" | "fast";
+  selectedOption: "standard" | "super";
   onNext: () => void;
   onBack: () => void;
   onRefreshWallet: () => Promise<void>;
@@ -191,13 +191,13 @@ export const Step4_ResourcePrep: React.FC<Step4Props> = ({
 
   // Format last check time
   const formatLastCheck = () => {
-    if (!lastCheckTime) return "未检查";
+    if (!lastCheckTime) return "Not checked";
     const now = new Date();
     const diff = Math.floor((now.getTime() - lastCheckTime.getTime()) / 1000);
 
-    if (diff < 60) return `${diff} 秒前`;
-    if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
-    return lastCheckTime.toLocaleTimeString("zh-CN", {
+    if (diff < 60) return `${diff}s ago`;
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    return lastCheckTime.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -207,15 +207,15 @@ export const Step4_ResourcePrep: React.FC<Step4Props> = ({
     <div className="step4-resource-prep">
       {/* Header */}
       <div className="step4-header">
-        <h2>准备资源</h2>
+        <h2>Prepare Resources</h2>
         <p className="step4-description">
-          请确保您的钱包拥有以下资源。我们会实时检查您的余额，确保满足{" "}
+          Ensure your wallet has the following resources. We'll check your balance in real-time to meet{" "}
           <strong>
             {selectedOption === "standard"
               ? "Standard ERC-4337 Flow"
-              : "Fast Stake Flow"}
+              : "Super Mode"}
           </strong>{" "}
-          的要求。
+          requirements.
         </p>
       </div>
 

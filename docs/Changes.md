@@ -1,5 +1,117 @@
 # Registry DApp 开发进度报告
 
+**日期**: 2025-10-23
+**阶段**: Phase 3.0 - V2 Integration Analysis
+**当前状态**: 📋 分析完成 - V2 流程对比与 Registry 改进建议
+
+---
+
+## 📋 V2 Integration Analysis (2025-10-23)
+
+### 任务背景
+
+基于 SuperPaymasterV2 成功测试流程，分析当前 registry 的 launch paymaster 流程与 V2 实际需求的差异，并提出改进建议。
+
+### 主要发现
+
+#### 1. V2 与旧版架构差异
+
+**Token 体系完全不同**：
+- 旧版（PaymasterV4）：PNT（用户支付）+ GToken（质押）
+- V2：xPNTs（用户支付）+ aPNTs（Operator 支付）+ GToken（质押）+ sGToken（质押凭证）
+
+**Pre-Authorization 机制**：
+- V2 引入 `autoApprovedSpenders` 映射
+- xPNTs token 自动添加 SuperPaymaster 到白名单
+- 用户**无需 approve**，直接使用 xPNTs 支付 gas
+
+**sGToken 核心要求**：
+- 所有验证基于 sGToken（Staked GToken）
+- 需要 lock 状态
+- SimpleAccount 必须持有 sGToken 才能 mint SBT
+
+**SBT 检查逻辑**：
+- 检查 userOp.sender（SimpleAccount 合约地址）
+- 不是检查 owner，而是检查合约账户本身
+
+#### 2. 当前 Registry 流程（7 步）
+
+1. Step 1: 填写配置信息
+2. Step 2: 连接钱包
+3. Step 3: 选择质押选项（EntryPoint）
+4. Step 4: 部署 Paymaster 合约
+5. Step 5: 质押到 EntryPoint
+6. Step 6: 注册到 Registry（Approve GToken + Register）
+7. Step 7: 完成部署
+
+#### 3. V2 实际成功流程
+
+**Operator 流程**：
+1. 部署 aPNTs Token
+2. Operator 注册（自动创建 xPNTs token）
+3. 充值 aPNTs
+4. EntryPoint 充值
+
+**User 流程**：
+1. 获得 GToken
+2. Stake GToken 获得 sGToken
+3. Mint SBT（需要 sGToken）
+4. 获得 xPNTs
+
+### 改进建议
+
+#### 方案 A：独立页面架构（推荐）
+
+遵循用户建议，创建以下独立页面：
+
+1. **Get GToken Page**（独立）- Mint GToken
+2. **Stake Page**（独立）- Stake GToken 获得 sGToken
+3. **Get SBT Page**（独立）- Mint SBT（前置：sGToken）
+4. **Get PNTs Page**（独立）- Mint xPNTs（用户）或 aPNTs（operator）
+
+**Launch Paymaster Flow 重新设计**：
+- Step 1: 部署 aPNTs Token
+- Step 2: Operator 注册（自动创建 xPNTs）
+- Step 3: 充值 aPNTs
+- Step 4: EntryPoint 充值
+- Step 5: 完成
+
+#### 方案 B：渐进式更新（兼容旧版）
+
+保留现有流程，增加独立的 "Launch V2 Paymaster" 选项。
+
+### 完成工作
+
+1. ✅ 创建 `V2-Registry-Flow-Analysis.md` 详细分析文档
+2. ✅ 更新 registry `.env` 添加 V2 合约地址
+3. 📋 提供实施优先级建议
+
+### 实施优先级
+
+**P0（必须）**：
+- [ ] 创建 Stake Page（独立页面）
+- [ ] 创建 Get SBT Page（独立页面）
+- [ ] 更新 Get GToken Page（显示 sGToken 信息）
+- [ ] 更新 Get PNTs Page（区分 aPNTs 和 xPNTs）
+
+**P1（高优先级）**：
+- [ ] 重新设计 Launch Paymaster Flow（V2 流程）
+- [ ] 添加前置条件检查（sGToken）
+- [ ] 更新 USER_GUIDE.md
+
+**P2（中优先级）**：
+- [ ] 添加 V2 测试脚本集成
+- [ ] 显示 auto-approval 状态
+- [ ] 添加 gas 消耗计算器
+
+### 相关文件
+
+- `/Volumes/UltraDisk/Dev2/aastar/registry/docs/V2-Registry-Flow-Analysis.md` - 详细分析
+- `/Volumes/UltraDisk/Dev2/aastar/registry/.env` - V2 合约地址配置
+- `/Volumes/UltraDisk/Dev2/aastar/SuperPaymaster/docs/V2-Test-Guide.md` - V2 测试指南
+
+---
+
 **日期**: 2025-10-21
 **阶段**: Phase 2.4 - Launch Paymaster Feature
 **当前状态**: ✅ v2.3.9 - 内容清理、法律页面完善与配置更新完成

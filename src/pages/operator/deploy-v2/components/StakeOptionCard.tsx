@@ -9,7 +9,7 @@ import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import type { WalletStatus } from "../utils/walletChecker";
 import "./StakeOptionCard.css";
 
-export type StakeOptionType = "standard" | "fast";
+export type StakeOptionType = "standard" | "super";
 
 export interface StakeOption {
   type: StakeOptionType;
@@ -96,7 +96,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
                   获取 GToken
                 </a>
               )}
-              {option.type === "fast" && (
+              {option.type === "super" && (
                 <>
                   <a
                     href="/get-gtoken"
@@ -250,9 +250,9 @@ export function createStandardFlowOption(
 }
 
 /**
- * Helper function to create Fast Flow option
+ * Helper function to create Super Mode option
  */
-export function createFastFlowOption(
+export function createSuperModeOption(
   walletStatus: WalletStatus,
   config: ReturnType<typeof getCurrentNetworkConfig>
 ): StakeOption {
@@ -269,48 +269,52 @@ export function createFastFlowOption(
     pntsBalance >= minPnts;
 
   return {
-    type: "fast",
-    title: "Fast Stake Flow",
-    subtitle: "使用 GToken 和 PNTs 的快速部署流程",
+    type: "super",
+    title: "模式2：GToken Super Mode",
+    subtitle: "三秒钟启动 Paymaster - 无需合约部署，无需服务器",
     recommended: allResourcesMet,
-    badge: "快速",
+    badge: "Super",
     requirements: [
       {
-        label: "ETH (仅部署 gas)",
+        label: "ETH (仅 gas)",
         value: `需要 ≥ ${config.requirements.minEthDeploy} ETH (当前: ${walletStatus.ethBalance} ETH)`,
         met: ethBalance >= minEth,
       },
       {
-        label: "GToken (治理 Stake)",
+        label: "GToken (Stake + Lock)",
         value: `需要 ≥ ${config.requirements.minGTokenStake} GToken (当前: ${walletStatus.gTokenBalance} GToken)`,
         met: gTokenBalance >= minGToken,
       },
       {
-        label: "PNTs (Deposit)",
-        value: `需要 ≥ ${config.requirements.minPntDeposit} PNT (当前: ${walletStatus.pntsBalance} PNT)`,
+        label: "aPNTs (Gas Backing)",
+        value: `需要 ≥ ${config.requirements.minPntDeposit} aPNT (当前: ${walletStatus.pntsBalance} aPNT)`,
         met: pntsBalance >= minPnts,
       },
     ],
     steps: [
-      "部署 PaymasterV4 合约 (~0.02 ETH gas)",
-      "Stake GToken 到 Governance Contract",
-      "Deposit PNTs (协议自动将 GToken→ETH)",
+      "Stake GToken → 获得 sGToken",
+      "注册到 SuperPaymasterV2（自动 lock sGToken）",
+      "Deposit aPNTs 到 SuperPaymasterV2",
+      "部署 xPNTs Token（社区 gas token）",
+      "完成！三秒钟启动 Paymaster",
     ],
     benefits: [
-      "更简单的流程（少 1-2 步）",
-      "不需要持有大量 ETH",
-      "协议自动处理 EntryPoint 要求",
-      "快速启动，适合测试",
+      "三秒钟快速启动 Paymaster",
+      "无需部署 Paymaster 合约",
+      "无需 Stake ETH 到 EntryPoint",
+      "无需运行离线签名服务器",
+      "适合社区快速启动和运营",
     ],
     warnings: [
-      "依赖协议的 GToken→ETH 转换",
-      "需要同时准备 GToken 和 PNTs",
+      "依赖 SuperPaymasterV2 共享合约",
+      "需要 GToken 和 aPNTs 资源",
+      "xPNTs token 需要社区推广",
     ],
     suitable: [
-      "GToken 和 PNTs 充足，ETH 较少",
-      "希望简化操作流程",
-      "快速测试 Paymaster 功能",
-      "不需要直接控制 EntryPoint ETH",
+      "快速启动社区 Paymaster",
+      "不想部署和维护合约",
+      "GToken 和 aPNTs 充足",
+      "专注社区运营而非技术",
     ],
   };
 }

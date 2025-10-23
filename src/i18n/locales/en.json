@@ -1,0 +1,54 @@
+{
+  "common": {
+    "back": "Back",
+    "next": "Next",
+    "continue": "Continue",
+    "skip": "Skip",
+    "loading": "Loading...",
+    "refresh": "Refresh",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "step3": {
+    "title": "Choose Stake Option",
+    "description": "Based on your wallet resources, choose the most suitable staking flow. We'll provide smart recommendations based on your current balance.",
+    "suggestion": {
+      "title": "Suggestion (You can choose freely)",
+      "recommend": "We recommend",
+      "note": "This is just a suggestion based on your current wallet resources. You are free to choose either option at any time."
+    },
+    "standardFlow": "Standard ERC-4337 Flow",
+    "superMode": "GToken Super Mode",
+    "walletStatus": "Current Wallet Status",
+    "eth": "ETH",
+    "gtoken": "GToken",
+    "pnts": "PNTs",
+    "sufficient": "Sufficient",
+    "insufficient": "Insufficient"
+  },
+  "step4": {
+    "title": "Prepare Resources",
+    "description": "Ensure your wallet has the following resources. We'll check your balance in real-time to meet {{mode}} requirements.",
+    "progressReady": "All resources ready!",
+    "progressPending": "Progress: {{ready}}/{{total}}",
+    "lastCheck": "Last check",
+    "autoRefresh": "Auto refresh",
+    "refreshNow": "Refresh now",
+    "checking": "Checking...",
+    "resourcesNotReady": "Resources not ready",
+    "continueDeployment": "Continue deployment"
+  },
+  "step5": {
+    "standard": {
+      "title": "Deposit to EntryPoint",
+      "description": "Deposit ETH to the EntryPoint contract to fund gas sponsorship for your Paymaster."
+    },
+    "super": {
+      "step1": "Stake GToken",
+      "step2": "Register Operator",
+      "step3": "Deposit aPNTs",
+      "step4": "Deploy xPNTs",
+      "step5": "Complete"
+    }
+  }
+}

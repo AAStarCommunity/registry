@@ -1,0 +1,66 @@
+/**
+ * LanguageToggle Styles
+ *
+ * Minimal, clean design for language switcher in top-right corner
+ */
+
+.language-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #ffffff);
+  transition: all 0.2s ease;
+}
+
+.language-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.language-toggle:active {
+  transform: translateY(0);
+}
+
+.globe-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.lang-text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Light theme support */
+@media (prefers-color-scheme: light) {
+  .language-toggle {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-primary, #333333);
+  }
+
+  .language-toggle:hover {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .language-toggle {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .globe-icon {
+    font-size: 14px;
+  }
+}

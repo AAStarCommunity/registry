@@ -16,6 +16,7 @@ export interface WalletStatus {
   ethBalance: string; // in ETH
   gTokenBalance: string; // in GToken
   pntsBalance: string; // in PNT
+  aPNTsBalance: string; // in aPNT (for Super Mode)
 
   // Contract checks
   hasSBTContract: boolean;
@@ -27,19 +28,23 @@ export interface WalletStatus {
   hasEnoughETH: boolean; // >= 0.05 ETH (deploy + gas)
   hasEnoughGToken: boolean; // >= minimum stake requirement
   hasEnoughPNTs: boolean; // >= minimum deposit requirement
+  hasEnoughAPNTs: boolean; // >= minimum aPNTs requirement (Super Mode)
 
   // Requirements
   requiredETH: string;
   requiredGToken: string;
   requiredPNTs: string;
+  requiredAPNTs: string;
 }
 
 export interface CheckOptions {
   requiredETH?: string; // Default: "0.05"
   requiredGToken?: string; // Default: "100"
   requiredPNTs?: string; // Default: "1000"
+  requiredAPNTs?: string; // Default: "1000" (for Super Mode)
   gTokenAddress?: string; // GToken contract address
   pntAddress?: string; // PNT token contract address
+  aPNTAddress?: string; // aPNT token contract address (Super Mode)
 }
 
 // Standard ERC-20 ABI for balance checking
@@ -142,8 +147,10 @@ export async function checkWalletStatus(
     requiredETH = "0.05",
     requiredGToken = "100",
     requiredPNTs = "1000",
+    requiredAPNTs = "1000",
     gTokenAddress,
     pntAddress,
+    aPNTAddress,
   } = options;
 
   // Initialize default status
@@ -153,14 +160,17 @@ export async function checkWalletStatus(
     ethBalance: "0",
     gTokenBalance: "0",
     pntsBalance: "0",
+    aPNTsBalance: "0",
     hasSBTContract: false,
     hasGasTokenContract: false,
     hasEnoughETH: false,
     hasEnoughGToken: false,
     hasEnoughPNTs: false,
+    hasEnoughAPNTs: false,
     requiredETH,
     requiredGToken,
     requiredPNTs,
+    requiredAPNTs,
   };
 
   try {
@@ -191,6 +201,13 @@ export async function checkWalletStatus(
       status.pntsBalance = await checkTokenBalance(pntAddress, address);
       status.hasEnoughPNTs =
         parseFloat(status.pntsBalance) >= parseFloat(requiredPNTs);
+    }
+
+    // Check aPNT balance (if address provided - for Super Mode)
+    if (aPNTAddress) {
+      status.aPNTsBalance = await checkTokenBalance(aPNTAddress, address);
+      status.hasEnoughAPNTs =
+        parseFloat(status.aPNTsBalance) >= parseFloat(requiredAPNTs);
     }
 
     // TODO: Check for existing SBT contract (needs registry or storage lookup)
@@ -268,7 +285,7 @@ export function formatBalance(balance: string, decimals: number = 4): string {
  */
 export function checkStakeOptionRequirements(
   status: WalletStatus,
-  option: "standard" | "fast"
+  option: "standard" | "super"
 ): {
   canProceed: boolean;
   missingResources: string[];
@@ -285,20 +302,20 @@ export function checkStakeOptionRequirements(
         `GToken (need ${status.requiredGToken}, have ${status.gTokenBalance})`
       );
     }
-  } else if (option === "fast") {
-    // Fast flow needs: ETH for deploy only, GToken and PNTs
-    const deployOnlyETH = "0.02";
-    if (parseFloat(status.ethBalance) < parseFloat(deployOnlyETH)) {
-      missing.push(`ETH for deployment (need ${deployOnlyETH}, have ${status.ethBalance})`);
+  } else if (option === "super") {
+    // Super Mode needs: ETH for gas only, GToken and aPNTs
+    const gasOnlyETH = "0.1";
+    if (parseFloat(status.ethBalance) < parseFloat(gasOnlyETH)) {
+      missing.push(`ETH for gas (need ${gasOnlyETH}, have ${status.ethBalance})`);
     }
     if (!status.hasEnoughGToken) {
       missing.push(
         `GToken (need ${status.requiredGToken}, have ${status.gTokenBalance})`
       );
     }
-    if (!status.hasEnoughPNTs) {
+    if (!status.hasEnoughAPNTs) {
       missing.push(
-        `PNTs (need ${status.requiredPNTs}, have ${status.pntsBalance})`
+        `aPNTs (need ${status.requiredAPNTs}, have ${status.aPNTsBalance})`
       );
     }
   }

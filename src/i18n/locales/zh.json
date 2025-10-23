@@ -1,0 +1,54 @@
+{
+  "common": {
+    "back": "返回",
+    "next": "下一步",
+    "continue": "继续",
+    "skip": "跳过",
+    "loading": "加载中...",
+    "refresh": "刷新",
+    "cancel": "取消",
+    "confirm": "确认"
+  },
+  "step3": {
+    "title": "选择质押方式",
+    "description": "根据您的钱包资源，选择最适合的质押流程。我们将根据您当前的余额提供智能建议。",
+    "suggestion": {
+      "title": "建议（您可以自由选择）",
+      "recommend": "我们建议",
+      "note": "这只是基于您当前钱包资源的建议。您可以随时自由选择任一选项。"
+    },
+    "standardFlow": "标准 ERC-4337 流程",
+    "superMode": "GToken 超级模式",
+    "walletStatus": "当前钱包状态",
+    "eth": "ETH",
+    "gtoken": "GToken",
+    "pnts": "PNTs",
+    "sufficient": "充足",
+    "insufficient": "不足"
+  },
+  "step4": {
+    "title": "准备资源",
+    "description": "确保您的钱包拥有以下资源。我们将实时检查您的余额以满足 {{mode}} 要求。",
+    "progressReady": "所有资源已就绪！",
+    "progressPending": "进度: {{ready}}/{{total}}",
+    "lastCheck": "上次检查",
+    "autoRefresh": "自动刷新",
+    "refreshNow": "立即刷新",
+    "checking": "检查中...",
+    "resourcesNotReady": "资源未就绪",
+    "continueDeployment": "继续部署"
+  },
+  "step5": {
+    "standard": {
+      "title": "向 EntryPoint 存款",
+      "description": "向 EntryPoint 合约存入 ETH 以资助您的 Paymaster 的 gas 赞助。"
+    },
+    "super": {
+      "step1": "质押 GToken",
+      "step2": "注册运营商",
+      "step3": "存入 aPNTs",
+      "step4": "部署 xPNTs",
+      "step5": "完成"
+    }
+  }
+}

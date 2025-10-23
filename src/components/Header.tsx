@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { LanguageToggle } from "./LanguageToggle";
 import "./Header.css";
 
 export function Header() {
@@ -54,6 +55,7 @@ export function Header() {
         </nav>
 
         <div className="header-actions">
+          <LanguageToggle />
           <a
             href="https://github.com/AAStarCommunity"
             target="_blank"
@@ -65,7 +67,7 @@ export function Header() {
             </svg>
             GitHub
           </a>
-          <Link to="/operator/deploy" className="cta-button">
+          <Link to="/operator/wizard" className="cta-button">
             Launch Paymaster
           </Link>
         </div>

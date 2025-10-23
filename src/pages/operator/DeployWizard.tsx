@@ -89,7 +89,7 @@ export interface DeployConfig {
   walletStatus?: WalletStatus;
 
   // Step 3: Stake option
-  stakeOption?: 'standard' | 'fast';
+  stakeOption?: 'standard' | 'super';
 
   // Step 4: Resource requirements
   resourcesReady?: boolean;

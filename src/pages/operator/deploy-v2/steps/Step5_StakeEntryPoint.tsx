@@ -1,15 +1,52 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
+import { StakeToSuperPaymaster } from "../components/StakeToSuperPaymaster";
 import "./Step5_StakeEntryPoint.css";
 
 export interface Step5Props {
   paymasterAddress: string;
   walletStatus: WalletStatus;
-  selectedOption: "standard" | "fast";
+  selectedOption: "standard" | "super";
   onNext: (txHash: string) => void;
   onBack: () => void;
 }
+
+/**
+ * Step5_StakeEntryPoint Router Component
+ *
+ * Routes to different staking flows based on selectedOption:
+ * - Standard: Deposit ETH to EntryPoint (traditional ERC-4337)
+ * - Super: Register to SuperPaymasterV2 (Super Mode)
+ */
+export function Step5_StakeEntryPoint(props: Step5Props) {
+  const { selectedOption } = props;
+
+  // Route based on stake option
+  if (selectedOption === "super") {
+    // Super Mode: Register to SuperPaymasterV2
+    return (
+      <StakeToSuperPaymaster
+        walletStatus={props.walletStatus}
+        onNext={props.onNext}
+        onBack={props.onBack}
+      />
+    );
+  }
+
+  // Standard Flow: Deposit to EntryPoint
+  return <Step5_StandardFlow {...props} />;
+}
+
+/**
+ * Standard Flow Component - EntryPoint Deposit
+ */
+function Step5_StandardFlow({
+  paymasterAddress,
+  walletStatus,
+  onNext,
+  onBack,
+}: Step5Props) {
 
 // EntryPoint v0.7 address on Sepolia
 const ENTRY_POINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
@@ -21,16 +58,7 @@ const ENTRY_POINT_ABI = [
   "function getDepositInfo(address account) external view returns (uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime)",
 ];
 
-export function Step5_StakeEntryPoint({
-  paymasterAddress,
-  walletStatus,
-  selectedOption,
-  onNext,
-  onBack,
-}: Step5Props) {
-  const [depositAmount, setDepositAmount] = useState<string>(
-    selectedOption === "standard" ? "0.1" : "0.02"
-  );
+  const [depositAmount, setDepositAmount] = useState<string>("0.1");
   const [currentBalance, setCurrentBalance] = useState<string>("0");
   const [isLoading, setIsLoading] = useState(false);
   const [loadingBalance, setLoadingBalance] = useState(true);
@@ -114,11 +142,7 @@ export function Step5_StakeEntryPoint({
   };
 
   const getRecommendedAmount = () => {
-    if (selectedOption === "standard") {
-      return "0.1 ETH (recommended for Standard Flow)";
-    } else {
-      return "0.02 ETH (minimum for Fast Flow)";
-    }
+    return "0.1 ETH (recommended for Standard Flow)";
   };
 
   return (
@@ -133,21 +157,12 @@ export function Step5_StakeEntryPoint({
 
       {/* Flow Info */}
       <div className="flow-info">
-        <div className="info-badge">
-          {selectedOption === "standard" ? "🐢 Standard Flow" : "⚡ Fast Flow"}
-        </div>
+        <div className="info-badge">🐢 Standard Flow</div>
         <div className="info-text">
-          {selectedOption === "standard" ? (
-            <p>
-              Standard Flow requires more ETH upfront for EntryPoint deposit and
-              direct gas payments.
-            </p>
-          ) : (
-            <p>
-              Fast Flow requires less ETH for EntryPoint deposit. The protocol
-              will provide additional stake using your GToken and PNTs.
-            </p>
-          )}
+          <p>
+            Standard Flow requires more ETH upfront for EntryPoint deposit and
+            direct gas payments.
+          </p>
         </div>
       </div>
 

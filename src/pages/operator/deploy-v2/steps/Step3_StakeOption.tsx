@@ -11,7 +11,7 @@ import type { WalletStatus } from "../utils/walletChecker";
 import {
   StakeOptionCard,
   createStandardFlowOption,
-  createFastFlowOption,
+  createSuperModeOption,
   type StakeOptionType,
   type StakeOption,
 } from "../components/StakeOptionCard";
@@ -35,34 +35,23 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
   const [recommendation, setRecommendation] = useState<{
     option: StakeOptionType;
     reason: string;
-    score: number;
   } | null>(null);
 
   // Create options based on wallet status
   const standardOption = createStandardFlowOption(walletStatus, config);
-  const fastOption = createFastFlowOption(walletStatus, config);
+  const superOption = createSuperModeOption(walletStatus, config);
 
-  // Calculate recommendation
+  // Calculate recommendation (but don't auto-select)
   useEffect(() => {
     const rec = calculateRecommendation(
       walletStatus,
       standardOption,
-      fastOption
+      superOption
     );
     setRecommendation(rec);
 
-    // Auto-select if only one option is viable
-    const standardViable = standardOption.requirements.every((r) => r.met);
-    const fastViable = fastOption.requirements.every((r) => r.met);
-
-    if (standardViable && !fastViable) {
-      setSelectedOption("standard");
-    } else if (fastViable && !standardViable) {
-      setSelectedOption("fast");
-    } else if (rec) {
-      // Auto-select recommended option
-      setSelectedOption(rec.option);
-    }
+    // Don't auto-select - let user choose freely
+    // Only show recommendation as a suggestion
   }, [walletStatus]);
 
   const handleSelectOption = (option: StakeOptionType) => {
@@ -77,7 +66,7 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
 
   // Check if user can proceed
   const selectedOptData =
-    selectedOption === "standard" ? standardOption : fastOption;
+    selectedOption === "standard" ? standardOption : superOption;
   const canProceed =
     selectedOption &&
     selectedOptData &&
@@ -144,27 +133,21 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
         <div className="recommendation-box">
           <div className="recommendation-header">
             <span className="recommendation-icon">💡</span>
-            <h3>智能推荐</h3>
+            <h3>Suggestion (You can choose freely)</h3>
           </div>
           <p className="recommendation-text">
             <strong>
-              推荐方案:{" "}
+              We recommend:{" "}
               {recommendation.option === "standard"
                 ? "Standard ERC-4337 Flow"
-                : "Fast Stake Flow"}
+                : "GToken Super Mode"}
             </strong>
           </p>
           <p className="recommendation-reason">{recommendation.reason}</p>
-          <div className="recommendation-score">
-            <span className="score-label">匹配度:</span>
-            <div className="score-bar">
-              <div
-                className="score-fill"
-                style={{ width: `${recommendation.score}%` }}
-              />
-            </div>
-            <span className="score-value">{recommendation.score}%</span>
-          </div>
+          <p className="recommendation-note">
+            💬 This is just a suggestion based on your current wallet resources.
+            You are free to choose either option at any time.
+          </p>
         </div>
       )}
 
@@ -179,11 +162,11 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
         />
 
         <StakeOptionCard
-          option={fastOption}
+          option={superOption}
           walletStatus={walletStatus}
-          selected={selectedOption === "fast"}
+          selected={selectedOption === "super"}
           disabled={false}
-          onSelect={() => handleSelectOption("fast")}
+          onSelect={() => handleSelectOption("super")}
         />
       </div>
 
@@ -221,7 +204,7 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
                     获取 GToken →
                   </a>
                 )}
-                {selectedOption === "fast" && (
+                {selectedOption === "super" && (
                   <>
                     <a
                       href="/get-gtoken"
@@ -277,12 +260,12 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
           </ul>
 
           <p>
-            <strong>选择 Fast Flow</strong> 如果您:
+            <strong>选择 Super Mode</strong> 如果您:
           </p>
           <ul>
-            <li>ETH 不多但有 GToken 和 PNTs</li>
-            <li>希望简化操作流程</li>
-            <li>快速测试 Paymaster 功能</li>
+            <li>ETH 不多但有 GToken 和 aPNTs</li>
+            <li>希望三秒钟快速启动 Paymaster</li>
+            <li>不想部署和维护合约</li>
           </ul>
 
           <p>
@@ -309,36 +292,34 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
 function calculateRecommendation(
   walletStatus: WalletStatus,
   standardOption: StakeOption,
-  fastOption: StakeOption
-): { option: StakeOptionType; reason: string; score: number } | null {
+  superOption: StakeOption
+): { option: StakeOptionType; reason: string } | null {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
   const pntsBalance = parseFloat(walletStatus.pntsBalance);
 
   // Check if requirements are met
   const standardMet = standardOption.requirements.every((r) => r.met);
-  const fastMet = fastOption.requirements.every((r) => r.met);
+  const superMet = superOption.requirements.every((r) => r.met);
 
   // Both met: recommend based on which is "more met"
-  if (standardMet && fastMet) {
+  if (standardMet && superMet) {
     // Calculate "excess" for each option
     const standardExcess = ethBalance / 0.1; // relative to 0.1 ETH requirement
-    const fastExcess =
+    const superExcess =
       (gTokenBalance / 100 + pntsBalance / 1000 + ethBalance / 0.02) / 3;
 
-    if (standardExcess > fastExcess * 1.5) {
+    if (standardExcess > superExcess * 1.5) {
       return {
         option: "standard",
         reason:
-          "您有充足的 ETH，建议使用 Standard Flow 以获得更好的协议兼容性和控制力。",
-        score: Math.min(95, Math.round(standardExcess * 30)),
+          "You have abundant ETH. Standard Flow provides better protocol compatibility and full control over EntryPoint deposits.",
       };
     } else {
       return {
-        option: "fast",
+        option: "super",
         reason:
-          "您的 GToken 和 PNTs 充足，使用 Fast Flow 可以简化流程并节省 ETH。",
-        score: Math.min(95, Math.round(fastExcess * 30)),
+          "Your GToken and aPNTs are abundant. Super Mode launches in 3 seconds and saves ETH by sharing a paymaster contract.",
       };
     }
   }
@@ -347,16 +328,14 @@ function calculateRecommendation(
   if (standardMet) {
     return {
       option: "standard",
-      reason: "您当前只满足 Standard Flow 的资源要求。",
-      score: 85,
+      reason: "You currently meet the requirements for Standard Flow. Super Mode requires additional GToken and aPNTs.",
     };
   }
 
-  if (fastMet) {
+  if (superMet) {
     return {
-      option: "fast",
-      reason: "您当前只满足 Fast Flow 的资源要求。",
-      score: 85,
+      option: "super",
+      reason: "You currently meet the requirements for Super Mode. Standard Flow requires more ETH for EntryPoint deposit.",
     };
   }
 
@@ -364,19 +343,17 @@ function calculateRecommendation(
   const standardMissing = standardOption.requirements.filter(
     (r) => !r.met
   ).length;
-  const fastMissing = fastOption.requirements.filter((r) => !r.met).length;
+  const superMissing = superOption.requirements.filter((r) => !r.met).length;
 
-  if (standardMissing < fastMissing) {
+  if (standardMissing < superMissing) {
     return {
       option: "standard",
-      reason: `您距离 Standard Flow 的要求更近（还需 ${standardMissing} 项资源）。`,
-      score: Math.max(30, 70 - standardMissing * 15),
+      reason: `You're closer to Standard Flow requirements (${standardMissing} resource${standardMissing > 1 ? 's' : ''} needed). Good for long-term operation with full control.`,
     };
   } else {
     return {
-      option: "fast",
-      reason: `您距离 Fast Flow 的要求更近（还需 ${fastMissing} 项资源）。`,
-      score: Math.max(30, 70 - fastMissing * 15),
+      option: "super",
+      reason: `You're closer to Super Mode requirements (${superMissing} resource${superMissing > 1 ? 's' : ''} needed). Great for quick launch without contract deployment.`,
     };
   }
 }

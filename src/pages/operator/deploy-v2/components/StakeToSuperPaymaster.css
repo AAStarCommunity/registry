@@ -1,0 +1,282 @@
+.stake-to-super-paymaster {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.step-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.step-header h2 {
+  font-size: 28px;
+  margin-bottom: 8px;
+  color: #1a1a1a;
+}
+
+.step-description {
+  font-size: 16px;
+  color: #666;
+}
+
+/* Progress Steps */
+.progress-steps {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 48px;
+  padding: 0 24px;
+}
+
+.progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  flex: 1;
+}
+
+.progress-step::after {
+  content: "";
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: #e0e0e0;
+  z-index: -1;
+}
+
+.progress-step:last-child::after {
+  display: none;
+}
+
+.progress-step.completed::after {
+  background: #4caf50;
+}
+
+.step-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #666;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  margin-bottom: 8px;
+  position: relative;
+  z-index: 1;
+}
+
+.progress-step.active .step-number {
+  background: #2196f3;
+  color: white;
+}
+
+.progress-step.completed .step-number {
+  background: #4caf50;
+  color: white;
+}
+
+.step-label {
+  font-size: 12px;
+  color: #666;
+  text-align: center;
+  max-width: 80px;
+}
+
+.progress-step.active .step-label {
+  color: #2196f3;
+  font-weight: 600;
+}
+
+/* Step Content */
+.step-content {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.step-content h3 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: #1a1a1a;
+}
+
+.step-content p {
+  color: #666;
+  margin-bottom: 24px;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #2196f3;
+}
+
+.form-group input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.form-hint {
+  font-size: 14px;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* Buttons */
+.btn-primary,
+.btn-secondary {
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #1976d2;
+}
+
+.btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+}
+
+.button-group {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Success State */
+.step-content.success {
+  text-align: center;
+}
+
+.success-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+}
+
+.info-card {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 24px;
+  margin-top: 24px;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row span:first-child {
+  color: #666;
+  font-weight: 600;
+}
+
+.info-row span:last-child {
+  color: #333;
+}
+
+.monospace {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+}
+
+/* Error Banner */
+.error-banner {
+  background: #ffebee;
+  border: 1px solid #ef5350;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.error-icon {
+  font-size: 20px;
+}
+
+.error-content {
+  flex: 1;
+  color: #c62828;
+}
+
+/* Navigation */
+.step-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.btn-back {
+  padding: 14px 28px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  background: white;
+  color: #666;
+  border: 1px solid #ddd;
+  transition: all 0.2s;
+}
+
+.btn-back:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.btn-back:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
