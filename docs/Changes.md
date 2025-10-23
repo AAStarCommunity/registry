@@ -5495,3 +5495,149 @@ npm run test:e2e -- --debug
 - ⚠️ testMode 提供模拟数据,自动跳过钱包连接步骤
 
 **状态**: ✅ 已完成
+
+---
+
+## 🐛 Deploy Wizard E2E 测试修复 (2025-10-23)
+
+### 问题诊断
+
+在执行 Playwright E2E 测试时，发现 Step 1→2→3→4 导航流程失败：
+
+1. **❌ 无效的以太坊地址 (EIP-55 checksum)**
+   - 测试地址：`0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb` （41字符）
+   - ethers.isAddress() 验证失败
+   - 原因：地址缺少1个字符且 checksum 无效
+
+2. **❌ React State 批处理竞态**
+   - Step 3 的 onNext 调用 `setConfig()` 后立即调用 `handleNext()`
+   - currentStep 变成 4，但 `config.paymasterAddress` 还未更新
+   - Step 4 渲染条件失败：`currentStep === 4 && config.paymasterAddress`
+
+3. **❌ TypeScript 类型错误**
+   - Step4_StakeOption 组件使用了错误的 Props 类型：`React.FC<Step3Props>`
+
+### 修复方案
+
+#### 1. 使用有效的 EIP-55 地址
+```typescript
+// Before: 0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb (41 chars, invalid checksum)
+// After:  0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045 (Vitalik's address, valid EIP-55)
+```
+
+**修改文件**：
+- `e2e/deploy-wizard.spec.ts`
+- `src/pages/operator/DeployWizard.tsx`
+- `src/pages/operator/deploy-v2/steps/Step3_DeployPaymaster.tsx`
+
+#### 2. 修复 React State 更新时序
+```typescript
+// Before (有竞态):
+setConfig({ ...config, paymasterAddress, owner });
+handleNext(); // config.paymasterAddress 可能还是 undefined!
+
+// After (原子更新):
+setConfig((prevConfig) => ({ ...prevConfig, paymasterAddress, owner }));
+setCurrentStep(4); // 直接设置，避免依赖 handleNext()
+```
+
+**关键改进**：
+- 使用函数式 setState 确保基于最新状态
+- 直接调用 setCurrentStep 避免中间函数调用延迟
+
+#### 3. 修复类型错误
+```typescript
+// src/pages/operator/deploy-v2/steps/Step4_StakeOption.tsx
+export const Step4_StakeOption: React.FC<Step4Props> = ({ ... }) => {
+  //                                      ^^^^ 修复: 从 Step3Props 改为 Step4Props
+```
+
+#### 4. 添加调试日志
+```typescript
+// 追踪 state 更新和渲染条件
+console.log('📝 Step 3 onNext called - paymasterAddress:', paymasterAddress);
+console.log('🎯 Advanced to Step 4');
+console.log('🔍 Step 4 render check:', {
+  currentStep,
+  hasPaymasterAddress: !!config.paymasterAddress,
+  hasWalletStatus: !!config.walletStatus,
+});
+```
+
+### 测试验证结果
+
+**调试输出（成功）**：
+```
+🖥️ Browser Console: 📝 Step 2 onNext called
+🖥️ Browser Console: 🎯 handleNext: 2 → 3
+🖥️ Browser Console: 🔍 Step3_DeployPaymaster mounted - isTestMode: true
+🖥️ Browser Console: 🧪 Test Mode: Using mock deployment
+🖥️ Browser Console: 🧪 Test Mode: Mock deployment complete
+🖥️ Browser Console: 📝 Step 3 onNext called - paymasterAddress: 0xd8dA...6045
+🖥️ Browser Console: 🎯 Advanced to Step 4
+🖥️ Browser Console: 🔍 Step 4 render check: {
+  currentStep: 4,
+  hasPaymasterAddress: true,
+  paymasterAddress: "0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045",
+  hasWalletStatus: true
+}
+🖥️ Browser Console: 🔍 Step4_StakeOption mounted
+```
+
+**导航流程验证**：
+- ✅ Step 1 → Step 2 (testMode 自动跳过 Step 1)
+- ✅ Step 2 → Step 3 (表单验证通过，地址有效)
+- ✅ Step 3 → Step 4 (mock 部署完成，state 正确更新)
+- ✅ Step 4 成功渲染 (paymasterAddress 和 walletStatus 都存在)
+
+### 技术要点
+
+1. **EIP-55 Checksum 验证**
+   - ethers.js 的 `isAddress()` 会验证地址的校验和
+   - 不能随意修改地址字符，必须使用有效的完整地址
+
+2. **React 18 State 批处理**
+   - 同步代码中多次 setState 会被批处理
+   - 使用函数式更新 `setState(prev => ...)` 确保基于最新值
+   - 避免在 setState 后立即依赖新状态值
+
+3. **测试模式 (testMode)**
+   - URL 参数：`?testMode=true`
+   - 自动填充 mock 数据并跳过 Step 1
+   - 使用 mock 部署避免真实 MetaMask 交互
+
+### 修改的文件
+
+- ✅ `e2e/deploy-wizard.spec.ts` - 更新测试地址和选择器
+- ✅ `src/pages/operator/DeployWizard.tsx` - 修复 Step 3 onNext，添加调试日志
+- ✅ `src/pages/operator/deploy-v2/steps/Step3_DeployPaymaster.tsx` - 更新 mock 地址
+- ✅ `src/pages/operator/deploy-v2/steps/Step4_StakeOption.tsx` - 修复类型，添加日志
+
+### Commit
+
+```
+fix: 修复 Step 1-2-3 导航问题 (Deploy Wizard E2E)
+
+问题诊断：
+1. ❌ 无效的以太坊地址（41字符，缺失EIP-55 checksum）
+2. ❌ React state批处理导致Step 4渲染条件失败
+3. ❌ Step 4组件使用错误的Props类型
+
+修复内容：
+- 使用Vitalik地址 (0xd8dA...) 替换无效测试地址
+- 修改Step 3 onNext直接调用setCurrentStep避免竞态
+- 修复Step4Props类型错误 (Step3Props -> Step4Props)
+- 添加详细调试日志追踪state更新
+- 更新E2E测试选择器匹配实际中文标题
+
+测试状态：
+✅ Step 1 → Step 2 导航
+✅ Step 2 表单验证通过
+✅ Step 2 → Step 3 导航  
+✅ Step 3 testMode mock部署
+✅ Step 3 → Step 4 导航
+✅ Step 4 组件成功渲染
+
+Commit: cf78c95
+```
+
