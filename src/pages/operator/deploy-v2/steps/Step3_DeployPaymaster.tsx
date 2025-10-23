@@ -41,11 +41,28 @@ export function Step3_DeployPaymaster({
   const [error, setError] = useState<string | null>(null);
   const [estimatedGas, setEstimatedGas] = useState<string | null>(null);
 
+  // Log testMode status on mount
+  console.log(`🔍 Step3_DeployPaymaster mounted - isTestMode: ${isTestMode}`);
+
   const handleDeploy = async () => {
     setIsDeploying(true);
     setError(null);
 
     try {
+      // In test mode, use mock deployment
+      if (isTestMode) {
+        console.log("🧪 Test Mode: Using mock deployment");
+        await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate deployment delay
+
+        const mockPaymasterAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+        const mockOwner = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+
+        console.log("🧪 Test Mode: Mock deployment complete, calling onNext");
+        setIsDeploying(false);
+        onNext(mockPaymasterAddress, mockOwner);
+        return;
+      }
+
       // Get provider and signer
       if (!window.ethereum) {
         throw new Error("Please install MetaMask to deploy the contract");
@@ -225,7 +242,7 @@ export function Step3_DeployPaymaster({
         </button>
         <button
           className="btn-deploy"
-          onClick={isTestMode ? handleTestDeploy : handleDeploy}
+          onClick={handleDeploy}
           disabled={isDeploying}
         >
           {isDeploying ? "Deploying..." : "Deploy Paymaster Contract 🚀"}

@@ -332,6 +332,7 @@ export function DeployWizard() {
               handleNext();
             }}
             onBack={handleBack}
+            isTestMode={isTestMode}
           />
         )}
 

@@ -5420,3 +5420,78 @@ curl -X POST 'http://localhost:5173/api/rpc-proxy' \
 5. 验证 testMode 是否仍然正常工作
 
 **状态**: ✅ 已完成
+
+---
+
+## 2025-10-23 19:30 - E2E 测试重写以匹配新的 7 步流程
+
+### 文件变更
+- `/Volumes/UltraDisk/Dev2/aastar/registry/e2e/deploy-wizard.spec.ts` - 重写所有测试用例
+
+### 新的 7 步流程测试结构
+
+```
+1. Step 1: Connect Wallet - 连接钱包并检查资源
+2. Step 2: Configuration - 配置参数
+3. Step 3: Deploy Paymaster - 部署合约
+4. Step 4: Select Stake Option - 选择质押选项
+5. Step 5: Stake - 质押
+6. Step 6: Register - 注册
+7. Step 7: Complete - 完成
+```
+
+### 主要变更
+
+1. **测试用例重组**:
+   - ✅ `Step 1: Connect Wallet - UI Verification` - 验证连接钱包 UI
+   - ✅ `Full Flow: Steps 2-4 (with test mode - Standard Mode)` - 测试配置、部署和选择质押流程
+   - ✅ `Steps 5-7: Complete UI Flow Verification` - 测试质押、注册和完成 UI
+
+2. **测试策略更新**:
+   - testMode=true 自动跳过 Step 1,直接从 Step 2 开始
+   - Step 1 测试:验证钱包连接 UI 元素
+   - Step 2 测试:验证配置表单(社区名称、Treasury)
+   - Step 3 测试:验证部署 Paymaster UI 和按钮
+   - Step 4 测试:验证质押选项选择(推荐框、选项卡)
+   - Step 5-7 测试:仅验证 UI 元素,不执行真实交易
+
+3. **移除的测试**:
+   - ❌ Step 4 Resource Preparation 相关测试(已被 Step 3 Deploy Paymaster 替代)
+
+4. **新增的测试**:
+   - ✅ Step 3: Deploy Paymaster 验证
+   - ✅ 部署按钮和自动部署逻辑检查
+
+5. **保留的测试**:
+   - ✅ Language Toggle 测试组
+   - ✅ Navigation and Routing 测试组
+   - ✅ UI Elements Verification 测试组
+   - ✅ Debug: Page Structure Analysis 测试组(更新为分析 Step 1 和 Step 2)
+
+### Debug 测试更新
+
+- `analyze wizard Step 1 (Connect Wallet) structure` - 分析连接钱包页面结构
+- `analyze wizard Step 2 (Configuration) structure with testMode` - 分析配置页面结构
+
+### 测试执行建议
+
+```bash
+# 运行完整测试套件
+npm run test:e2e
+
+# 运行特定测试
+npm run test:e2e -- --grep "Step 1: Connect Wallet"
+npm run test:e2e -- --grep "Full Flow"
+npm run test:e2e -- --grep "Steps 5-7"
+
+# Debug 模式运行
+npm run test:e2e -- --debug
+```
+
+### 注意事项
+
+- ⚠️ Steps 5-7 涉及区块链交易,E2E 测试仅验证 UI 元素存在
+- ⚠️ 真实交易测试需要手动执行,使用真实钱包
+- ⚠️ testMode 提供模拟数据,自动跳过钱包连接步骤
+
+**状态**: ✅ 已完成

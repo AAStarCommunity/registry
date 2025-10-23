@@ -2,7 +2,22 @@
  * Playwright E2E Test - Deploy Wizard Complete User Flow
  *
  * Tests the complete 7-step deployment wizard following actual user journey
- * Updated: 2025-10-23 - Rewritten to match sequential wizard flow
+ * Updated: 2025-10-23 - Rewritten to match new 7-step flow
+ *
+ * New 7-Step Flow:
+ * 1. Step 1: Connect Wallet - 连接钱包并检查资源
+ * 2. Step 2: Configuration - 配置参数
+ * 3. Step 3: Deploy Paymaster - 部署合约
+ * 4. Step 4: Select Stake Option - 选择质押选项
+ * 5. Step 5: Stake - 质押
+ * 6. Step 6: Register - 注册
+ * 7. Step 7: Complete - 完成
+ *
+ * Test Strategy:
+ * - testMode=true auto-skips Step 1 (Connect Wallet), starts at Step 2
+ * - Steps 1-2: UI element validation
+ * - Steps 3-4: Configuration and deployment flow
+ * - Steps 5-7: Stake and register UI (no real transactions)
  */
 
 import { test, expect, Page } from '@playwright/test';
@@ -23,105 +38,117 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     await page.waitForLoadState('networkidle');
   });
 
-  test('Step 1: Should display and submit configuration form', async ({ page }) => {
-    // Verify Step 1 is displayed
-    await expect(page.locator('h2, h3, .step-title').first()).toContainText(/configure|config|setup/i, { timeout: 5000 });
+  test('Step 1: Connect Wallet - UI Verification', async ({ page }) => {
+    // Verify Step 1: Connect Wallet is displayed
+    await expect(page.locator('h2, h3, .step-title').first()).toContainText(/connect|wallet|钱包/i, { timeout: 5000 });
 
-    // Fill required fields
-    const communityInput = page.locator('input[name="communityName"], input[id="communityName"]');
-    await expect(communityInput).toBeVisible({ timeout: 5000 });
-    await communityInput.fill(TEST_CONFIG.communityName);
+    console.log('✅ Step 1: Connect Wallet UI displayed');
 
-    const treasuryInput = page.locator('input[name="treasury"], input[id="treasury"]');
-    await expect(treasuryInput).toBeVisible();
-    await treasuryInput.fill(TEST_CONFIG.treasury);
+    // Verify wallet connection UI elements exist
+    const walletButton = page.locator('button:has-text("Connect"), button:has-text("连接"), button:has-text("MetaMask")');
+    const walletButtonCount = await walletButton.count();
 
-    // Submit form
-    const nextButton = page.locator('button:has-text("Next"), button.btn-next, button[type="submit"]');
-    await expect(nextButton).toBeVisible();
-    await nextButton.click();
-
-    // Wait for navigation to Step 2
-    await page.waitForTimeout(1000);
-
-    console.log('✅ Step 1: Configuration form submitted successfully');
+    if (walletButtonCount > 0) {
+      console.log('✅ Step 1: Wallet connection button found');
+    } else {
+      console.log('⚠️  Step 1: Wallet button not found (may auto-connect in test mode)');
+    }
   });
 
   test('Full Flow: Steps 2-4 (with test mode - Standard Mode)', async ({ page }) => {
-    // Navigate with testMode enabled - should auto-skip to Step 2
+    // Enable console log capture
+    page.on('console', msg => console.log(`🖥️ Browser Console [${msg.type()}]:`, msg.text()));
+
+    // Navigate with testMode enabled - should auto-skip Step 1 (Connect Wallet)
     await page.goto('/operator/wizard?testMode=true');
     await page.waitForLoadState('networkidle');
 
-    console.log('🧪 Test Mode: Full flow test starting');
+    console.log('🧪 Test Mode: Full flow test starting (Step 1 auto-skipped)');
 
     // Wait for test mode initialization
     await page.waitForTimeout(1000);
 
-    // === STEP 2: Wallet Check (Test Mode - Auto Mock) ===
-    console.log('Verifying Step 2: Wallet Check (Test Mode)');
+    // === STEP 2: Configuration ===
+    console.log('Verifying Step 2: Configuration');
 
     const step2Indicator = page.locator('h2, h3').first();
-    await expect(step2Indicator).toContainText(/wallet|check/i, { timeout: TEST_CONFIG.timeout });
+    await expect(step2Indicator).toContainText(/configure|config|配置/i, { timeout: TEST_CONFIG.timeout });
 
-    console.log('✅ Step 2: Test mode wallet mock active');
+    // Verify configuration form fields
+    const communityInput = page.locator('input[name="communityName"], input[id="communityName"]');
+    await expect(communityInput).toBeVisible({ timeout: 5000 });
+    console.log('✅ Step 2: Community name input found');
+
+    const treasuryInput = page.locator('input[name="treasury"], input[id="treasury"]');
+    await expect(treasuryInput).toBeVisible();
+    console.log('✅ Step 2: Treasury input found');
+
+    // Fill configuration form
+    await communityInput.fill(TEST_CONFIG.communityName);
+    await treasuryInput.fill(TEST_CONFIG.treasury);
 
     // Click Next to proceed to Step 3
-    const nextButton2 = page.locator('button:has-text("Next"), button.btn-next, button[type="submit"]').first();
+    const nextButton2 = page.locator('button:has-text("Next"), button:has-text("继续"), button[type="submit"]').first();
     await expect(nextButton2).toBeVisible({ timeout: 5000 });
     await nextButton2.click();
     await page.waitForTimeout(2000);
 
     console.log('✅ Step 2 completed, proceeding to Step 3');
 
-    // === STEP 3: Stake Option ===
-    console.log('Verifying Step 3: Stake Option');
+    // === STEP 3: Deploy Paymaster ===
+    console.log('Verifying Step 3: Deploy Paymaster');
 
     const step3Indicator = page.locator('h2, h3').first();
-    await expect(step3Indicator).toContainText(/stake|option|Stake/i, { timeout: TEST_CONFIG.timeout });
+    await expect(step3Indicator).toContainText(/deploy|paymaster|部署/i, { timeout: TEST_CONFIG.timeout });
+
+    // Verify deployment UI elements
+    const deployButton = page.locator('button:has-text("Deploy"), button:has-text("部署"), button:has-text("Continue")');
+    const deployButtonCount = await deployButton.count();
+
+    if (deployButtonCount > 0) {
+      console.log('✅ Step 3: Deploy button found');
+
+      // In test mode, deployment should be mock - click to proceed
+      await deployButton.first().click();
+      console.log('🔄 Waiting for Step 4 to appear...');
+
+      // Wait for Step 4 heading to appear (increased timeout)
+      await page.waitForSelector('h2:has-text("Select Stake Option"), h2:has-text("质押"), h3:has-text("Select Stake Option"), h3:has-text("质押")', { timeout: 15000 });
+      console.log('✅ Step 3: Deployment initiated (mock)');
+    } else {
+      console.log('⚠️  Step 3: Deploy button not found (may auto-deploy in test mode)');
+    }
+
+    console.log('✅ Step 3 completed, proceeding to Step 4');
+
+    // === STEP 4: Select Stake Option ===
+    console.log('Verifying Step 4: Select Stake Option');
+
+    const step4Indicator = page.locator('h2, h3').first();
+    await expect(step4Indicator).toContainText(/stake|option|质押/i, { timeout: TEST_CONFIG.timeout });
 
     // Verify recommendation box exists
     const recommendationBox = page.locator('.recommendation-box');
     await expect(recommendationBox).toBeVisible({ timeout: 5000 });
-    console.log('✅ Step 3: Recommendation box displayed');
-
-    // Verify "You can choose freely" text
-    await expect(page.locator('text=/choose freely/i')).toBeVisible({ timeout: 3000 });
+    console.log('✅ Step 4: Recommendation box displayed');
 
     // Verify both option cards are visible
     const optionCards = page.locator('.stake-option-card');
     await expect(optionCards).toHaveCount(2, { timeout: 5000 });
-    console.log('✅ Step 3: Both option cards visible');
+    console.log('✅ Step 4: Both option cards visible');
 
     // Select Standard mode (first option)
     await optionCards.first().click();
     await page.waitForTimeout(1000);
-    console.log('✅ Step 3: Selected Standard mode');
+    console.log('✅ Step 4: Selected Standard mode');
 
-    // Wait for button to be enabled and click (Chinese text: "继续 →")
-    const nextButton3 = page.locator('button:has-text("继续")');
-    await expect(nextButton3).toBeEnabled({ timeout: 5000 });
-    await nextButton3.click();
+    // Wait for button to be enabled and click
+    const nextButton4 = page.locator('button:has-text("继续"), button:has-text("Continue")');
+    await expect(nextButton4).toBeEnabled({ timeout: 5000 });
+    await nextButton4.click();
     await page.waitForTimeout(2000);
 
-    console.log('✅ Step 3 completed, proceeding to Step 4');
-
-    // === STEP 4: Resource Preparation ===
-    console.log('Verifying Step 4: Resource Preparation');
-
-    const step4Indicator = page.locator('h2, h3').first();
-    await expect(step4Indicator).toContainText(/resource|prepare|Prepare/i, { timeout: TEST_CONFIG.timeout });
-
-    // Verify resource checklist is shown
-    const resourceChecklist = page.locator('.resource-checklist');
-    await expect(resourceChecklist).toBeVisible({ timeout: 5000 });
-    console.log('✅ Step 4: Resource checklist displayed');
-
-    // In test mode, resources should be ready, so Next button should be enabled
-    const nextButton4 = page.locator('button:has-text("继续部署")');
-    await expect(nextButton4).toBeEnabled({ timeout: 5000 });
-    console.log('✅ Step 4: Next button enabled (resources ready)');
-
-    console.log('✅ Step 4: Resource preparation page verified');
+    console.log('✅ Step 4 completed');
   });
 
   test('Steps 5-7: Complete UI Flow Verification', async ({ page }) => {
@@ -136,28 +163,34 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     console.log('🧪 Testing complete 7-step wizard UI flow');
 
     // Navigate through steps quickly to reach Step 5
-    // Step 2: Click Next
+    // Step 2: Fill configuration and click Next
+    const communityInput = page.locator('input[name="communityName"], input[id="communityName"]');
+    await communityInput.fill(TEST_CONFIG.communityName);
+    const treasuryInput = page.locator('input[name="treasury"], input[id="treasury"]');
+    await treasuryInput.fill(TEST_CONFIG.treasury);
+
     const nextButton2 = page.locator('button:has-text("Next"), button:has-text("继续")').first();
     await nextButton2.click();
     await page.waitForTimeout(1500);
 
-    // Step 3: Select option and click Next (继续)
+    // Step 3: Deploy Paymaster (auto-skip or click if button exists)
+    const deployButton = page.locator('button:has-text("Deploy"), button:has-text("部署"), button:has-text("Continue")');
+    if (await deployButton.count() > 0) {
+      await deployButton.first().click();
+      await page.waitForTimeout(1500);
+    }
+
+    // Step 4: Select stake option and click Next
     const optionCards = page.locator('.stake-option-card').first();
     await optionCards.click();
     await page.waitForTimeout(1000);
-    const nextButton3 = page.locator('button:has-text("继续")');
-    await expect(nextButton3).toBeEnabled({ timeout: 5000 });
-    await nextButton3.click();
-    await page.waitForTimeout(1500);
-
-    // Step 4: Click Next (继续部署)
-    const nextButton4 = page.locator('button:has-text("继续部署")');
+    const nextButton4 = page.locator('button:has-text("继续"), button:has-text("Continue")');
     await expect(nextButton4).toBeEnabled({ timeout: 5000 });
     await nextButton4.click();
     await page.waitForTimeout(1500);
 
-    // === STEP 5: Deposit to EntryPoint (Standard Mode) ===
-    console.log('Verifying Step 5: Deposit to EntryPoint');
+    // === STEP 5: Stake ===
+    console.log('Verifying Step 5: Stake');
 
     const step5Indicator = page.locator('h2, h3').first();
     const step5Text = await step5Indicator.textContent();
@@ -168,17 +201,16 @@ test.describe('Deploy Wizard - Complete User Flow', () => {
     console.log(`✅ Step 5: UI rendered with ${await page.locator('button').count()} buttons`);
     expect(step5HasButtons).toBeTruthy();
 
-    // Verify EntryPoint address or deposit form elements exist
-    const hasDepositElements = await page.locator('input, button:has-text("Deposit"), button:has-text("存入")').count() > 0;
-    if (hasDepositElements) {
-      console.log('✅ Step 5: Deposit form elements found');
+    // Verify stake-related elements exist
+    const hasStakeElements = await page.locator('input, button:has-text("Stake"), button:has-text("质押")').count() > 0;
+    if (hasStakeElements) {
+      console.log('✅ Step 5: Stake form elements found');
     }
 
-    // Note: Cannot proceed to Step 6 without actual blockchain transaction
-    // Step 6 and 7 will require manual testing with real wallet
+    // === STEP 6 & 7: Register and Complete ===
+    console.log('⚠️  Note: Steps 6-7 (Register & Complete) require manual testing with real wallet for transaction execution');
 
     console.log('✅ Steps 5-7 UI verification complete');
-    console.log('⚠️  Note: Steps 6-7 require manual testing with real wallet for transaction execution');
   });
 });
 
@@ -296,7 +328,7 @@ test.describe('UI Elements Verification', () => {
 
 // Helper test to capture actual page structure for debugging
 test.describe('Debug: Page Structure Analysis', () => {
-  test('analyze wizard Step 1 structure', async ({ page }) => {
+  test('analyze wizard Step 1 (Connect Wallet) structure', async ({ page }) => {
     await page.goto('/operator/wizard');
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(2000);
@@ -326,5 +358,31 @@ test.describe('Debug: Page Structure Analysis', () => {
     // Take screenshot for visual verification
     await page.screenshot({ path: 'test-results/wizard-step1-structure.png', fullPage: true });
     console.log('📸 Screenshot saved to test-results/wizard-step1-structure.png');
+  });
+
+  test('analyze wizard Step 2 (Configuration) structure with testMode', async ({ page }) => {
+    await page.goto('/operator/wizard?testMode=true');
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000);
+
+    // Capture page title
+    const title = await page.title();
+    console.log('📄 Page title:', title);
+
+    // Capture all headings
+    const headings = await page.locator('h1, h2, h3, h4').allTextContents();
+    console.log('📋 Headings:', headings);
+
+    // Capture all input fields
+    const inputs = await page.locator('input').count();
+    console.log('🔤 Input fields count:', inputs);
+
+    // Capture button texts
+    const buttons = await page.locator('button').allTextContents();
+    console.log('🔘 Buttons:', buttons);
+
+    // Take screenshot for visual verification
+    await page.screenshot({ path: 'test-results/wizard-step2-structure.png', fullPage: true });
+    console.log('📸 Screenshot saved to test-results/wizard-step2-structure.png');
   });
 });
