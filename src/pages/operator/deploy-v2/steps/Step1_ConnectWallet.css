@@ -1,4 +1,4 @@
-.step2-wallet-check {
+.step1-connect-wallet {
   max-width: 900px;
   margin: 0 auto;
   padding: 2rem;
@@ -302,7 +302,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .step2-wallet-check {
+  .step1-connect-wallet {
     padding: 1rem;
   }
 

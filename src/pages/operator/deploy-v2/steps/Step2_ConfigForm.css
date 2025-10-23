@@ -1,4 +1,4 @@
-.step1-config-form {
+.step2-config-form {
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
@@ -197,7 +197,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .step1-config-form {
+  .step2-config-form {
     padding: 1rem;
   }
 

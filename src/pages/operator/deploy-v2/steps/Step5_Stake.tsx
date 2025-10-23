@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { StakeToSuperPaymaster } from "../components/StakeToSuperPaymaster";
-import "./Step5_StakeEntryPoint.css";
+import "./Step5_Stake.css";
 
 export interface Step5Props {
   paymasterAddress: string;
@@ -13,13 +13,13 @@ export interface Step5Props {
 }
 
 /**
- * Step5_StakeEntryPoint Router Component
+ * Step5_Stake Router Component
  *
  * Routes to different staking flows based on selectedOption:
  * - Standard: Deposit ETH to EntryPoint (traditional ERC-4337)
  * - Super: Register to SuperPaymasterV2 (Super Mode)
  */
-export function Step5_StakeEntryPoint(props: Step5Props) {
+export function Step5_Stake(props: Step5Props) {
   const { selectedOption } = props;
 
   // Route based on stake option
@@ -146,7 +146,7 @@ const ENTRY_POINT_ABI = [
   };
 
   return (
-    <div className="step5-stake-entrypoint">
+    <div className="step5-stake">
       <div className="step-header">
         <h2>Step 5: Deposit to EntryPoint</h2>
         <p className="step-description">

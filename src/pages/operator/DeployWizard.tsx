@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react';
 import './DeployWizard.css';
 
 // Import step components
-import { Step1_ConfigForm } from './deploy-v2/steps/Step1_ConfigForm';
-import { Step2_WalletCheck } from './deploy-v2/steps/Step2_WalletCheck';
-import { Step3_StakeOption } from './deploy-v2/steps/Step3_StakeOption';
-import { Step4_ResourcePrep } from './deploy-v2/steps/Step4_ResourcePrep';
-import { Step5_StakeEntryPoint } from './deploy-v2/steps/Step5_StakeEntryPoint';
+import { Step1_ConnectWallet } from './deploy-v2/steps/Step1_ConnectWallet';
+import { Step2_ConfigForm } from './deploy-v2/steps/Step2_ConfigForm';
+import { Step3_DeployPaymaster } from './deploy-v2/steps/Step3_DeployPaymaster';
+import { Step4_StakeOption } from './deploy-v2/steps/Step4_StakeOption';
+import { Step5_Stake } from './deploy-v2/steps/Step5_Stake';
 import { Step6_RegisterRegistry } from './deploy-v2/steps/Step6_RegisterRegistry';
 import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
 
@@ -102,13 +102,13 @@ export interface DeployConfig {
 }
 
 const STEPS = [
-  { id: 1, title: 'Configuration', icon: '⚙️' },
-  { id: 2, title: 'Check Wallet', icon: '💼' },
-  { id: 3, title: 'Select Stake Option', icon: '⚡' },
-  { id: 4, title: 'Prepare Resources', icon: '📦' },
+  { id: 1, title: 'Connect Wallet', icon: '🔌' },
+  { id: 2, title: 'Configuration', icon: '⚙️' },
+  { id: 3, title: 'Deploy Paymaster', icon: '🚀' },
+  { id: 4, title: 'Select Stake Option', icon: '⚡' },
   { id: 5, title: 'Stake', icon: '🔒' },
   { id: 6, title: 'Register to Registry', icon: '📝' },
-  { id: 7, title: 'Manage Paymaster', icon: '🚀' },
+  { id: 7, title: 'Complete', icon: '✅' },
 ];
 
 export function DeployWizard() {
@@ -194,7 +194,7 @@ export function DeployWizard() {
     handleNext();
   };
 
-  const handleStep3Complete = (option: 'standard' | 'fast') => {
+  const handleStep3Complete = (option: 'standard' | 'super') => {
     setConfig({
       ...config,
       stakeOption: option,
@@ -294,74 +294,59 @@ export function DeployWizard() {
 
       {/* Step content */}
       <div className="wizard-content">
+        {/* Step 1: Connect Wallet - 连接钱包并检查资源（不需要 paymasterAddress）*/}
         {currentStep === 1 && (
-          <Step1_ConfigForm
-            onNext={(formConfig) => {
+          <Step1_ConnectWallet
+            onNext={handleStep2Complete}
+            isTestMode={isTestMode}
+          />
+        )}
+
+        {/* Step 2: Config Form - 配置参数 */}
+        {currentStep === 2 && config.walletStatus && (
+          <Step2_ConfigForm
+            onNext={(formConfig: DeployConfig) => {
               // Update config with form data
               setConfig({
                 ...config,
                 ...formConfig,
               });
-              // For now, we'll simulate deployment completion
-              // In real implementation, this would deploy the contract
-              handleStep1Complete('0x1234567890123456789012345678901234567890', '0x1234567890123456789012345678901234567890');
+              handleNext();
             }}
-            onCancel={() => {
-              // Navigate back to operator portal
-              window.location.href = '/operator';
-            }}
-          />
-        )}
-
-        {currentStep === 2 && config.paymasterAddress && (
-          <Step2_WalletCheck
-            paymasterAddress={config.paymasterAddress}
-            onNext={handleStep2Complete}
             onBack={handleBack}
-            isTestMode={isTestMode}
           />
         )}
 
+        {/* Step 3: Deploy Paymaster - 部署 PaymasterV4_1 合约 */}
         {currentStep === 3 && config.walletStatus && (
-          <Step3_StakeOption
+          <Step3_DeployPaymaster
+            config={config}
+            chainId={SUPPORTED_NETWORKS[config.network].chainId}
+            onNext={(paymasterAddress: string, owner: string) => {
+              // Update config with deployed contract info
+              setConfig({
+                ...config,
+                paymasterAddress,
+                owner,
+              });
+              handleNext();
+            }}
+            onBack={handleBack}
+          />
+        )}
+
+        {/* Step 4: Stake Option - 选择质押选项 */}
+        {currentStep === 4 && config.paymasterAddress && config.walletStatus && (
+          <Step4_StakeOption
             walletStatus={config.walletStatus}
             onNext={handleStep3Complete}
             onBack={handleBack}
           />
         )}
 
-        {currentStep === 4 && config.walletStatus && config.stakeOption && (
-          <Step4_ResourcePrep
-            walletStatus={config.walletStatus}
-            selectedOption={config.stakeOption}
-            onNext={handleStep4Complete}
-            onBack={handleBack}
-            onRefreshWallet={async () => {
-              // Re-check wallet status with current configuration
-              try {
-                const updatedStatus = await checkWalletStatus({
-                  requiredETH: '0.05',
-                  requiredGToken: '100',
-                  requiredPNTs: '1000',
-                  // TODO: Get actual token addresses from config or environment
-                  // gTokenAddress: "0x...",
-                  // pntAddress: "0x...",
-                });
-
-                // Update the wallet status in config
-                setConfig({
-                  ...config,
-                  walletStatus: updatedStatus,
-                });
-              } catch (error) {
-                console.error('Failed to refresh wallet status:', error);
-              }
-            }}
-          />
-        )}
-
+        {/* Step 5: Stake - 质押 */}
         {currentStep === 5 && config.paymasterAddress && config.walletStatus && config.stakeOption && (
-          <Step5_StakeEntryPoint
+          <Step5_Stake
             paymasterAddress={config.paymasterAddress}
             walletStatus={config.walletStatus}
             selectedOption={config.stakeOption}
@@ -370,6 +355,7 @@ export function DeployWizard() {
           />
         )}
 
+        {/* Step 6: Register Registry - 注册到 Registry */}
         {currentStep === 6 && config.paymasterAddress && config.walletStatus && (
           <Step6_RegisterRegistry
             paymasterAddress={config.paymasterAddress}
@@ -380,6 +366,7 @@ export function DeployWizard() {
           />
         )}
 
+        {/* Step 7: Complete - 完成（需要跳转到管理页面）*/}
         {currentStep === 7 && config.paymasterAddress && config.owner && (
           <Step7_Complete
             paymasterAddress={config.paymasterAddress}

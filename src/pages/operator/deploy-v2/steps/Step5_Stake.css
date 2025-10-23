@@ -1,6 +1,6 @@
 /* Step5_StakeEntryPoint.css */
 
-.step5-stake-entrypoint {
+.step5-stake {
   max-width: 800px;
   margin: 0 auto;
 }
@@ -285,7 +285,7 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .step5-stake-entrypoint {
+  .step5-stake {
     padding: 16px;
   }
 

@@ -1,5 +1,5 @@
 /**
- * Step 3: Stake Option Selection
+ * Step 4: Stake Option Selection
  *
  * Allows users to choose between Standard and Fast Stake flows
  * based on their wallet resources
@@ -15,15 +15,15 @@ import {
   type StakeOptionType,
   type StakeOption,
 } from "../components/StakeOptionCard";
-import "./Step3_StakeOption.css";
+import "./Step4_StakeOption.css";
 
-interface Step3Props {
+interface Step4Props {
   walletStatus: WalletStatus;
   onNext: (selectedOption: StakeOptionType) => void;
   onBack: () => void;
 }
 
-export const Step3_StakeOption: React.FC<Step3Props> = ({
+export const Step4_StakeOption: React.FC<Step3Props> = ({
   walletStatus,
   onNext,
   onBack,
@@ -73,7 +73,7 @@ export const Step3_StakeOption: React.FC<Step3Props> = ({
     selectedOptData.requirements.every((r) => r.met);
 
   return (
-    <div className="step3-stake-option">
+    <div className="step4-stake-option">
       {/* Header */}
       <div className="step3-header">
         <h2>选择 Stake 方案</h2>

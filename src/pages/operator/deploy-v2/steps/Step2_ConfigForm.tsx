@@ -7,7 +7,7 @@ import {
   getMostRecent,
 } from "../utils/formHistory";
 import type { HistoryItem } from "../utils/formHistory";
-import "./Step1_ConfigForm.css";
+import "./Step2_ConfigForm.css";
 
 export interface DeployConfig {
   communityName: string;
@@ -29,12 +29,12 @@ interface ValidationErrors {
   minTokenBalance?: string;
 }
 
-interface Step1Props {
+interface Step2Props {
   onNext: (config: DeployConfig) => void;
-  onCancel: () => void;
+  onBack: () => void;
 }
 
-export function Step1_ConfigForm({ onNext, onCancel }: Step1Props) {
+export function Step2_ConfigForm({ onNext, onBack }: Step2Props) {
   // Form state
   const [config, setConfig] = useState<DeployConfig>({
     communityName: "",
@@ -235,9 +235,9 @@ export function Step1_ConfigForm({ onNext, onCancel }: Step1Props) {
   const estimatedGasCost = "~0.02 ETH"; // TODO: Calculate based on current gas price
 
   return (
-    <div className="step1-config-form">
+    <div className="step2-config-form">
       <div className="step-header">
-        <h2>Step 1: Configure Deployment</h2>
+        <h2>Step 2: Configure Deployment</h2>
         <p className="step-description">
           Fill in the basic configuration for your Paymaster. Fields with
           history will show recent values you've used before.
@@ -478,11 +478,11 @@ export function Step1_ConfigForm({ onNext, onCancel }: Step1Props) {
 
         {/* Action Buttons */}
         <div className="form-actions">
-          <button type="button" onClick={onCancel} className="btn-cancel">
+          <button type="button" onClick={onBack} className="btn-cancel">
             Cancel
           </button>
           <button type="submit" className="btn-next">
-            Next: Check Wallet Resources
+            Next: Deploy Paymaster →
           </button>
         </div>
       </form>

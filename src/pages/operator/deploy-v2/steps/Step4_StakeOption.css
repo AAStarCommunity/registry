@@ -1,6 +1,6 @@
 /* Step 3: Stake Option Selection Styles */
 
-.step3-stake-option {
+.step4-stake-option {
   max-width: 1400px;
   margin: 0 auto;
   padding: 2rem;
@@ -359,7 +359,7 @@
 }
 
 @media (max-width: 768px) {
-  .step3-stake-option {
+  .step4-stake-option {
     padding: 1.5rem 1rem;
   }
 
@@ -435,7 +435,7 @@
   }
 }
 
-.step3-stake-option > * {
+.step4-stake-option > * {
   animation: fadeInUp 0.5s ease-out;
 }
 

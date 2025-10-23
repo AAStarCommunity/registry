@@ -5323,3 +5323,100 @@ curl -X POST 'http://localhost:5173/api/rpc-proxy' \
 3. 验证替代的帮助资源链接可访问
 
 **状态**: ✅ 已完成
+
+---
+
+## 2025-10-23: DeployWizard 步骤渲染逻辑更新
+
+### 更新内容
+
+更新了 `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/DeployWizard.tsx` 文件中的步骤渲染逻辑（第 295-380 行），以符合新的 7 步部署流程。
+
+### 新的 7 步流程
+
+1. **Step 1: Connect Wallet** - `Step1_ConnectWallet`
+   - 连接钱包并检查资源
+   - **不需要** `paymasterAddress` prop
+   - 使用 `handleStep2Complete` 处理完成
+
+2. **Step 2: Config Form** - `Step2_ConfigForm`
+   - 配置部署参数
+   - 需要 `walletStatus` 条件渲染
+   - 使用 `handleNext` 处理完成
+
+3. **Step 3: Deploy Paymaster** - `Step3_DeployPaymaster`
+   - 部署 PaymasterV4_1 合约
+   - 接收 `config` 和 `chainId` props
+   - 返回 `paymasterAddress` 和 `owner`
+   - 直接更新 config 并使用 `handleNext`
+
+4. **Step 4: Stake Option** - `Step4_StakeOption`
+   - 选择质押选项（standard/super）
+   - 需要 `paymasterAddress` 和 `walletStatus` 条件渲染
+   - 使用 `handleStep3Complete` 处理完成
+
+5. **Step 5: Stake** - `Step5_Stake`
+   - 执行质押操作
+   - 需要 `paymasterAddress`、`walletStatus` 和 `stakeOption` 条件渲染
+   - 使用 `handleStep5Complete` 处理完成
+
+6. **Step 6: Register Registry** - `Step6_RegisterRegistry`
+   - 注册到 Registry 合约
+   - 需要 `paymasterAddress` 和 `walletStatus` 条件渲染
+   - 使用 `handleStep6Complete` 处理完成
+
+7. **Step 7: Complete** - `Step7_Complete`
+   - 完成部署，显示摘要信息
+   - 需要 `paymasterAddress` 和 `owner` 条件渲染
+   - 提供跳转到管理页面的功能
+
+### 主要变更
+
+1. **Step 1 变更**:
+   - 从 `Step1_ConfigForm` 改为 `Step1_ConnectWallet`
+   - 移除了 `paymasterAddress` 的模拟生成
+   - 使用 `handleStep2Complete` 而非 `handleStep1Complete`
+
+2. **Step 2 变更**:
+   - 从 `Step2_WalletCheck` 改为 `Step2_ConfigForm`
+   - 条件渲染改为检查 `walletStatus`
+   - 移除了 `paymasterAddress` prop
+
+3. **Step 3 新增**:
+   - 新增 `Step3_DeployPaymaster` 组件
+   - 传递 `config` 和 `chainId` props
+   - 在 onNext 回调中更新 `paymasterAddress` 和 `owner`
+
+4. **Step 4 变更**:
+   - 从 `Step3_StakeOption` 改为 `Step4_StakeOption`
+   - 添加 `paymasterAddress` 条件检查
+
+5. **Step 5 变更**:
+   - 从 `Step5_StakeEntryPoint` 改为 `Step5_Stake`
+   - 移除了复杂的 `onRefreshWallet` 逻辑
+
+6. **条件渲染逻辑**:
+   - 确保每个步骤都有正确的前置条件检查
+   - Step 1: 无条件
+   - Step 2: 需要 `walletStatus`
+   - Step 3: 需要 `walletStatus`
+   - Step 4: 需要 `paymasterAddress` 和 `walletStatus`
+   - Step 5: 需要 `paymasterAddress`、`walletStatus` 和 `stakeOption`
+   - Step 6: 需要 `paymasterAddress` 和 `walletStatus`
+   - Step 7: 需要 `paymasterAddress` 和 `owner`
+
+### 保持不变
+
+- 所有的处理器函数（`handleStep1Complete` 到 `handleStep6Complete`）保持不变
+- `handleNext` 和 `handleBack` 函数保持不变
+- 进度指示器和其他 UI 组件保持不变
+
+### 测试建议
+
+1. 验证步骤间的导航流程
+2. 确认每个步骤的条件渲染正确
+3. 检查 props 传递是否正确
+4. 测试 config 状态更新是否正常
+5. 验证 testMode 是否仍然正常工作
+
+**状态**: ✅ 已完成

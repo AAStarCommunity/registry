@@ -2,17 +2,14 @@ import React, { useState, useEffect } from "react";
 import { WalletStatus } from "../components/WalletStatus";
 import { checkWalletStatus, getCurrentNetwork } from "../utils/walletChecker";
 import type { WalletStatus as WalletStatusType } from "../utils/walletChecker";
-import type { DeployConfig } from "./Step1_ConfigForm";
-import "./Step2_WalletCheck.css";
+import "./Step1_ConnectWallet.css";
 
-export interface Step2Props {
-  paymasterAddress: string;
+export interface Step1Props {
   onNext: (walletStatus: WalletStatusType) => void;
-  onBack: () => void;
   isTestMode?: boolean;
 }
 
-export function Step2_WalletCheck({ paymasterAddress, onNext, onBack, isTestMode = false }: Step2Props) {
+export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) {
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -111,27 +108,13 @@ export function Step2_WalletCheck({ paymasterAddress, onNext, onBack, isTestMode
   };
 
   return (
-    <div className="step2-wallet-check">
+    <div className="step1-connect-wallet">
       <div className="step-header">
-        <h2>Step 2: Check Wallet Resources</h2>
+        <h2>Step 1: Connect Wallet & Check Resources</h2>
         <p className="step-description">
-          We'll verify that your wallet has the necessary resources to deploy and
-          operate a Paymaster. Missing resources can be acquired from the provided
-          links.
+          Connect your operator wallet (MetaMask) and verify you have the necessary resources
+          to deploy and operate a Paymaster. Missing resources can be acquired from the provided links.
         </p>
-      </div>
-
-      {/* Paymaster Info */}
-      <div className="config-summary">
-        <div className="summary-title">📋 Paymaster Configuration</div>
-        <div className="summary-content">
-          <div className="summary-item">
-            <span className="summary-label">Planned Address:</span>
-            <span className="summary-value address">
-              {paymasterAddress.slice(0, 6)}...{paymasterAddress.slice(-4)}
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Network Info */}
@@ -208,23 +191,20 @@ export function Step2_WalletCheck({ paymasterAddress, onNext, onBack, isTestMode
 
       {/* Action Buttons */}
       <div className="step-actions">
-        <button className="btn-back" onClick={onBack}>
-          ← Back to Configuration
-        </button>
         <button
           className="btn-next"
           onClick={() => walletStatus && onNext(walletStatus)}
           disabled={!canProceed()}
           title={
             !canProceed()
-              ? "Please ensure you have enough ETH and GToken"
-              : "Proceed to stake option selection"
+              ? "Please ensure you have enough ETH and sGToken"
+              : "Proceed to configuration"
           }
         >
           {canProceed() ? (
-            <>Next: Choose Stake Option →</>
+            <>Next: Configuration →</>
           ) : (
-            <>Acquire Resources First</>
+            <>Connect Wallet & Acquire Resources</>
           )}
         </button>
       </div>
