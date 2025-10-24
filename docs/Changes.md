@@ -6,6 +6,290 @@
 
 ---
 
+## 2025-10-25 - Registry v2.0 架构迁移完成
+
+### 问题描述
+用户报告了 4 个关键问题：
+1. ❌ Explorer URL 路径错误：`/explorer/` 应改为 `/paymaster/`
+2. ❌ Paymaster 详情页显示原始 JSON 而非解析后的字段
+3. ❌ 未发现 xPNTs 注册到 Paymaster 的流程
+4. ❌ AOA 部署流程中未体验到 stGToken lock 步骤
+
+**核心架构误解**：我最初误认为 Step6 需要调用 `GTokenStaking.lockStake()` 来锁定在 Step4 中质押的 stGToken。
+
+**用户关键纠正**: "if step4 got stGtoken, why we need step6 to stake again?"
+
+这揭示了正确的架构理解：
+- **Step4**: 质押 GToken → 获得 stGToken（用户的"储蓄账户"）
+- **Step6**: 仅注册元数据到 Registry v2（无质押）
+- **Lock**: 在运行时自动触发，非部署时操作
+
+### 实现内容
+
+#### 1. 修复 Explorer URL 路径
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step7_Complete.tsx:20`
+```typescript
+// 修复前
+window.open(`/explorer/${paymasterAddress}`, "_blank");
+
+// 修复后
+window.open(`/paymaster/${paymasterAddress}`, "_blank");
+```
+
+**文件**: `src/pages/analytics/AnalyticsDashboard.tsx:189`
+```typescript
+// 修复前
+<Link to={`/explorer/${pm.address}`} ...>
+
+// 修复后
+<Link to={`/paymaster/${pm.address}`} ...>
+```
+
+#### 2. 修复 Paymaster 详情页 JSON 显示
+
+**文件**: `src/pages/analytics/PaymasterDetail.tsx:96-133`
+
+**修复前**:
+```
+Name: {"name":"BreadCommunity25","description":"...","version":"v4","timestamp":176132}
+```
+
+**修复后**: 添加 JSON 解析逻辑
+```typescript
+try {
+  const metadata = JSON.parse(info.name);
+  if (metadata.name) {
+    parsedName = metadata.name;
+    description = metadata.description || "";
+    version = metadata.version || "";
+    timestamp = metadata.timestamp ? new Date(metadata.timestamp * 1000).toLocaleString() : "";
+  }
+} catch (e) {
+  parsedName = info.name;
+}
+```
+
+现在显示为独立字段：
+- Name: BreadCommunity25
+- Description: Community Paymaster for BreadCommunity25
+- Version: v4
+- Timestamp: 2025/10/24 下午3:25:32
+
+#### 3. 确认 xPNTs 注册流程
+
+**调查结果**:
+- ✅ 检查了 `PaymasterV4.sol` 和 `PaymasterV4_1.sol` 源码
+- ✅ 确认 xPNTs **不需要**注册到 Paymaster
+- ✅ PaymasterV4_1 仅新增 Registry 集成（激活/停用），无 xPNTs 注册要求
+
+#### 4. AOA Flow stGToken Lock 架构澄清
+
+**架构发现**:
+
+**GTokenStaking 合约**（0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2）有两个独立功能：
+
+1. **质押 (Step4 部署时)**:
+```solidity
+function stake(uint256 amount) external returns (uint256 shares) {
+    // 用户转移 GToken，铸造 sGToken shares
+}
+```
+
+2. **锁定 (运行时)**:
+```solidity
+function lockStake(
+    address user,
+    uint256 amount,
+    string memory purpose
+) external {
+    // 由授权合约（MySBT、SuperPaymaster）调用
+    // 冻结用户部分 sGToken
+}
+```
+
+**关键理解**: 这是两个完全独立的操作！质押在部署时完成，锁定在运行时由服务自动触发。
+
+#### 5. Registry v2.0 架构对比
+
+| 特性 | Registry v1.2 (旧) | Registry v2.0 (新) |
+|------|-------------------|-------------------|
+| 合约地址 | 0x838da93c815a6E45Aa50429529da9106C0621eF0 | 0x6806e4937038e783cA0D3961B7E258A3549A0043 |
+| 注册方式 | `payable` - 需要 ETH 质押 | 纯元数据存储 - 无质押 |
+| 功能 | `registerPaymaster(name, feeRate) payable` | `registerCommunity(profile)` |
+| 质押要求 | `msg.value >= minStakeAmount` | ❌ 无质押 |
+| 数据存储 | name + feeRate + ETH stake | 完整社区档案（14 个字段） |
+| 状态 | ⚠️ 已废弃 | ✅ 当前使用 |
+
+#### 6. 创建 Step6_RegisterRegistry_v2.tsx
+
+**新文件**: `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx`
+
+**关键实现**:
+```typescript
+// Registry v2.0 ABI - 纯元数据注册
+const REGISTRY_V2_ABI = [
+  `function registerCommunity(
+    tuple(
+      string name,
+      string ensName,
+      string description,
+      string website,
+      string logoURI,
+      string twitterHandle,
+      string githubOrg,
+      string telegramGroup,
+      address xPNTsToken,
+      address[] supportedSBTs,
+      uint8 mode,              // AOA=0, Super=1
+      address paymasterAddress,
+      address community,
+      uint256 registeredAt,
+      uint256 lastUpdatedAt,
+      bool isActive,
+      uint256 memberCount
+    ) profile
+  ) external`
+];
+
+// 构建社区档案（无质押！）
+const profile = {
+  name: communityName,
+  description: description,
+  xPNTsToken: xPNTsAddress,
+  supportedSBTs: [sbtAddress],
+  mode: PaymasterMode.INDEPENDENT, // AOA mode
+  paymasterAddress: paymasterAddress,
+  // ... 其他字段由合约设置
+};
+
+// 注册到 Registry v2（纯元数据）
+const tx = await registry.registerCommunity(profile);
+```
+
+**Info Banner**:
+```
+Registry v2.0 只存储社区元数据。
+你的 stGToken 已在 Step 4 质押，将在操作期间自动锁定。
+```
+
+#### 7. 更新配置文件
+
+**文件**: `.env.local`
+```bash
+# Registry v2.0 (Community metadata only - no staking)
+VITE_REGISTRY_V2_ADDRESS=0x6806e4937038e783cA0D3961B7E258A3549A0043
+
+# Legacy Registry v1.2 (ETH staking - deprecated)
+VITE_REGISTRY_ADDRESS=0x838da93c815a6E45Aa50429529da9106C0621eF0
+
+# v2.0 System Contracts (deployed 2025-10-24)
+VITE_GTOKEN_STAKING_ADDRESS=0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2
+VITE_SUPERPAYMASTER_V2_ADDRESS=0xb96d8BC6d771AE5913C8656FAFf8721156AC8141
+VITE_XPNTS_FACTORY_ADDRESS=0x356CF363E136b0880C8F48c9224A37171f375595
+VITE_MYSBT_ADDRESS=0xB330a8A396Da67A1b50903E734750AAC81B0C711
+```
+
+**文件**: `src/config/networkConfig.ts`
+```typescript
+export interface NetworkConfig {
+  contracts: {
+    registry: string;         // v1.2 (legacy)
+    registryV2: string;        // v2.0 (metadata only) ← 新增
+    gTokenStaking: string;     // v2.0 staking contract ← 新增
+    xPNTsFactory: string;      // v2.0 ← 新增
+    mySBT: string;             // v2.0 ← 新增
+    superPaymasterV2: string;  // v2.0 ← 新增
+  }
+}
+```
+
+#### 8. 添加 AOA 模式警告
+
+**文件**: `src/pages/operator/deploy-v2/components/StakeOptionCard.tsx:252-255`
+
+在 `createStandardFlowOption()` 添加:
+```typescript
+warnings: [
+  "Relies on PaymasterV4.1 enhanced contract",
+  "Requires ETH and stGToken resources",
+],
+```
+
+### v2 合约部署地址（Sepolia）
+
+| 合约 | 地址 | 功能 |
+|------|------|------|
+| Registry v2.0 | 0x6806e4937038e783cA0D3961B7E258A3549A0043 | 社区元数据注册 |
+| GTokenStaking | 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2 | GToken 质押与锁定 |
+| SuperPaymasterV2 | 0xb96d8BC6d771AE5913C8656FAFf8721156AC8141 | Super Mode 共享 Paymaster |
+| xPNTsFactory | 0x356CF363E136b0880C8F48c9224A37171f375595 | 社区 Gas Token 工厂 |
+| MySBT | 0xB330a8A396Da67A1b50903E734750AAC81B0C711 | 身份 SBT 合约 |
+
+### 架构迁移对比
+
+**修复前（v1.2 + v2 混用）**:
+- ❌ Step4: 使用 v2 GTokenStaking（0xc3aa...c7b2）
+- ❌ Step6: 使用 v1.2 Registry（0x838d...eF0）- ETH 质押
+- ❌ 架构不一致，会导致部署失败
+
+**修复后（完整 v2）**:
+- ✅ Step4: 使用 v2 GTokenStaking - 质押 GToken → stGToken
+- ✅ Step6: 使用 v2 Registry - 纯元数据注册
+- ✅ 架构统一，质押与注册分离
+
+### 验证结果
+- ✅ Explorer URL 路径已修复（两处）
+- ✅ Paymaster 详情页 JSON 正确解析和显示
+- ✅ 确认 xPNTs 不需要注册到 Paymaster
+- ✅ AOA 流程架构理解正确（质押 ≠ 锁定）
+- ✅ 所有配置文件更新为 v2 地址
+- ✅ Step6_RegisterRegistry_v2.tsx 创建完成
+- ✅ AOA 模式警告添加完成
+
+### 影响范围
+- **部署向导**: Step6 现在使用 v2 纯元数据注册
+- **配置系统**: 支持 v1.2 和 v2 两个 Registry 地址
+- **分析仪表盘**: URL 导航正确
+- **详情页面**: JSON 元数据正确解析
+
+### 文件变更列表
+**修改**:
+- `src/pages/operator/deploy-v2/steps/Step7_Complete.tsx` - 修复 URL
+- `src/pages/analytics/AnalyticsDashboard.tsx` - 修复 URL
+- `src/pages/analytics/PaymasterDetail.tsx` - JSON 解析
+- `src/pages/operator/deploy-v2/components/StakeOptionCard.tsx` - 添加警告
+- `.env.local` - v2 地址
+- `.env.example` - v2 地址
+- `src/config/networkConfig.ts` - v2 合约配置
+
+**新建**:
+- `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx`
+
+### 关键技术要点
+
+**1. Staking vs Locking**:
+- **Staking（质押）**: 用户主动操作，GToken → sGToken，发生在部署时
+- **Locking（锁定）**: 系统自动操作，冻结 sGToken，发生在运行时
+- 两者完全独立，不要混淆！
+
+**2. Registry v2 设计理念**:
+- 纯元数据存储，不涉及资产
+- 质押由 GTokenStaking 专门管理
+- 职责分离，架构更清晰
+
+**3. AOA 部署完整流程**:
+1. Step4: Stake GToken → 获得 stGToken（储蓄）
+2. Step5: Stake ETH to EntryPoint（ERC-4337 标准）
+3. Step6: Register metadata to Registry v2（仅信息）
+4. 运行时: 服务自动调用 lockStake（冻结 stGToken）
+
+### Commits
+- `c4f5639` - fix: 修复 explorer URL 路径和 Paymaster 详情页 JSON 显示
+- `614a108` - feat: Migrate to Registry v2.0 architecture
+
+---
+
 ## 2025-10-25 - Phase 3.2: Step4_DeployResources 组件实现与集成
 
 ### 问题描述
