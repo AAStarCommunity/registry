@@ -6179,3 +6179,126 @@ User asked: "Can all registry pages now use multiple languages?"
 ### 提交 | Commits
 - `6711472` - feat(i18n): Add comprehensive multi-language support infrastructure
 
+
+---
+
+## 2025-10-24: AOA Branding Enhancement & Resource Description Optimization
+
+### 背景 | Background
+用户建议优化文案：
+1. 标题优化：引入 AOA (Asset Oriented Abstraction) 品牌
+2. 资源要求描述优化：区分"长期供给" vs "一次性交互"
+3. 强调核心差异：无离线签名服务器
+
+### 实施 | Implementation
+
+#### 1. 模式名称升级 | Mode Name Upgrade
+
+**标准流程 | Standard Flow:**
+```
+Before: "Standard ERC-4337 Flow"
+After:  "Enhanced ERC-4337 Flow: AOA"
+Subtitle: "Asset Oriented Abstraction - No off-chain signature server, just Your Gas Token"
+Badge: "AOA"
+```
+
+**超级模式 | Super Mode:**
+```
+Before: "GToken Super Mode"
+After:  "Super Mode"
+Subtitle: "AOA and more: No Server, No Contract Deployment"
+Badge: "AOA+"
+```
+
+#### 2. 资源要求优化 | Resource Requirements Enhancement
+
+**核心区别 | Key Distinction:**
+- **长期供给 (long-term supply)**: 需要持续充值和管理
+- **一次性交互 (one-time interaction)**: 只需初始交易的 gas
+
+**标准流程 (Standard Flow):**
+```
+English:
+- ETH (long-term supply) + stGToken
+- Sufficient ETH for contract deployment, EntryPoint stake, and ongoing gas sponsorship
+- ⚠️ Requires continuous ETH supply for multi-chain gas operations
+
+中文:
+- ETH（长期供给）+ stGToken
+- 充足的 ETH 用于合约部署、EntryPoint 质押和持续的 gas 赞助
+- ⚠️ 需要持续的 ETH 供给来支持多链 gas 操作
+```
+
+**超级模式 (Super Mode):**
+```
+English:
+- ETH (one-time interaction) + stGToken + aPNTs (long-term supply)
+- ETH only for initial transaction gas - no ongoing ETH needed
+- aPNTs as gas backing token - protocol handles cross-chain distribution
+- ✅ No continuous ETH management required
+
+中文:
+- ETH（一次性交互）+ stGToken + aPNTs（长期供给）
+- ETH 仅用于初始交互的 gas - 无需持续的 ETH
+- aPNTs 作为 gas 支持代币 - 协议处理跨链分发
+- ✅ 无需持续管理 ETH，aPNTs 处理所有 gas 赞助
+```
+
+#### 3. 更新范围 | Updated Files
+
+1. **src/i18n/locales/en.json** (src/i18n/locales/en.json:50-164)
+   - 新增 `modeNames` 区块包含标题和副标题
+   - 更新资源要求描述
+   - 更新预览步骤标题
+   - 更新选择按钮文本
+
+2. **src/i18n/locales/zh.json** (src/i18n/locales/zh.json:50-164)
+   - 同步英文更新的所有内容
+   - 保持双语一致性
+
+3. **src/pages/operator/deploy-v2/components/StakeOptionCard.tsx** (src/pages/operator/deploy-v2/components/StakeOptionCard.tsx:214-330)
+   - 标题、副标题、徽章更新
+   - 所有步骤、好处、适合场景翻译为英文
+   - 资源要求标签优化（强调 long-term vs one-time）
+
+#### 4. 核心价值主张 | Core Value Propositions
+
+**AOA (Asset Oriented Abstraction) 核心特性：**
+- ✅ 无离线签名服务器 (No off-chain signature server)
+- ✅ 无链上验证复杂度 (No on-chain verify complexity)
+- ✅ 只需您的 Gas Token (Just Your Gas Token)
+
+**Standard vs Super 对比：**
+
+| 维度 | Standard (AOA) | Super (AOA+) |
+|------|----------------|--------------|
+| **ETH 需求** | 长期供给 | 一次性交互 |
+| **合约部署** | 需要部署自己的 Paymaster | 无需部署 |
+| **跨链管理** | 手动管理每条链的 ETH | 协议自动处理 |
+| **签名服务器** | 不需要 | 不需要 |
+| **Gas 支持** | ETH 直接支持 | aPNTs 代币支持 |
+| **控制权** | 100% 自有 | 共享合约 |
+
+### 用户体验改进 | UX Improvements
+
+1. **一目了然的资源需求**
+   - 用户立即知道 ETH 是"一次性"还是"长期供给"
+   - 避免误解资源需求的持续性
+
+2. **品牌识别度**
+   - AOA/AOA+ 徽章清晰区分两种模式
+   - 统一的品牌传达核心技术优势
+
+3. **双语支持**
+   - 完整的英文和中文翻译
+   - 可通过 LanguageToggle (🌐) 切换
+
+### 下一步 | Next Steps
+
+1. 完成 Step1_ConnectAndSelect.tsx 组件的 i18n 集成
+2. 确保 UI 中所有硬编码文本使用翻译 keys
+3. 测试语言切换功能的完整性
+
+### 提交 | Commits
+- `40362ce` - feat: Enhance mode names and resource descriptions with AOA branding
+
