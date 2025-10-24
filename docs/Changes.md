@@ -6086,3 +6086,96 @@ enum SubStep {
 ---
 
 **总结：** 这次优化实现了真正的"条件式资源检查"，避免了之前"检查所有资源 → 再选择模式"的不合理流程。现在用户的体验是：连接钱包 → 选择想要的模式 → 只检查该模式需要的资源。更符合直觉，减少了用户困惑。
+
+---
+
+## 2025-10-24: Multi-Language (i18n) Support Implementation
+
+### 背景 | Background
+用户询问：「registry全部页面，现在可以用多语言了么」
+User asked: "Can all registry pages now use multiple languages?"
+
+### 发现 | Findings
+- i18n 基础设施已存在 (i18next, react-i18next, LanguageToggle 组件)
+- 但翻译文件不完整，大部分页面硬编码英文/中文
+- i18n infrastructure already exists (i18next, react-i18next, LanguageToggle component)
+- But translation files incomplete, most pages hardcoded in English/Chinese
+
+### 实施 | Implementation
+
+#### 1. 翻译文件扩充 | Translation Files Enhancement
+**文件 | Files:**
+- `src/i18n/locales/en.json`
+- `src/i18n/locales/zh.json`
+
+**新增内容 | New Content:**
+- Header 导航和按钮翻译 (header.*)
+- Wizard 流程翻译 (wizard.*)
+- Step1 全部3个子步骤的详细翻译 (step1.substep1/2/3.*)
+  - 钱包连接提示
+  - 模式选择（包含加油站比喻）
+  - 5维度对比表（资源、维护、声誉、部署、适合场景）
+  - 资源验证
+
+#### 2. 组件更新 | Component Updates
+**✅ 已完成 | Completed:**
+
+1. **Header.tsx** (src/components/Header.tsx:Header.tsx:1-3)
+   ```typescript
+   import { useTranslation } from "react-i18next";
+   const { t } = useTranslation();
+   // All navigation items now use t('header.xxx')
+   ```
+
+2. **DeployWizard.tsx** (src/pages/operator/DeployWizard.tsx:179-387)
+   ```typescript
+   const { t } = useTranslation();
+   // Dynamic step creation with i18n
+   const createStepConfigs = (t: (key: string) => string) => { ... }
+   // All wizard UI text now uses t('wizard.xxx')
+   ```
+
+**⚠️ 待完成 | Pending:**
+
+3. **Step1_ConnectAndSelect.tsx** (628行，需要大规模重构)
+   - 文件过大，包含大量硬编码文本
+   - 所有翻译 key 已定义在 en.json/zh.json
+   - 需要将所有硬编码文本替换为 `t()` 调用
+
+4. **其他步骤和页面 | Other Steps and Pages**
+   - Step2-Step7 需要 i18n 集成
+   - Landing Page、Portal pages 需要 i18n
+
+### 当前状态 | Current Status
+
+**可用功能 | Working Features:**
+- ✅ Header 导航栏完全支持中英文切换
+- ✅ Deploy Wizard 主结构（标题、步骤名、网络选择器）支持中英文
+- ✅ LanguageToggle 按钮 (🌐) 已集成在 Header 中
+- ✅ 语言切换持久化到 localStorage
+
+**测试方法 | How to Test:**
+1. 启动开发服务器: `pnpm dev`
+2. 打开浏览器访问应用
+3. 点击 Header 右上角的 🌐 按钮
+4. 观察 Header 导航和 Wizard 标题切换为中文/英文
+
+### 下一步 | Next Steps
+
+1. **短期 | Short-term:**
+   - 重构 Step1_ConnectAndSelect.tsx 使用 i18n
+   - 为 Step2-Step7 添加 i18n 支持
+
+2. **中期 | Medium-term:**
+   - Landing Page i18n
+   - Developer/Operator Portal pages i18n
+   - Footer i18n
+
+3. **长期 | Long-term:**
+   - 支持更多语言 (日文、韩文等)
+   - 提取所有硬编码文本到翻译文件
+   - 设置 i18n 为强制规范
+
+### 提交 | Commits
+- `6711472` - feat(i18n): Add comprehensive multi-language support infrastructure
+
