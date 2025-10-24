@@ -1,3 +1,117 @@
+### 🔧 修复 Switch Account 加载状态和地址更新问题 (2025-10-24)
+
+**用户反馈的两个问题**:
+
+1. **选择新账户后页面仍显示旧地址** - 权限更新后没有正确获取新账户
+2. **两个按钮都显示 loading** - Connect 和 Switch 按钮共享同一个 loading 状态
+
+**问题分析**:
+
+**问题1 - 地址未更新**:
+```typescript
+// ❌ 问题代码
+await window.ethereum.request({
+  method: 'wallet_requestPermissions',
+  params: [{ eth_accounts: {} }]
+});
+
+const accounts = await window.ethereum.request({
+  method: 'eth_accounts'  // 可能返回缓存的旧账户
+});
+```
+
+`wallet_requestPermissions` 执行后，立即调用 `eth_accounts` 可能获取到缓存的旧账户，需要使用 `eth_requestAccounts` 来确保获取新选择的账户。
+
+**问题2 - 共享 loading 状态**:
+```typescript
+// ❌ 问题代码
+const [isLoading, setIsLoading] = useState(false);
+
+// 两个按钮都使用同一个状态
+<button disabled={isLoading}>{isLoading ? 'Loading...' : 'Connect'}</button>
+<button disabled={isLoading}>{isLoading ? 'Loading...' : 'Switch'}</button>
+```
+
+**解决方案**:
+
+**1. 独立的 Loading 状态**:
+```typescript
+// ✅ 为每个按钮创建独立状态
+const [isConnecting, setIsConnecting] = useState(false);
+const [isSwitching, setIsSwitching] = useState(false);
+
+// Connect 按钮
+const handleConnectWallet = async () => {
+  setIsConnecting(true);  // 只设置自己的 loading
+  try {
+    // ... connection logic
+  } finally {
+    setIsConnecting(false);
+  }
+};
+
+// Switch 按钮
+const handleSwitchAccount = async () => {
+  setIsSwitching(true);  // 只设置自己的 loading
+  try {
+    // ... switch logic
+  } finally {
+    setIsSwitching(false);
+  }
+};
+```
+
+**2. 正确获取新账户**:
+```typescript
+// ✅ 修复后的代码
+await window.ethereum.request({
+  method: 'wallet_requestPermissions',
+  params: [{ eth_accounts: {} }]
+});
+
+// 使用 eth_requestAccounts 确保获取新选择的账户
+const accounts = await window.ethereum.request({
+  method: 'eth_requestAccounts'  // 返回用户刚选择的账户
+});
+
+const address = accounts[0];
+setWalletAddress(address);  // 正确更新为新地址
+```
+
+**3. 按钮 UI 更新**:
+```typescript
+// Connect 按钮 - 使用 isConnecting
+<button 
+  disabled={isConnecting || isSwitching}
+  onClick={handleConnectWallet}
+>
+  {isConnecting ? 'Connecting...' : 'Connect MetaMask'}
+</button>
+
+// Switch 按钮 - 使用 isSwitching
+<button 
+  disabled={isConnecting || isSwitching}
+  onClick={handleSwitchAccount}
+>
+  {isSwitching ? 'Switching...' : 'Switch Account'}
+</button>
+```
+
+**修复效果**:
+- ✅ 点击 Switch Account → 只有 Switch 按钮显示 loading
+- ✅ 点击 Connect MetaMask → 只有 Connect 按钮显示 loading
+- ✅ 选择新账户后 → 页面正确显示新地址
+- ✅ 两个按钮在对方操作时都被禁用，防止并发操作
+
+**Git Commit**:
+```
+fix(wallet): Fix Switch Account issues with independent loading states
+
+Commit: 125322d
+```
+
+---
+
 ### 🔧 修复 Switch Account 弹窗问题 (2025-10-24)
 
 **问题**: 用户反馈点击"Switch Account"按钮后，MetaMask 没有弹出账户选择窗口。
