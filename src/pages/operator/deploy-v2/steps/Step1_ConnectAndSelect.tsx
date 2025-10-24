@@ -40,6 +40,8 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<StakeOptionType | null>(null);
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isSwitching, setIsSwitching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkInfo, setNetworkInfo] = useState<{
@@ -90,7 +92,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
   // SubStep 1: Connect Wallet (basic connection only)
   const handleConnectWallet = async () => {
-    setIsLoading(true);
+    setIsConnecting(true);
     setError(null);
 
     try {
@@ -126,13 +128,13 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       setError(errorMessage);
       console.error("Wallet connection error:", err);
     } finally {
-      setIsLoading(false);
+      setIsConnecting(false);
     }
   };
 
   // Force switch account - always show MetaMask account selector
   const handleSwitchAccount = async () => {
-    setIsLoading(true);
+    setIsSwitching(true);
     setError(null);
 
     try {
@@ -147,9 +149,10 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         params: [{ eth_accounts: {} }]
       });
 
-      // After permission is granted, get the accounts
+      // After permission is granted, request accounts to get the newly selected account
+      // wallet_requestPermissions doesn't return accounts, so we need to request them again
       const accounts = await window.ethereum.request({
-        method: 'eth_accounts'
+        method: 'eth_requestAccounts'
       });
 
       if (accounts.length === 0) {
@@ -165,7 +168,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       setError(errorMessage);
       console.error("Account switch error:", err);
     } finally {
-      setIsLoading(false);
+      setIsSwitching(false);
     }
   };
 
@@ -294,9 +297,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               <button
                 className="btn-connect-primary"
                 onClick={handleConnectWallet}
-                disabled={isLoading}
+                disabled={isConnecting || isSwitching}
               >
-                {isLoading ? (
+                {isConnecting ? (
                   <>
                     <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
                   </>
@@ -309,10 +312,10 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               <button
                 className="btn-switch-account"
                 onClick={handleSwitchAccount}
-                disabled={isLoading}
+                disabled={isConnecting || isSwitching}
                 title="Switch to a different MetaMask account"
               >
-                {isLoading ? (
+                {isSwitching ? (
                   <>
                     <span className="spinner">⏳</span> Switching...
                   </>
