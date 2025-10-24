@@ -233,20 +233,55 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             </div>
           )}
 
-          <div className="connect-action">
+          <div className="connect-wallet-container">
+            <div className="connect-wallet-icon">🔐</div>
+            <p className="connect-wallet-prompt">
+              Please connect your MetaMask wallet to get started
+            </p>
             <button
-              className="btn-connect"
+              className="btn-connect-primary"
               onClick={handleConnectWallet}
               disabled={isLoading}
             >
-              {isLoading ? "Connecting..." : "Connect Wallet"}
+              {isLoading ? (
+                <>
+                  <span className="spinner">⏳</span> Connecting...
+                </>
+              ) : (
+                <>
+                  <span className="wallet-icon">🦊</span> Connect MetaMask
+                </>
+              )}
             </button>
+            <p className="connect-wallet-hint">
+              Make sure you have MetaMask installed and are on the correct network
+            </p>
           </div>
 
           <div className="help-section">
-            <div className="help-title">💡 What You'll Need</div>
+            <div className="help-title">💡 What Happens Next?</div>
             <div className="help-content">
-              <p>After connecting, you'll select your deployment mode and check your resources:</p>
+              <div className="help-step">
+                <div className="help-step-number">1</div>
+                <div className="help-step-text">
+                  <strong>Connect Wallet</strong> - Connect your MetaMask wallet
+                </div>
+              </div>
+              <div className="help-step">
+                <div className="help-step-number">2</div>
+                <div className="help-step-text">
+                  <strong>Select Mode</strong> - Choose between Standard Flow or Super Mode
+                </div>
+              </div>
+              <div className="help-step">
+                <div className="help-step-number">3</div>
+                <div className="help-step-text">
+                  <strong>Check Resources</strong> - We'll verify you have the required resources
+                </div>
+              </div>
+            </div>
+            <div className="help-note">
+              <strong>Resource Requirements:</strong>
               <ul>
                 <li><strong>Standard Flow:</strong> ETH + stGToken</li>
                 <li><strong>Super Mode:</strong> ETH + stGToken + aPNTs</li>
@@ -300,21 +335,112 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             </span>
           </div>
 
-          {/* Resource Requirements Info Banner */}
-          <div className="resource-info-banner">
-            <div className="info-icon">💡</div>
-            <div className="info-content">
-              <div className="info-title">Resource Requirements Difference</div>
-              <div className="info-details">
-                <div className="info-item">
-                  <strong>Standard Flow:</strong> Requires <span className="highlight">ETH + stGToken</span>
+          {/* Gas Station Metaphor */}
+          <div className="metaphor-banner">
+            <div className="metaphor-icon">⛽</div>
+            <div className="metaphor-content">
+              <div className="metaphor-title">Gas Station Metaphor: We Help You Build a Paymaster Gas Station</div>
+              <div className="metaphor-comparison">
+                <div className="metaphor-option">
+                  <div className="metaphor-option-title">🏗️ Standard Flow</div>
+                  <p>Use free building materials (open-source code), <strong>build and maintain your own</strong> gas station, register to Registry, and protocol provides customer traffic.</p>
+                  <p className="metaphor-highlight">Gas (ETH) needs to be <strong>purchased and distributed across chains by yourself</strong>.</p>
                 </div>
-                <div className="info-item">
-                  <strong>Super Mode:</strong> Requires <span className="highlight">ETH + stGToken + aPNTs</span>
+                <div className="metaphor-option">
+                  <div className="metaphor-option-title">⚡ Super Mode</div>
+                  <p><strong>No construction needed</strong>. Join SuperPaymaster, provide gas station services, sell your community gas cards (xPNTs).</p>
+                  <p className="metaphor-highlight">Users top up credits to cards. Protocol handles <strong>cross-chain infrastructure, gas purchase & distribution</strong>.</p>
                 </div>
               </div>
-              <div className="info-note">
-                We'll only check the resources you need after you make your selection.
+            </div>
+          </div>
+
+          {/* Detailed Comparison Table */}
+          <div className="comparison-table">
+            <div className="comparison-header">
+              <h3>📊 Comprehensive Comparison: Core Differences</h3>
+            </div>
+
+            <div className="comparison-grid">
+              {/* Resource Requirements */}
+              <div className="comparison-row">
+                <div className="comparison-label">💰 Resource Requirements</div>
+                <div className="comparison-standard">
+                  <strong>ETH + stGToken</strong>
+                  <p className="comparison-detail">Need sufficient ETH for contract deployment and EntryPoint deposit</p>
+                </div>
+                <div className="comparison-super">
+                  <strong>ETH + stGToken + aPNTs</strong>
+                  <p className="comparison-detail">ETH only for gas, aPNTs for gas backing</p>
+                </div>
+              </div>
+
+              {/* Maintenance */}
+              <div className="comparison-row">
+                <div className="comparison-label">🔧 Ongoing Maintenance</div>
+                <div className="comparison-standard">
+                  <strong>Self-Maintained</strong>
+                  <p className="comparison-detail">Purchase ETH yourself and deposit to EntryPoints on each chain</p>
+                  <p className="comparison-detail warning">⚠️ Bear the cost of managing multiple EntryPoint balances across chains</p>
+                </div>
+                <div className="comparison-super">
+                  <strong>Protocol-Managed</strong>
+                  <p className="comparison-detail">Simply deposit aPNTs in SuperPaymaster dashboard</p>
+                  <p className="comparison-detail success">✅ aPNTs already distributed cross-chain. No manual cross-chain operations needed</p>
+                </div>
+              </div>
+
+              {/* Reputation */}
+              <div className="comparison-row">
+                <div className="comparison-label">⭐ Reputation Accumulation</div>
+                <div className="comparison-standard">
+                  <strong>No Reputation</strong>
+                  <p className="comparison-detail">SuperPaymaster provides free registration and smart routing</p>
+                  <p className="comparison-detail warning">⚠️ But NO Reputation accumulation</p>
+                  <p className="comparison-detail">Customers cannot select your service based on Reputation (stability, pricing, etc.)</p>
+                </div>
+                <div className="comparison-super">
+                  <strong>Reputation System</strong>
+                  <p className="comparison-detail success">✅ Accumulate Reputation through service quality</p>
+                  <p className="comparison-detail">Customers can choose your service based on Reputation</p>
+                  <p className="comparison-detail">Higher Reputation = More customer traffic and revenue</p>
+                </div>
+              </div>
+
+              {/* Contract Deployment */}
+              <div className="comparison-row">
+                <div className="comparison-label">🚀 Contract Deployment</div>
+                <div className="comparison-standard">
+                  <strong>Deployment Required</strong>
+                  <p className="comparison-detail">Deploy your own PaymasterV4 contract</p>
+                  <p className="comparison-detail">Full control over contract and funds</p>
+                </div>
+                <div className="comparison-super">
+                  <strong>No Deployment</strong>
+                  <p className="comparison-detail success">✅ Use shared SuperPaymasterV2 contract</p>
+                  <p className="comparison-detail">Launch in 3 seconds</p>
+                </div>
+              </div>
+
+              {/* Best For */}
+              <div className="comparison-row">
+                <div className="comparison-label">🎯 Best For</div>
+                <div className="comparison-standard">
+                  <ul className="comparison-list">
+                    <li>Have abundant ETH funds</li>
+                    <li>Want full control over gas budget</li>
+                    <li>Have technical team to manage cross-chain balances</li>
+                    <li>Don't care about Reputation accumulation</li>
+                  </ul>
+                </div>
+                <div className="comparison-super">
+                  <ul className="comparison-list">
+                    <li>Quick launch for community Paymaster</li>
+                    <li>Don't want to handle cross-chain maintenance</li>
+                    <li>Want to accumulate Reputation</li>
+                    <li>Focus on community operations over tech</li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
