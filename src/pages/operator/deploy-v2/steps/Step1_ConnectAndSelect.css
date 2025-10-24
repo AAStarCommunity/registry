@@ -54,7 +54,7 @@
 }
 
 .substep-indicator.completed .substep-number {
-  background: var(--color-success);
+  background: #4caf50;  /* Green background for completed state */
   color: white;
 }
 
