@@ -55,15 +55,26 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     const handleAccountsChanged = (accounts: string[]) => {
       console.log('🔄 Account changed detected:', accounts[0]);
       if (accounts.length > 0) {
-        setWalletAddress(accounts[0]);
-        // If user is already past wallet connection, stay on current step
-        // Otherwise, proceed to next step
+        const newAddress = accounts[0];
+        setWalletAddress(newAddress);
+
+        // Clear old wallet status when account changes
+        setWalletStatus(null);
+
+        // Handle different substeps
         if (subStep === SubStep.ConnectWallet) {
+          // User switched account before connecting - proceed to next step
           setSubStep(SubStep.SelectOption);
+        } else if (subStep === SubStep.CheckResources && selectedOption) {
+          // User switched account while checking resources - recheck with new account
+          console.log('🔄 Rechecking resources for new account...');
+          checkResourcesForOption(selectedOption);
         }
+        // If on SelectOption step, just update address and let user continue
       } else {
         // User disconnected wallet
         setWalletAddress(null);
+        setWalletStatus(null);
         setSubStep(SubStep.ConnectWallet);
       }
     };
@@ -73,7 +84,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     return () => {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
     };
-  }, [subStep]);
+  }, [subStep, selectedOption]);
 
   // Test mode auto-setup
   useEffect(() => {
@@ -184,17 +195,27 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       // Define different requirements based on option
       const requirements = option === 'standard'
         ? {
-            requiredETH: config.requirements.minEthDeploy, // 0.1 ETH for deployment + stake
+            requiredETH: config.requirements.minEthStandardFlow, // 0.1 ETH for deployment + stake
             requiredGToken: config.requirements.minGTokenStake, // 100 GToken
             requiredPNTs: "0", // Standard flow doesn't need PNTs
+            requiredAPNTs: "0", // Standard flow doesn't need aPNTs
+            gTokenAddress: config.contracts.gToken,
+            pntAddress: config.contracts.pntToken,
+            aPNTAddress: config.contracts.pntToken, // Using same address for now
           }
         : {
-            requiredETH: "0.02", // Super mode only needs small ETH for gas
+            requiredETH: config.requirements.minEthDeploy, // Super mode only needs small ETH for gas
             requiredGToken: config.requirements.minGTokenStake, // 100 GToken
             requiredPNTs: config.requirements.minPntDeposit, // 1000 PNTs
+            requiredAPNTs: config.requirements.minPntDeposit, // Using same requirement for aPNTs
+            gTokenAddress: config.contracts.gToken,
+            pntAddress: config.contracts.pntToken,
+            aPNTAddress: config.contracts.pntToken, // Using same address for now
           };
 
+      console.log('💰 Checking wallet resources with config:', requirements);
       const status = await checkWalletStatus(requirements);
+      console.log('✅ Wallet status retrieved:', status);
       setWalletStatus(status);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Failed to check wallet";
