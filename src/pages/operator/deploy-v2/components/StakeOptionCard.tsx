@@ -249,6 +249,10 @@ export function createStandardFlowOption(
       "No off-chain signature server needed",
       "Higher protocol compatibility for long-term operation",
     ],
+    warnings: [
+      "Relies on PaymasterV4.1 enhanced contract",
+      "Requires ETH and stGToken resources",
+    ],
     suitable: [
       "Have sufficient ETH for long-term operations",
       "Want complete control over gas budgets",

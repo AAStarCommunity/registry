@@ -14,13 +14,18 @@ export interface NetworkConfig {
   // Contract addresses
   contracts: {
     paymasterV4: string;
-    registry: string;
+    registry: string; // Legacy v1.2 (ETH staking)
+    registryV2: string; // v2.0 (metadata only)
     pntToken: string;
     gToken: string;
+    gTokenStaking: string; // v2.0 staking contract
     gasTokenFactory: string;
     sbtContract: string;
     usdtContract: string;
     entryPointV07: string;
+    xPNTsFactory: string; // v2.0
+    mySBT: string; // v2.0
+    superPaymasterV2: string; // v2.0
   };
 
   // Resource acquisition links
@@ -51,12 +56,17 @@ const sepoliaConfig: NetworkConfig = {
   contracts: {
     paymasterV4: import.meta.env.VITE_PAYMASTER_V4_ADDRESS || "0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445",
     registry: import.meta.env.VITE_REGISTRY_ADDRESS || "0x838da93c815a6E45Aa50429529da9106C0621eF0",
+    registryV2: import.meta.env.VITE_REGISTRY_V2_ADDRESS || "0x6806e4937038e783cA0D3961B7E258A3549A0043",
     pntToken: import.meta.env.VITE_PNT_TOKEN_ADDRESS || "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
-    gToken: import.meta.env.VITE_GTOKEN_ADDRESS || "0x868F843723a98c6EECC4BF0aF3352C53d5004147",
+    gToken: import.meta.env.VITE_GTOKEN_ADDRESS || "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35",
+    gTokenStaking: import.meta.env.VITE_GTOKEN_STAKING_ADDRESS || "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2",
     gasTokenFactory: import.meta.env.VITE_GASTOKEN_FACTORY_ADDRESS || "0x6720Dc8ce5021bC6F3F126054556b5d3C125101F",
     sbtContract: import.meta.env.VITE_SBT_CONTRACT_ADDRESS || "0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f",
     usdtContract: import.meta.env.VITE_USDT_CONTRACT_ADDRESS || "0x14EaC6C3D49AEDff3D59773A7d7bfb50182bCfDc",
     entryPointV07: import.meta.env.VITE_ENTRYPOINT_V07_ADDRESS || "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    xPNTsFactory: import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || "0x356CF363E136b0880C8F48c9224A37171f375595",
+    mySBT: import.meta.env.VITE_MYSBT_ADDRESS || "0xB330a8A396Da67A1b50903E734750AAC81B0C711",
+    superPaymasterV2: import.meta.env.VITE_SUPERPAYMASTER_V2_ADDRESS || "0xb96d8BC6d771AE5913C8656FAFf8721156AC8141",
   },
 
   resources: {
