@@ -60,7 +60,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
       <div className="stake-option-header">
         <div className="stake-option-title-section">
           <h3>{option.title}</h3>
-          {option.recommended && <span className="badge recommended">推荐</span>}
+          {option.recommended && <span className="badge recommended">Recommended</span>}
           {option.badge && !option.recommended && (
             <span className="badge">{option.badge}</span>
           )}
@@ -70,7 +70,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
 
       {/* Requirements Section */}
       <div className="stake-option-section">
-        <h4>📋 资源要求</h4>
+        <h4>📋 Resource Requirements</h4>
         <div className="requirements-list">
           {option.requirements.map((req, index) => (
             <div
@@ -90,10 +90,10 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
           <div className="missing-resources-warning">
             <span className="warning-icon">⚠️</span>
             <span>
-              还需 {missingCount} 项资源。
+              Need {missingCount} more resource{missingCount > 1 ? 's' : ''}.{' '}
               {option.type === "standard" && (
                 <a href="/get-gtoken" target="_blank" rel="noopener noreferrer">
-                  获取 GToken
+                  Get GToken
                 </a>
               )}
               {option.type === "super" && (
@@ -103,11 +103,11 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    获取 GToken
+                    Get GToken
                   </a>{" "}
                   |{" "}
                   <a href="/get-pnts" target="_blank" rel="noopener noreferrer">
-                    获取 PNTs
+                    Get PNTs
                   </a>
                 </>
               )}
@@ -118,7 +118,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
 
       {/* Steps Section */}
       <div className="stake-option-section">
-        <h4>📝 部署步骤</h4>
+        <h4>📝 Deployment Steps</h4>
         <ol className="steps-list">
           {option.steps.map((step, index) => (
             <li key={index}>{step}</li>
@@ -128,7 +128,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
 
       {/* Benefits Section */}
       <div className="stake-option-section">
-        <h4>✨ 优势</h4>
+        <h4>✨ Advantages</h4>
         <ul className="benefits-list">
           {option.benefits.map((benefit, index) => (
             <li key={index}>{benefit}</li>
@@ -139,7 +139,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
       {/* Warnings (if any) */}
       {option.warnings && option.warnings.length > 0 && (
         <div className="stake-option-section warnings">
-          <h4>⚠️ 注意事项</h4>
+          <h4>⚠️ Important Notes</h4>
           <ul className="warnings-list">
             {option.warnings.map((warning, index) => (
               <li key={index}>{warning}</li>
@@ -150,7 +150,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
 
       {/* Suitable For Section */}
       <div className="stake-option-section">
-        <h4>🎯 适合场景</h4>
+        <h4>🎯 Best For</h4>
         <ul className="suitable-list">
           {option.suitable.map((scenario, index) => (
             <li key={index}>{scenario}</li>
@@ -170,13 +170,13 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
             if (!disabled) onSelect();
           }}
         >
-          {selected ? "✓ 已选择" : disabled ? "不可用" : "选择此方案"}
+          {selected ? "✓ Selected" : disabled ? "Unavailable" : "Select This Option"}
         </button>
 
         {canProceed && (
           <div className="ready-indicator">
             <span className="ready-icon">✓</span>
-            <span>资源充足，可以开始部署</span>
+            <span>Resources ready, proceed with deployment</span>
           </div>
         )}
       </div>
@@ -191,7 +191,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
       {/* Disabled Overlay */}
       {disabled && (
         <div className="disabled-overlay">
-          <span>此方案暂不可用</span>
+          <span>This option is currently unavailable</span>
         </div>
       )}
     </div>
