@@ -301,8 +301,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <div className="switch-account-hint">
               <span className="hint-icon">💡</span>
               <div className="hint-content">
-                <strong>Want to use a different account?</strong>
-                <p>Switch your account in MetaMask extension, and this page will automatically update.</p>
+                <strong>About Account Selection:</strong>
+                <p><strong>First time connecting?</strong> Click the button above - MetaMask will let you choose which account to connect.</p>
+                <p><strong>Want to switch accounts?</strong> Change your account in MetaMask extension, and this page will update automatically.</p>
               </div>
             </div>
           </div>
