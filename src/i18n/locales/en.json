@@ -9,6 +9,167 @@
     "cancel": "Cancel",
     "confirm": "Confirm"
   },
+  "header": {
+    "home": "Home",
+    "operators": "Operators",
+    "explorer": "Explorer",
+    "developers": "Developers",
+    "github": "GitHub",
+    "launchPaymaster": "Launch Paymaster"
+  },
+  "wizard": {
+    "title": "Deploy Your Paymaster",
+    "subtitle": "Complete {{totalSteps}}-step wizard to deploy and register your community Paymaster",
+    "selectNetwork": "Select Network:",
+    "chainId": "Chain ID",
+    "testnetBadge": "TESTNET",
+    "mainnetBadge": "MAINNET",
+    "needHelp": "💡 Need Help?",
+    "deploymentGuide": "📚 Read the Deployment Guide",
+    "steps": {
+      "connectAndSelect": "Connect & Select Mode",
+      "config": "Configuration",
+      "deploy": "Deploy Paymaster",
+      "stake": "Stake",
+      "register": "Register to Registry",
+      "complete": "Complete"
+    }
+  },
+  "step1": {
+    "substep1": {
+      "title": "Connect Your Wallet",
+      "description": "Please connect your MetaMask wallet to get started. Make sure you're on the correct network.",
+      "connectPrompt": "Please connect your MetaMask wallet to get started",
+      "connectButton": "Connect MetaMask",
+      "connecting": "Connecting...",
+      "connectHint": "Make sure you have MetaMask installed and are on the correct network"
+    },
+    "substep2": {
+      "title": "Choose Your Deployment Mode",
+      "description": "Select the deployment mode that best fits your needs. We provide two distinct approaches with different resource requirements and operational characteristics.",
+      "metaphor": {
+        "icon": "⛽",
+        "title": "Gas Station Metaphor: We Help You Build a Paymaster Gas Station",
+        "standard": {
+          "title": "🏗️ Standard Flow",
+          "description": "Use free building materials (open-source code), **build and maintain your own** gas station on each supported blockchain. Once built, you have **full ownership and 100% control**.",
+          "highlight": "Gas (ETH) needs to be **purchased and distributed across chains by yourself**."
+        },
+        "super": {
+          "title": "⚡ Super Mode",
+          "description": "**No construction needed**. Join SuperPaymaster shared gas station network (like joining a franchise chain). Protocol handles infrastructure, maintenance, and cross-chain operations.",
+          "highlight": "Protocol handles **cross-chain infrastructure, gas purchase & distribution**."
+        }
+      },
+      "comparisonTable": {
+        "title": "Comprehensive Comparison",
+        "dimensions": {
+          "resources": "💰 Resource Requirements",
+          "maintenance": "🔧 Ongoing Maintenance",
+          "reputation": "⭐ Reputation Accumulation",
+          "deployment": "🚀 Contract Deployment",
+          "bestFor": "🎯 Best For"
+        },
+        "standard": {
+          "resources": {
+            "title": "Self-Funded",
+            "detail1": "Need ETH for deployment + Stake + Deposit",
+            "detail2": "Need stGToken for governance stake",
+            "warning": "⚠️ Higher ETH requirement upfront"
+          },
+          "maintenance": {
+            "title": "Self-Maintained",
+            "detail1": "Purchase ETH yourself and deposit to EntryPoints on each chain",
+            "detail2": "⚠️ Bear the cost of managing multiple EntryPoint balances across chains"
+          },
+          "reputation": {
+            "title": "No Reputation",
+            "detail1": "⚠️ But NO Reputation accumulation",
+            "detail2": "Customers cannot select your service based on Reputation"
+          },
+          "deployment": {
+            "title": "Deploy Your Own",
+            "detail1": "Full control over your Paymaster contract",
+            "detail2": "Can customize logic and parameters",
+            "success": "✅ 100% ownership and control"
+          },
+          "bestFor": {
+            "item1": "Already have sufficient ETH funds",
+            "item2": "Want complete control over gas budgets",
+            "item3": "Need high degree of protocol compatibility",
+            "item4": "Plan to run Paymaster long-term"
+          }
+        },
+        "super": {
+          "resources": {
+            "title": "Multi-Asset",
+            "detail1": "Minimal ETH (only for gas fees)",
+            "detail2": "Need stGToken (Stake + Lock)",
+            "detail3": "Need aPNTs (Gas Backing)",
+            "success": "✅ Lower ETH requirement, leverage stGToken + aPNTs"
+          },
+          "maintenance": {
+            "title": "Protocol-Managed",
+            "detail1": "Simply deposit aPNTs in SuperPaymaster dashboard",
+            "detail2": "✅ aPNTs already distributed cross-chain. No manual cross-chain operations needed"
+          },
+          "reputation": {
+            "title": "Reputation System",
+            "detail1": "✅ Accumulate Reputation through service quality",
+            "detail2": "Higher Reputation = More customer traffic and revenue"
+          },
+          "deployment": {
+            "title": "Use Shared Contract",
+            "detail1": "Join SuperPaymasterV2 shared contract",
+            "detail2": "Protocol manages infrastructure",
+            "warning": "⚠️ Rely on shared infrastructure"
+          },
+          "bestFor": {
+            "item1": "Quickly launch community Paymaster",
+            "item2": "Don't want to deploy and maintain contracts",
+            "item3": "Have sufficient stGToken and aPNTs",
+            "item4": "Focus on community operations rather than tech"
+          }
+        }
+      },
+      "previewSteps": {
+        "title": "Preview: What Happens After You Select?",
+        "standard": {
+          "title": "Standard Flow - {{totalSteps}} Steps",
+          "step1": "Configuration",
+          "step2": "Deploy Paymaster Contract",
+          "step3": "Stake ETH to EntryPoint",
+          "step4": "Stake stGToken to Governance",
+          "step5": "Register to Registry",
+          "step6": "Complete!"
+        },
+        "super": {
+          "title": "Super Mode - {{totalSteps}} Steps",
+          "step1": "Configuration",
+          "step2": "Stake stGToken to Governance & Register",
+          "step3": "Deposit aPNTs",
+          "step4": "Register to Registry",
+          "step5": "Complete!"
+        }
+      },
+      "selectButton": {
+        "standard": "Select Standard Flow",
+        "super": "Select Super Mode"
+      }
+    },
+    "substep3": {
+      "title": "Verify Resource Requirements",
+      "description": "Based on your selection, verify that you have the necessary resources. You can acquire missing resources from the provided links.",
+      "walletConnected": "Wallet Connected",
+      "selectedMode": "Selected Mode:",
+      "modeStandard": "Standard Flow",
+      "modeSuper": "Super Mode",
+      "resourceCheck": "Resource Check",
+      "checkingWallet": "Checking wallet resources...",
+      "proceedButton": "Proceed to Configuration →",
+      "notReady": "Please ensure all required resources are met"
+    }
+  },
   "step3": {
     "title": "Choose Stake Option",
     "description": "Based on your wallet resources, choose the most suitable staking flow. We'll provide smart recommendations based on your current balance.",

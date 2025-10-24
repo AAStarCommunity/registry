@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './DeployWizard.css';
 
 // Import step components
@@ -119,27 +120,34 @@ export interface StepConfig {
   stepKey: string; // Unique identifier for routing
 }
 
-// Common steps (all users go through these)
-const COMMON_STEPS: StepConfig[] = [
-  { id: 1, title: 'Connect & Select Mode', icon: '🔌', stepKey: 'connectAndSelect' },
-];
+/**
+ * Create step configs with i18n translation keys
+ */
+const createStepConfigs = (t: (key: string) => string) => {
+  // Common steps (all users go through these)
+  const COMMON_STEPS: StepConfig[] = [
+    { id: 1, title: t('wizard.steps.connectAndSelect'), icon: '🔌', stepKey: 'connectAndSelect' },
+  ];
 
-// Standard flow specific steps (6 total)
-const STANDARD_FLOW_STEPS: StepConfig[] = [
-  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
-  { id: 3, title: 'Deploy Paymaster', icon: '🚀', stepKey: 'deploy' },
-  { id: 4, title: 'Stake', icon: '🔒', stepKey: 'stake' },
-  { id: 5, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
-  { id: 6, title: 'Complete', icon: '✅', stepKey: 'complete' },
-];
+  // Standard flow specific steps (6 total)
+  const STANDARD_FLOW_STEPS: StepConfig[] = [
+    { id: 2, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
+    { id: 3, title: t('wizard.steps.deploy'), icon: '🚀', stepKey: 'deploy' },
+    { id: 4, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
+    { id: 5, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
+    { id: 6, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
+  ];
 
-// Super mode specific steps (5 total - no deployment)
-const SUPER_MODE_STEPS: StepConfig[] = [
-  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
-  { id: 3, title: 'Stake', icon: '🔒', stepKey: 'stake' },
-  { id: 4, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
-  { id: 5, title: 'Complete', icon: '✅', stepKey: 'complete' },
-];
+  // Super mode specific steps (5 total - no deployment)
+  const SUPER_MODE_STEPS: StepConfig[] = [
+    { id: 2, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
+    { id: 3, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
+    { id: 4, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
+    { id: 5, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
+  ];
+
+  return { COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS };
+};
 
 /**
  * Get SuperPaymaster address from network config
@@ -152,7 +160,12 @@ function getSuperPaymasterAddress(): string {
 /**
  * Generate steps based on selected stake option
  */
-function getStepsForOption(option: 'standard' | 'super' | undefined): StepConfig[] {
+function getStepsForOption(
+  option: 'standard' | 'super' | undefined,
+  t: (key: string) => string
+): StepConfig[] {
+  const { COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS } = createStepConfigs(t);
+
   if (!option) {
     // Before selection, only show common steps
     return COMMON_STEPS;
@@ -164,8 +177,9 @@ function getStepsForOption(option: 'standard' | 'super' | undefined): StepConfig
 }
 
 export function DeployWizard() {
+  const { t } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
-  const [steps, setSteps] = useState<StepConfig[]>(COMMON_STEPS);
+  const [steps, setSteps] = useState<StepConfig[]>(() => createStepConfigs(t).COMMON_STEPS);
   const [isTestMode, setIsTestMode] = useState(false);
   const [config, setConfig] = useState<DeployConfig>({
     network: 'sepolia', // Default to Sepolia testnet
@@ -212,7 +226,7 @@ export function DeployWizard() {
         stakeOption: 'standard', // Auto-select standard flow
         resourcesReady: true,
       }));
-      setSteps(getStepsForOption('standard'));
+      setSteps(getStepsForOption('standard', t));
       setCurrentStep(2); // Skip to Step 2: Configuration
       console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
     }
@@ -238,7 +252,7 @@ export function DeployWizard() {
   ) => {
     console.log(`✅ User selected: ${stakeOption} mode with wallet ${walletStatus.address}`);
     setConfig((prev) => ({ ...prev, walletStatus, stakeOption }));
-    setSteps(getStepsForOption(stakeOption));
+    setSteps(getStepsForOption(stakeOption, t));
     handleNext();
   };
 
@@ -368,15 +382,15 @@ export function DeployWizard() {
   return (
     <div className="deploy-wizard">
       <div className="wizard-header">
-        <h1 className="wizard-title">Deploy Your Paymaster</h1>
+        <h1 className="wizard-title">{t('wizard.title')}</h1>
         <p className="wizard-subtitle">
-          Complete {steps.length}-step wizard to deploy and register your community Paymaster
+          {t('wizard.subtitle', { totalSteps: steps.length })}
         </p>
       </div>
 
       <div className="network-selector">
         <label htmlFor="network-select" className="network-label">
-          Select Network:
+          {t('wizard.selectNetwork')}
         </label>
         <select
           id="network-select"
@@ -395,13 +409,13 @@ export function DeployWizard() {
         </select>
         <div className="network-info">
           <span className="network-chain-id">
-            Chain ID: {SUPPORTED_NETWORKS[config.network].chainId}
+            {t('wizard.chainId')}: {SUPPORTED_NETWORKS[config.network].chainId}
           </span>
           {SUPPORTED_NETWORKS[config.network].isTestnet && (
-            <span className="network-badge testnet">TESTNET</span>
+            <span className="network-badge testnet">{t('wizard.testnetBadge')}</span>
           )}
           {!SUPPORTED_NETWORKS[config.network].isTestnet && (
-            <span className="network-badge mainnet">MAINNET</span>
+            <span className="network-badge mainnet">{t('wizard.mainnetBadge')}</span>
           )}
         </div>
       </div>
@@ -433,11 +447,11 @@ export function DeployWizard() {
       <div className="wizard-content">{renderStepContent()}</div>
 
       <div className="wizard-help">
-        <h3>💡 Need Help?</h3>
+        <h3>{t('wizard.needHelp')}</h3>
         <ul>
           <li>
             <a href="/launch-tutorial" target="_blank" rel="noopener noreferrer">
-              📚 Read the Deployment Guide
+              {t('wizard.deploymentGuide')}
             </a>
           </li>
         </ul>
