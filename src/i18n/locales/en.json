@@ -172,7 +172,7 @@
       "modeSuper": "Super Mode",
       "resourceCheck": "Resource Check",
       "checkingWallet": "Checking wallet resources...",
-      "proceedButton": "Proceed to Configuration →",
+      "proceedButton": "Next → Configuration",
       "notReady": "Please ensure all required resources are met"
     }
   },

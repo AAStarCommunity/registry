@@ -314,97 +314,13 @@ export function Step2_ConfigForm({ onNext, onBack }: Step2Props) {
           </div>
         </div>
 
-        {/* Gas to USD Rate (with history) */}
-        <div className="form-group" ref={gasRateRef}>
-          <label htmlFor="gasToUSDRate">
-            Gas to USD Rate (USD/ETH)
-            {gasRateHistory.length > 0 && (
-              <button
-                type="button"
-                className="history-toggle"
-                onClick={() =>
-                  setOpenDropdown(openDropdown === "gasRate" ? null : "gasRate")
-                }
-              >
-                📋 History
-              </button>
-            )}
-          </label>
-          <input
-            type="text"
-            id="gasToUSDRate"
-            value={config.gasToUSDRate}
-            onChange={(e) => handleChange("gasToUSDRate", e.target.value)}
-            onBlur={() => handleBlur("gasToUSDRate")}
-            onFocus={() =>
-              gasRateHistory.length > 0 && setOpenDropdown("gasRate")
-            }
-            placeholder="4500"
-            className={errors.gasToUSDRate ? "error" : ""}
-          />
-          {openDropdown === "gasRate" && gasRateHistory.length > 0 && (
-            <HistoryDropdown
-              history={gasRateHistory}
-              onSelect={(value) => handleHistorySelect("gasRate", value)}
-              onClear={() => handleHistoryClear("gasRate")}
-              isOpen={true}
-              onClose={() => setOpenDropdown(null)}
-            />
-          )}
-          {errors.gasToUSDRate && (
-            <div className="error-message">{errors.gasToUSDRate}</div>
-          )}
-          <div className="field-help">
-            Current ETH price in USD (default: 4500)
-          </div>
-        </div>
+        {/* Gas to USD Rate (with history) - HIDDEN, using default value 4500 for calculations */}
+        {/* Future: Will fetch from Chainlink oracle on-chain */}
+        <input type="hidden" value={config.gasToUSDRate} />
 
-        {/* PNT Price USD (with history) */}
-        <div className="form-group" ref={pntPriceRef}>
-          <label htmlFor="pntPriceUSD">
-            PNT Price (USD)
-            {pntPriceHistory.length > 0 && (
-              <button
-                type="button"
-                className="history-toggle"
-                onClick={() =>
-                  setOpenDropdown(
-                    openDropdown === "pntPrice" ? null : "pntPrice",
-                  )
-                }
-              >
-                📋 History
-              </button>
-            )}
-          </label>
-          <input
-            type="text"
-            id="pntPriceUSD"
-            value={config.pntPriceUSD}
-            onChange={(e) => handleChange("pntPriceUSD", e.target.value)}
-            onBlur={() => handleBlur("pntPriceUSD")}
-            onFocus={() =>
-              pntPriceHistory.length > 0 && setOpenDropdown("pntPrice")
-            }
-            placeholder="0.02"
-            className={errors.pntPriceUSD ? "error" : ""}
-          />
-          {openDropdown === "pntPrice" && pntPriceHistory.length > 0 && (
-            <HistoryDropdown
-              history={pntPriceHistory}
-              onSelect={(value) => handleHistorySelect("pntPrice", value)}
-              onClear={() => handleHistoryClear("pntPrice")}
-              isOpen={true}
-              onClose={() => setOpenDropdown(null)}
-            />
-          )}
-          {errors.pntPriceUSD && (
-            <div className="error-message">{errors.pntPriceUSD}</div>
-          )}
-          <div className="field-help">
-            Current PNT token price in USD (default: 0.02)
-          </div>
-        </div>
+        {/* PNT Price USD (with history) - HIDDEN, using default value 0.02 for calculations */}
+        {/* Future: Will fetch from swap contract with periodic price updates */}
+        <input type="hidden" value={config.pntPriceUSD} />
 
         {/* Service Fee Rate */}
         <div className="form-group">
@@ -446,9 +362,9 @@ export function Step2_ConfigForm({ onNext, onBack }: Step2Props) {
           </div>
         </div>
 
-        {/* Min Token Balance */}
+        {/* Min Gas Token Balance */}
         <div className="form-group">
-          <label htmlFor="minTokenBalance">Min Token Balance (PNT)</label>
+          <label htmlFor="minTokenBalance">Min Gas Token Balance (xPNTs)</label>
           <input
             type="text"
             id="minTokenBalance"
@@ -462,7 +378,7 @@ export function Step2_ConfigForm({ onNext, onBack }: Step2Props) {
             <div className="error-message">{errors.minTokenBalance}</div>
           )}
           <div className="field-help">
-            Minimum PNT balance required for users
+            Minimum xPNTs balance required for end users
           </div>
         </div>
 
