@@ -5641,3 +5641,205 @@ fix: 修复 Step 1-2-3 导航问题 (Deploy Wizard E2E)
 Commit: cf78c95
 ```
 
+
+---
+
+## 🚀 DeployWizard 流程重构 (2025-10-24)
+
+### 任务背景
+
+在实施 Deploy Wizard 过程中，发现了一个关键的逻辑漏洞：
+
+**问题**：原流程设计
+```
+Step 1: Connect Wallet
+Step 2: Configuration
+Step 3: Deploy Paymaster ← 所有人都要部署
+Step 4: Select Stake Option ← 太晚了！
+```
+
+- Super Mode 用户不需要部署 Paymaster，而是使用共享的 SuperPaymaster
+- 但当前流程强制所有用户先部署（Step 3），再选择模式（Step 4）
+- **顺序反了！** 应该先选择模式，再根据模式决定是否部署
+
+### 解决方案：方案 B - 动态步骤流程
+
+#### 方案对比
+
+| | 方案 A（温和） | 方案 B（彻底）✅ |
+|---|---|---|
+| 核心思路 | 保持 7 步，Step 3 变条件性 | 动态生成步骤序列 |
+| 用户体验 | ❌ Super 用户看到"跳过" | ✅ 只看到需要的步骤 |
+| 代码维护性 | ⚠️ 需特殊判断逻辑 | ✅ 声明式配置 |
+| 工作量 | 🟢 小（1-2h） | 🟡 中（3-4h） |
+
+**选择**：方案 B - 长期收益更大，代码架构更清晰
+
+#### 新流程结构
+
+```
+公共步骤（所有用户）:
+├─ Step 1: Connect Wallet
+└─ Step 2: Select Stake Option ← 决策点
+
+Standard Flow (7步):        Super Mode (6步):
+3. Configuration            3. Configuration
+4. Deploy Paymaster         4. Stake to SuperPaymaster
+5. Stake to EntryPoint      5. Register to Registry
+6. Register to Registry     6. Complete
+7. Complete
+```
+
+### 技术实现
+
+#### 1. 动态步骤配置
+
+```typescript
+// Step configuration interface
+interface StepConfig {
+  id: number;
+  title: string;
+  icon: string;
+  stepKey: string; // 路由标识
+}
+
+// 公共步骤
+const COMMON_STEPS = [
+  { id: 1, title: 'Connect Wallet', stepKey: 'connect' },
+  { id: 2, title: 'Select Stake Option', stepKey: 'selectOption' },
+];
+
+// Standard 流程特定步骤
+const STANDARD_FLOW_STEPS = [
+  { id: 3, title: 'Configuration', stepKey: 'config' },
+  { id: 4, title: 'Deploy Paymaster', stepKey: 'deploy' },
+  { id: 5, title: 'Stake', stepKey: 'stake' },
+  { id: 6, title: 'Register', stepKey: 'register' },
+  { id: 7, title: 'Complete', stepKey: 'complete' },
+];
+
+// Super Mode 特定步骤（无部署）
+const SUPER_MODE_STEPS = [
+  { id: 3, title: 'Configuration', stepKey: 'config' },
+  { id: 4, title: 'Stake', stepKey: 'stake' },
+  { id: 5, title: 'Register', stepKey: 'register' },
+  { id: 6, title: 'Complete', stepKey: 'complete' },
+];
+
+function getStepsForOption(option: 'standard' | 'super'): StepConfig[] {
+  return option === 'standard'
+    ? [...COMMON_STEPS, ...STANDARD_FLOW_STEPS]
+    : [...COMMON_STEPS, ...SUPER_MODE_STEPS];
+}
+```
+
+#### 2. 动态状态管理
+
+```typescript
+const [steps, setSteps] = useState<StepConfig[]>(COMMON_STEPS);
+
+const handleSelectOptionComplete = (option: 'standard' | 'super') => {
+  setConfig((prev) => ({ ...prev, stakeOption: option }));
+  setSteps(getStepsForOption(option)); // 动态更新步骤序列
+  handleNext();
+};
+```
+
+#### 3. 基于 stepKey 的路由
+
+```typescript
+const renderStepContent = () => {
+  const stepKey = steps[currentStep - 1]?.stepKey;
+  
+  switch (stepKey) {
+    case 'connect': return <Step1_ConnectWallet ... />;
+    case 'selectOption': return <Step4_StakeOption ... />;
+    case 'config': return <Step2_ConfigForm ... />;
+    case 'deploy': return <Step3_DeployPaymaster ... />;
+    case 'stake':
+      // Super Mode 使用共享地址，Standard 使用部署的地址
+      const paymasterAddr = config.stakeOption === 'standard'
+        ? config.paymasterAddress
+        : getSuperPaymasterAddress();
+      return <Step5_Stake paymasterAddress={paymasterAddr} ... />;
+    // ...
+  }
+};
+```
+
+#### 4. SuperPaymaster 地址配置
+
+```typescript
+function getSuperPaymasterAddress(): string {
+  const networkConfig = getCurrentNetworkConfig();
+  return networkConfig.contracts.paymasterV4;
+  // Sepolia: 0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445
+}
+```
+
+### 文案优化
+
+同时优化了 Step 1 的资源说明文案：
+
+| 原文案 | 新文案 | 说明 |
+|---|---|---|
+| GToken | **stGToken** | Staked GToken 凭证 |
+| PNTs | **aPNTs** | Advanced PNTs |
+| 描述模糊 | Lock 30+ stGToken to join SuperPaymaster (more = higher reputation) | 清晰的数量和用途说明 |
+| - | 1000+ aPNTs required (purchase from AAStar Community) | 明确获取渠道 |
+
+### 核心优势
+
+✅ **用户体验最佳**
+- Super Mode 用户只需 6 步，不会看到无关的部署步骤
+- 进度条动态显示正确的步骤总数
+
+✅ **代码架构清晰**
+- 声明式步骤配置，完全解耦
+- 步骤渲染逻辑使用 switch statement，易于维护
+
+✅ **可扩展性强**
+- 未来添加新模式（如 Ultra Mode）只需新增配置数组
+- 符合开闭原则
+
+✅ **类型安全**
+- 完整的 TypeScript 类型支持
+- StepConfig 接口确保步骤配置一致性
+
+### 向后兼容
+
+- ✅ testMode 继续工作（自动选择 standard 模式，跳到 Step 3）
+- ✅ 所有现有步骤组件无需修改
+- ✅ 进度条组件自动适配动态步骤
+
+### 代码变更
+
+**文件修改**：
+1. `src/pages/operator/DeployWizard.tsx` - 完全重构为动态架构
+2. `src/pages/operator/deploy-v2/components/WalletStatus.tsx` - 文案优化
+3. `src/pages/operator/deploy-v2/steps/Step1_ConnectWallet.tsx` - 帮助文案优化
+
+**统计**：
+- +231 行插入
+- -192 行删除
+- 净增 39 行
+
+### 下一步
+
+- [ ] 更新 E2E 测试以匹配新流程
+  - 更新 Step 2 测试（现在是 Select Option 而非 Configuration）
+  - 更新 Step 3 测试（现在是 Configuration 而非 Deploy）
+  - 调整 testMode 跳转逻辑验证
+
+- [ ] 验证两种模式的完整流程
+  - Standard Flow 手动测试
+  - Super Mode 手动测试
+
+- [ ] 性能优化
+  - 考虑移除 console.log 调试语句
+  - 优化 re-render 性能
+
+### 提交记录
+
+- `475a2ad` - feat: 重构 DeployWizard 为动态步骤流程（方案 B）
+
