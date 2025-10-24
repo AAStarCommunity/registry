@@ -37,8 +37,8 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: var(--color-muted);
-  color: var(--color-text-secondary);
+  background: #e0e0e0;  /* Light gray background for inactive state */
+  color: #757575;       /* Dark gray text for contrast */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,7 +48,7 @@
 }
 
 .substep-indicator.active .substep-number {
-  background: var(--color-primary);
+  background: #007aff;  /* Blue background for active state */
   color: white;
   transform: scale(1.1);
 }
@@ -61,19 +61,19 @@
 .substep-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: #757575;  /* Dark gray for inactive labels */
   white-space: nowrap;
 }
 
 .substep-indicator.active .substep-label {
-  color: var(--color-primary);
+  color: #007aff;  /* Blue for active labels */
   font-weight: 600;
 }
 
 .substep-line {
   flex: 1;
   height: 2px;
-  background: var(--color-border);
+  background: #e0e0e0;  /* Light gray for step connector lines */
   margin: 0 1rem;
   max-width: 100px;
 }
