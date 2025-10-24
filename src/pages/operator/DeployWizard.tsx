@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import './DeployWizard.css';
 
 // Import step components
-import { Step1_ConnectWallet } from './deploy-v2/steps/Step1_ConnectWallet';
+import { Step1_ConnectAndSelect } from './deploy-v2/steps/Step1_ConnectAndSelect';
 import { Step2_ConfigForm } from './deploy-v2/steps/Step2_ConfigForm';
 import { Step3_DeployPaymaster } from './deploy-v2/steps/Step3_DeployPaymaster';
-import { Step4_StakeOption } from './deploy-v2/steps/Step4_StakeOption';
 import { Step5_Stake } from './deploy-v2/steps/Step5_Stake';
 import { Step6_RegisterRegistry } from './deploy-v2/steps/Step6_RegisterRegistry';
 import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
@@ -19,21 +18,23 @@ import { getCurrentNetworkConfig } from '../../config/networkConfig';
  *
  * Flow Structure:
  * Common Steps:
- *   1. Connect Wallet
- *   2. Select Stake Option (Decision Point)
+ *   1. Connect Wallet & Select Stake Option (Merged Step)
+ *      - 1a. Connect wallet
+ *      - 1b. Select mode (Standard or Super)
+ *      - 1c. Check resources based on selection
  *
- * Standard Flow (7 steps total):
- *   3. Configuration
- *   4. Deploy Paymaster
- *   5. Stake to EntryPoint
- *   6. Register to Registry
- *   7. Complete
- *
- * Super Mode (6 steps total):
- *   3. Configuration
- *   4. Stake to SuperPaymaster (no deployment)
+ * Standard Flow (6 steps total):
+ *   2. Configuration
+ *   3. Deploy Paymaster
+ *   4. Stake to EntryPoint
  *   5. Register to Registry
  *   6. Complete
+ *
+ * Super Mode (5 steps total):
+ *   2. Configuration
+ *   3. Stake to SuperPaymaster (no deployment)
+ *   4. Register to Registry
+ *   5. Complete
  */
 
 export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
@@ -120,25 +121,24 @@ export interface StepConfig {
 
 // Common steps (all users go through these)
 const COMMON_STEPS: StepConfig[] = [
-  { id: 1, title: 'Connect Wallet', icon: '🔌', stepKey: 'connect' },
-  { id: 2, title: 'Select Stake Option', icon: '⚡', stepKey: 'selectOption' },
+  { id: 1, title: 'Connect & Select Mode', icon: '🔌', stepKey: 'connectAndSelect' },
 ];
 
-// Standard flow specific steps
+// Standard flow specific steps (6 total)
 const STANDARD_FLOW_STEPS: StepConfig[] = [
-  { id: 3, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
-  { id: 4, title: 'Deploy Paymaster', icon: '🚀', stepKey: 'deploy' },
-  { id: 5, title: 'Stake', icon: '🔒', stepKey: 'stake' },
-  { id: 6, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
-  { id: 7, title: 'Complete', icon: '✅', stepKey: 'complete' },
-];
-
-// Super mode specific steps (no deployment)
-const SUPER_MODE_STEPS: StepConfig[] = [
-  { id: 3, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 3, title: 'Deploy Paymaster', icon: '🚀', stepKey: 'deploy' },
   { id: 4, title: 'Stake', icon: '🔒', stepKey: 'stake' },
   { id: 5, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
   { id: 6, title: 'Complete', icon: '✅', stepKey: 'complete' },
+];
+
+// Super mode specific steps (5 total - no deployment)
+const SUPER_MODE_STEPS: StepConfig[] = [
+  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 3, title: 'Stake', icon: '🔒', stepKey: 'stake' },
+  { id: 4, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
+  { id: 5, title: 'Complete', icon: '✅', stepKey: 'complete' },
 ];
 
 /**
@@ -213,8 +213,8 @@ export function DeployWizard() {
         resourcesReady: true,
       }));
       setSteps(getStepsForOption('standard'));
-      setCurrentStep(3); // Skip to new Step 3: Configuration
-      console.log('🧪 Test Mode Enabled - Skipping to Step 3 with mock data');
+      setCurrentStep(2); // Skip to Step 2: Configuration
+      console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
     }
   }, []);
 
@@ -232,15 +232,13 @@ export function DeployWizard() {
     }
   };
 
-  const handleConnectComplete = (walletStatus: WalletStatus) => {
-    setConfig({ ...config, walletStatus });
-    handleNext();
-  };
-
-  const handleSelectOptionComplete = (option: 'standard' | 'super') => {
-    console.log(`✅ User selected: ${option} mode`);
-    setConfig((prev) => ({ ...prev, stakeOption: option }));
-    setSteps(getStepsForOption(option));
+  const handleConnectAndSelectComplete = (
+    walletStatus: WalletStatus,
+    stakeOption: 'standard' | 'super'
+  ) => {
+    console.log(`✅ User selected: ${stakeOption} mode with wallet ${walletStatus.address}`);
+    setConfig((prev) => ({ ...prev, walletStatus, stakeOption }));
+    setSteps(getStepsForOption(stakeOption));
     handleNext();
   };
 
@@ -268,18 +266,12 @@ export function DeployWizard() {
     const stepKey = steps[currentStep - 1]?.stepKey;
 
     switch (stepKey) {
-      case 'connect':
-        return <Step1_ConnectWallet onNext={handleConnectComplete} isTestMode={isTestMode} />;
-
-      case 'selectOption':
+      case 'connectAndSelect':
         return (
-          config.walletStatus && (
-            <Step4_StakeOption
-              walletStatus={config.walletStatus}
-              onNext={handleSelectOptionComplete}
-              onBack={handleBack}
-            />
-          )
+          <Step1_ConnectAndSelect
+            onNext={handleConnectAndSelectComplete}
+            isTestMode={isTestMode}
+          />
         );
 
       case 'config':
