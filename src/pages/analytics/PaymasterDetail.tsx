@@ -96,9 +96,31 @@ export function PaymasterDetail() {
       let registryData = null;
       // Check if actually registered (name not empty)
       if (info.name && info.name.length > 0) {
+        // Try to parse info.name as JSON (it may contain metadata)
+        let parsedName = info.name;
+        let description = "";
+        let version = "";
+        let timestamp = "";
+
+        try {
+          const metadata = JSON.parse(info.name);
+          if (metadata.name) {
+            parsedName = metadata.name;
+            description = metadata.description || "";
+            version = metadata.version || "";
+            timestamp = metadata.timestamp ? new Date(metadata.timestamp * 1000).toLocaleString() : "";
+          }
+        } catch (e) {
+          // If parsing fails, use the raw string as name
+          parsedName = info.name;
+        }
+
         registryData = {
           paymasterAddress: address,
-          name: info.name,
+          name: parsedName,
+          description: description,
+          version: version,
+          timestamp: timestamp,
           feeRate: Number(info.feeRate), // Convert BigInt to Number for caching
           stakedAmount: "0", // Store as string to avoid BigInt serialization
           reputation: "0", // Store as string to avoid BigInt serialization
@@ -293,6 +315,24 @@ export function PaymasterDetail() {
                 : "Unregistered Paymaster"}
             </span>
           </div>
+          {isRegistered && registryInfo.description && (
+            <div className="info-item">
+              <label>Description:</label>
+              <span className="value">{registryInfo.description}</span>
+            </div>
+          )}
+          {isRegistered && registryInfo.version && (
+            <div className="info-item">
+              <label>Version:</label>
+              <span className="value">{registryInfo.version}</span>
+            </div>
+          )}
+          {isRegistered && registryInfo.timestamp && (
+            <div className="info-item">
+              <label>Registered At:</label>
+              <span className="value">{registryInfo.timestamp}</span>
+            </div>
+          )}
           <div className="info-item">
             <label>Address:</label>
             <a

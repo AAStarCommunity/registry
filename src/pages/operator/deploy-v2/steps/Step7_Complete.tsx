@@ -17,7 +17,7 @@ export function Step7_Complete({
   registryTxHash,
 }: Step7Props) {
   const handleViewOnExplorer = () => {
-    window.open(`/explorer/${paymasterAddress}`, "_blank");
+    window.open(`/paymaster/${paymasterAddress}`, "_blank");
   };
 
   const handleManage = () => {
