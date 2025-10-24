@@ -179,12 +179,12 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
             fees. Get test ETH from faucets (Sepolia) or exchanges (Mainnet).
           </div>
           <div className="help-item">
-            <strong>GToken:</strong> Governance token required for protocol
-            participation. Visit the GToken page to learn how to acquire it.
+            <strong>stGToken:</strong> Staked GToken credential obtained after staking GToken on Staking Contract.
+            Lock 30+ stGToken to join SuperPaymaster (more locked = higher reputation).
           </div>
           <div className="help-item">
-            <strong>PNTs:</strong> Points token for fast stake flow (optional). If
-            you don't have PNTs, you can use the standard stake flow instead.
+            <strong>aPNTs:</strong> Advanced PNTs required for SuperPaymaster (1000+ minimum).
+            Purchase from AAStar Community to enable fast deployment.
           </div>
         </div>
       </div>

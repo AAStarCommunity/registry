@@ -91,22 +91,22 @@ export function WalletStatus({
           )}
         </div>
 
-        {/* GToken Balance */}
+        {/* stGToken Balance */}
         <div className={`balance-item ${status.hasEnoughGToken ? "sufficient" : "insufficient"}`}>
           <div className="balance-header">
             <div className="balance-name">
               <span className={status.hasEnoughGToken ? "icon-success" : "icon-error"}>
                 {status.hasEnoughGToken ? "✅" : "❌"}
               </span>
-              <span>GToken Balance</span>
+              <span>stGToken Balance</span>
             </div>
             <div className="balance-value">
-              {formatBalance(status.gTokenBalance)} GToken
+              {formatBalance(status.gTokenBalance)} stGToken
             </div>
           </div>
           <div className="balance-details">
             <span className="balance-required">
-              Required: {status.requiredGToken} GToken
+              Required: {status.requiredGToken} stGToken
             </span>
             {!status.hasEnoughGToken && (
               <div className="balance-action">
@@ -115,34 +115,34 @@ export function WalletStatus({
                   onClick={onGetGToken}
                   disabled={!onGetGToken}
                 >
-                  Get GToken →
+                  Get stGToken →
                 </button>
               </div>
             )}
           </div>
           {!status.hasEnoughGToken && (
             <div className="balance-help">
-              GToken is required for governance staking
+              Staked GToken credential. Lock 30+ stGToken to join SuperPaymaster (more = higher reputation)
             </div>
           )}
         </div>
 
-        {/* PNTs Balance */}
+        {/* aPNTs Balance */}
         <div className={`balance-item ${status.hasEnoughPNTs ? "sufficient" : "insufficient"}`}>
           <div className="balance-header">
             <div className="balance-name">
               <span className={status.hasEnoughPNTs ? "icon-success" : "icon-error"}>
                 {status.hasEnoughPNTs ? "✅" : "❌"}
               </span>
-              <span>PNTs Balance</span>
+              <span>aPNTs Balance</span>
             </div>
             <div className="balance-value">
-              {formatBalance(status.pntsBalance)} PNT
+              {formatBalance(status.pntsBalance)} aPNT
             </div>
           </div>
           <div className="balance-details">
             <span className="balance-required">
-              Required: {status.requiredPNTs} PNT
+              Required: {status.requiredPNTs} aPNT
             </span>
             {!status.hasEnoughPNTs && (
               <div className="balance-action">
@@ -151,14 +151,14 @@ export function WalletStatus({
                   onClick={onGetPNTs}
                   disabled={!onGetPNTs}
                 >
-                  Get PNTs →
+                  Get aPNTs →
                 </button>
               </div>
             )}
           </div>
           {!status.hasEnoughPNTs && (
             <div className="balance-help">
-              PNTs are required for fast stake flow (optional)
+              Advanced PNTs for SuperPaymaster. 1000+ aPNTs required (purchase from AAStar Community)
             </div>
           )}
         </div>

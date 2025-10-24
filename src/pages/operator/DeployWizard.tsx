@@ -12,19 +12,28 @@ import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
 
 // Import types and utilities
 import type { WalletStatus } from './deploy-v2/utils/walletChecker';
-import { checkWalletStatus } from './deploy-v2/utils/walletChecker';
+import { getCurrentNetworkConfig } from '../../config/networkConfig';
 
 /**
- * DeployWizard - Complete 7-step deployment flow
+ * DeployWizard - Dynamic deployment flow with branching paths
  *
- * Phase 2.1.4 & 2.1.5 Implementation:
- * - Step 1: Configuration ✅
- * - Step 2: Check Wallet ✅
- * - Step 3: Select Stake Option (Standard/Super) ✅
- * - Step 4: Prepare Resources ✅
- * - Step 5: Stake (routes to EntryPoint or SuperPaymaster) ✅
- * - Step 6: Register to Registry 🔄
- * - Step 7: Manage Paymaster 🔄
+ * Flow Structure:
+ * Common Steps:
+ *   1. Connect Wallet
+ *   2. Select Stake Option (Decision Point)
+ *
+ * Standard Flow (7 steps total):
+ *   3. Configuration
+ *   4. Deploy Paymaster
+ *   5. Stake to EntryPoint
+ *   6. Register to Registry
+ *   7. Complete
+ *
+ * Super Mode (6 steps total):
+ *   3. Configuration
+ *   4. Stake to SuperPaymaster (no deployment)
+ *   5. Register to Registry
+ *   6. Complete
  */
 
 export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
@@ -69,10 +78,10 @@ export const SUPPORTED_NETWORKS: Record<SupportedNetwork, NetworkConfig> = {
 };
 
 export interface DeployConfig {
-  // Network selection (new)
+  // Network selection
   network: SupportedNetwork;
 
-  // Step 1: Configuration
+  // Configuration
   communityName: string;
   treasury: string;
   gasToUSDRate: string;
@@ -81,38 +90,82 @@ export interface DeployConfig {
   maxGasCostCap: string;
   minTokenBalance: string;
 
-  // Step 1: Deployment result
+  // Deployment result
   paymasterAddress?: string;
   owner?: string;
 
-  // Step 2: Wallet status
+  // Wallet status
   walletStatus?: WalletStatus;
 
-  // Step 3: Stake option
+  // Stake option
   stakeOption?: 'standard' | 'super';
 
-  // Step 4: Resource requirements
+  // Resource requirements
   resourcesReady?: boolean;
 
-  // Step 5: EntryPoint deposit
+  // EntryPoint deposit
   entryPointTxHash?: string;
 
-  // Step 6: Registry registration
+  // Registry registration
   registryTxHash?: string;
 }
 
-const STEPS = [
-  { id: 1, title: 'Connect Wallet', icon: '🔌' },
-  { id: 2, title: 'Configuration', icon: '⚙️' },
-  { id: 3, title: 'Deploy Paymaster', icon: '🚀' },
-  { id: 4, title: 'Select Stake Option', icon: '⚡' },
-  { id: 5, title: 'Stake', icon: '🔒' },
-  { id: 6, title: 'Register to Registry', icon: '📝' },
-  { id: 7, title: 'Complete', icon: '✅' },
+// Step configuration interface
+export interface StepConfig {
+  id: number;
+  title: string;
+  icon: string;
+  stepKey: string; // Unique identifier for routing
+}
+
+// Common steps (all users go through these)
+const COMMON_STEPS: StepConfig[] = [
+  { id: 1, title: 'Connect Wallet', icon: '🔌', stepKey: 'connect' },
+  { id: 2, title: 'Select Stake Option', icon: '⚡', stepKey: 'selectOption' },
 ];
+
+// Standard flow specific steps
+const STANDARD_FLOW_STEPS: StepConfig[] = [
+  { id: 3, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 4, title: 'Deploy Paymaster', icon: '🚀', stepKey: 'deploy' },
+  { id: 5, title: 'Stake', icon: '🔒', stepKey: 'stake' },
+  { id: 6, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
+  { id: 7, title: 'Complete', icon: '✅', stepKey: 'complete' },
+];
+
+// Super mode specific steps (no deployment)
+const SUPER_MODE_STEPS: StepConfig[] = [
+  { id: 3, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 4, title: 'Stake', icon: '🔒', stepKey: 'stake' },
+  { id: 5, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
+  { id: 6, title: 'Complete', icon: '✅', stepKey: 'complete' },
+];
+
+/**
+ * Get SuperPaymaster address from network config
+ */
+function getSuperPaymasterAddress(): string {
+  const networkConfig = getCurrentNetworkConfig();
+  return networkConfig.contracts.paymasterV4;
+}
+
+/**
+ * Generate steps based on selected stake option
+ */
+function getStepsForOption(option: 'standard' | 'super' | undefined): StepConfig[] {
+  if (!option) {
+    // Before selection, only show common steps
+    return COMMON_STEPS;
+  }
+
+  return option === 'standard'
+    ? [...COMMON_STEPS, ...STANDARD_FLOW_STEPS]
+    : [...COMMON_STEPS, ...SUPER_MODE_STEPS];
+}
 
 export function DeployWizard() {
   const [currentStep, setCurrentStep] = useState(1);
+  const [steps, setSteps] = useState<StepConfig[]>(COMMON_STEPS);
   const [isTestMode, setIsTestMode] = useState(false);
   const [config, setConfig] = useState<DeployConfig>({
     network: 'sepolia', // Default to Sepolia testnet
@@ -131,7 +184,6 @@ export function DeployWizard() {
     const testMode = params.get('testMode') === 'true';
     setIsTestMode(testMode);
 
-    // In test mode, pre-populate config with mock data and skip to Step 2
     if (testMode) {
       setConfig((prev) => ({
         ...prev,
@@ -157,16 +209,17 @@ export function DeployWizard() {
           requiredPNTs: '1000',
           requiredAPNTs: '1000',
         },
-        resourcesReady: true,  // Pre-set resources as ready in test mode
+        stakeOption: 'standard', // Auto-select standard flow
+        resourcesReady: true,
       }));
-      // Auto-advance to Step 2 in test mode
-      setCurrentStep(2);
-      console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
+      setSteps(getStepsForOption('standard'));
+      setCurrentStep(3); // Skip to new Step 3: Configuration
+      console.log('🧪 Test Mode Enabled - Skipping to Step 3 with mock data');
     }
   }, []);
 
   const handleNext = () => {
-    if (currentStep < STEPS.length) {
+    if (currentStep < steps.length) {
       const nextStep = currentStep + 1;
       console.log(`🎯 handleNext: ${currentStep} → ${nextStep}`);
       setCurrentStep(nextStep);
@@ -179,66 +232,156 @@ export function DeployWizard() {
     }
   };
 
-  const handleStep1Complete = (paymasterAddress: string, owner: string) => {
-    setConfig({
-      ...config,
-      paymasterAddress,
-      owner,
-    });
+  const handleConnectComplete = (walletStatus: WalletStatus) => {
+    setConfig({ ...config, walletStatus });
     handleNext();
   };
 
-  const handleStep2Complete = (walletStatus: WalletStatus) => {
-    setConfig({
-      ...config,
-      walletStatus,
-    });
+  const handleSelectOptionComplete = (option: 'standard' | 'super') => {
+    console.log(`✅ User selected: ${option} mode`);
+    setConfig((prev) => ({ ...prev, stakeOption: option }));
+    setSteps(getStepsForOption(option));
     handleNext();
   };
 
-  const handleStep3Complete = (option: 'standard' | 'super') => {
-    setConfig({
-      ...config,
-      stakeOption: option,
-    });
+  const handleConfigComplete = (formConfig: Partial<DeployConfig>) => {
+    setConfig((prev) => ({ ...prev, ...formConfig }));
     handleNext();
   };
 
-  const handleStep4Complete = () => {
-    setConfig({
-      ...config,
-      resourcesReady: true,
-    });
+  const handleDeployComplete = (paymasterAddress: string, owner: string) => {
+    setConfig((prev) => ({ ...prev, paymasterAddress, owner }));
     handleNext();
   };
 
-  const handleStep5Complete = (txHash: string) => {
-    setConfig({
-      ...config,
-      entryPointTxHash: txHash,
-    });
+  const handleStakeComplete = (txHash: string) => {
+    setConfig((prev) => ({ ...prev, entryPointTxHash: txHash }));
     handleNext();
   };
 
-  const handleStep6Complete = (txHash: string) => {
-    setConfig({
-      ...config,
-      registryTxHash: txHash,
-    });
+  const handleRegisterComplete = (txHash: string) => {
+    setConfig((prev) => ({ ...prev, registryTxHash: txHash }));
     handleNext();
+  };
+
+  const renderStepContent = () => {
+    const stepKey = steps[currentStep - 1]?.stepKey;
+
+    switch (stepKey) {
+      case 'connect':
+        return <Step1_ConnectWallet onNext={handleConnectComplete} isTestMode={isTestMode} />;
+
+      case 'selectOption':
+        return (
+          config.walletStatus && (
+            <Step4_StakeOption
+              walletStatus={config.walletStatus}
+              onNext={handleSelectOptionComplete}
+              onBack={handleBack}
+            />
+          )
+        );
+
+      case 'config':
+        return (
+          config.walletStatus && (
+            <Step2_ConfigForm
+              onNext={handleConfigComplete}
+              onBack={handleBack}
+            />
+          )
+        );
+
+      case 'deploy':
+        return (
+          config.walletStatus && (
+            <Step3_DeployPaymaster
+              config={config}
+              chainId={SUPPORTED_NETWORKS[config.network].chainId}
+              onNext={handleDeployComplete}
+              onBack={handleBack}
+              isTestMode={isTestMode}
+            />
+          )
+        );
+
+      case 'stake':
+        // For Super Mode, use shared SuperPaymaster address
+        // For Standard Mode, use user's deployed paymaster
+        const paymasterForStake =
+          config.stakeOption === 'standard'
+            ? config.paymasterAddress
+            : getSuperPaymasterAddress();
+
+        return (
+          config.walletStatus &&
+          config.stakeOption &&
+          paymasterForStake && (
+            <Step5_Stake
+              paymasterAddress={paymasterForStake}
+              walletStatus={config.walletStatus}
+              selectedOption={config.stakeOption}
+              onNext={handleStakeComplete}
+              onBack={handleBack}
+            />
+          )
+        );
+
+      case 'register':
+        // Similar to stake - use appropriate paymaster address
+        const paymasterForRegister =
+          config.stakeOption === 'standard'
+            ? config.paymasterAddress
+            : getSuperPaymasterAddress();
+
+        return (
+          config.walletStatus &&
+          paymasterForRegister && (
+            <Step6_RegisterRegistry
+              paymasterAddress={paymasterForRegister}
+              walletStatus={config.walletStatus}
+              communityName={config.communityName}
+              onNext={handleRegisterComplete}
+              onBack={handleBack}
+            />
+          )
+        );
+
+      case 'complete':
+        // In Super Mode, owner is the connected wallet (no contract deployed)
+        // In Standard Mode, owner is from deployment
+        const finalOwner = config.owner || config.walletStatus?.address;
+        const finalPaymaster =
+          config.paymasterAddress ||
+          (config.stakeOption === 'super' ? getSuperPaymasterAddress() : undefined);
+
+        return (
+          finalPaymaster &&
+          finalOwner && (
+            <Step7_Complete
+              paymasterAddress={finalPaymaster}
+              communityName={config.communityName}
+              owner={finalOwner}
+              entryPointTxHash={config.entryPointTxHash}
+              registryTxHash={config.registryTxHash}
+            />
+          )
+        );
+
+      default:
+        return <div>Loading step...</div>;
+    }
   };
 
   return (
     <div className="deploy-wizard">
-      {/* Header */}
       <div className="wizard-header">
         <h1 className="wizard-title">Deploy Your Paymaster</h1>
         <p className="wizard-subtitle">
-          Complete 7-step wizard to deploy and register your community Paymaster
+          Complete {steps.length}-step wizard to deploy and register your community Paymaster
         </p>
       </div>
 
-      {/* Network Selector */}
       <div className="network-selector">
         <label htmlFor="network-select" className="network-label">
           Select Network:
@@ -247,7 +390,9 @@ export function DeployWizard() {
           id="network-select"
           className="network-dropdown"
           value={config.network}
-          onChange={(e) => setConfig({ ...config, network: e.target.value as SupportedNetwork })}
+          onChange={(e) =>
+            setConfig({ ...config, network: e.target.value as SupportedNetwork })
+          }
           disabled={currentStep > 1}
         >
           {Object.values(SUPPORTED_NETWORKS).map((network) => (
@@ -269,9 +414,8 @@ export function DeployWizard() {
         </div>
       </div>
 
-      {/* Progress indicator */}
       <div className="wizard-progress">
-        {STEPS.map((step, index) => (
+        {steps.map((step, index) => (
           <div
             key={step.id}
             className={`progress-step ${
@@ -289,118 +433,13 @@ export function DeployWizard() {
               <div className="progress-step-title">{step.title}</div>
               <div className="progress-step-number">Step {step.id}</div>
             </div>
-            {index < STEPS.length - 1 && <div className="progress-step-line" />}
+            {index < steps.length - 1 && <div className="progress-step-line" />}
           </div>
         ))}
       </div>
 
-      {/* Step content */}
-      <div className="wizard-content">
-        {/* Step 1: Connect Wallet - 连接钱包并检查资源（不需要 paymasterAddress）*/}
-        {currentStep === 1 && (
-          <Step1_ConnectWallet
-            onNext={handleStep2Complete}
-            isTestMode={isTestMode}
-          />
-        )}
+      <div className="wizard-content">{renderStepContent()}</div>
 
-        {/* Step 2: Config Form - 配置参数 */}
-        {currentStep === 2 && config.walletStatus && (
-          <Step2_ConfigForm
-            onNext={(formConfig: DeployConfig) => {
-              // Update config with form data, preserving walletStatus
-              console.log('📝 Step 2 onNext called');
-              console.log('  Current config.walletStatus:', config.walletStatus ? 'EXISTS' : 'MISSING');
-              console.log('  FormConfig keys:', Object.keys(formConfig));
-
-              setConfig({
-                ...config,
-                ...formConfig,
-                // Explicitly preserve walletStatus from current config
-                walletStatus: config.walletStatus,
-              });
-
-              console.log('  Config updated, calling handleNext');
-              handleNext();
-            }}
-            onBack={handleBack}
-          />
-        )}
-
-        {/* Step 3: Deploy Paymaster - 部署 PaymasterV4_1 合约 */}
-        {currentStep === 3 && config.walletStatus && (
-          <Step3_DeployPaymaster
-            config={config}
-            chainId={SUPPORTED_NETWORKS[config.network].chainId}
-            onNext={(paymasterAddress: string, owner: string) => {
-              // Update config with deployed contract info and advance to next step atomically
-              console.log('📝 Step 3 onNext called - paymasterAddress:', paymasterAddress);
-              setConfig((prevConfig) => ({
-                ...prevConfig,
-                paymasterAddress,
-                owner,
-              }));
-              // Advance step immediately
-              setCurrentStep(4);
-              console.log('🎯 Advanced to Step 4');
-            }}
-            onBack={handleBack}
-            isTestMode={isTestMode}
-          />
-        )}
-
-        {/* Step 4: Stake Option - 选择质押选项 */}
-        {currentStep === 4 && (() => {
-          console.log('🔍 Step 4 render check:', {
-            currentStep,
-            hasPaymasterAddress: !!config.paymasterAddress,
-            paymasterAddress: config.paymasterAddress,
-            hasWalletStatus: !!config.walletStatus,
-          });
-          return config.paymasterAddress && config.walletStatus;
-        })() && (
-          <Step4_StakeOption
-            walletStatus={config.walletStatus}
-            onNext={handleStep3Complete}
-            onBack={handleBack}
-          />
-        )}
-
-        {/* Step 5: Stake - 质押 */}
-        {currentStep === 5 && config.paymasterAddress && config.walletStatus && config.stakeOption && (
-          <Step5_Stake
-            paymasterAddress={config.paymasterAddress}
-            walletStatus={config.walletStatus}
-            selectedOption={config.stakeOption}
-            onNext={handleStep5Complete}
-            onBack={handleBack}
-          />
-        )}
-
-        {/* Step 6: Register Registry - 注册到 Registry */}
-        {currentStep === 6 && config.paymasterAddress && config.walletStatus && (
-          <Step6_RegisterRegistry
-            paymasterAddress={config.paymasterAddress}
-            walletStatus={config.walletStatus}
-            communityName={config.communityName}
-            onNext={handleStep6Complete}
-            onBack={handleBack}
-          />
-        )}
-
-        {/* Step 7: Complete - 完成（需要跳转到管理页面）*/}
-        {currentStep === 7 && config.paymasterAddress && config.owner && (
-          <Step7_Complete
-            paymasterAddress={config.paymasterAddress}
-            communityName={config.communityName}
-            owner={config.owner}
-            entryPointTxHash={config.entryPointTxHash}
-            registryTxHash={config.registryTxHash}
-          />
-        )}
-      </div>
-
-      {/* Help section */}
       <div className="wizard-help">
         <h3>💡 Need Help?</h3>
         <ul>
