@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { WalletStatus } from "../components/WalletStatus";
 import { checkWalletStatus, getCurrentNetwork } from "../utils/walletChecker";
@@ -33,6 +34,7 @@ enum SubStep {
 }
 
 export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Props) {
+  const { t } = useTranslation();
   const config = getCurrentNetworkConfig();
   const [subStep, setSubStep] = useState<SubStep>(SubStep.ConnectWallet);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -96,9 +98,20 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         throw new Error("Please install MetaMask or another Web3 wallet");
       }
 
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
+      // First, check if wallet is already connected (auto-detect current account)
+      let accounts = await window.ethereum.request({
+        method: 'eth_accounts'
       });
+
+      // If not connected, request connection (this will show MetaMask popup)
+      if (accounts.length === 0) {
+        console.log('🔗 No accounts connected, requesting connection...');
+        accounts = await window.ethereum.request({
+          method: 'eth_requestAccounts'
+        });
+      } else {
+        console.log('✅ Auto-detected connected account:', accounts[0]);
+      }
 
       if (accounts.length === 0) {
         throw new Error("No accounts found");
@@ -209,9 +222,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       return (
         <div className="substep-connect">
           <div className="substep-header">
-            <h2>Connect Your Wallet</h2>
+            <h2>{t('step1.substep1.title')}</h2>
             <p className="substep-description">
-              Connect your operator wallet (MetaMask) to get started with Paymaster deployment.
+              {t('step1.substep1.description')}
             </p>
           </div>
 
@@ -236,7 +249,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           <div className="connect-wallet-container">
             <div className="connect-wallet-icon">🔐</div>
             <p className="connect-wallet-prompt">
-              Please connect your MetaMask wallet to get started
+              {t('step1.substep1.connectPrompt')}
             </p>
             <button
               className="btn-connect-primary"
@@ -245,16 +258,16 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             >
               {isLoading ? (
                 <>
-                  <span className="spinner">⏳</span> Connecting...
+                  <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
                 </>
               ) : (
                 <>
-                  <span className="wallet-icon">🦊</span> Connect MetaMask
+                  <span className="wallet-icon">🦊</span> {t('step1.substep1.connectButton')}
                 </>
               )}
             </button>
             <p className="connect-wallet-hint">
-              Make sure you have MetaMask installed and are on the correct network
+              {t('step1.substep1.connectHint')}
             </p>
           </div>
 
@@ -321,10 +334,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       return (
         <div className="substep-select">
           <div className="substep-header">
-            <h2>Select Your Deployment Mode</h2>
+            <h2>{t('step1.substep2.title')}</h2>
             <p className="substep-description">
-              Choose between Standard Flow (full control) or Super Mode (quick launch).
-              We'll check your resources based on your selection.
+              {t('step1.substep2.description')}
             </p>
           </div>
 
@@ -337,19 +349,19 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
           {/* Gas Station Metaphor */}
           <div className="metaphor-banner">
-            <div className="metaphor-icon">⛽</div>
+            <div className="metaphor-icon">{t('step1.substep2.metaphor.icon')}</div>
             <div className="metaphor-content">
-              <div className="metaphor-title">Gas Station Metaphor: We Help You Build a Paymaster Gas Station</div>
+              <div className="metaphor-title">{t('step1.substep2.metaphor.title')}</div>
               <div className="metaphor-comparison">
                 <div className="metaphor-option">
-                  <div className="metaphor-option-title">🏗️ Standard Flow</div>
-                  <p>Use free building materials (open-source code), <strong>build and maintain your own</strong> gas station, register to Registry, and protocol provides customer traffic.</p>
-                  <p className="metaphor-highlight">Gas (ETH) needs to be <strong>purchased and distributed across chains by yourself</strong>.</p>
+                  <div className="metaphor-option-title">{t('step1.substep2.metaphor.standard.title')}</div>
+                  <p dangerouslySetInnerHTML={{ __html: t('step1.substep2.metaphor.standard.description') }} />
+                  <p className="metaphor-highlight" dangerouslySetInnerHTML={{ __html: t('step1.substep2.metaphor.standard.highlight') }} />
                 </div>
                 <div className="metaphor-option">
-                  <div className="metaphor-option-title">⚡ Super Mode</div>
-                  <p><strong>No construction needed</strong>. Join SuperPaymaster, provide gas station services, sell your community gas cards (xPNTs).</p>
-                  <p className="metaphor-highlight">Users top up credits to cards. Protocol handles <strong>cross-chain infrastructure, gas purchase & distribution</strong>.</p>
+                  <div className="metaphor-option-title">{t('step1.substep2.metaphor.super.title')}</div>
+                  <p dangerouslySetInnerHTML={{ __html: t('step1.substep2.metaphor.super.description') }} />
+                  <p className="metaphor-highlight" dangerouslySetInnerHTML={{ __html: t('step1.substep2.metaphor.super.highlight') }} />
                 </div>
               </div>
             </div>
@@ -358,87 +370,92 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           {/* Detailed Comparison Table */}
           <div className="comparison-table">
             <div className="comparison-header">
-              <h3>📊 Comprehensive Comparison: Core Differences</h3>
+              <h3>{t('step1.substep2.comparisonTable.title')}</h3>
             </div>
 
             <div className="comparison-grid">
               {/* Resource Requirements */}
               <div className="comparison-row">
-                <div className="comparison-label">💰 Resource Requirements</div>
+                <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.resources')}</div>
                 <div className="comparison-standard">
-                  <strong>ETH + stGToken</strong>
-                  <p className="comparison-detail">Need sufficient ETH for contract deployment and EntryPoint deposit</p>
+                  <strong>{t('step1.substep2.comparisonTable.standard.resources.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.resources.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.resources.detail2')}</p>
+                  <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.standard.resources.warning')}</p>
                 </div>
                 <div className="comparison-super">
-                  <strong>ETH + stGToken + aPNTs</strong>
-                  <p className="comparison-detail">ETH only for gas, aPNTs for gas backing</p>
+                  <strong>{t('step1.substep2.comparisonTable.super.resources.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.resources.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.resources.detail2')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.resources.detail3')}</p>
+                  <p className="comparison-detail success">{t('step1.substep2.comparisonTable.super.resources.success')}</p>
                 </div>
               </div>
 
               {/* Maintenance */}
               <div className="comparison-row">
-                <div className="comparison-label">🔧 Ongoing Maintenance</div>
+                <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.maintenance')}</div>
                 <div className="comparison-standard">
-                  <strong>Self-Maintained</strong>
-                  <p className="comparison-detail">Purchase ETH yourself and deposit to EntryPoints on each chain</p>
-                  <p className="comparison-detail warning">⚠️ Bear the cost of managing multiple EntryPoint balances across chains</p>
+                  <strong>{t('step1.substep2.comparisonTable.standard.maintenance.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.maintenance.detail1')}</p>
+                  <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.standard.maintenance.detail2')}</p>
                 </div>
                 <div className="comparison-super">
-                  <strong>Protocol-Managed</strong>
-                  <p className="comparison-detail">Simply deposit aPNTs in SuperPaymaster dashboard</p>
-                  <p className="comparison-detail success">✅ aPNTs already distributed cross-chain. No manual cross-chain operations needed</p>
+                  <strong>{t('step1.substep2.comparisonTable.super.maintenance.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.maintenance.detail1')}</p>
+                  <p className="comparison-detail success">{t('step1.substep2.comparisonTable.super.maintenance.detail2')}</p>
                 </div>
               </div>
 
               {/* Reputation */}
               <div className="comparison-row">
-                <div className="comparison-label">⭐ Reputation Accumulation</div>
+                <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.reputation')}</div>
                 <div className="comparison-standard">
-                  <strong>No Reputation</strong>
-                  <p className="comparison-detail">SuperPaymaster provides free registration and smart routing</p>
-                  <p className="comparison-detail warning">⚠️ But NO Reputation accumulation</p>
-                  <p className="comparison-detail">Customers cannot select your service based on Reputation (stability, pricing, etc.)</p>
+                  <strong>{t('step1.substep2.comparisonTable.standard.reputation.title')}</strong>
+                  <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.standard.reputation.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.reputation.detail2')}</p>
                 </div>
                 <div className="comparison-super">
-                  <strong>Reputation System</strong>
-                  <p className="comparison-detail success">✅ Accumulate Reputation through service quality</p>
-                  <p className="comparison-detail">Customers can choose your service based on Reputation</p>
-                  <p className="comparison-detail">Higher Reputation = More customer traffic and revenue</p>
+                  <strong>{t('step1.substep2.comparisonTable.super.reputation.title')}</strong>
+                  <p className="comparison-detail success">{t('step1.substep2.comparisonTable.super.reputation.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.reputation.detail2')}</p>
                 </div>
               </div>
 
               {/* Contract Deployment */}
               <div className="comparison-row">
-                <div className="comparison-label">🚀 Contract Deployment</div>
+                <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.deployment')}</div>
                 <div className="comparison-standard">
-                  <strong>Deployment Required</strong>
-                  <p className="comparison-detail">Deploy your own PaymasterV4 contract</p>
-                  <p className="comparison-detail">Full control over contract and funds</p>
+                  <strong>{t('step1.substep2.comparisonTable.standard.deployment.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.deployment.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.deployment.detail2')}</p>
+                  <p className="comparison-detail success">{t('step1.substep2.comparisonTable.standard.deployment.success')}</p>
                 </div>
                 <div className="comparison-super">
-                  <strong>No Deployment</strong>
-                  <p className="comparison-detail success">✅ Use shared SuperPaymasterV2 contract</p>
-                  <p className="comparison-detail">Launch in 3 seconds</p>
+                  <strong>{t('step1.substep2.comparisonTable.super.deployment.title')}</strong>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.deployment.detail1')}</p>
+                  <p className="comparison-detail">{t('step1.substep2.comparisonTable.super.deployment.detail2')}</p>
+                  <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.super.deployment.warning')}</p>
                 </div>
               </div>
 
               {/* Best For */}
               <div className="comparison-row">
-                <div className="comparison-label">🎯 Best For</div>
+                <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.bestFor')}</div>
                 <div className="comparison-standard">
                   <ul className="comparison-list">
-                    <li>Have abundant ETH funds</li>
-                    <li>Want full control over gas budget</li>
-                    <li>Have technical team to manage cross-chain balances</li>
-                    <li>Don't care about Reputation accumulation</li>
+                    <li>{t('step1.substep2.comparisonTable.standard.bestFor.item1')}</li>
+                    <li>{t('step1.substep2.comparisonTable.standard.bestFor.item2')}</li>
+                    <li>{t('step1.substep2.comparisonTable.standard.bestFor.item3')}</li>
+                    <li>{t('step1.substep2.comparisonTable.standard.bestFor.item4')}</li>
                   </ul>
                 </div>
                 <div className="comparison-super">
                   <ul className="comparison-list">
-                    <li>Quick launch for community Paymaster</li>
-                    <li>Don't want to handle cross-chain maintenance</li>
-                    <li>Want to accumulate Reputation</li>
-                    <li>Focus on community operations over tech</li>
+                    <li>{t('step1.substep2.comparisonTable.super.bestFor.item1')}</li>
+                    <li>{t('step1.substep2.comparisonTable.super.bestFor.item2')}</li>
+                    <li>{t('step1.substep2.comparisonTable.super.bestFor.item3')}</li>
+                    <li>{t('step1.substep2.comparisonTable.super.bestFor.item4')}</li>
                   </ul>
                 </div>
               </div>
@@ -468,7 +485,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               onClick={() => setSubStep(SubStep.ConnectWallet)}
               className="nav-button back"
             >
-              ← Back
+              {t('common.back')}
             </button>
 
             <button
@@ -476,7 +493,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               className="nav-button next"
               disabled={!selectedOption}
             >
-              {selectedOption ? "Check Resources →" : "Select an option"}
+              {selectedOption ? `${t('common.next')} →` : t('step1.substep2.title')}
             </button>
           </div>
         </div>
@@ -488,10 +505,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       return (
         <div className="substep-resources">
           <div className="substep-header">
-            <h2>Verify Your Resources</h2>
+            <h2>{t('step1.substep3.title')}</h2>
             <p className="substep-description">
-              You selected <strong>{selectedOption === 'standard' ? 'Standard Flow' : 'Super Mode'}</strong>.
-              Let's check if you have the required resources.
+              {t('step1.substep3.description')}
             </p>
           </div>
 
@@ -499,19 +515,19 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <span className="mode-icon">{selectedOption === 'standard' ? '🚀' : '⚡'}</span>
             <div className="mode-info">
               <div className="mode-title">
-                {selectedOption === 'standard' ? 'Standard ERC-4337 Flow' : 'GToken Super Mode'}
+                {selectedOption === 'standard' ? t('step1.substep3.modeStandard') : t('step1.substep3.modeSuper')}
               </div>
               <div className="mode-description">
                 {selectedOption === 'standard'
-                  ? 'Deploy your own Paymaster contract with full control'
-                  : 'Quick launch using shared SuperPaymaster contract'}
+                  ? t('step1.substep2.modeNames.standardSubtitle')
+                  : t('step1.substep2.modeNames.superSubtitle')}
               </div>
             </div>
             <button
               onClick={() => setSubStep(SubStep.SelectOption)}
               className="change-mode-btn"
             >
-              Change Mode
+              {t('common.back')}
             </button>
           </div>
 
@@ -531,7 +547,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           {isLoading && (
             <div className="loading-state">
               <div className="loading-spinner">⏳</div>
-              <div className="loading-text">Checking wallet resources...</div>
+              <div className="loading-text">{t('step1.substep3.checkingWallet')}</div>
             </div>
           )}
 
@@ -546,10 +562,10 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
               <div className="refresh-section">
                 <button className="refresh-button" onClick={handleRefreshResources}>
-                  🔄 Refresh Balances
+                  🔄 {t('common.refresh')}
                 </button>
                 <span className="refresh-help">
-                  Click to re-check your wallet balances after acquiring resources
+                  {t('step1.substep3.resourceCheck')}
                 </span>
               </div>
             </>
@@ -584,14 +600,14 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               disabled={!canProceed()}
               title={
                 !canProceed()
-                  ? "Please ensure you have all required resources"
-                  : "Proceed to configuration"
+                  ? t('step1.substep3.notReady')
+                  : t('step1.substep3.proceedButton')
               }
             >
               {canProceed() ? (
-                <>Next: Configuration →</>
+                <>{t('step1.substep3.proceedButton')}</>
               ) : (
-                <>Acquire Required Resources First</>
+                <>{t('step1.substep3.notReady')}</>
               )}
             </button>
           </div>
@@ -608,17 +624,17 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       <div className="substep-progress">
         <div className={`substep-indicator ${subStep >= SubStep.ConnectWallet ? 'active' : ''} ${subStep > SubStep.ConnectWallet ? 'completed' : ''}`}>
           <span className="substep-number">1</span>
-          <span className="substep-label">Connect</span>
+          <span className="substep-label">{t('step1.substep1.title')}</span>
         </div>
         <div className="substep-line" />
         <div className={`substep-indicator ${subStep >= SubStep.SelectOption ? 'active' : ''} ${subStep > SubStep.SelectOption ? 'completed' : ''}`}>
           <span className="substep-number">2</span>
-          <span className="substep-label">Select Mode</span>
+          <span className="substep-label">{t('step1.substep2.title')}</span>
         </div>
         <div className="substep-line" />
         <div className={`substep-indicator ${subStep >= SubStep.CheckResources ? 'active' : ''}`}>
           <span className="substep-number">3</span>
-          <span className="substep-label">Check Resources</span>
+          <span className="substep-label">{t('step1.substep3.title')}</span>
         </div>
       </div>
 

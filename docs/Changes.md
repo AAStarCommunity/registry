@@ -6302,3 +6302,92 @@ English:
 ### 提交 | Commits
 - `40362ce` - feat: Enhance mode names and resource descriptions with AOA branding
 
+
+---
+
+## 📋 i18n Integration - Step1_ConnectAndSelect.tsx (2025-10-24)
+
+### 任务概述
+将 Step1_ConnectAndSelect.tsx 组件集成 react-i18next，替换所有硬编码的英文和中文文本为翻译键。
+
+### 实施内容
+
+#### 1. 导入和钩子集成
+- 添加 `import { useTranslation } from "react-i18next";`
+- 在组件内添加 `const { t } = useTranslation();`
+
+#### 2. SubStep 1 (连接钱包) - 已完成
+替换的翻译键：
+- `step1.substep1.title` - "Connect Your Wallet" / "连接您的钱包"
+- `step1.substep1.description` - 描述文本
+- `step1.substep1.connectPrompt` - 连接提示
+- `step1.substep1.connectButton` - "Connect MetaMask" / "连接 MetaMask"
+- `step1.substep1.connecting` - "Connecting..." / "连接中..."
+- `step1.substep1.connectHint` - 连接提示文本
+
+#### 3. SubStep 2 (选择模式) - 已完成
+替换的翻译键：
+- `step1.substep2.title` - "Choose Your Deployment Mode" / "选择您的部署模式"
+- `step1.substep2.description` - 模式选择描述
+- **Gas Station Metaphor (加油站比喻)**:
+  - `step1.substep2.metaphor.icon` - ⛽
+  - `step1.substep2.metaphor.title` - 标题
+  - `step1.substep2.metaphor.standard.*` - Standard Flow 描述
+  - `step1.substep2.metaphor.super.*` - Super Mode 描述
+- **Comparison Table (对比表)**:
+  - `step1.substep2.comparisonTable.title` - "Comprehensive Comparison"
+  - `step1.substep2.comparisonTable.dimensions.*` - 五个维度标签
+  - `step1.substep2.comparisonTable.standard.*` - Standard Flow 详情
+  - `step1.substep2.comparisonTable.super.*` - Super Mode 详情
+
+#### 4. SubStep 3 (检查资源) - 已完成
+替换的翻译键：
+- `step1.substep3.title` - "Verify Resource Requirements" / "验证资源要求"
+- `step1.substep3.description` - 资源检查描述
+- `step1.substep3.modeStandard` - "Standard Flow" / "标准流程"
+- `step1.substep3.modeSuper` - "Super Mode" / "超级模式"
+- `step1.substep3.checkingWallet` - "Checking wallet resources..." / "正在检查钱包资源..."
+- `step1.substep3.resourceCheck` - 资源检查提示
+- `step1.substep3.proceedButton` - "Proceed to Configuration →" / "继续配置 →"
+- `step1.substep3.notReady` - 资源未就绪提示
+
+#### 5. 通用翻译键使用
+- `common.back` - "Back" / "返回"
+- `common.next` - "Next" / "下一步"
+- `common.refresh` - "Refresh" / "刷新"
+
+#### 6. 进度指示器
+更新了底部的三个子步骤进度标签，使用对应的 title 翻译键。
+
+### 技术细节
+
+#### HTML 内容渲染
+对于包含 Markdown 格式（如 `**bold**`）的翻译文本，使用 `dangerouslySetInnerHTML` 来正确渲染：
+```tsx
+<p dangerouslySetInnerHTML={{ __html: t('step1.substep2.metaphor.standard.description') }} />
+```
+
+#### 条件渲染保持不变
+所有的逻辑判断、条件渲染、CSS 类名都保持原样，仅替换了显示文本。
+
+### 文件修改
+- **修改文件**: `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx`
+- **翻译文件**: 
+  - `/Volumes/UltraDisk/Dev2/aastar/registry/src/i18n/locales/en.json` (已存在)
+  - `/Volumes/UltraDisk/Dev2/aastar/registry/src/i18n/locales/zh.json` (已存在)
+
+### 验证清单
+✅ 导入 useTranslation hook
+✅ 添加 const { t } = useTranslation()
+✅ SubStep 1 所有文本已替换
+✅ SubStep 2 所有文本已替换（包括 metaphor 和 comparison table）
+✅ SubStep 3 所有文本已替换
+✅ 导航按钮文本已替换
+✅ 进度指示器标签已替换
+✅ 保持所有逻辑和样式不变
+
+### 下一步
+- 测试组件在中英文切换时的显示效果
+- 确认所有翻译文本在 UI 中正确显示
+- 验证响应式布局在长文本时的表现
+
