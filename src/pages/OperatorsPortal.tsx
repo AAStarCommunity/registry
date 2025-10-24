@@ -1,6 +1,28 @@
+import { useState } from "react";
 import "./OperatorsPortal.css";
 
 export function OperatorsPortal() {
+  // Revenue Calculator state
+  const [dailyTxs, setDailyTxs] = useState(1000);
+  const [avgGasETH, setAvgGasETH] = useState(0.0001); // Changed from USD to ETH
+  const [feeRate, setFeeRate] = useState(2);
+  const [ethPrice] = useState(2500); // Assumed ETH price in USD
+
+  // Calculate revenues based on inputs
+  const calculateRevenue = () => {
+    const avgGasUSD = avgGasETH * ethPrice; // Convert ETH to USD
+    const dailyRevenue = dailyTxs * avgGasUSD * (feeRate / 100);
+    const monthlyRevenue = dailyRevenue * 30;
+    const yearlyRevenue = dailyRevenue * 365;
+    return {
+      daily: dailyRevenue.toFixed(2),
+      monthly: monthlyRevenue.toFixed(2),
+      yearly: yearlyRevenue.toFixed(2),
+    };
+  };
+
+  const revenue = calculateRevenue();
+
   const handleManageClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
     const manageForm = document.querySelector('.manage-form');
@@ -202,14 +224,20 @@ export function OperatorsPortal() {
               <div className="calculator-card">
                 <div className="calc-input">
                   <label>Daily Transactions:</label>
-                  <input type="number" defaultValue="1000" id="dailyTxs" />
-                </div>
-                <div className="calc-input">
-                  <label>Avg Gas Cost (USD):</label>
                   <input
                     type="number"
-                    step="0.01"
-                    defaultValue="2.50"
+                    value={dailyTxs}
+                    onChange={(e) => setDailyTxs(Number(e.target.value))}
+                    id="dailyTxs"
+                  />
+                </div>
+                <div className="calc-input">
+                  <label>Avg Gas Cost (ETH):</label>
+                  <input
+                    type="number"
+                    step="0.0001"
+                    value={avgGasETH}
+                    onChange={(e) => setAvgGasETH(Number(e.target.value))}
                     id="avgGas"
                   />
                 </div>
@@ -218,23 +246,29 @@ export function OperatorsPortal() {
                   <input
                     type="number"
                     step="0.1"
-                    defaultValue="2"
+                    value={feeRate}
+                    onChange={(e) => setFeeRate(Number(e.target.value))}
                     id="feeRate"
                   />
                 </div>
                 <div className="calc-result">
                   <div className="result-line">
                     <span>Daily Revenue:</span>
-                    <span className="result-value">$50.00</span>
+                    <span className="result-value">${revenue.daily}</span>
                   </div>
                   <div className="result-line">
                     <span>Monthly Revenue:</span>
-                    <span className="result-value">$1,500.00</span>
+                    <span className="result-value">${revenue.monthly}</span>
                   </div>
                   <div className="result-line">
                     <span>Yearly Revenue:</span>
-                    <span className="result-value">$18,000.00</span>
+                    <span className="result-value">${revenue.yearly}</span>
                   </div>
+                </div>
+                <div className="calc-note">
+                  <small>
+                    Based on ETH price: ${ethPrice} | Gas Cost: ~${(avgGasETH * ethPrice).toFixed(4)} USD
+                  </small>
                 </div>
               </div>
             </div>

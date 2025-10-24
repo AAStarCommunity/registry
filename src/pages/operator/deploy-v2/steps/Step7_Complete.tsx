@@ -187,6 +187,12 @@ export function Step7_Complete({
                 Fine-tune your service fee, gas price, and token requirements
                 based on usage.
               </div>
+              <button
+                onClick={handleManage}
+                className="step-link"
+              >
+                Manage Paymaster →
+              </button>
             </div>
           </div>
 
@@ -197,6 +203,12 @@ export function Step7_Complete({
               <div className="step-description">
                 Track service fee revenue collected in your treasury address.
               </div>
+              <button
+                onClick={handleManage}
+                className="step-link"
+              >
+                Manage Paymaster →
+              </button>
             </div>
           </div>
         </div>

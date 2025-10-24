@@ -186,7 +186,7 @@ export function AnalyticsDashboard() {
                     <td className="rank">#{index + 1}</td>
                     <td className="address">
                       <Link
-                        to={`/paymaster/${pm.address}`}
+                        to={`/explorer/${pm.address}`}
                         className="paymaster-link"
                         title="View Paymaster Details"
                       >

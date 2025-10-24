@@ -799,6 +799,61 @@
   margin-bottom: 0.25rem;
 }
 
+/* AOA Warning Banner */
+.aoa-warning-banner {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #fff8e1 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
+}
+
+.aoa-warning-banner .warning-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.aoa-warning-banner .warning-icon {
+  font-size: 1.5rem;
+}
+
+.aoa-warning-banner .warning-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #ff8f00;
+}
+
+.aoa-warning-banner .warning-content {
+  margin-left: 2.25rem;
+}
+
+.aoa-warning-banner .warning-content p {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.95rem;
+  color: #664d03;
+}
+
+.aoa-warning-banner .warning-content ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.aoa-warning-banner .warning-content li {
+  font-size: 0.9rem;
+  line-height: 1.8;
+  color: #664d03;
+  margin-bottom: 0.5rem;
+}
+
+.aoa-warning-banner .warning-content strong {
+  font-weight: 600;
+  color: #e65100;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .substep-progress {
