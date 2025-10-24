@@ -1,3 +1,95 @@
+### 🔧 修复导航按钮颜色可见性问题 (2025-10-24)
+
+**用户反馈**：Next 按钮的文字是白色在白色背景上，看不清楚。
+
+**问题原因**：
+
+CSS 样式使用了未定义的 CSS 变量：
+```css
+.nav-button.next {
+  color: white;
+  background: var(--color-primary);  /* ❌ 变量未定义，导致背景是白色 */
+}
+```
+
+当 `var(--color-primary)` 未定义时，浏览器会回退到默认值（通常是透明或白色），导致白色文字在白色背景上不可见。
+
+**修复方案**：
+
+将所有导航按钮的 CSS 变量替换为显式颜色值：
+
+**1. Next 按钮** (`Step1_ConnectAndSelect.css:550-560`):
+```css
+/* ✅ 修复后 */
+.nav-button.next {
+  color: #ffffff;        /* 白色文字 */
+  background: #007AFF;   /* iOS 蓝色背景 */
+  flex: 1;
+}
+
+.nav-button.next:hover:not(:disabled) {
+  background: #0051D5;   /* 深蓝色悬停效果 */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+}
+```
+
+**2. Back 按钮** (`Step1_ConnectAndSelect.css:541-548`):
+```css
+/* ✅ 修复后 */
+.nav-button.back {
+  color: #666666;        /* 深灰色文字 */
+  background: #f5f5f5;   /* 浅灰色背景 */
+}
+
+.nav-button.back:hover {
+  background: #e0e0e0;   /* 中灰色悬停效果 */
+}
+```
+
+**3. Proceed 按钮（SubStep 3 底部）** (`Step1_ConnectAndSelect.css:572-595`):
+```css
+/* ✅ 修复后 */
+.btn-next {
+  width: 100%;
+  padding: 1rem 2rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #ffffff;        /* 白色文字 */
+  background: linear-gradient(135deg, #007AFF 0%, #0051D5 100%);  /* 蓝色渐变 */
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-next:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f5f5f5;   /* 浅灰色背景（禁用状态）*/
+  color: #999999;        /* 灰色文字（禁用状态）*/
+}
+```
+
+**修复效果**：
+- ✅ "Next →" 按钮：蓝色背景 + 白色文字，清晰可见
+- ✅ "Back" 按钮：灰色背景 + 深灰色文字，清晰可见
+- ✅ "Proceed to Next Step" 按钮：蓝色渐变背景 + 白色文字
+- ✅ 禁用状态按钮：灰色背景 + 灰色文字，视觉上明确表示不可点击
+- ✅ 所有按钮在任何背景下都有足够的对比度
+
+**Git Commit**:
+```
+fix(ui): Replace CSS variables with explicit colors for navigation buttons
+
+Commit: 2ccea93
+```
+
+**相关文件**:
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.css`
+
+---
+
 ### 🔧 修复钱包余额检测功能 (2025-10-24)
 
 **用户反馈的问题**：
