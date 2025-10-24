@@ -347,6 +347,7 @@ export function DeployWizard() {
               paymasterAddress={paymasterForRegister}
               walletStatus={config.walletStatus}
               communityName={config.communityName}
+              serviceFeeRate={config.serviceFeeRate}
               onNext={handleRegisterComplete}
               onBack={handleBack}
             />

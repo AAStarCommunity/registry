@@ -7559,3 +7559,278 @@ English:
 - 确认所有翻译文本在 UI 中正确显示
 - 验证响应式布局在长文本时的表现
 
+
+
+---
+
+## 🔧 Registry 注册修复 - feeRate 参数错误 (2025-10-24)
+
+### 问题描述
+用户点击 "Register Paymaster" 按钮时，交易失败并报错：
+```
+execution reverted: "Invalid fee rate"
+transaction data: registerPaymaster(address, uint256, string)
+第二个参数: 10000000000000000000 (10 ether)
+```
+
+### 根本原因
+Step6 的 `registerPaymaster` 调用中，第二个参数传递了 `ethers.parseEther(gTokenAmount)` (10 ether = 10^19 wei)，但 Registry v1.2 合约期望的是 `feeRate`（basis points，最大值 10000）。
+
+**接口不匹配**:
+- 前端期望: `registerPaymaster(address paymasterAddress, uint256 gTokenAmount, string metadata)`
+- 合约实际: `registerPaymaster(string _name, uint256 _feeRate) payable`
+
+### 修复内容
+
+#### 1. Step6_RegisterRegistry.tsx
+**位置**: `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry.tsx`
+
+**修改内容**:
+- 添加 `serviceFeeRate: string` 到 `Step6Props` 接口 (Line 10)
+- 计算 `feeRateInBasisPoints` 并使用它注册 (Lines 150-163):
+  ```typescript
+  // 修复前
+  const tx = await registry.registerPaymaster(
+    paymasterAddress,
+    ethers.parseEther(gTokenAmount),  // ❌ 10 ether = 10^19
+    metadata
+  );
+
+  // 修复后
+  const feeRateInBasisPoints = Math.round(parseFloat(serviceFeeRate) * 100);
+  const tx = await registry.registerPaymaster(
+    paymasterAddress,
+    feeRateInBasisPoints,  // ✅ e.g., "2" -> 200 basis points (2%)
+    metadata
+  );
+  ```
+
+#### 2. DeployWizard.tsx
+**位置**: `src/pages/operator/DeployWizard.tsx`
+
+**修改内容**:
+- 添加 `serviceFeeRate={config.serviceFeeRate}` 到 Step6 组件调用 (Line 350)
+
+### 参数说明
+- **serviceFeeRate** (Step2 收集): 字符串格式的百分比，例如 "2" 表示 2%
+- **feeRateInBasisPoints** (传给合约): 整数格式的 basis points，例如 200 表示 2%
+  - 转换公式: `Math.round(parseFloat(serviceFeeRate) * 100)`
+  - 合约验证: `feeRate <= 10000` (最大 100%)
+
+### 示例
+- 用户在 Step2 输入: `serviceFeeRate = "2"` (2%)
+- Step6 计算: `2 * 100 = 200` basis points
+- 合约接收: `200` ✅ 通过验证（<= 10000）
+
+### 相关文档
+- 详细修复说明: `/tmp/fix-registry-feerate.md`
+
+### 提交信息
+- 文件修改:
+  - `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry.tsx`
+  - `src/pages/operator/DeployWizard.tsx`
+
+
+---
+
+## 🏗️ Launch Paymaster 合约架构全面分析 (2025-10-24)
+
+### 任务背景
+用户要求全面梳理 Launch Paymaster 涉及的合约体系，明确：
+1. 当前合约版本和文件位置
+2. AOA 标准模式涉及的合约
+3. AOA+ Super 模式涉及的合约
+4. 前端是否使用了最新的、想要实现的合约
+
+### 分析结果
+
+#### ✅ AOA 标准模式合约
+
+| 合约名称 | 位置 | 状态 | 地址 (Sepolia) |
+|---------|------|------|---------------|
+| **PaymasterV4_1** | `contracts/src/v3/PaymasterV4_1.sol` | ✅ 已部署并使用 | `0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445` |
+| **EntryPoint v0.7** | 标准合约 | ✅ 已部署 | `0x0000000071727De22E5E9d8BAf0edAc6f37da032` |
+| **Registry v1.2** | `contracts/src/SuperPaymasterRegistry_v1_2.sol` | ⚠️ **未部署** | - |
+| **GToken** | - | ✅ 已部署 | `0x868F843723a98c6EECC4BF0aF3352C53d5004147` |
+| **PNT Token** | - | ✅ 已部署 | `0xD14E87d8D8B69016Fcc08728c33799bD3F66F180` |
+| **GasTokenFactory** | - | ✅ 已部署 | `0x6720Dc8ce5021bC6F3F126054556b5d3C125101F` |
+
+**部署流程**:
+1. 用户部署 PaymasterV4_1 合约
+2. Owner 调用 `EntryPoint.addStake()` 质押 ETH
+3. Owner 调用 `EntryPoint.deposit()` 存入运营 ETH
+4. (计划中) Owner 质押 GToken 到 Governance
+5. Owner 调用 `Registry.registerPaymaster()` 注册
+
+#### ❌ AOA+ Super 模式合约
+
+| 合约名称 | 状态 | 说明 |
+|---------|------|------|
+| **SuperPaymasterV2** | ❌ **源文件缺失** | 仅在编译输出中找到引用，源文件不在 repo 中 |
+| **Registry v1.2** | ⚠️ 未部署 | 同标准模式 |
+| **GToken (stGToken)** | ✅ 已部署 | 用于质押 |
+| **PNT Token (aPNTs)** | ✅ 已部署 | 用于 Gas 存款 |
+
+**预期流程** (未实现):
+1. Operator 质押 stGToken 到 SuperPaymasterV2
+2. SuperPaymasterV2 自动 lock stGToken
+3. Operator 存入 aPNTs 到 SuperPaymasterV2
+4. SuperPaymasterV2 注册 Operator 到 Registry
+5. 用户使用时自动扣除 aPNTs 赞助 Gas
+
+### 🚨 发现的关键问题
+
+#### 问题 1: 前端使用了错误的 Registry 地址
+**前端配置** (`networkConfig.ts:53`):
+```typescript
+registry: "0x838da93c815a6E45Aa50429529da9106C0621eF0"
+```
+
+**验证结果**:
+```bash
+$ cast call 0x838da93c815a6E45Aa50429529da9106C0621eF0 "routerFeeRate()(uint256)"
+> 250  # 这是 SuperPaymasterV7 Router 的函数，不是 Registry!
+```
+
+**结论**: ❌ 前端配置的地址是 **SuperPaymasterV7 Router**，不是 Registry v1.2
+
+#### 问题 2: Registry 接口版本不匹配
+**前端期望的接口** (`Step6_RegisterRegistry.tsx:22`):
+```solidity
+function registerPaymaster(address paymasterAddress, uint256 gTokenAmount, string memory metadata) external
+```
+
+**Registry v1.2 实际接口**:
+```solidity
+function registerPaymaster(string calldata _name, uint256 _feeRate) external payable
+```
+
+**参数对比**:
+| 参数 | 前端期望 | 合约实际 | 匹配? |
+|------|---------|---------|------|
+| 参数1 | `address` | `string` (name) | ❌ |
+| 参数2 | `uint256` (gToken) | `uint256` (feeRate) | ⚠️ 类型对，语义不同 |
+| 参数3 | `string` (metadata) | - | ❌ 不存在 |
+| 质押方式 | ERC20 approve+transfer | ETH payable | ❌ |
+
+**状态**: ✅ 已修复（本次更新）
+
+#### 问题 3: SuperPaymasterV2 源文件缺失
+**查找结果**:
+```bash
+$ find contracts/src -name "SuperPaymasterV2.sol"
+# 没有结果
+
+$ find contracts -name "SuperPaymasterV2.sol" | grep -v out
+# 没有结果
+```
+
+**结论**: ⚠️ SuperPaymasterV2 合约源文件不在 repo 中，AOA+ Super 模式无法实现
+
+#### 问题 4: 合约目录分散
+当前合约分布在多个目录：
+- `contracts/src/v3/` - PaymasterV4 系列
+- `contracts/src/` - Registry
+- `contracts/src/base/` - 基础合约
+- `contracts/src/interfaces/` - 接口定义
+
+### 📝 用户问题的答案
+
+> "根据你分析整理，再检查 registry 前端应用，launch paymaster 使用的，是我们最新的，想要实现的合约么？"
+
+**答案**: ❌ **不是。前端没有使用最新的、想要实现的合约。**
+
+**具体问题**:
+1. ❌ Registry 地址错误：指向 SuperPaymasterV7 Router，不是 Registry v1.2
+2. ✅ Registry 接口不匹配：**已修复**（feeRate 参数）
+3. ❌ Registry v1.2 可能未部署到 Sepolia
+4. ❌ SuperPaymasterV2 源文件缺失，AOA+ Super 模式无法实现
+5. ✅ PaymasterV4_1 正确使用（AOA 标准模式可用）
+
+### 建议的修复方案
+
+#### 短期修复 (使用现有合约)
+1. **部署 Registry v1.2**:
+   ```bash
+   forge script script/DeployRegistry_v1_2.s.sol --broadcast
+   ```
+
+2. **更新前端 Registry 地址**:
+   ```typescript
+   // networkConfig.ts
+   registry: "<新部署的 Registry v1.2 地址>"
+   ```
+
+3. ✅ **修复 Step6 注册逻辑**: 已完成（本次更新）
+
+#### 长期优化 (实现 SuperPaymasterV2)
+1. **创建 SuperPaymasterV2 合约**:
+   - 位置: `contracts/src/v2/SuperPaymasterV2.sol`
+   - 继承自: PaymasterV4_1
+   - 新增功能：
+     - 多账户管理 (`mapping(address operator => OperatorInfo)`)
+     - stGToken lock 机制
+     - aPNTs 账户余额管理
+     - 自动 Reputation 记录
+
+2. **实现 Operator 注册流程**:
+   - `registerOperator(string name, uint256 stGTokenAmount, uint256 aPNTAmount)`
+   - 自动与 Registry 交互
+   - 无需部署独立 Paymaster 合约
+
+3. **前端 Super Mode 流程完善**:
+   - Step 3: Stake & Register (一步完成)
+   - Step 4: Deposit aPNTs
+   - Step 5: 完成
+
+### 建议的合约目录结构
+
+```
+contracts/src/
+├── core/                      # ERC-4337 核心合约
+│   ├── EntryPoint.sol
+│   ├── BasePaymaster.sol
+│   └── ...
+│
+├── interfaces/                # 接口定义
+│   ├── ISuperPaymasterRegistry.sol
+│   ├── ISuperPaymasterV2.sol (新增)
+│   └── ...
+│
+├── v3/                        # V3/V4 系列 Paymaster
+│   ├── PaymasterV3.sol
+│   ├── PaymasterV3_1.sol
+│   ├── PaymasterV3_2.sol
+│   ├── PaymasterV4.sol
+│   └── PaymasterV4_1.sol     ← 当前 AOA 标准模式使用
+│
+├── v2/                        # V2 系列（AOA+ Super 模式）
+│   └── SuperPaymasterV2.sol   ← ⚠️ 缺失，需要创建
+│
+├── registry/                  # Registry 相关
+│   └── SuperPaymasterRegistry_v1_2.sol
+│
+├── tokens/                    # Token 合约
+│   ├── GasTokenV2.sol (xPNTs)
+│   ├── PNTs.sol
+│   └── GasTokenFactoryV2.sol
+│
+└── governance/                # Governance 相关（计划中）
+    └── GTokenStaking.sol
+```
+
+### 相关文档
+- 完整架构报告: `/tmp/contract-architecture-report.md`
+- SuperPaymaster 合约说明: `/Volumes/UltraDisk/Dev2/aastar/SuperPaymaster/CLAUDE.md`
+
+### 文件分析
+- `contracts/src/v3/PaymasterV4_1.sol` - ✅ 已确认
+- `contracts/src/SuperPaymasterRegistry_v1_2.sol` - ✅ 已确认
+- `contracts/src/v2/SuperPaymasterV2.sol` - ❌ 缺失
+- `src/config/networkConfig.ts` - ⚠️ Registry 地址错误
+
+### 总结
+- ✅ **AOA 标准模式**: PaymasterV4_1 可用，需要部署 Registry v1.2 并更新前端地址
+- ❌ **AOA+ Super 模式**: SuperPaymasterV2 源文件缺失，功能无法实现
+- ⚠️ **前端问题**: Registry 地址错误（已识别），注册接口已修复
+

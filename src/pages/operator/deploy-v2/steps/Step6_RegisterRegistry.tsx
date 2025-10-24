@@ -7,6 +7,7 @@ export interface Step6Props {
   paymasterAddress: string;
   walletStatus: WalletStatus;
   communityName: string;
+  serviceFeeRate: string;  // Fee rate percentage (e.g., "2" for 2%)
   onNext: (registryTxHash: string) => void;
   onBack: () => void;
 }
@@ -33,6 +34,7 @@ export function Step6_RegisterRegistry({
   paymasterAddress,
   walletStatus,
   communityName,
+  serviceFeeRate,
   onNext,
   onBack,
 }: Step6Props) {
@@ -145,10 +147,19 @@ export function Step6_RegisterRegistry({
         timestamp: Date.now(),
       });
 
+      // Calculate feeRate in basis points (e.g., "2" -> 200 basis points = 2%)
+      const feeRateInBasisPoints = Math.round(parseFloat(serviceFeeRate) * 100);
+
+      console.log('Registering Paymaster:', {
+        paymasterAddress,
+        feeRateInBasisPoints,
+        metadata: JSON.parse(metadata)
+      });
+
       // Register Paymaster
       const tx = await registry.registerPaymaster(
         paymasterAddress,
-        ethers.parseEther(gTokenAmount),
+        feeRateInBasisPoints,  // ✅ Use feeRate (basis points) instead of gTokenAmount
         metadata
       );
 
