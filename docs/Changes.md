@@ -1,3 +1,98 @@
+### 🔄 重构账户切换方案：从按钮触发改为事件驱动 (2025-10-24)
+
+**问题回顾**：之前尝试使用 Switch Account 按钮配合 `wallet_requestPermissions` API 来实现账户切换，但发现该 API 无法实现预期功能。
+
+**核心发现**：
+- `wallet_requestPermissions` 只显示**权限确认对话框**，而不是**账户选择器**
+- 用户反馈："switch account button can popup metamask and show all accounts, but i can't select one to connect"
+- MetaMask **没有提供** 直接显示账户选择对话框的 API
+
+**新的解决方案 - 事件驱动架构**：
+
+**1. 移除 Switch Account 按钮**：
+```typescript
+// ❌ 删除无效的按钮和处理函数
+const handleSwitchAccount = async () => { ... }  // 已移除
+const [isSwitching, setIsSwitching] = useState(false);  // 已移除
+```
+
+**2. 添加 accountsChanged 事件监听**：
+```typescript
+// ✅ 新增事件驱动方案
+useEffect(() => {
+  if (!window.ethereum) return;
+
+  const handleAccountsChanged = (accounts: string[]) => {
+    console.log('🔄 Account changed detected:', accounts[0]);
+    if (accounts.length > 0) {
+      setWalletAddress(accounts[0]);
+      if (subStep === SubStep.ConnectWallet) {
+        setSubStep(SubStep.SelectOption);
+      }
+    } else {
+      // 用户断开钱包
+      setWalletAddress(null);
+      setSubStep(SubStep.ConnectWallet);
+    }
+  };
+
+  window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+  return () => {
+    window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+  };
+}, [subStep]);
+```
+
+**3. 添加用户引导提示框**：
+```typescript
+<div className="switch-account-hint">
+  <span className="hint-icon">💡</span>
+  <div className="hint-content">
+    <strong>Want to use a different account?</strong>
+    <p>Switch your account in MetaMask extension, and this page will automatically update.</p>
+  </div>
+</div>
+```
+
+**为什么这个方案更好**：
+
+| 对比维度 | 按钮方案 (旧) | 事件驱动 (新) |
+|---------|-------------|--------------|
+| **API 支持** | ❌ wallet_requestPermissions 不支持账户选择 | ✅ accountsChanged 是标准事件 |
+| **用户体验** | ❌ 点击按钮无法选择账户 | ✅ 在 MetaMask 中切换即可，符合用户习惯 |
+| **自动更新** | ❌ 需要手动点击按钮 | ✅ 切换后页面自动更新 |
+| **代码复杂度** | ❌ 需要按钮、loading 状态、错误处理 | ✅ 仅需事件监听器，更简洁 |
+| **可靠性** | ❌ 依赖不适用的 API | ✅ 使用 MetaMask 原生能力 |
+
+**实现效果**：
+- ✅ 用户在 MetaMask 扩展中切换账户
+- ✅ `accountsChanged` 事件自动触发
+- ✅ 页面立即更新为新的钱包地址
+- ✅ 如果在连接阶段，自动进入下一步
+- ✅ 如果用户断开钱包，自动返回连接阶段
+- ✅ 提示框清晰指导用户如何切换账户
+
+**技术架构改进**：
+- 从 **命令式交互**（按钮触发）转变为 **事件驱动**（监听变化）
+- 减少 75 行代码（删除按钮相关代码、CSS）
+- 更符合 Web3 开发最佳实践
+
+**Git Commit**:
+```
+refactor(wallet): Replace Switch Account button with event-driven approach
+
+Commit: 4f69e38
+```
+
+**经验总结**：
+- 在使用 Web3 API 前，务必仔细阅读官方文档确认其实际功能
+- `wallet_requestPermissions` 用于重新请求权限，不是账户选择器
+- 事件驱动架构在 Web3 应用中更可靠（如 accountsChanged、chainChanged）
+- 与 Web3 钱包交互时，应遵循钱包的原生交互模式，而不是尝试创建自定义 UI
+
+---
+
 ### 🔧 修复 Switch Account 加载状态和地址更新问题 (2025-10-24)
 
 **用户反馈的两个问题**:
