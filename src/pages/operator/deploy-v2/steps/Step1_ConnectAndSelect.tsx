@@ -41,13 +41,39 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
   const [selectedOption, setSelectedOption] = useState<StakeOptionType | null>(null);
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [isSwitching, setIsSwitching] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networkInfo, setNetworkInfo] = useState<{
     chainId: number;
     chainName: string;
   } | null>(null);
+
+  // Listen for account changes
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    const handleAccountsChanged = (accounts: string[]) => {
+      console.log('🔄 Account changed detected:', accounts[0]);
+      if (accounts.length > 0) {
+        setWalletAddress(accounts[0]);
+        // If user is already past wallet connection, stay on current step
+        // Otherwise, proceed to next step
+        if (subStep === SubStep.ConnectWallet) {
+          setSubStep(SubStep.SelectOption);
+        }
+      } else {
+        // User disconnected wallet
+        setWalletAddress(null);
+        setSubStep(SubStep.ConnectWallet);
+      }
+    };
+
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+    return () => {
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    };
+  }, [subStep]);
 
   // Test mode auto-setup
   useEffect(() => {
@@ -132,45 +158,6 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     }
   };
 
-  // Force switch account - always show MetaMask account selector
-  const handleSwitchAccount = async () => {
-    setIsSwitching(true);
-    setError(null);
-
-    try {
-      if (!window.ethereum) {
-        throw new Error("Please install MetaMask or another Web3 wallet");
-      }
-
-      // Request permissions to force account selector popup
-      console.log('🔄 Requesting account switch...');
-      await window.ethereum.request({
-        method: 'wallet_requestPermissions',
-        params: [{ eth_accounts: {} }]
-      });
-
-      // After permission is granted, request accounts to get the newly selected account
-      // wallet_requestPermissions doesn't return accounts, so we need to request them again
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-
-      if (accounts.length === 0) {
-        throw new Error("No accounts found");
-      }
-
-      const address = accounts[0];
-      setWalletAddress(address);
-      setSubStep(SubStep.SelectOption);
-      console.log(`✅ Switched to account: ${address}`);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Failed to switch account";
-      setError(errorMessage);
-      console.error("Account switch error:", err);
-    } finally {
-      setIsSwitching(false);
-    }
-  };
 
   // SubStep 2: Select Stake Option
   const handleSelectOption = (option: StakeOptionType) => {
@@ -293,42 +280,31 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <p className="connect-wallet-prompt">
               {t('step1.substep1.connectPrompt')}
             </p>
-            <div className="wallet-buttons">
-              <button
-                className="btn-connect-primary"
-                onClick={handleConnectWallet}
-                disabled={isConnecting || isSwitching}
-              >
-                {isConnecting ? (
-                  <>
-                    <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
-                  </>
-                ) : (
-                  <>
-                    <span className="wallet-icon">🦊</span> {t('step1.substep1.connectButton')}
-                  </>
-                )}
-              </button>
-              <button
-                className="btn-switch-account"
-                onClick={handleSwitchAccount}
-                disabled={isConnecting || isSwitching}
-                title="Switch to a different MetaMask account"
-              >
-                {isSwitching ? (
-                  <>
-                    <span className="spinner">⏳</span> Switching...
-                  </>
-                ) : (
-                  <>
-                    <span className="switch-icon">🔄</span> Switch Account
-                  </>
-                )}
-              </button>
-            </div>
+            <button
+              className="btn-connect-primary"
+              onClick={handleConnectWallet}
+              disabled={isConnecting}
+            >
+              {isConnecting ? (
+                <>
+                  <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
+                </>
+              ) : (
+                <>
+                  <span className="wallet-icon">🦊</span> {t('step1.substep1.connectButton')}
+                </>
+              )}
+            </button>
             <p className="connect-wallet-hint">
               {t('step1.substep1.connectHint')}
             </p>
+            <div className="switch-account-hint">
+              <span className="hint-icon">💡</span>
+              <div className="hint-content">
+                <strong>Want to use a different account?</strong>
+                <p>Switch your account in MetaMask extension, and this page will automatically update.</p>
+              </div>
+            </div>
           </div>
 
           <div className="help-section">
