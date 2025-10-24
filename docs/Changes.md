@@ -1,5 +1,199 @@
 # Registry DApp 开发进度报告
 
+**日期**: 2025-10-24
+**阶段**: Phase 3.1 - MetaMask 钱包自动检测功能
+**当前状态**: ✅ 完成 - 实现钱包账户自动连接
+
+---
+
+## ✅ MetaMask 账户自动检测实现 (2025-10-24)
+
+### 任务背景
+
+用户反馈："connect button in step1 should auto detect which account i am using in metamask and connect it"
+
+之前的钱包连接实现每次都会弹出 MetaMask 账户选择窗口（`eth_requestAccounts`），即使用户已经连接过钱包。这导致了不必要的用户操作步骤，影响了用户体验。
+
+### 实现方案
+
+采用标准的 Web3 钱包连接最佳实践，实现两步检测：
+
+1. **自动检测**：首先调用 `eth_accounts` 检查是否已有连接的账户
+2. **按需请求**：仅在没有连接账户时才调用 `eth_requestAccounts` 弹出连接窗口
+
+### 技术实现
+
+**修改文件**: `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx:92-131`
+
+**核心逻辑**:
+```typescript
+const handleConnectWallet = async () => {
+  // 第一步：检查是否已经连接（自动检测当前账户）
+  let accounts = await window.ethereum.request({
+    method: 'eth_accounts'
+  });
+
+  // 第二步：如果未连接，请求连接（显示 MetaMask 弹窗）
+  if (accounts.length === 0) {
+    console.log('🔗 No accounts connected, requesting connection...');
+    accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts'
+    });
+  } else {
+    console.log('✅ Auto-detected connected account:', accounts[0]);
+  }
+  // ...
+};
+```
+
+### 用户体验改进
+
+**之前的行为**:
+- 用户点击 "Connect MetaMask" 按钮
+- 每次都弹出 MetaMask 账户选择窗口
+- 即使已经连接过也需要重新选择
+
+**改进后的行为**:
+- 用户点击 "Connect MetaMask" 按钮
+- 如果 MetaMask 已连接，直接使用当前账户（无弹窗）
+- 仅在首次连接或断开后才显示选择窗口
+
+### Git Commit
+
+```
+feat(wallet): Auto-detect connected MetaMask account
+
+Commit: 3e15236
+```
+
+---
+
+# Registry DApp 开发进度报告
+
+**日期**: 2025-10-24
+**阶段**: Phase 3.1 - MetaMask 钱包自动检测功能
+**当前状态**: ✅ 完成 - 实现钱包账户自动连接
+
+---
+
+## ✅ MetaMask 账户自动检测实现 (2025-10-24)
+
+### 任务背景
+
+用户反馈："connect button in step1 should auto detect which account i am using in metamask and connect it"
+
+之前的钱包连接实现每次都会弹出 MetaMask 账户选择窗口（`eth_requestAccounts`），即使用户已经连接过钱包。这导致了不必要的用户操作步骤，影响了用户体验。
+
+### 实现方案
+
+采用标准的 Web3 钱包连接最佳实践，实现两步检测：
+
+1. **自动检测**：首先调用 `eth_accounts` 检查是否已有连接的账户
+2. **按需请求**：仅在没有连接账户时才调用 `eth_requestAccounts` 弹出连接窗口
+
+### 技术实现
+
+**修改文件**: `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx:92-131`
+
+**核心逻辑**:
+```typescript
+const handleConnectWallet = async () => {
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    if (!window.ethereum) {
+      throw new Error("Please install MetaMask or another Web3 wallet");
+    }
+
+    // 第一步：检查是否已经连接（自动检测当前账户）
+    let accounts = await window.ethereum.request({
+      method: 'eth_accounts'
+    });
+
+    // 第二步：如果未连接，请求连接（显示 MetaMask 弹窗）
+    if (accounts.length === 0) {
+      console.log('🔗 No accounts connected, requesting connection...');
+      accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+    } else {
+      console.log('✅ Auto-detected connected account:', accounts[0]);
+    }
+
+    if (accounts.length === 0) {
+      throw new Error("No accounts found");
+    }
+
+    const address = accounts[0];
+    setWalletAddress(address);
+    setSubStep(SubStep.SelectOption);
+    console.log(`✅ Wallet connected: ${address}`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to connect wallet";
+    setError(errorMessage);
+    console.error("Wallet connection error:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
+
+### 用户体验改进
+
+**之前的行为**:
+- 用户点击 "Connect MetaMask" 按钮
+- 每次都弹出 MetaMask 账户选择窗口
+- 即使已经连接过也需要重新选择
+
+**改进后的行为**:
+- 用户点击 "Connect MetaMask" 按钮
+- 如果 MetaMask 已连接，直接使用当前账户（无弹窗）
+- 仅在首次连接或断开后才显示选择窗口
+
+### 测试场景
+
+1. ✅ **首次连接**: MetaMask 未连接 → 弹出选择窗口
+2. ✅ **已连接状态**: MetaMask 已连接 → 自动检测并使用当前账户
+3. ✅ **切换账户**: 用户在 MetaMask 中切换账户 → 自动使用新账户
+4. ✅ **断开后重连**: 用户断开连接后 → 再次弹出选择窗口
+
+### 符合标准
+
+遵循 [EIP-1193](https://eips.ethereum.org/EIPS/eip-1193) 标准的 Provider API:
+- `eth_accounts`: 返回已授权的账户列表（不触发权限请求）
+- `eth_requestAccounts`: 请求账户访问权限（触发用户交互）
+
+### Git Commit
+
+```
+feat(wallet): Auto-detect connected MetaMask account
+
+- Use eth_accounts to check for existing connection first
+- Only prompt with eth_requestAccounts if no account connected
+- Provides seamless UX for already-connected users
+- Reduces unnecessary MetaMask popups
+
+Commit: 3e15236
+```
+
+### 影响范围
+
+- **文件修改**: 1 个文件（Step1_ConnectAndSelect.tsx）
+- **代码行数**: +15 行, -4 行
+- **用户影响**: 所有使用 Deploy Wizard 的用户
+- **向后兼容**: 完全兼容，不影响现有功能
+
+### 后续工作
+
+- [ ] 监控用户反馈，确认体验改进
+- [ ] 考虑添加 "Change Account" 按钮，允许用户主动切换账户
+- [ ] 添加账户变更监听（`accountsChanged` 事件）
+
+---
+
+# Registry DApp 开发进度报告
+
 **日期**: 2025-10-23
 **阶段**: Phase 3.0 - V2 Integration Analysis
 **当前状态**: 📋 分析完成 - V2 流程对比与 Registry 改进建议
