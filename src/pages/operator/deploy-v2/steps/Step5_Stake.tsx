@@ -48,8 +48,10 @@ function Step5_StandardFlow({
   onBack,
 }: Step5Props) {
 
-// EntryPoint v0.7 address on Sepolia
-const ENTRY_POINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+// EntryPoint v0.7 address - read from env with fallback
+const ENTRY_POINT_V07 =
+  import.meta.env.VITE_ENTRY_POINT_V07 ||
+  "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // Official v0.7 EntryPoint
 
 // Simple EntryPoint ABI for depositTo
 const ENTRY_POINT_ABI = [

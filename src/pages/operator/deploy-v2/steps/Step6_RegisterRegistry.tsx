@@ -12,11 +12,15 @@ export interface Step6Props {
   onBack: () => void;
 }
 
-// Registry v1.2 address on Sepolia
-const REGISTRY_V1_2 = "0x838da93c815a6E45Aa50429529da9106C0621eF0";
+// Registry v1.2 address on Sepolia - read from env with fallback
+const REGISTRY_V1_2 =
+  import.meta.env.VITE_REGISTRY_ADDRESS ||
+  "0x838da93c815a6E45Aa50429529da9106C0621eF0";
 
-// GToken address on Sepolia
-const GTOKEN_ADDRESS = "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180"; // TODO: Get from env
+// GToken address on Sepolia - read from env with fallback
+const GTOKEN_ADDRESS =
+  import.meta.env.VITE_GTOKEN_ADDRESS ||
+  "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180";
 
 // Simple ABI
 const REGISTRY_ABI = [

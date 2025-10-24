@@ -15,9 +15,13 @@ import './ManagePaymasterFull.css';
  * - Pause/unpause functionality
  */
 
-// Contract addresses (Sepolia testnet)
-const ENTRY_POINT_V07 = "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
-const REGISTRY_V1_2 = "0x838da93c815a6E45Aa50429529da9106C0621eF0";
+// Contract addresses - read from env with fallback
+const ENTRY_POINT_V07 =
+  import.meta.env.VITE_ENTRY_POINT_V07 ||
+  "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // Official v0.7 EntryPoint
+const REGISTRY_V1_2 =
+  import.meta.env.VITE_REGISTRY_ADDRESS ||
+  "0x838da93c815a6E45Aa50429529da9106C0621eF0";
 
 // ABIs
 const PAYMASTER_V4_ABI = [
