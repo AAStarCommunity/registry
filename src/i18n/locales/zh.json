@@ -28,6 +28,7 @@
     "deploymentGuide": "📚 阅读部署指南",
     "steps": {
       "connectAndSelect": "连接并选择模式",
+      "resources": "部署资源",
       "config": "配置",
       "deploy": "部署 Paymaster",
       "stake": "质押",

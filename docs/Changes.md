@@ -6,6 +6,240 @@
 
 ---
 
+## 2025-10-25 - Phase 3.2: Step4_DeployResources 组件实现与集成
+
+### 问题描述
+为 AOA 和 Super 两种模式添加统一的资源部署步骤，包括 SBT 选择、xPNTs Token 部署和 GToken staking。
+
+### 实现内容
+
+#### 1. Step4_DeployResources 组件创建 (src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx)
+
+**组件功能**：
+- 📦 Step 1: 选择或使用现有 MySBT 合约
+- 🪙 Step 2: 通过 xPNTsFactory 部署 xPNTs Token
+- 🔒 Step 3: Stake GToken 获得 sGToken
+
+**关键特性**：
+- ✅ 多步骤向导，带进度指示器
+- ✅ 自动从社区名称生成 token symbol
+- ✅ 验证最低 30 GToken stake
+- ✅ 完成后自动传递资源数据到下一步
+- ✅ 复用 Phase 3.3 的 staking 模式
+
+**代码示例**：
+```typescript
+export interface DeployedResources {
+  sbtAddress: string;
+  xPNTsAddress: string;
+  sGTokenAmount: string;
+  gTokenStakeTxHash: string;
+}
+
+// 三个主要操作
+handleSelectSBT()       // 使用现有 MySBT
+handleDeployXPNTs()     // 部署 xPNTs via factory
+handleStakeGToken()     // Stake GToken → sGToken
+```
+
+**使用的合约地址**：
+- MySBT: 0xB330a8A396Da67A1b50903E734750AAC81B0C711
+- xPNTsFactory: 0x356CF363E136b0880C8F48c9224A37171f375595
+- GToken: 0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35
+- GTokenStaking: 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2
+
+#### 2. DeployWizard 集成 (src/pages/operator/DeployWizard.tsx)
+
+**更新流程结构**：
+```typescript
+// AOA Flow (7 步) - 新增 resources 步骤
+1. Connect & Select Mode
+2. Deploy Resources (SBT + xPNTs + Stake GToken) ← 新增
+3. Configuration
+4. Deploy Paymaster
+5. Stake to EntryPoint
+6. Register to Registry
+7. Complete
+
+// Super Mode (6 步) - 新增 resources 步骤
+1. Connect & Select Mode
+2. Deploy Resources (SBT + xPNTs + Stake GToken) ← 新增
+3. Configuration
+4. Stake to SuperPaymaster
+5. Register to Registry
+6. Complete
+```
+
+**主要变更**：
+- ✅ Import Step4_DeployResources 和 DeployedResources 类型
+- ✅ 在 DeployConfig 接口添加 `deployedResources?: DeployedResources`
+- ✅ STANDARD_FLOW_STEPS 和 SUPER_MODE_STEPS 都添加 'resources' 步骤
+- ✅ 添加 handleResourcesComplete 回调
+- ✅ renderStepContent() 添加 'resources' case
+
+#### 3. i18n 翻译更新
+
+**英文** (src/i18n/locales/en.json):
+```json
+"steps": {
+  "connectAndSelect": "Connect & Select Mode",
+  "resources": "Deploy Resources",  ← 新增
+  "config": "Configuration",
+  // ...
+}
+```
+
+**中文** (src/i18n/locales/zh.json):
+```json
+"steps": {
+  "connectAndSelect": "连接并选择模式",
+  "resources": "部署资源",  ← 新增
+  "config": "配置",
+  // ...
+}
+```
+
+### 验证结果
+- ✅ 构建成功（无新 TypeScript 错误）
+- ✅ Step4_DeployResources 组件完整实现
+- ✅ 成功集成到 DeployWizard 的两个流程中
+- ✅ i18n 翻译完整（中英文）
+- ✅ 组件与 Phase 3.3 staking 逻辑保持一致
+
+### 文件变更列表
+- 新建：`src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx`
+- 新建：`src/pages/operator/deploy-v2/steps/Step4_DeployResources.css`
+- 修改：`src/pages/operator/DeployWizard.tsx`
+- 修改：`src/i18n/locales/en.json`
+- 修改：`src/i18n/locales/zh.json`
+
+---
+
+## 2025-10-24 - Phase 3.3: Super Mode stGToken Lock 功能实现
+
+### 问题描述
+完成 Super Mode（AOA+）的 stGToken lock 功能实现，包括修复 `StakeToSuperPaymaster` 组件的合约地址、ABI 错误和真实 staking 逻辑。
+
+### 实现内容
+
+#### 1. StakeToSuperPaymaster.tsx 修复 (src/pages/operator/deploy-v2/components/StakeToSuperPaymaster.tsx)
+
+**修复前问题**：
+- ❌ 合约地址都是 placeholder `"0x..."`
+- ❌ `registerOperator` ABI 参数顺序错误
+- ❌ GToken staking 逻辑只是 placeholder
+
+**修复后**：
+- ✅ 从环境变量读取合约地址，保留 fallback 值
+  - `SUPER_PAYMASTER_V2`: 0xb96d8BC6d771AE5913C8656FAFf8721156AC8141
+  - `GTOKEN_ADDRESS`: 0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35
+  - `GTOKEN_STAKING_ADDRESS`: 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2
+  - `APNTS_ADDRESS`: Placeholder (待部署)
+
+- ✅ 修正 `registerOperator` ABI 签名
+  ```typescript
+  // 正确的函数签名（与 SuperPaymasterV2.sol:277 一致）
+  function registerOperator(
+    uint256 sGTokenAmount,          // ← 第一个参数是 sGToken 数量
+    address[] memory supportedSBTs,
+    address xPNTsToken,
+    address treasury
+  )
+  ```
+
+- ✅ 实现真实的 GToken staking 逻辑
+  ```typescript
+  handleStakeGToken() {
+    // 1. Approve GTokenStaking 花费 GToken
+    // 2. Stake GToken 获得 sGToken
+    // 3. 验证 sGToken 余额
+  }
+  ```
+
+- ✅ 实现真实的 Operator 注册逻辑
+  ```typescript
+  handleRegisterOperator() {
+    // 1. Approve SuperPaymaster 转移 sGToken
+    // 2. 调用 registerOperator（正确的参数顺序）
+  }
+  ```
+
+#### 2. Enum 语法修复
+
+**问题**：TypeScript `erasableSyntaxOnly` 配置不允许普通 enum
+
+**修复**：将所有 enum 改为 const object + type alias
+```typescript
+// 修复前
+enum RegistrationStep {
+  STAKE_GTOKEN = 1,
+  // ...
+}
+
+// 修复后
+const RegistrationStep = {
+  STAKE_GTOKEN: 1,
+  // ...
+} as const;
+
+type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationStep];
+```
+
+**影响文件**：
+- `StakeToSuperPaymaster.tsx`
+- `Step1_ConnectAndSelect.tsx`
+
+### 验证结果
+- ✅ 所有关键 TypeScript 错误已修复
+- ✅ 构建成功
+- ✅ Super Mode 使用正确的 stGToken lock 流程
+- ✅ 合约地址从环境变量读取
+- ✅ ABI 签名与合约源码一致
+
+### Super Mode 完整流程
+
+1. **Step 1: Stake GToken**
+   - Approve GTokenStaking
+   - Stake GToken → 获得 sGToken
+   - 验证 sGToken 余额
+
+2. **Step 2: Register Operator**
+   - Approve SuperPaymaster 转移 sGToken
+   - 调用 `registerOperator(sGTokenAmount, supportedSBTs, xPNTsToken, treasury)`
+   - Lock sGToken (最低 30, 推荐 50-100)
+
+3. **Step 3: Deposit aPNTs**
+   - Approve aPNTs
+   - 存入 aPNTs 作为 gas backing
+
+4. **Step 4: Deploy xPNTs (Optional)**
+   - 部署社区专属 xPNTs token
+
+5. **Complete**
+   - Operator 注册成功
+   - 可以开始为用户 sponsor gas
+
+### 技术要点
+
+**stGToken Lock 范围**：
+- 最低：30 stGToken
+- 推荐：50-100 stGToken
+- 作用：获得使用 SuperPaymaster 的权限，lock 越多声誉越高
+
+**合约交互顺序**：
+1. GToken → GTokenStaking (Stake)
+2. GTokenStaking → SuperPaymaster (Approve + Lock)
+3. aPNTs → SuperPaymaster (Approve + Deposit)
+
+### 下一步
+- Phase 3.2: 添加 Step4_DeployResources 组件（SBT + xPNTs + Stake GToken）
+- 部署 aPNTs ERC20 token 到 Sepolia testnet
+
+### Commits
+- (待提交) feat: implement Super Mode stGToken lock functionality
+
+---
+
 ## 2025-10-24 - 修复硬编码合约地址问题
 
 ### 问题描述
@@ -52,6 +286,70 @@
 ### Commits
 - `7b4c6cd` - refactor: replace hardcoded addresses with environment variables
 - `764b7f4` - docs: 添加硬编码地址修复的进度报告
+
+---
+
+## 2025-10-24 - Phase 2 & 3: 合约部署 + Standard→AOA 重命名
+
+### 问题描述
+完成 Phase 2 合约部署和 Phase 3 代码库重命名，修正架构理解并统一术语。
+
+### 实现内容
+
+#### Phase 2: 合约部署（Sepolia Testnet）
+
+**核心合约**：
+- SuperPaymasterV2: 0xb96d8BC6d771AE5913C8656FAFf8721156AC8141
+- Registry (统一): 0x838da93c815a6E45Aa50429529da9106C0621eF0
+- GTokenStaking: 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2
+
+**共享资源**：
+- GToken: 0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35
+- xPNTsFactory: 0x356CF363E136b0880C8F48c9224A37171f375595
+- MySBT: 0xB330a8A396Da67A1b50903E734750AAC81B0C711
+
+**Operator 测试**: 成功注册并 lock 50 sGT，xPNTs: 0x95A71F3C8c25D14ec2F261Ab293635d7f37A55ab
+
+#### Phase 3: Standard → AOA 系统重命名
+
+**类型定义**: `"standard" | "super"` → `"aoa" | "super"`
+
+**修改文件** (6 个):
+1. StakeOptionCard.tsx - 类型 `type: "aoa"`, UI "Enhanced ERC-4337 Flow: AOA"
+2. Step1_ConnectAndSelect.tsx - 变量 `aoaOption`, CSS `comparison-aoa`
+3. Step4_StakeOption.tsx - 变量 `aoaOption`
+4. Step5_Stake.tsx - 类型 `"aoa" | "super"`, 文案 "AOA Flow"
+5. walletChecker.ts - 函数签名 `option: "aoa" | "super"`
+6. DeployWizard.tsx - Config 类型, 所有参数和条件判断
+
+**配置更新**: .env 澄清统一 Registry 架构（移除双 Registry 误解）
+
+### 技术澄清
+
+**统一 Registry** (0x838...eF0):
+- AOA: Paymaster 运营者注册 (lock stGToken 30-100)
+- Super(AOA+): SuperPaymaster 运营方注册 (lock 大量 stGToken)
+- ❌ 不是两个 Registry，是一个统一的！
+
+**AOA vs AOA+**:
+- AOA: 去除链下签名服务器，SBT+xPNTs 免 gas
+- AOA+ (Super): 共享 SuperPaymaster，运营方负责注册
+
+### 验证结果
+- ✅ TypeScript 类型错误全部修复
+- ✅ 所有 "standard" 更新为 "aoa"
+- ✅ .env 配置澄清
+- ✅ 合约部署成功，Operator 测试通过
+
+### 影响范围
+- 类型系统、UI 组件、配置流程、工具函数
+
+### 下一步
+- Phase 3.2: Step4_DeployResources (待开发)
+- Phase 3.3: stGToken lock 支持 (待开发)
+
+### Commits
+- (待提交)
 
 ---
 

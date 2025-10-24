@@ -20,10 +20,20 @@ export interface StakeToSuperPaymasterProps {
   onBack: () => void;
 }
 
-// Contract addresses (TODO: move to config)
-const SUPER_PAYMASTER_V2 = "0x..."; // Replace with actual address
-const GTOKEN_ADDRESS = "0x..."; // Replace with actual address
-const APNTS_ADDRESS = "0x..."; // Replace with actual address
+// Contract addresses - read from env with fallbacks
+const SUPER_PAYMASTER_V2 =
+  import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
+  "0xb96d8BC6d771AE5913C8656FAFf8721156AC8141";
+const GTOKEN_ADDRESS =
+  import.meta.env.VITE_GTOKEN_ADDRESS ||
+  "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35";
+const GTOKEN_STAKING_ADDRESS =
+  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+  "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2";
+// TODO: 添加 aPNTs ERC20 token 地址到 .env
+const APNTS_ADDRESS =
+  import.meta.env.VITE_APNTS_ADDRESS ||
+  "0x0000000000000000000000000000000000000000"; // Placeholder
 
 // Simplified ABIs
 const GTOKEN_ABI = [
@@ -31,26 +41,36 @@ const GTOKEN_ABI = [
   "function balanceOf(address account) external view returns (uint256)",
 ];
 
+const GTOKEN_STAKING_ABI = [
+  "function stake(uint256 amount) external",
+  "function balanceOf(address account) external view returns (uint256)",
+  "function approve(address spender, uint256 amount) external returns (bool)",
+];
+
 const SUPER_PAYMASTER_ABI = [
-  "function registerOperator(address treasury, address xPNTsToken, uint256 exchangeRate, address[] memory supportedSBTs) external",
+  // ✅ 正确的函数签名 - 与 SuperPaymasterV2.sol:277 一致
+  "function registerOperator(uint256 sGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
   "function depositAPNTs(uint256 amount) external",
   "function getOperatorAccount(address operator) external view returns (tuple(uint256 sGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))",
 ];
 
-enum RegistrationStep {
-  STAKE_GTOKEN = 1,
-  REGISTER_OPERATOR = 2,
-  DEPOSIT_APNTS = 3,
-  DEPLOY_XPNTS = 4,
-  COMPLETE = 5,
-}
+// Registration steps
+const RegistrationStep = {
+  STAKE_GTOKEN: 1,
+  REGISTER_OPERATOR: 2,
+  DEPOSIT_APNTS: 3,
+  DEPLOY_XPNTS: 4,
+  COMPLETE: 5,
+} as const;
+
+type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationStep];
 
 export function StakeToSuperPaymaster({
   walletStatus,
   onNext,
   onBack,
 }: StakeToSuperPaymasterProps) {
-  const [currentStep, setCurrentStep] = useState<RegistrationStep>(
+  const [currentStep, setCurrentStep] = useState<RegistrationStepType>(
     RegistrationStep.STAKE_GTOKEN
   );
   const [isLoading, setIsLoading] = useState(false);
@@ -71,14 +91,34 @@ export function StakeToSuperPaymaster({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTOKEN_ABI, signer);
+      const gtokenStaking = new ethers.Contract(
+        GTOKEN_STAKING_ADDRESS,
+        GTOKEN_STAKING_ABI,
+        signer
+      );
 
-      // TODO: Implement GToken staking logic
-      // This should interact with GToken contract to stake and receive sGToken
+      const stakeAmount = ethers.parseEther(gTokenAmount);
 
-      console.log("Staking GToken...", gTokenAmount);
+      console.log("Step 1/2: Approving GToken for staking...");
 
-      // Placeholder: simulate transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // 1. Approve GTokenStaking to spend GToken
+      const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, stakeAmount);
+      console.log("Approval tx:", approveTx.hash);
+      await approveTx.wait();
+      console.log("✅ GToken approved");
+
+      console.log("Step 2/2: Staking GToken...");
+
+      // 2. Stake GToken to get sGToken
+      const stakeTx = await gtokenStaking.stake(stakeAmount);
+      console.log("Stake tx:", stakeTx.hash);
+      setTxHash(stakeTx.hash);
+      await stakeTx.wait();
+
+      // 3. Verify sGToken balance
+      const sGTokenBalance = await gtokenStaking.balanceOf(await signer.getAddress());
+      console.log("✅ Staked! sGToken balance:", ethers.formatEther(sGTokenBalance));
 
       setCurrentStep(RegistrationStep.REGISTER_OPERATOR);
     } catch (err: any) {
@@ -96,27 +136,44 @@ export function StakeToSuperPaymaster({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const gtokenStaking = new ethers.Contract(
+        GTOKEN_STAKING_ADDRESS,
+        GTOKEN_STAKING_ABI,
+        signer
+      );
       const superPaymaster = new ethers.Contract(
         SUPER_PAYMASTER_V2,
         SUPER_PAYMASTER_ABI,
         signer
       );
 
-      console.log("Registering operator to SuperPaymasterV2...");
+      // Calculate sGToken lock amount (minimum 30, recommended 50-100)
+      const sGTokenLockAmount = ethers.parseEther(gTokenAmount);
 
-      // Call registerOperator
+      console.log("Step 1/2: Approving sGToken for SuperPaymaster...");
+
+      // 1. Approve SuperPaymaster to transfer sGToken from GTokenStaking
+      const approveTx = await gtokenStaking.approve(SUPER_PAYMASTER_V2, sGTokenLockAmount);
+      console.log("Approval tx:", approveTx.hash);
+      await approveTx.wait();
+      console.log("✅ sGToken approved");
+
+      console.log("Step 2/2: Registering operator to SuperPaymasterV2...");
+
+      // 2. Call registerOperator with correct parameter order
+      // function registerOperator(uint256 sGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury)
       const tx = await superPaymaster.registerOperator(
-        treasuryAddress,
-        xPNTsTokenAddress || ethers.ZeroAddress,
-        ethers.parseUnits(exchangeRate, 18),
-        [] // supportedSBTs - empty for now
+        sGTokenLockAmount,              // sGTokenAmount
+        [],                              // supportedSBTs - empty for now
+        xPNTsTokenAddress || ethers.ZeroAddress,  // xPNTsToken
+        treasuryAddress                  // treasury
       );
 
       setTxHash(tx.hash);
       console.log("Registration tx:", tx.hash);
 
       await tx.wait();
-      console.log("Operator registered!");
+      console.log("✅ Operator registered!");
 
       setCurrentStep(RegistrationStep.DEPOSIT_APNTS);
     } catch (err: any) {

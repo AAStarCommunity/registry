@@ -27,16 +27,19 @@ export interface Step1Props {
   isTestMode?: boolean;
 }
 
-enum SubStep {
-  ConnectWallet = 1,
-  SelectOption = 2,
-  CheckResources = 3,
-}
+// Sub-step constants
+const SubStep = {
+  ConnectWallet: 1,
+  SelectOption: 2,
+  CheckResources: 3,
+} as const;
+
+type SubStepType = typeof SubStep[keyof typeof SubStep];
 
 export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Props) {
   const { t } = useTranslation();
   const config = getCurrentNetworkConfig();
-  const [subStep, setSubStep] = useState<SubStep>(SubStep.ConnectWallet);
+  const [subStep, setSubStep] = useState<SubStepType>(SubStep.ConnectWallet);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [selectedOption, setSelectedOption] = useState<StakeOptionType | null>(null);
   const [walletStatus, setWalletStatus] = useState<WalletStatusType | null>(null);

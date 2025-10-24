@@ -6,6 +6,7 @@ import './DeployWizard.css';
 import { Step1_ConnectAndSelect } from './deploy-v2/steps/Step1_ConnectAndSelect';
 import { Step2_ConfigForm } from './deploy-v2/steps/Step2_ConfigForm';
 import { Step3_DeployPaymaster } from './deploy-v2/steps/Step3_DeployPaymaster';
+import { Step4_DeployResources, type DeployedResources } from './deploy-v2/steps/Step4_DeployResources';
 import { Step5_Stake } from './deploy-v2/steps/Step5_Stake';
 import { Step6_RegisterRegistry } from './deploy-v2/steps/Step6_RegisterRegistry';
 import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
@@ -21,21 +22,23 @@ import { getCurrentNetworkConfig } from '../../config/networkConfig';
  * Common Steps:
  *   1. Connect Wallet & Select Stake Option (Merged Step)
  *      - 1a. Connect wallet
- *      - 1b. Select mode (Standard or Super)
+ *      - 1b. Select mode (AOA or Super)
  *      - 1c. Check resources based on selection
  *
- * Standard Flow (6 steps total):
- *   2. Configuration
- *   3. Deploy Paymaster
- *   4. Stake to EntryPoint
+ * AOA Flow (7 steps total):
+ *   2. Deploy Resources (SBT + xPNTs + Stake GToken)
+ *   3. Configuration
+ *   4. Deploy Paymaster
+ *   5. Stake to EntryPoint
+ *   6. Register to Registry
+ *   7. Complete
+ *
+ * Super Mode (6 steps total):
+ *   2. Deploy Resources (SBT + xPNTs + Stake GToken)
+ *   3. Configuration
+ *   4. Stake to SuperPaymaster (no deployment)
  *   5. Register to Registry
  *   6. Complete
- *
- * Super Mode (5 steps total):
- *   2. Configuration
- *   3. Stake to SuperPaymaster (no deployment)
- *   4. Register to Registry
- *   5. Complete
  */
 
 export type SupportedNetwork = 'sepolia' | 'op-sepolia' | 'op-mainnet' | 'mainnet';
@@ -105,6 +108,9 @@ export interface DeployConfig {
   // Resource requirements
   resourcesReady?: boolean;
 
+  // Deployed resources (SBT + xPNTs + staked GToken)
+  deployedResources?: DeployedResources;
+
   // EntryPoint deposit
   entryPointTxHash?: string;
 
@@ -129,21 +135,23 @@ const createStepConfigs = (t: (key: string) => string) => {
     { id: 1, title: t('wizard.steps.connectAndSelect'), icon: '🔌', stepKey: 'connectAndSelect' },
   ];
 
-  // Standard flow specific steps (6 total)
+  // AOA flow specific steps (7 total)
   const STANDARD_FLOW_STEPS: StepConfig[] = [
-    { id: 2, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
-    { id: 3, title: t('wizard.steps.deploy'), icon: '🚀', stepKey: 'deploy' },
+    { id: 2, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
+    { id: 3, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
+    { id: 4, title: t('wizard.steps.deploy'), icon: '🚀', stepKey: 'deploy' },
+    { id: 5, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
+    { id: 6, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
+    { id: 7, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
+  ];
+
+  // Super mode specific steps (6 total - no deployment)
+  const SUPER_MODE_STEPS: StepConfig[] = [
+    { id: 2, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
+    { id: 3, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
     { id: 4, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
     { id: 5, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
     { id: 6, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
-  ];
-
-  // Super mode specific steps (5 total - no deployment)
-  const SUPER_MODE_STEPS: StepConfig[] = [
-    { id: 2, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
-    { id: 3, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
-    { id: 4, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
-    { id: 5, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
   ];
 
   return { COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS };
@@ -256,6 +264,12 @@ export function DeployWizard() {
     handleNext();
   };
 
+  const handleResourcesComplete = (resources: DeployedResources) => {
+    console.log(`✅ Resources deployed:`, resources);
+    setConfig((prev) => ({ ...prev, deployedResources: resources }));
+    handleNext();
+  };
+
   const handleConfigComplete = (formConfig: Partial<DeployConfig>) => {
     setConfig((prev) => ({ ...prev, ...formConfig }));
     handleNext();
@@ -286,6 +300,18 @@ export function DeployWizard() {
             onNext={handleConnectAndSelectComplete}
             isTestMode={isTestMode}
           />
+        );
+
+      case 'resources':
+        return (
+          config.walletStatus && (
+            <Step4_DeployResources
+              walletStatus={config.walletStatus}
+              communityName={config.communityName}
+              onNext={handleResourcesComplete}
+              onBack={handleBack}
+            />
+          )
         );
 
       case 'config':

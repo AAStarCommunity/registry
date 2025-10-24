@@ -28,6 +28,7 @@
     "deploymentGuide": "📚 Read the Deployment Guide",
     "steps": {
       "connectAndSelect": "Connect & Select Mode",
+      "resources": "Deploy Resources",
       "config": "Configuration",
       "deploy": "Deploy Paymaster",
       "stake": "Stake",
