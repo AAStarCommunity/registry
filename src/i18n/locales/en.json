@@ -47,11 +47,17 @@
     "substep2": {
       "title": "Choose Your Deployment Mode",
       "description": "Select the deployment mode that best fits your needs. We provide two distinct approaches with different resource requirements and operational characteristics.",
+      "modeNames": {
+        "standard": "Enhanced ERC-4337 Flow: AOA",
+        "standardSubtitle": "Asset Oriented Abstraction - No off-chain signature server and on-chain verify, just Your Gas Token.",
+        "super": "Super Mode",
+        "superSubtitle": "AOA and more: No Server, No Contract Deployment"
+      },
       "metaphor": {
         "icon": "⛽",
         "title": "Gas Station Metaphor: We Help You Build a Paymaster Gas Station",
         "standard": {
-          "title": "🏗️ Standard Flow",
+          "title": "🏗️ Enhanced ERC-4337 Flow",
           "description": "Use free building materials (open-source code), **build and maintain your own** gas station on each supported blockchain. Once built, you have **full ownership and 100% control**.",
           "highlight": "Gas (ETH) needs to be **purchased and distributed across chains by yourself**."
         },
@@ -72,10 +78,10 @@
         },
         "standard": {
           "resources": {
-            "title": "Self-Funded",
-            "detail1": "Need ETH for deployment + Stake + Deposit",
-            "detail2": "Need stGToken for governance stake",
-            "warning": "⚠️ Higher ETH requirement upfront"
+            "title": "ETH (long-term supply) + stGToken",
+            "detail1": "Sufficient ETH for contract deployment, EntryPoint stake, and ongoing gas sponsorship",
+            "detail2": "stGToken for governance participation and protocol access",
+            "warning": "⚠️ Requires continuous ETH supply for multi-chain gas operations"
           },
           "maintenance": {
             "title": "Self-Maintained",
@@ -102,11 +108,11 @@
         },
         "super": {
           "resources": {
-            "title": "Multi-Asset",
-            "detail1": "Minimal ETH (only for gas fees)",
-            "detail2": "Need stGToken (Stake + Lock)",
-            "detail3": "Need aPNTs (Gas Backing)",
-            "success": "✅ Lower ETH requirement, leverage stGToken + aPNTs"
+            "title": "ETH (one-time interaction) + stGToken + aPNTs (long-term supply)",
+            "detail1": "ETH only for initial transaction gas - no ongoing ETH needed",
+            "detail2": "stGToken for governance participation and protocol access",
+            "detail3": "aPNTs as gas backing token - protocol handles cross-chain distribution",
+            "success": "✅ No continuous ETH management required, aPNTs handle all gas sponsorship"
           },
           "maintenance": {
             "title": "Protocol-Managed",
@@ -135,7 +141,7 @@
       "previewSteps": {
         "title": "Preview: What Happens After You Select?",
         "standard": {
-          "title": "Standard Flow - {{totalSteps}} Steps",
+          "title": "Enhanced ERC-4337 Flow (AOA) - {{totalSteps}} Steps",
           "step1": "Configuration",
           "step2": "Deploy Paymaster Contract",
           "step3": "Stake ETH to EntryPoint",
@@ -144,7 +150,7 @@
           "step6": "Complete!"
         },
         "super": {
-          "title": "Super Mode - {{totalSteps}} Steps",
+          "title": "Super Mode (AOA+) - {{totalSteps}} Steps",
           "step1": "Configuration",
           "step2": "Stake stGToken to Governance & Register",
           "step3": "Deposit aPNTs",
@@ -153,8 +159,8 @@
         }
       },
       "selectButton": {
-        "standard": "Select Standard Flow",
-        "super": "Select Super Mode"
+        "standard": "Select Enhanced ERC-4337 Flow (AOA)",
+        "super": "Select Super Mode (AOA+)"
       }
     },
     "substep3": {

@@ -213,43 +213,43 @@ export function createStandardFlowOption(
 
   return {
     type: "standard",
-    title: "Standard ERC-4337 Flow",
-    subtitle: "完全符合 ERC-4337 标准的部署流程",
+    title: "Enhanced ERC-4337 Flow: AOA",
+    subtitle: "Asset Oriented Abstraction - No off-chain signature server, just Your Gas Token",
     recommended: ethBalance >= minEth && gTokenBalance >= minGToken,
-    badge: "标准",
+    badge: "AOA",
     requirements: [
       {
-        label: "ETH (部署 + Stake + Deposit)",
+        label: "ETH (long-term supply: deployment + stake + ongoing gas)",
         value: showBalances
-          ? `需要 ≥ ${config.requirements.minEthStandardFlow} ETH (当前: ${walletStatus.ethBalance} ETH)`
-          : `需要 ≥ ${config.requirements.minEthStandardFlow} ETH`,
+          ? `Need ≥ ${config.requirements.minEthStandardFlow} ETH (Current: ${walletStatus.ethBalance} ETH)`
+          : `Need ≥ ${config.requirements.minEthStandardFlow} ETH`,
         met: ethBalance >= minEth,
       },
       {
-        label: "stGToken (治理 Stake)",
+        label: "stGToken (governance participation)",
         value: showBalances
-          ? `需要 ≥ ${config.requirements.minGTokenStake} stGToken (当前: ${walletStatus.gTokenBalance} stGToken)`
-          : `需要 ≥ ${config.requirements.minGTokenStake} stGToken`,
+          ? `Need ≥ ${config.requirements.minGTokenStake} stGToken (Current: ${walletStatus.gTokenBalance} stGToken)`
+          : `Need ≥ ${config.requirements.minGTokenStake} stGToken`,
         met: gTokenBalance >= minGToken,
       },
     ],
     steps: [
-      "部署 PaymasterV4 合约 (~0.02 ETH gas)",
-      "Stake ETH 到 EntryPoint (ERC-4337)",
-      "Deposit ETH 到 EntryPoint (gas sponsorship)",
-      "Stake stGToken 到 Governance Contract",
+      "Deploy PaymasterV4 contract (~0.02 ETH gas)",
+      "Stake ETH to EntryPoint (ERC-4337 standard)",
+      "Deposit ETH to EntryPoint (for gas sponsorship)",
+      "Stake stGToken to Governance Contract",
     ],
     benefits: [
-      "完全符合 ERC-4337 标准规范",
-      "直接控制 EntryPoint 中的 ETH",
-      "更高的协议兼容性",
-      "适合长期运营的 Operator",
+      "Fully ERC-4337 compliant with AOA enhancements",
+      "Direct control over EntryPoint ETH deposits",
+      "No off-chain signature server needed",
+      "Higher protocol compatibility for long-term operation",
     ],
     suitable: [
-      "已有充足的 ETH 资金",
-      "想要完全控制 gas 预算",
-      "需要高度的协议兼容性",
-      "计划长期运营 Paymaster",
+      "Have sufficient ETH for long-term operations",
+      "Want complete control over gas budgets",
+      "Need high protocol compatibility",
+      "Plan to run Paymaster long-term",
     ],
   };
 }
@@ -276,55 +276,55 @@ export function createSuperModeOption(
 
   return {
     type: "super",
-    title: "GToken Super Mode",
-    subtitle: "三秒钟启动 Paymaster - 无需合约部署，无需服务器",
+    title: "Super Mode",
+    subtitle: "AOA and more: No Server, No Contract Deployment - Launch in seconds",
     recommended: allResourcesMet,
-    badge: "Super",
+    badge: "AOA+",
     requirements: [
       {
-        label: "ETH (仅 gas 费用)",
+        label: "ETH (one-time interaction gas only)",
         value: showBalances
-          ? `需要 ≥ ${config.requirements.minEthDeploy} ETH (当前: ${walletStatus.ethBalance} ETH)`
-          : `需要 ≥ ${config.requirements.minEthDeploy} ETH`,
+          ? `Need ≥ ${config.requirements.minEthDeploy} ETH (Current: ${walletStatus.ethBalance} ETH)`
+          : `Need ≥ ${config.requirements.minEthDeploy} ETH`,
         met: ethBalance >= minEth,
       },
       {
-        label: "stGToken (Stake + Lock)",
+        label: "stGToken (governance participation)",
         value: showBalances
-          ? `需要 ≥ ${config.requirements.minGTokenStake} stGToken (当前: ${walletStatus.gTokenBalance} stGToken)`
-          : `需要 ≥ ${config.requirements.minGTokenStake} stGToken`,
+          ? `Need ≥ ${config.requirements.minGTokenStake} stGToken (Current: ${walletStatus.gTokenBalance} stGToken)`
+          : `Need ≥ ${config.requirements.minGTokenStake} stGToken`,
         met: gTokenBalance >= minGToken,
       },
       {
-        label: "aPNTs (Gas Backing)",
+        label: "aPNTs (long-term supply: gas backing token)",
         value: showBalances
-          ? `需要 ≥ ${config.requirements.minPntDeposit} aPNT (当前: ${walletStatus.pntsBalance} aPNT)`
-          : `需要 ≥ ${config.requirements.minPntDeposit} aPNT`,
+          ? `Need ≥ ${config.requirements.minPntDeposit} aPNT (Current: ${walletStatus.pntsBalance} aPNT)`
+          : `Need ≥ ${config.requirements.minPntDeposit} aPNT`,
         met: pntsBalance >= minPnts,
       },
     ],
     steps: [
-      "Stake stGToken 到 Governance Contract",
-      "注册到 SuperPaymasterV2（自动 lock stGToken）",
-      "Deposit aPNTs 到 SuperPaymasterV2",
-      "完成！三秒钟启动 Paymaster",
+      "Stake stGToken to Governance Contract",
+      "Register to SuperPaymasterV2 (auto-lock stGToken)",
+      "Deposit aPNTs to SuperPaymasterV2",
+      "Complete! Launch Paymaster in seconds",
     ],
     benefits: [
-      "三秒钟快速启动 Paymaster",
-      "无需部署 Paymaster 合约",
-      "无需 Stake ETH 到 EntryPoint",
-      "无需运行离线签名服务器",
-      "适合社区快速启动和运营",
+      "Launch Paymaster in seconds with AOA+",
+      "No Paymaster contract deployment needed",
+      "No ETH stake to EntryPoint required",
+      "No off-chain signature server needed",
+      "Protocol handles all cross-chain gas distribution",
     ],
     warnings: [
-      "依赖 SuperPaymasterV2 共享合约",
-      "需要 stGToken 和 aPNTs 资源",
+      "Relies on SuperPaymasterV2 shared contract",
+      "Requires stGToken and aPNTs resources",
     ],
     suitable: [
-      "快速启动社区 Paymaster",
-      "不想部署和维护合约",
-      "stGToken 和 aPNTs 充足",
-      "专注社区运营而非技术",
+      "Quick community Paymaster launch",
+      "Don't want to deploy and maintain contracts",
+      "Have sufficient stGToken and aPNTs",
+      "Focus on community ops rather than tech",
     ],
   };
 }
