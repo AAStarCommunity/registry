@@ -140,10 +140,16 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         throw new Error("Please install MetaMask or another Web3 wallet");
       }
 
-      // Always request accounts to show account selector
+      // Request permissions to force account selector popup
       console.log('🔄 Requesting account switch...');
+      await window.ethereum.request({
+        method: 'wallet_requestPermissions',
+        params: [{ eth_accounts: {} }]
+      });
+
+      // After permission is granted, get the accounts
       const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
+        method: 'eth_accounts'
       });
 
       if (accounts.length === 0) {
