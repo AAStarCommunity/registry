@@ -1,3 +1,99 @@
+## ✅ Switch Account 按钮功能 (2025-10-24)
+
+### 问题反馈
+
+用户反馈："could you add a switch button beside connect? i can't connect to another cause of autodetect a old connected wallet"
+
+由于之前实现的自动检测功能，用户无法切换到不同的 MetaMask 账户，因为系统总是自动使用已连接的账户。
+
+### 解决方案
+
+在"Connect MetaMask"按钮旁边添加"Switch Account"按钮，允许用户主动触发 MetaMask 账户选择窗口。
+
+### 实现细节
+
+**新增函数**: `handleSwitchAccount`
+
+```typescript
+const handleSwitchAccount = async () => {
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    if (!window.ethereum) {
+      throw new Error("Please install MetaMask or another Web3 wallet");
+    }
+
+    // Always request accounts to show account selector
+    console.log('🔄 Requesting account switch...');
+    const accounts = await window.ethereum.request({
+      method: 'eth_requestAccounts'  // 强制显示选择窗口
+    });
+
+    if (accounts.length === 0) {
+      throw new Error("No accounts found");
+    }
+
+    const address = accounts[0];
+    setWalletAddress(address);
+    setSubStep(SubStep.SelectOption);
+    console.log(`✅ Switched to account: ${address}`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to switch account";
+    setError(errorMessage);
+    console.error("Account switch error:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
+
+**UI 更新**:
+- 添加 `.wallet-buttons` 容器包裹两个按钮
+- "Connect MetaMask" - 使用自动检测逻辑（默认操作）
+- "Switch Account" - 强制显示 MetaMask 账户选择器
+
+**CSS 样式**:
+```css
+.wallet-buttons {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn-switch-account {
+  padding: 1rem 2.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #667eea;
+  background: white;
+  border: 2px solid #667eea;
+  /* 悬停时渐变背景... */
+}
+```
+
+### 用户体验改进
+
+**现在的行为**:
+- **Connect MetaMask** - 如果已连接，自动使用当前账户（快速）
+- **Switch Account** - 始终显示 MetaMask 账户选择窗口（灵活）
+
+两个按钮并排显示，用户可以根据需求选择：
+- 快速连接 → 使用 Connect MetaMask
+- 切换账户 → 使用 Switch Account
+
+### Git Commit
+
+```
+feat(wallet): Add Switch Account button for changing MetaMask accounts
+
+Commit: 2154dec
+```
+
+---
+
 # Registry DApp 开发进度报告
 
 **日期**: 2025-10-24
