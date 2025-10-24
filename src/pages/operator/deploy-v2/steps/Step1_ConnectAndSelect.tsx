@@ -130,6 +130,39 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     }
   };
 
+  // Force switch account - always show MetaMask account selector
+  const handleSwitchAccount = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      if (!window.ethereum) {
+        throw new Error("Please install MetaMask or another Web3 wallet");
+      }
+
+      // Always request accounts to show account selector
+      console.log('🔄 Requesting account switch...');
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+
+      if (accounts.length === 0) {
+        throw new Error("No accounts found");
+      }
+
+      const address = accounts[0];
+      setWalletAddress(address);
+      setSubStep(SubStep.SelectOption);
+      console.log(`✅ Switched to account: ${address}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to switch account";
+      setError(errorMessage);
+      console.error("Account switch error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // SubStep 2: Select Stake Option
   const handleSelectOption = (option: StakeOptionType) => {
     setSelectedOption(option);
@@ -251,21 +284,39 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <p className="connect-wallet-prompt">
               {t('step1.substep1.connectPrompt')}
             </p>
-            <button
-              className="btn-connect-primary"
-              onClick={handleConnectWallet}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
-                </>
-              ) : (
-                <>
-                  <span className="wallet-icon">🦊</span> {t('step1.substep1.connectButton')}
-                </>
-              )}
-            </button>
+            <div className="wallet-buttons">
+              <button
+                className="btn-connect-primary"
+                onClick={handleConnectWallet}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner">⏳</span> {t('step1.substep1.connecting')}
+                  </>
+                ) : (
+                  <>
+                    <span className="wallet-icon">🦊</span> {t('step1.substep1.connectButton')}
+                  </>
+                )}
+              </button>
+              <button
+                className="btn-switch-account"
+                onClick={handleSwitchAccount}
+                disabled={isLoading}
+                title="Switch to a different MetaMask account"
+              >
+                {isLoading ? (
+                  <>
+                    <span className="spinner">⏳</span> Switching...
+                  </>
+                ) : (
+                  <>
+                    <span className="switch-icon">🔄</span> Switch Account
+                  </>
+                )}
+              </button>
+            </div>
             <p className="connect-wallet-hint">
               {t('step1.substep1.connectHint')}
             </p>
