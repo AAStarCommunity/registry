@@ -1,3 +1,150 @@
+### 🎨 优化资源要求展示：隐藏选择阶段的检测状态 (2025-10-24)
+
+**用户反馈**：在 Step 1 选择模式时就显示很多 ❌ emoji 和警告信息，让用户感到压力和不适。
+
+**问题分析**：
+
+在 SubStep 2（选择部署模式）阶段，StakeOptionCard 已经显示了资源检测结果：
+
+```
+Resource Requirements
+❌ ETH (one-time interaction gas only)
+   Need ≥ 0.02 ETH
+❌ stGToken (governance participation)
+   Need ≥ 100 stGToken
+❌ aPNTs (long-term supply: gas backing token)
+   Need ≥ 1000 aPNT
+⚠️ Need 3 more resources. Get GToken | Get PNTs
+```
+
+**问题**：
+1. 用户还在**了解和选择**部署模式，还没有确认选择
+2. 此时显示大量 ❌ 和 ⚠️ emoji 会给用户负面心理暗示
+3. 资源检测应该在用户点击 "Next" 后才进行
+
+**解决方案**：
+
+添加 `showResourceStatus` 属性来控制是否显示资源检测状态：
+
+**1. 修改 StakeOptionCard 组件** (`StakeOptionCard.tsx:31-46`):
+
+```typescript
+interface StakeOptionCardProps {
+  option: StakeOption;
+  walletStatus: WalletStatus;
+  selected: boolean;
+  disabled: boolean;
+  onSelect: () => void;
+  showResourceStatus?: boolean; // ✅ 新增：控制是否显示检测状态
+}
+
+export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
+  option,
+  walletStatus,
+  selected,
+  disabled,
+  onSelect,
+  showResourceStatus = true, // ✅ 默认显示，保持向后兼容
+}) => {
+  // ...
+}
+```
+
+**2. 条件渲染资源检测图标** (`StakeOptionCard.tsx:73-121`):
+
+```typescript
+{/* Requirements Section */}
+<div className="stake-option-section">
+  <h4>📋 Resource Requirements</h4>
+  <div className="requirements-list">
+    {option.requirements.map((req, index) => (
+      <div
+        key={index}
+        className={`requirement-item ${showResourceStatus ? (req.met ? "met" : "not-met") : ""}`}
+      >
+        {/* ✅ 只在 showResourceStatus 为 true 时显示图标 */}
+        {showResourceStatus && (
+          <span className="requirement-icon">{req.met ? "✅" : "❌"}</span>
+        )}
+        <div className="requirement-content">
+          <span className="requirement-label">{req.label}</span>
+          <span className="requirement-value">{req.value}</span>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {/* ✅ 只在 showResourceStatus 为 true 时显示警告 */}
+  {showResourceStatus && !canProceed && (
+    <div className="missing-resources-warning">
+      <span className="warning-icon">⚠️</span>
+      <span>
+        Need {missingCount} more resource{missingCount > 1 ? 's' : ''}.
+        ...
+      </span>
+    </div>
+  )}
+</div>
+```
+
+**3. 在选择阶段隐藏状态** (`Step1_ConnectAndSelect.tsx:523-541`):
+
+```typescript
+{/* SubStep 2: Select Option */}
+<div className="stake-options-grid">
+  <StakeOptionCard
+    option={standardOption}
+    walletStatus={tempWalletStatus}
+    selected={selectedOption === "standard"}
+    disabled={false}
+    onSelect={() => handleSelectOption("standard")}
+    showResourceStatus={false}  // ✅ 在选择阶段不显示检测状态
+  />
+
+  <StakeOptionCard
+    option={superOption}
+    walletStatus={tempWalletStatus}
+    selected={selectedOption === "super"}
+    disabled={false}
+    onSelect={() => handleSelectOption("super")}
+    showResourceStatus={false}  // ✅ 在选择阶段不显示检测状态
+  />
+</div>
+```
+
+**用户体验流程**：
+
+1. **SubStep 2 - 选择部署模式**：
+   - ✅ 只显示资源要求的文字描述
+   - ✅ 不显示 ✅ ❌ 图标
+   - ✅ 不显示警告信息（⚠️ Need X more resources）
+   - ✅ 用户可以平静地了解两种模式的区别
+
+2. **点击 Next 按钮后**：
+   - 进入 SubStep 3 - 检测资源
+   - 自动检测钱包余额
+   - 显示完整的资源检测结果（包括 ✅ ❌ 图标和警告）
+
+**修复效果**：
+
+- ✅ **选择阶段**：清爽的界面，只显示资源要求说明
+- ✅ **检测阶段**：完整的检测结果，包括状态图标和警告
+- ✅ **心理体验**：用户不会在选择时就看到大量负面反馈
+- ✅ **逻辑清晰**：选择时看要求，确认后看结果
+
+**Git Commit**:
+```
+feat(ui): Add option to hide resource check status in StakeOptionCard
+
+Commit: 1024bc0
+```
+
+**相关文件**:
+- `src/pages/operator/deploy-v2/components/StakeOptionCard.tsx` - 添加 showResourceStatus 属性
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx` - 在选择阶段传入 false
+
+---
+
 ### 🔧 修复导航按钮颜色可见性问题 (2025-10-24)
 
 **用户反馈**：Next 按钮的文字是白色在白色背景上，看不清楚。
