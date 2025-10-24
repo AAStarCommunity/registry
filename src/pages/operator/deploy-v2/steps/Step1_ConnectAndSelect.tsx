@@ -527,6 +527,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               selected={selectedOption === "standard"}
               disabled={false}
               onSelect={() => handleSelectOption("standard")}
+              showResourceStatus={false}
             />
 
             <StakeOptionCard
@@ -535,6 +536,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               selected={selectedOption === "super"}
               disabled={false}
               onSelect={() => handleSelectOption("super")}
+              showResourceStatus={false}
             />
           </div>
 

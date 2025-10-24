@@ -34,6 +34,7 @@ interface StakeOptionCardProps {
   selected: boolean;
   disabled: boolean;
   onSelect: () => void;
+  showResourceStatus?: boolean; // Whether to show resource check status (✅ ❌)
 }
 
 export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
@@ -42,6 +43,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
   selected,
   disabled,
   onSelect,
+  showResourceStatus = true, // Default to showing status for backward compatibility
 }) => {
   const config = getCurrentNetworkConfig();
 
@@ -75,9 +77,11 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
           {option.requirements.map((req, index) => (
             <div
               key={index}
-              className={`requirement-item ${req.met ? "met" : "not-met"}`}
+              className={`requirement-item ${showResourceStatus ? (req.met ? "met" : "not-met") : ""}`}
             >
-              <span className="requirement-icon">{req.met ? "✅" : "❌"}</span>
+              {showResourceStatus && (
+                <span className="requirement-icon">{req.met ? "✅" : "❌"}</span>
+              )}
               <div className="requirement-content">
                 <span className="requirement-label">{req.label}</span>
                 <span className="requirement-value">{req.value}</span>
@@ -86,7 +90,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
           ))}
         </div>
 
-        {!canProceed && (
+        {showResourceStatus && !canProceed && (
           <div className="missing-resources-warning">
             <span className="warning-icon">⚠️</span>
             <span>
@@ -173,7 +177,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
           {selected ? "✓ Selected" : disabled ? "Unavailable" : "Select This Option"}
         </button>
 
-        {canProceed && (
+        {showResourceStatus && canProceed && (
           <div className="ready-indicator">
             <span className="ready-icon">✓</span>
             <span>Resources ready, proceed with deployment</span>
