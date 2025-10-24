@@ -1,3 +1,55 @@
+### 🔧 修复 Switch Account 弹窗问题 (2025-10-24)
+
+**问题**: 用户反馈点击"Switch Account"按钮后，MetaMask 没有弹出账户选择窗口。
+
+**原因分析**:
+- `eth_requestAccounts` 的行为：
+  - 首次连接：显示连接请求窗口
+  - 已授权网站：直接返回当前账户，**不显示选择器**
+- 这导致"Switch Account"按钮无法触发账户选择窗口
+
+**解决方案**:
+使用 `wallet_requestPermissions` 方法强制重新请求权限：
+
+```typescript
+// ❌ 错误方式：不会显示选择器
+const accounts = await window.ethereum.request({
+  method: 'eth_requestAccounts'
+});
+
+// ✅ 正确方式：强制显示账户选择器
+await window.ethereum.request({
+  method: 'wallet_requestPermissions',
+  params: [{ eth_accounts: {} }]
+});
+
+// 然后获取用户选择的账户
+const accounts = await window.ethereum.request({
+  method: 'eth_accounts'
+});
+```
+
+**wallet_requestPermissions 工作原理**:
+1. 重新请求 `eth_accounts` 权限
+2. MetaMask 显示权限请求窗口
+3. 用户可以选择不同的账户进行授权
+4. 即使之前已授权，也会显示账户选择器
+
+**Git Commit**:
+```
+fix(wallet): Use wallet_requestPermissions to force account selector popup
+
+Commit: e1015d9
+```
+
+**测试验证**:
+- ✅ 点击"Switch Account"按钮
+- ✅ MetaMask 弹出权限请求窗口
+- ✅ 可以选择不同的账户
+- ✅ 选择后更新钱包地址并进入下一步
+
+---
+
 ## ✅ Switch Account 按钮功能 (2025-10-24)
 
 ### 问题反馈
