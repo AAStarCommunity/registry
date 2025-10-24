@@ -9,7 +9,7 @@ import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import type { WalletStatus } from "../utils/walletChecker";
 import "./StakeOptionCard.css";
 
-export type StakeOptionType = "standard" | "super";
+export type StakeOptionType = "aoa" | "super";
 
 export interface StakeOption {
   type: StakeOptionType;
@@ -95,7 +95,7 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
             <span className="warning-icon">⚠️</span>
             <span>
               Need {missingCount} more resource{missingCount > 1 ? 's' : ''}.{' '}
-              {option.type === "standard" && (
+              {option.type === "aoa" && (
                 <a href="/get-gtoken" target="_blank" rel="noopener noreferrer">
                   Get GToken
                 </a>
@@ -216,7 +216,7 @@ export function createStandardFlowOption(
   const minGToken = parseFloat(config.requirements.minGTokenStake);
 
   return {
-    type: "standard",
+    type: "aoa",
     title: "Enhanced ERC-4337 Flow: AOA",
     subtitle: "Asset Oriented Abstraction - No off-chain signature server, just Your Gas Token",
     recommended: ethBalance >= minEth && gTokenBalance >= minGToken,

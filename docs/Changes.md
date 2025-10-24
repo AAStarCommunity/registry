@@ -148,3 +148,58 @@
 
 ### 备份文件命名规范
 `Changes.backup-YYYYMMDD-HHMMSS.md`
+
+## 2025-10-24 - 重命名 "standard" 为 "aoa"
+
+### 任务概述
+将代码库中的 "standard" 相关术语重命名为 "aoa"，以更准确地反映 AOA (Account Owned Address) 模式。
+
+### 修改的文件
+
+#### 1. `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step5_Stake.tsx`
+- 更新类型定义：`"standard" | "super"` → `"aoa" | "super"`
+- 更新注释：`Standard:` → `AOA:`
+- 更新 UI 文案：`Standard Flow` → `AOA Flow`
+- 更新推荐信息：`recommended for Standard Flow` → `recommended for AOA Flow`
+
+#### 2. `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx`
+- 更新变量名：`standardOption` → `aoaOption`
+- 更新选项判断：`option === 'standard'` → `option === 'aoa'`
+- 更新 CSS 类名：`comparison-standard` → `comparison-aoa`
+- 更新选项卡选择：`selected={selectedOption === "standard"}` → `selected={selectedOption === "aoa"}`
+- 更新事件处理：`handleSelectOption("standard")` → `handleSelectOption("aoa")`
+- 更新帮助文本：`Standard Flow:` → `AOA Flow:`
+- 更新注释：`// AOA flow doesn't need PNTs`
+
+#### 3. `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/steps/Step4_StakeOption.tsx`
+- 更新变量名：`standardOption` → `aoaOption`
+- 更新函数参数：`calculateRecommendation(walletStatus, aoaOption, superOption)`
+- 更新条件判断：`selectedOption === "standard"` → `selectedOption === "aoa"`
+- 更新推荐文案：`Standard ERC-4337 Flow` → `AOA ERC-4337 Flow`
+- 更新帮助文本：`选择 Standard Flow` → `选择 AOA Flow`
+- 更新逻辑判断：`aoaMet`, `aoaExcess`, `aoaMissing`
+- 更新推荐理由：涉及 "Standard Flow" 的文本全部改为 "AOA Flow"
+
+#### 4. `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/operator/deploy-v2/utils/walletChecker.ts`
+- 更新函数签名：`option: "standard" | "super"` → `option: "aoa" | "super"`
+- 更新条件判断：`if (option === "standard")` → `if (option === "aoa")`
+- 更新注释：`// Standard flow needs:` → `// AOA flow needs:`
+
+### 重命名规则
+- ✅ `"standard"` (字符串字面量) → `"aoa"`
+- ✅ `Standard` (UI 文案/注释中的单词) → `AOA`
+- ✅ `standard` (变量名，如 `standardOption`) → `aoa` (如 `aoaOption`)
+- ✅ CSS 类名：`comparison-standard` → `comparison-aoa`
+
+### 保留不变
+- ✅ 函数名保持不变（如 `Step5_StandardFlow` 函数名保留，仅注释更新）
+- ✅ `minEthStandardFlow` 等配置项名称保留（这是配置键）
+- ✅ CSS 类名中的其他 standard 相关类保持兼容
+
+### 验证
+所有修改已成功完成，文件已更新。建议进行以下测试：
+1. 检查 TypeScript 编译是否通过
+2. 测试 UI 选项卡切换功能
+3. 验证 AOA 和 Super 模式的资源检查逻辑
+4. 确认所有文案显示正确
+

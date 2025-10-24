@@ -285,15 +285,15 @@ export function formatBalance(balance: string, decimals: number = 4): string {
  */
 export function checkStakeOptionRequirements(
   status: WalletStatus,
-  option: "standard" | "super"
+  option: "aoa" | "super"
 ): {
   canProceed: boolean;
   missingResources: string[];
 } {
   const missing: string[] = [];
 
-  if (option === "standard") {
-    // Standard flow needs: ETH for deploy + stake + deposit, GToken for governance stake
+  if (option === "aoa") {
+    // AOA flow needs: ETH for deploy + stake + deposit, GToken for governance stake
     if (!status.hasEnoughETH) {
       missing.push(`ETH (need ${status.requiredETH}, have ${status.ethBalance})`);
     }

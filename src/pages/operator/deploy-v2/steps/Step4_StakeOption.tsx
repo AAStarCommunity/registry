@@ -39,14 +39,14 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
   } | null>(null);
 
   // Create options based on wallet status
-  const standardOption = createStandardFlowOption(walletStatus, config);
+  const aoaOption = createStandardFlowOption(walletStatus, config);
   const superOption = createSuperModeOption(walletStatus, config);
 
   // Calculate recommendation (but don't auto-select)
   useEffect(() => {
     const rec = calculateRecommendation(
       walletStatus,
-      standardOption,
+      aoaOption,
       superOption
     );
     setRecommendation(rec);
@@ -67,7 +67,7 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
 
   // Check if user can proceed
   const selectedOptData =
-    selectedOption === "standard" ? standardOption : superOption;
+    selectedOption === "aoa" ? aoaOption : superOption;
   const canProceed =
     selectedOption &&
     selectedOptData &&
@@ -139,8 +139,8 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
           <p className="recommendation-text">
             <strong>
               We recommend:{" "}
-              {recommendation.option === "standard"
-                ? "Standard ERC-4337 Flow"
+              {recommendation.option === "aoa"
+                ? "AOA ERC-4337 Flow"
                 : "GToken Super Mode"}
             </strong>
           </p>
@@ -155,11 +155,11 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
       {/* Option Cards */}
       <div className="stake-options-grid">
         <StakeOptionCard
-          option={standardOption}
+          option={aoaOption}
           walletStatus={walletStatus}
-          selected={selectedOption === "standard"}
+          selected={selectedOption === "aoa"}
           disabled={false}
-          onSelect={() => handleSelectOption("standard")}
+          onSelect={() => handleSelectOption("aoa")}
         />
 
         <StakeOptionCard
@@ -195,7 +195,7 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
                   ))}
               </ul>
               <div className="preparation-links">
-                {selectedOption === "standard" && (
+                {selectedOption === "aoa" && (
                   <a
                     href="/get-gtoken"
                     target="_blank"
@@ -252,7 +252,7 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
         <div className="help-content">
           <h4>如何选择合适的方案？</h4>
           <p>
-            <strong>选择 Standard Flow</strong> 如果您:
+            <strong>选择 AOA Flow</strong> 如果您:
           </p>
           <ul>
             <li>拥有充足的 ETH (≥ 0.1 ETH)</li>
@@ -292,7 +292,7 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
  */
 function calculateRecommendation(
   walletStatus: WalletStatus,
-  standardOption: StakeOption,
+  aoaOption: StakeOption,
   superOption: StakeOption
 ): { option: StakeOptionType; reason: string } | null {
   const ethBalance = parseFloat(walletStatus.ethBalance);
@@ -300,21 +300,21 @@ function calculateRecommendation(
   const pntsBalance = parseFloat(walletStatus.pntsBalance);
 
   // Check if requirements are met
-  const standardMet = standardOption.requirements.every((r) => r.met);
+  const aoaMet = aoaOption.requirements.every((r) => r.met);
   const superMet = superOption.requirements.every((r) => r.met);
 
   // Both met: recommend based on which is "more met"
-  if (standardMet && superMet) {
+  if (aoaMet && superMet) {
     // Calculate "excess" for each option
-    const standardExcess = ethBalance / 0.1; // relative to 0.1 ETH requirement
+    const aoaExcess = ethBalance / 0.1; // relative to 0.1 ETH requirement
     const superExcess =
       (gTokenBalance / 100 + pntsBalance / 1000 + ethBalance / 0.02) / 3;
 
-    if (standardExcess > superExcess * 1.5) {
+    if (aoaExcess > superExcess * 1.5) {
       return {
-        option: "standard",
+        option: "aoa",
         reason:
-          "You have abundant ETH. Standard Flow provides better protocol compatibility and full control over EntryPoint deposits.",
+          "You have abundant ETH. AOA Flow provides better protocol compatibility and full control over EntryPoint deposits.",
       };
     } else {
       return {
@@ -326,30 +326,30 @@ function calculateRecommendation(
   }
 
   // Only one met
-  if (standardMet) {
+  if (aoaMet) {
     return {
-      option: "standard",
-      reason: "You currently meet the requirements for Standard Flow. Super Mode requires additional GToken and aPNTs.",
+      option: "aoa",
+      reason: "You currently meet the requirements for AOA Flow. Super Mode requires additional GToken and aPNTs.",
     };
   }
 
   if (superMet) {
     return {
       option: "super",
-      reason: "You currently meet the requirements for Super Mode. Standard Flow requires more ETH for EntryPoint deposit.",
+      reason: "You currently meet the requirements for Super Mode. AOA Flow requires more ETH for EntryPoint deposit.",
     };
   }
 
   // Neither met: recommend based on closest
-  const standardMissing = standardOption.requirements.filter(
+  const aoaMissing = aoaOption.requirements.filter(
     (r) => !r.met
   ).length;
   const superMissing = superOption.requirements.filter((r) => !r.met).length;
 
-  if (standardMissing < superMissing) {
+  if (aoaMissing < superMissing) {
     return {
-      option: "standard",
-      reason: `You're closer to Standard Flow requirements (${standardMissing} resource${standardMissing > 1 ? 's' : ''} needed). Good for long-term operation with full control.`,
+      option: "aoa",
+      reason: `You're closer to AOA Flow requirements (${aoaMissing} resource${aoaMissing > 1 ? 's' : ''} needed). Good for long-term operation with full control.`,
     };
   } else {
     return {

@@ -108,7 +108,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         requiredAPNTs: '1000',
       };
       setWalletAddress(mockWalletStatus.address);
-      setSelectedOption('standard');
+      setSelectedOption('aoa');
       setWalletStatus(mockWalletStatus);
       setSubStep(SubStep.CheckResources);
       console.log('🧪 Test Mode: Auto-completed Step 1');
@@ -193,12 +193,12 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
     try {
       // Define different requirements based on option
-      const requirements = option === 'standard'
+      const requirements = option === 'aoa'
         ? {
             requiredETH: config.requirements.minEthStandardFlow, // 0.1 ETH for deployment + stake
             requiredGToken: config.requirements.minGTokenStake, // 100 GToken
-            requiredPNTs: "0", // Standard flow doesn't need PNTs
-            requiredAPNTs: "0", // Standard flow doesn't need aPNTs
+            requiredPNTs: "0", // AOA flow doesn't need PNTs
+            requiredAPNTs: "0", // AOA flow doesn't need aPNTs
             gTokenAddress: config.contracts.gToken,
             pntAddress: config.contracts.pntToken,
             aPNTAddress: config.contracts.pntToken, // Using same address for now
@@ -252,7 +252,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     if (!walletStatus || !selectedOption) return false;
 
     // Check requirements based on selected option
-    if (selectedOption === 'standard') {
+    if (selectedOption === 'aoa') {
       return walletStatus.hasEnoughETH && walletStatus.hasEnoughGToken;
     } else {
       return walletStatus.hasEnoughETH && walletStatus.hasEnoughGToken && walletStatus.hasEnoughPNTs;
@@ -354,7 +354,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <div className="help-note">
               <strong>Resource Requirements:</strong>
               <ul>
-                <li><strong>Standard Flow:</strong> ETH + stGToken</li>
+                <li><strong>AOA Flow:</strong> ETH + stGToken</li>
                 <li><strong>Super Mode:</strong> ETH + stGToken + aPNTs</li>
               </ul>
             </div>
@@ -386,7 +386,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
       };
 
       // Don't show balances yet - user hasn't been checked
-      const standardOption = createStandardFlowOption(tempWalletStatus, config, false);
+      const aoaOption = createStandardFlowOption(tempWalletStatus, config, false);
       const superOption = createSuperModeOption(tempWalletStatus, config, false);
 
       return (
@@ -435,7 +435,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {/* Resource Requirements */}
               <div className="comparison-row">
                 <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.resources')}</div>
-                <div className="comparison-standard">
+                <div className="comparison-aoa">
                   <strong>{t('step1.substep2.comparisonTable.standard.resources.title')}</strong>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.resources.detail1')}</p>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.resources.detail2')}</p>
@@ -453,7 +453,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {/* Maintenance */}
               <div className="comparison-row">
                 <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.maintenance')}</div>
-                <div className="comparison-standard">
+                <div className="comparison-aoa">
                   <strong>{t('step1.substep2.comparisonTable.standard.maintenance.title')}</strong>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.maintenance.detail1')}</p>
                   <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.standard.maintenance.detail2')}</p>
@@ -468,7 +468,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {/* Reputation */}
               <div className="comparison-row">
                 <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.reputation')}</div>
-                <div className="comparison-standard">
+                <div className="comparison-aoa">
                   <strong>{t('step1.substep2.comparisonTable.standard.reputation.title')}</strong>
                   <p className="comparison-detail warning">{t('step1.substep2.comparisonTable.standard.reputation.detail1')}</p>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.reputation.detail2')}</p>
@@ -483,7 +483,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {/* Contract Deployment */}
               <div className="comparison-row">
                 <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.deployment')}</div>
-                <div className="comparison-standard">
+                <div className="comparison-aoa">
                   <strong>{t('step1.substep2.comparisonTable.standard.deployment.title')}</strong>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.deployment.detail1')}</p>
                   <p className="comparison-detail">{t('step1.substep2.comparisonTable.standard.deployment.detail2')}</p>
@@ -500,7 +500,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {/* Best For */}
               <div className="comparison-row">
                 <div className="comparison-label">{t('step1.substep2.comparisonTable.dimensions.bestFor')}</div>
-                <div className="comparison-standard">
+                <div className="comparison-aoa">
                   <ul className="comparison-list">
                     <li>{t('step1.substep2.comparisonTable.standard.bestFor.item1')}</li>
                     <li>{t('step1.substep2.comparisonTable.standard.bestFor.item2')}</li>
@@ -539,11 +539,11 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
           <div className="stake-options-grid">
             <StakeOptionCard
-              option={standardOption}
+              option={aoaOption}
               walletStatus={tempWalletStatus}
-              selected={selectedOption === "standard"}
+              selected={selectedOption === "aoa"}
               disabled={false}
-              onSelect={() => handleSelectOption("standard")}
+              onSelect={() => handleSelectOption("aoa")}
               showResourceStatus={false}
             />
 
@@ -589,13 +589,13 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           </div>
 
           <div className="selected-mode-banner">
-            <span className="mode-icon">{selectedOption === 'standard' ? '🚀' : '⚡'}</span>
+            <span className="mode-icon">{selectedOption === 'aoa' ? '🚀' : '⚡'}</span>
             <div className="mode-info">
               <div className="mode-title">
-                {selectedOption === 'standard' ? t('step1.substep3.modeStandard') : t('step1.substep3.modeSuper')}
+                {selectedOption === 'aoa' ? t('step1.substep3.modeStandard') : t('step1.substep3.modeSuper')}
               </div>
               <div className="mode-description">
-                {selectedOption === 'standard'
+                {selectedOption === 'aoa'
                   ? t('step1.substep2.modeNames.standardSubtitle')
                   : t('step1.substep2.modeNames.superSubtitle')}
               </div>
@@ -652,8 +652,8 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <div className="help-title">💡 Resource Guide</div>
             <div className="help-content">
               <div className="help-item">
-                <strong>ETH:</strong> Required for {selectedOption === 'standard' ? 'deploying contracts and paying gas fees' : 'transaction gas fees'}.
-                {selectedOption === 'standard'
+                <strong>ETH:</strong> Required for {selectedOption === 'aoa' ? 'deploying contracts and paying gas fees' : 'transaction gas fees'}.
+                {selectedOption === 'aoa'
                   ? ` You need ${config.requirements.minEthDeploy} ETH for deployment and staking.`
                   : ' Super Mode only needs minimal ETH for gas.'}
               </div>

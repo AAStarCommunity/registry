@@ -100,7 +100,7 @@ export interface DeployConfig {
   walletStatus?: WalletStatus;
 
   // Stake option
-  stakeOption?: 'standard' | 'super';
+  stakeOption?: 'aoa' | 'super';
 
   // Resource requirements
   resourcesReady?: boolean;
@@ -161,7 +161,7 @@ function getSuperPaymasterAddress(): string {
  * Generate steps based on selected stake option
  */
 function getStepsForOption(
-  option: 'standard' | 'super' | undefined,
+  option: 'aoa' | 'super' | undefined,
   t: (key: string) => string
 ): StepConfig[] {
   const { COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS } = createStepConfigs(t);
@@ -171,7 +171,7 @@ function getStepsForOption(
     return COMMON_STEPS;
   }
 
-  return option === 'standard'
+  return option === 'aoa'
     ? [...COMMON_STEPS, ...STANDARD_FLOW_STEPS]
     : [...COMMON_STEPS, ...SUPER_MODE_STEPS];
 }
@@ -223,10 +223,10 @@ export function DeployWizard() {
           requiredPNTs: '1000',
           requiredAPNTs: '1000',
         },
-        stakeOption: 'standard', // Auto-select standard flow
+        stakeOption: 'aoa', // Auto-select AOA flow
         resourcesReady: true,
       }));
-      setSteps(getStepsForOption('standard', t));
+      setSteps(getStepsForOption('aoa', t));
       setCurrentStep(2); // Skip to Step 2: Configuration
       console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
     }
@@ -248,7 +248,7 @@ export function DeployWizard() {
 
   const handleConnectAndSelectComplete = (
     walletStatus: WalletStatus,
-    stakeOption: 'standard' | 'super'
+    stakeOption: 'aoa' | 'super'
   ) => {
     console.log(`✅ User selected: ${stakeOption} mode with wallet ${walletStatus.address}`);
     setConfig((prev) => ({ ...prev, walletStatus, stakeOption }));
@@ -315,7 +315,7 @@ export function DeployWizard() {
         // For Super Mode, use shared SuperPaymaster address
         // For Standard Mode, use user's deployed paymaster
         const paymasterForStake =
-          config.stakeOption === 'standard'
+          config.stakeOption === 'aoa'
             ? config.paymasterAddress
             : getSuperPaymasterAddress();
 
@@ -336,7 +336,7 @@ export function DeployWizard() {
       case 'register':
         // Similar to stake - use appropriate paymaster address
         const paymasterForRegister =
-          config.stakeOption === 'standard'
+          config.stakeOption === 'aoa'
             ? config.paymasterAddress
             : getSuperPaymasterAddress();
 

@@ -7,7 +7,7 @@ import "./Step5_Stake.css";
 export interface Step5Props {
   paymasterAddress: string;
   walletStatus: WalletStatus;
-  selectedOption: "standard" | "super";
+  selectedOption: "aoa" | "super";
   onNext: (txHash: string) => void;
   onBack: () => void;
 }
@@ -16,7 +16,7 @@ export interface Step5Props {
  * Step5_Stake Router Component
  *
  * Routes to different staking flows based on selectedOption:
- * - Standard: Deposit ETH to EntryPoint (traditional ERC-4337)
+ * - AOA: Deposit ETH to EntryPoint (traditional ERC-4337)
  * - Super: Register to SuperPaymasterV2 (Super Mode)
  */
 export function Step5_Stake(props: Step5Props) {
@@ -34,12 +34,12 @@ export function Step5_Stake(props: Step5Props) {
     );
   }
 
-  // Standard Flow: Deposit to EntryPoint
+  // AOA Flow: Deposit to EntryPoint
   return <Step5_StandardFlow {...props} />;
 }
 
 /**
- * Standard Flow Component - EntryPoint Deposit
+ * AOA Flow Component - EntryPoint Deposit
  */
 function Step5_StandardFlow({
   paymasterAddress,
@@ -144,7 +144,7 @@ const ENTRY_POINT_ABI = [
   };
 
   const getRecommendedAmount = () => {
-    return "0.1 ETH (recommended for Standard Flow)";
+    return "0.1 ETH (recommended for AOA Flow)";
   };
 
   return (
@@ -159,10 +159,10 @@ const ENTRY_POINT_ABI = [
 
       {/* Flow Info */}
       <div className="flow-info">
-        <div className="info-badge">🐢 Standard Flow</div>
+        <div className="info-badge">🐢 AOA Flow</div>
         <div className="info-text">
           <p>
-            Standard Flow requires more ETH upfront for EntryPoint deposit and
+            AOA Flow requires more ETH upfront for EntryPoint deposit and
             direct gas payments.
           </p>
         </div>
