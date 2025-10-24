@@ -1,3 +1,381 @@
+### 🔧 修复钱包余额检测功能 (2025-10-24)
+
+**用户反馈的问题**：
+1. 连接钱包或切换账户后，地址显示正确但无法检测余额
+2. 即使首次连接钱包也检测不到余额
+3. 即使账户有足够的 ETH，仍然显示"资源不足"的图标
+
+**根本原因分析**：
+
+**问题 1：缺少代币合约地址**
+
+`checkWalletStatus` 函数需要代币合约地址才能查询链上余额：
+
+```typescript
+// ❌ 问题代码 - 缺少代币地址参数
+const status = await checkWalletStatus({
+  requiredETH: config.requirements.minEthStandardFlow,
+  requiredGToken: config.requirements.minGTokenStake,
+  // ⚠️ 缺少：gTokenAddress, pntAddress, aPNTAddress
+});
+
+// 结果：checkWalletStatus 无法查询代币余额，所有代币余额返回 "0"
+```
+
+`walletChecker.ts` 中的函数签名：
+```typescript
+export async function checkWalletStatus(options: CheckOptions = {}): Promise<WalletStatus> {
+  const {
+    requiredETH = "0.05",
+    requiredGToken = "100",
+    requiredPNTs = "1000",
+    requiredAPNTs = "1000",
+    gTokenAddress,    // 必需：查询 GToken 余额
+    pntAddress,       // 必需：查询 PNT 余额
+    aPNTAddress,      // 必需：查询 aPNT 余额
+  } = options;
+  
+  // 没有这些地址，无法创建合约实例查询余额
+  if (!gTokenAddress) {
+    // 返回 gTokenBalance: "0"
+  }
+}
+```
+
+**问题 2：账户切换时未重新检测余额**
+
+```typescript
+// ❌ 原始代码
+const handleAccountsChanged = (accounts: string[]) => {
+  if (accounts.length > 0) {
+    setWalletAddress(accounts[0]);  // 只更新地址
+    // ⚠️ 没有重新检测余额
+  }
+};
+```
+
+**解决方案**：
+
+**1. 传递代币合约地址到余额检测函数**
+
+`Step1_ConnectAndSelect.tsx:189-227`:
+```typescript
+// ✅ 修复后的代码
+const checkResourcesForOption = async (option: StakeOptionType) => {
+  const config = getCurrentNetworkConfig();
+  
+  // 为 Standard Flow 和 Super Mode 分别定义要求
+  const requirements = option === 'standard'
+    ? {
+        requiredETH: config.requirements.minEthStandardFlow,  // 0.1 ETH
+        requiredGToken: config.requirements.minGTokenStake,   // 100 GToken
+        requiredPNTs: "0",
+        requiredAPNTs: "0",
+        // ✅ 新增：传递代币合约地址
+        gTokenAddress: config.contracts.gToken,
+        pntAddress: config.contracts.pntToken,
+        aPNTAddress: config.contracts.pntToken,
+      }
+    : {
+        requiredETH: config.requirements.minEthDeploy,        // 0.02 ETH
+        requiredGToken: config.requirements.minGTokenStake,   // 100 GToken
+        requiredPNTs: config.requirements.minPntDeposit,      // 1000 PNTs
+        requiredAPNTs: config.requirements.minPntDeposit,
+        // ✅ 新增：传递代币合约地址
+        gTokenAddress: config.contracts.gToken,
+        pntAddress: config.contracts.pntToken,
+        aPNTAddress: config.contracts.pntToken,
+      };
+
+  console.log('💰 Checking wallet resources with config:', requirements);
+  const status = await checkWalletStatus(requirements);  // 现在包含所有必需参数
+  console.log('✅ Wallet status retrieved:', status);
+  setWalletStatus(status);
+};
+```
+
+**2. 账户切换时自动重新检测余额**
+
+`Step1_ConnectAndSelect.tsx:51-87`:
+```typescript
+// ✅ 增强的 accountsChanged 事件处理
+useEffect(() => {
+  if (!window.ethereum) return;
+
+  const handleAccountsChanged = (accounts: string[]) => {
+    console.log('🔄 Account changed detected:', accounts[0]);
+    if (accounts.length > 0) {
+      const newAddress = accounts[0];
+      setWalletAddress(newAddress);
+
+      // ✅ 清除旧的钱包状态
+      setWalletStatus(null);
+
+      // 处理不同的子步骤
+      if (subStep === SubStep.ConnectWallet) {
+        // 用户在连接前切换账户 - 继续到下一步
+        setSubStep(SubStep.SelectOption);
+      } else if (subStep === SubStep.CheckResources && selectedOption) {
+        // ✅ 用户在检测资源阶段切换账户 - 自动重新检测
+        console.log('🔄 Rechecking resources for new account...');
+        checkResourcesForOption(selectedOption);
+      }
+      // 如果在 SelectOption 步骤，只更新地址，让用户继续
+    } else {
+      // 用户断开钱包
+      setWalletAddress(null);
+      setWalletStatus(null);
+      setSubStep(SubStep.ConnectWallet);
+    }
+  };
+
+  window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+  return () => {
+    window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+  };
+}, [subStep, selectedOption]);
+```
+
+**3. 添加调试日志**
+
+```typescript
+console.log('💰 Checking wallet resources with config:', requirements);
+const status = await checkWalletStatus(requirements);
+console.log('✅ Wallet status retrieved:', status);
+```
+
+**修复效果**：
+- ✅ 首次连接钱包可以正确检测 ETH 和代币余额
+- ✅ 切换账户后自动重新检测新账户的余额
+- ✅ 余额不足时显示准确的"资源不足"提示
+- ✅ 余额充足时显示"✓ Resources ready"状态
+- ✅ 控制台输出详细日志便于调试
+
+**网络配置**（`networkConfig.ts:45-79`）：
+```typescript
+const sepoliaConfig: NetworkConfig = {
+  chainId: 11155111,
+  chainName: "Sepolia Testnet",
+  
+  contracts: {
+    gToken: "0x868F843723a98c6EECC4BF0aF3352C53d5004147",
+    pntToken: "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
+    // ... 其他合约地址
+  },
+  
+  requirements: {
+    minEthDeploy: "0.02",        // Super Mode 最低要求
+    minEthStandardFlow: "0.1",   // Standard Flow 最低要求
+    minGTokenStake: "100",
+    minPntDeposit: "1000",
+  },
+};
+```
+
+**Git Commit**:
+```
+fix(wallet): Add token addresses to balance checker and auto-recheck on account switch
+
+Commit: 10a3833
+```
+
+**相关文件**:
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx` - 主要修改
+- `src/pages/operator/deploy-v2/utils/walletChecker.ts` - 余额检测逻辑
+- `src/config/networkConfig.ts` - 合约地址配置
+
+---
+
+### 🔧 修复钱包余额检测功能 (2025-10-24)
+
+**用户反馈的问题**：
+1. 连接钱包或切换账户后，地址显示正确但无法检测余额
+2. 即使首次连接钱包也检测不到余额
+3. 即使账户有足够的 ETH，仍然显示"资源不足"的图标
+
+**根本原因分析**：
+
+**问题 1：缺少代币合约地址**
+
+`checkWalletStatus` 函数需要代币合约地址才能查询链上余额：
+
+```typescript
+// ❌ 问题代码 - 缺少代币地址参数
+const status = await checkWalletStatus({
+  requiredETH: config.requirements.minEthStandardFlow,
+  requiredGToken: config.requirements.minGTokenStake,
+  // ⚠️ 缺少：gTokenAddress, pntAddress, aPNTAddress
+});
+
+// 结果：checkWalletStatus 无法查询代币余额，所有代币余额返回 "0"
+```
+
+`walletChecker.ts` 中的函数签名：
+```typescript
+export async function checkWalletStatus(options: CheckOptions = {}): Promise<WalletStatus> {
+  const {
+    requiredETH = "0.05",
+    requiredGToken = "100",
+    requiredPNTs = "1000",
+    requiredAPNTs = "1000",
+    gTokenAddress,    // 必需：查询 GToken 余额
+    pntAddress,       // 必需：查询 PNT 余额
+    aPNTAddress,      // 必需：查询 aPNT 余额
+  } = options;
+  
+  // 没有这些地址，无法创建合约实例查询余额
+  if (!gTokenAddress) {
+    // 返回 gTokenBalance: "0"
+  }
+}
+```
+
+**问题 2：账户切换时未重新检测余额**
+
+```typescript
+// ❌ 原始代码
+const handleAccountsChanged = (accounts: string[]) => {
+  if (accounts.length > 0) {
+    setWalletAddress(accounts[0]);  // 只更新地址
+    // ⚠️ 没有重新检测余额
+  }
+};
+```
+
+**解决方案**：
+
+**1. 传递代币合约地址到余额检测函数**
+
+`Step1_ConnectAndSelect.tsx:189-227`:
+```typescript
+// ✅ 修复后的代码
+const checkResourcesForOption = async (option: StakeOptionType) => {
+  const config = getCurrentNetworkConfig();
+  
+  // 为 Standard Flow 和 Super Mode 分别定义要求
+  const requirements = option === 'standard'
+    ? {
+        requiredETH: config.requirements.minEthStandardFlow,  // 0.1 ETH
+        requiredGToken: config.requirements.minGTokenStake,   // 100 GToken
+        requiredPNTs: "0",
+        requiredAPNTs: "0",
+        // ✅ 新增：传递代币合约地址
+        gTokenAddress: config.contracts.gToken,
+        pntAddress: config.contracts.pntToken,
+        aPNTAddress: config.contracts.pntToken,
+      }
+    : {
+        requiredETH: config.requirements.minEthDeploy,        // 0.02 ETH
+        requiredGToken: config.requirements.minGTokenStake,   // 100 GToken
+        requiredPNTs: config.requirements.minPntDeposit,      // 1000 PNTs
+        requiredAPNTs: config.requirements.minPntDeposit,
+        // ✅ 新增：传递代币合约地址
+        gTokenAddress: config.contracts.gToken,
+        pntAddress: config.contracts.pntToken,
+        aPNTAddress: config.contracts.pntToken,
+      };
+
+  console.log('💰 Checking wallet resources with config:', requirements);
+  const status = await checkWalletStatus(requirements);  // 现在包含所有必需参数
+  console.log('✅ Wallet status retrieved:', status);
+  setWalletStatus(status);
+};
+```
+
+**2. 账户切换时自动重新检测余额**
+
+`Step1_ConnectAndSelect.tsx:51-87`:
+```typescript
+// ✅ 增强的 accountsChanged 事件处理
+useEffect(() => {
+  if (!window.ethereum) return;
+
+  const handleAccountsChanged = (accounts: string[]) => {
+    console.log('🔄 Account changed detected:', accounts[0]);
+    if (accounts.length > 0) {
+      const newAddress = accounts[0];
+      setWalletAddress(newAddress);
+
+      // ✅ 清除旧的钱包状态
+      setWalletStatus(null);
+
+      // 处理不同的子步骤
+      if (subStep === SubStep.ConnectWallet) {
+        // 用户在连接前切换账户 - 继续到下一步
+        setSubStep(SubStep.SelectOption);
+      } else if (subStep === SubStep.CheckResources && selectedOption) {
+        // ✅ 用户在检测资源阶段切换账户 - 自动重新检测
+        console.log('🔄 Rechecking resources for new account...');
+        checkResourcesForOption(selectedOption);
+      }
+      // 如果在 SelectOption 步骤，只更新地址，让用户继续
+    } else {
+      // 用户断开钱包
+      setWalletAddress(null);
+      setWalletStatus(null);
+      setSubStep(SubStep.ConnectWallet);
+    }
+  };
+
+  window.ethereum.on('accountsChanged', handleAccountsChanged);
+
+  return () => {
+    window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+  };
+}, [subStep, selectedOption]);
+```
+
+**3. 添加调试日志**
+
+```typescript
+console.log('💰 Checking wallet resources with config:', requirements);
+const status = await checkWalletStatus(requirements);
+console.log('✅ Wallet status retrieved:', status);
+```
+
+**修复效果**：
+- ✅ 首次连接钱包可以正确检测 ETH 和代币余额
+- ✅ 切换账户后自动重新检测新账户的余额
+- ✅ 余额不足时显示准确的"资源不足"提示
+- ✅ 余额充足时显示"✓ Resources ready"状态
+- ✅ 控制台输出详细日志便于调试
+
+**网络配置**（`networkConfig.ts:45-79`）：
+```typescript
+const sepoliaConfig: NetworkConfig = {
+  chainId: 11155111,
+  chainName: "Sepolia Testnet",
+  
+  contracts: {
+    gToken: "0x868F843723a98c6EECC4BF0aF3352C53d5004147",
+    pntToken: "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
+    // ... 其他合约地址
+  },
+  
+  requirements: {
+    minEthDeploy: "0.02",        // Super Mode 最低要求
+    minEthStandardFlow: "0.1",   // Standard Flow 最低要求
+    minGTokenStake: "100",
+    minPntDeposit: "1000",
+  },
+};
+```
+
+**Git Commit**:
+```
+fix(wallet): Add token addresses to balance checker and auto-recheck on account switch
+
+Commit: 10a3833
+```
+
+**相关文件**:
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx` - 主要修改
+- `src/pages/operator/deploy-v2/utils/walletChecker.ts` - 余额检测逻辑
+- `src/config/networkConfig.ts` - 合约地址配置
+
+---
+
 ### 🔄 重构账户切换方案：从按钮触发改为事件驱动 (2025-10-24)
 
 **问题回顾**：之前尝试使用 Switch Account 按钮配合 `wallet_requestPermissions` API 来实现账户切换，但发现该 API 无法实现预期功能。
