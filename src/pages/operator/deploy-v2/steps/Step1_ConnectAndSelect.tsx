@@ -279,8 +279,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         requiredAPNTs: "0",
       };
 
-      const standardOption = createStandardFlowOption(tempWalletStatus, config);
-      const superOption = createSuperModeOption(tempWalletStatus, config);
+      // Don't show balances yet - user hasn't been checked
+      const standardOption = createStandardFlowOption(tempWalletStatus, config, false);
+      const superOption = createSuperModeOption(tempWalletStatus, config, false);
 
       return (
         <div className="substep-select">
@@ -297,6 +298,25 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <span className="wallet-address">
               {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
             </span>
+          </div>
+
+          {/* Resource Requirements Info Banner */}
+          <div className="resource-info-banner">
+            <div className="info-icon">💡</div>
+            <div className="info-content">
+              <div className="info-title">Resource Requirements Difference</div>
+              <div className="info-details">
+                <div className="info-item">
+                  <strong>Standard Flow:</strong> Requires <span className="highlight">ETH + stGToken</span>
+                </div>
+                <div className="info-item">
+                  <strong>Super Mode:</strong> Requires <span className="highlight">ETH + stGToken + aPNTs</span>
+                </div>
+              </div>
+              <div className="info-note">
+                We'll only check the resources you need after you make your selection.
+              </div>
+            </div>
           </div>
 
           <div className="stake-options-grid">

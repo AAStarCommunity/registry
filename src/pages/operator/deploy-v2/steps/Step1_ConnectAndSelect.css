@@ -170,6 +170,64 @@
   font-weight: 600;
 }
 
+/* Resource Info Banner */
+.resource-info-banner {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border: 2px solid #2196f3;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+}
+
+.info-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.info-content {
+  flex: 1;
+}
+
+.info-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-bottom: 0.75rem;
+}
+
+.info-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.info-item {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+}
+
+.info-item strong {
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.info-item .highlight {
+  padding: 0.125rem 0.5rem;
+  background: rgba(33, 150, 243, 0.15);
+  border-radius: 4px;
+  font-weight: 600;
+  color: var(--color-primary-dark);
+}
+
+.info-note {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
 .stake-options-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

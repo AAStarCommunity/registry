@@ -203,7 +203,8 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
  */
 export function createStandardFlowOption(
   walletStatus: WalletStatus,
-  config: ReturnType<typeof getCurrentNetworkConfig>
+  config: ReturnType<typeof getCurrentNetworkConfig>,
+  showBalances: boolean = true
 ): StakeOption {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
@@ -219,12 +220,16 @@ export function createStandardFlowOption(
     requirements: [
       {
         label: "ETH (部署 + Stake + Deposit)",
-        value: `需要 ≥ ${config.requirements.minEthStandardFlow} ETH (当前: ${walletStatus.ethBalance} ETH)`,
+        value: showBalances
+          ? `需要 ≥ ${config.requirements.minEthStandardFlow} ETH (当前: ${walletStatus.ethBalance} ETH)`
+          : `需要 ≥ ${config.requirements.minEthStandardFlow} ETH`,
         met: ethBalance >= minEth,
       },
       {
-        label: "GToken (治理 Stake)",
-        value: `需要 ≥ ${config.requirements.minGTokenStake} GToken (当前: ${walletStatus.gTokenBalance} GToken)`,
+        label: "stGToken (治理 Stake)",
+        value: showBalances
+          ? `需要 ≥ ${config.requirements.minGTokenStake} stGToken (当前: ${walletStatus.gTokenBalance} stGToken)`
+          : `需要 ≥ ${config.requirements.minGTokenStake} stGToken`,
         met: gTokenBalance >= minGToken,
       },
     ],
@@ -232,7 +237,7 @@ export function createStandardFlowOption(
       "部署 PaymasterV4 合约 (~0.02 ETH gas)",
       "Stake ETH 到 EntryPoint (ERC-4337)",
       "Deposit ETH 到 EntryPoint (gas sponsorship)",
-      "Stake GToken 到 Governance Contract",
+      "Stake stGToken 到 Governance Contract",
     ],
     benefits: [
       "完全符合 ERC-4337 标准规范",
@@ -254,7 +259,8 @@ export function createStandardFlowOption(
  */
 export function createSuperModeOption(
   walletStatus: WalletStatus,
-  config: ReturnType<typeof getCurrentNetworkConfig>
+  config: ReturnType<typeof getCurrentNetworkConfig>,
+  showBalances: boolean = true
 ): StakeOption {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
@@ -270,32 +276,37 @@ export function createSuperModeOption(
 
   return {
     type: "super",
-    title: "模式2：GToken Super Mode",
+    title: "GToken Super Mode",
     subtitle: "三秒钟启动 Paymaster - 无需合约部署，无需服务器",
     recommended: allResourcesMet,
     badge: "Super",
     requirements: [
       {
-        label: "ETH (仅 gas)",
-        value: `需要 ≥ ${config.requirements.minEthDeploy} ETH (当前: ${walletStatus.ethBalance} ETH)`,
+        label: "ETH (仅 gas 费用)",
+        value: showBalances
+          ? `需要 ≥ ${config.requirements.minEthDeploy} ETH (当前: ${walletStatus.ethBalance} ETH)`
+          : `需要 ≥ ${config.requirements.minEthDeploy} ETH`,
         met: ethBalance >= minEth,
       },
       {
-        label: "GToken (Stake + Lock)",
-        value: `需要 ≥ ${config.requirements.minGTokenStake} GToken (当前: ${walletStatus.gTokenBalance} GToken)`,
+        label: "stGToken (Stake + Lock)",
+        value: showBalances
+          ? `需要 ≥ ${config.requirements.minGTokenStake} stGToken (当前: ${walletStatus.gTokenBalance} stGToken)`
+          : `需要 ≥ ${config.requirements.minGTokenStake} stGToken`,
         met: gTokenBalance >= minGToken,
       },
       {
         label: "aPNTs (Gas Backing)",
-        value: `需要 ≥ ${config.requirements.minPntDeposit} aPNT (当前: ${walletStatus.pntsBalance} aPNT)`,
+        value: showBalances
+          ? `需要 ≥ ${config.requirements.minPntDeposit} aPNT (当前: ${walletStatus.pntsBalance} aPNT)`
+          : `需要 ≥ ${config.requirements.minPntDeposit} aPNT`,
         met: pntsBalance >= minPnts,
       },
     ],
     steps: [
-      "Stake GToken → 获得 sGToken",
-      "注册到 SuperPaymasterV2（自动 lock sGToken）",
+      "Stake stGToken 到 Governance Contract",
+      "注册到 SuperPaymasterV2（自动 lock stGToken）",
       "Deposit aPNTs 到 SuperPaymasterV2",
-      "部署 xPNTs Token（社区 gas token）",
       "完成！三秒钟启动 Paymaster",
     ],
     benefits: [
@@ -307,13 +318,12 @@ export function createSuperModeOption(
     ],
     warnings: [
       "依赖 SuperPaymasterV2 共享合约",
-      "需要 GToken 和 aPNTs 资源",
-      "xPNTs token 需要社区推广",
+      "需要 stGToken 和 aPNTs 资源",
     ],
     suitable: [
       "快速启动社区 Paymaster",
       "不想部署和维护合约",
-      "GToken 和 aPNTs 充足",
+      "stGToken 和 aPNTs 充足",
       "专注社区运营而非技术",
     ],
   };
