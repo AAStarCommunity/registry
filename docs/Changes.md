@@ -5843,3 +5843,246 @@ function getSuperPaymasterAddress(): string {
 
 - `475a2ad` - feat: 重构 DeployWizard 为动态步骤流程（方案 B）
 
+
+---
+
+## 2025-01-24: Step 1 & 2 合并优化 - 条件式资源检查
+
+### 📋 背景
+
+用户反馈：当前流程在 Step 1 就要求用户准备所有资源（包括 aPNTs），但用户可能在 Step 2 选择 Standard Flow，根本不需要 aPNTs。这会造成用户困惑和不必要的资源准备。
+
+### 🎯 优化目标
+
+实现条件式资源检查：
+- 连接钱包
+- 选择 stake option
+- **仅检查**选定模式所需的资源
+
+### ✅ 完成的工作
+
+#### 1. 新组件：Step1_ConnectAndSelect.tsx
+
+创建了一个包含 3 个子步骤的合并组件：
+
+**子步骤 1: 连接钱包（基本连接）**
+```typescript
+// 只连接钱包，不检查余额
+const handleConnectWallet = async () => {
+  const accounts = await window.ethereum.request({
+    method: 'eth_requestAccounts'
+  });
+  setWalletAddress(accounts[0]);
+  setSubStep(SubStep.SelectOption);
+};
+```
+
+**子步骤 2: 选择 Stake Option**
+- 显示 Standard Flow 和 Super Mode 两个选项卡
+- 用户可以自由选择任一模式
+- 不进行资源检查
+
+**子步骤 3: 条件式资源检查**
+```typescript
+const requirements = option === 'standard'
+  ? {
+      requiredETH: config.requirements.minEthDeploy, // 0.1 ETH
+      requiredGToken: config.requirements.minGTokenStake, // 100
+      requiredPNTs: "0", // Standard 不需要 PNTs
+    }
+  : {
+      requiredETH: "0.02", // Super mode 只需少量 gas
+      requiredGToken: config.requirements.minGTokenStake,
+      requiredPNTs: config.requirements.minPntDeposit, // 1000
+    };
+```
+
+#### 2. 流程对比
+
+**之前的流程（7/6 步）：**
+```
+Standard Flow:
+1. Connect Wallet → 检查所有资源（ETH, GToken, PNTs）❌
+2. Select Stake Option
+3. Configuration
+4. Deploy Paymaster
+5. Stake
+6. Register
+7. Complete
+
+Super Mode:
+1. Connect Wallet → 检查所有资源 ❌
+2. Select Stake Option
+3. Configuration
+4. Stake
+5. Register
+6. Complete
+```
+
+**现在的流程（6/5 步）：**
+```
+Standard Flow:
+1. Connect & Select Mode
+   - 1a. Connect wallet
+   - 1b. Select Standard Flow
+   - 1c. Check ETH + GToken only ✅
+2. Configuration
+3. Deploy Paymaster
+4. Stake
+5. Register
+6. Complete
+
+Super Mode:
+1. Connect & Select Mode
+   - 1a. Connect wallet
+   - 1b. Select Super Mode
+   - 1c. Check ETH + GToken + PNTs ✅
+2. Configuration
+3. Stake
+4. Register
+5. Complete
+```
+
+#### 3. 步骤配置更新
+
+```typescript
+// 之前：两个公共步骤
+const COMMON_STEPS: StepConfig[] = [
+  { id: 1, title: 'Connect Wallet', icon: '🔌', stepKey: 'connect' },
+  { id: 2, title: 'Select Stake Option', icon: '⚡', stepKey: 'selectOption' },
+];
+
+// 现在：一个合并步骤
+const COMMON_STEPS: StepConfig[] = [
+  { id: 1, title: 'Connect & Select Mode', icon: '🔌', stepKey: 'connectAndSelect' },
+];
+
+// Standard Flow: 6 步（原 7 步）
+const STANDARD_FLOW_STEPS: StepConfig[] = [
+  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 3, title: 'Deploy Paymaster', icon: '🚀', stepKey: 'deploy' },
+  { id: 4, title: 'Stake', icon: '🔒', stepKey: 'stake' },
+  { id: 5, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
+  { id: 6, title: 'Complete', icon: '✅', stepKey: 'complete' },
+];
+
+// Super Mode: 5 步（原 6 步）
+const SUPER_MODE_STEPS: StepConfig[] = [
+  { id: 2, title: 'Configuration', icon: '⚙️', stepKey: 'config' },
+  { id: 3, title: 'Stake', icon: '🔒', stepKey: 'stake' },
+  { id: 4, title: 'Register to Registry', icon: '📝', stepKey: 'register' },
+  { id: 5, title: 'Complete', icon: '✅', stepKey: 'complete' },
+];
+```
+
+#### 4. UI/UX 改进
+
+**3 段式进度指示器：**
+```
+[1. Connect] ─── [2. Select Mode] ─── [3. Check Resources]
+```
+
+**模式选择后的横幅显示：**
+```
+⚡ GToken Super Mode
+Quick launch using shared SuperPaymaster contract
+[Change Mode]
+```
+
+**条件式帮助文本：**
+- Standard Flow: 只显示 ETH 和 stGToken 说明
+- Super Mode: 显示 ETH、stGToken 和 aPNTs 说明
+
+### 📊 代码统计
+
+**新增文件：**
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx` (+485 行)
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.css` (+400 行)
+
+**修改文件：**
+- `src/pages/operator/DeployWizard.tsx` (+171/-171 行)
+  - 更新步骤配置（COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS）
+  - 合并事件处理器（handleConnectAndSelectComplete）
+  - 更新 renderStepContent switch 语句
+  - 更新 testMode 跳转逻辑
+
+**移除依赖：**
+- `Step1_ConnectWallet` 的独立使用
+- `Step4_StakeOption` 的独立使用
+- `handleSelectOptionComplete` 处理器
+
+### 🎯 用户体验改进
+
+1. **✅ 避免误导：** Standard Flow 用户不会看到 "Get aPNTs" 按钮
+2. **✅ 减少困惑：** Super Mode 用户不会看到 EntryPoint deposit 要求
+3. **✅ 更快流程：** 总步骤数减少（Standard: 7→6，Super: 6→5）
+4. **✅ 清晰进度：** 3 段式子步骤指示用户当前位置
+5. **✅ 灵活选择：** 用户可以在资源检查前更改模式选择
+
+### 🔄 技术实现亮点
+
+#### 条件式资源检查
+```typescript
+const checkResourcesForOption = async (option: StakeOptionType) => {
+  const requirements = option === 'standard'
+    ? { requiredETH: "0.1", requiredGToken: "100", requiredPNTs: "0" }
+    : { requiredETH: "0.02", requiredGToken: "100", requiredPNTs: "1000" };
+
+  const status = await checkWalletStatus(requirements);
+  setWalletStatus(status);
+};
+```
+
+#### 子步骤管理
+```typescript
+enum SubStep {
+  ConnectWallet = 1,
+  SelectOption = 2,
+  CheckResources = 3,
+}
+
+// 渐进式进度指示
+<div className={`substep-indicator ${subStep >= SubStep.ConnectWallet ? 'active' : ''}`}>
+  <span className="substep-number">1</span>
+  <span className="substep-label">Connect</span>
+</div>
+```
+
+#### 模式切换灵活性
+```typescript
+// 用户可以在资源检查后更改选择
+<button onClick={() => setSubStep(SubStep.SelectOption)} className="change-mode-btn">
+  Change Mode
+</button>
+```
+
+### 🧪 测试建议
+
+1. **Standard Flow 路径：**
+   - 连接钱包 → 选择 Standard → 检查是否只显示 ETH + stGToken 要求
+   - 验证不显示 aPNTs 获取链接
+
+2. **Super Mode 路径：**
+   - 连接钱包 → 选择 Super Mode → 检查是否显示 ETH + stGToken + aPNTs 要求
+   - 验证显示所有三个资源获取链接
+
+3. **模式切换：**
+   - 在子步骤 2 选择 Standard → 进入子步骤 3 → 点击 "Change Mode" → 切换到 Super Mode
+   - 验证资源检查更新为新模式的要求
+
+4. **TestMode：**
+   - 访问 `?testMode=true` → 验证自动跳过到 Step 2（Configuration）
+
+### 📝 相关 Commit
+
+- `7bde75d` - refactor: 合并 Step 1 和 Step 2 为条件式资源检查
+
+### 🔜 后续工作
+
+1. **E2E 测试更新：** 更新 Playwright 测试以适应新的步骤流程
+2. **用户反馈收集：** 观察用户是否能更清晰地理解资源要求
+3. **性能优化：** 考虑缓存资源检查结果，避免重复查询
+
+---
+
+**总结：** 这次优化实现了真正的"条件式资源检查"，避免了之前"检查所有资源 → 再选择模式"的不合理流程。现在用户的体验是：连接钱包 → 选择想要的模式 → 只检查该模式需要的资源。更符合直觉，减少了用户困惑。
