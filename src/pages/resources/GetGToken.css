@@ -428,3 +428,218 @@
     width: 100%;
   }
 }
+
+/* Stake Section Styles */
+.stake-section {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.wallet-connect-prompt {
+  text-align: center;
+  padding: 2rem;
+}
+
+.wallet-connect-prompt p {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.stake-interface {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.wallet-info {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 2px solid #7c3aed;
+}
+
+.connected-account {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.connected-account .mono {
+  color: #7c3aed;
+  font-family: "Monaco", "Courier New", monospace;
+  margin-left: 0.5rem;
+}
+
+.balance-display {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.balance-item {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.balance-item .label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.balance-item .value {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stake-form {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.input-with-max {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.input-with-max input {
+  flex: 1;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.input-with-max input:focus {
+  outline: none;
+  border-color: #7c3aed;
+}
+
+.input-with-max input:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+}
+
+.max-button {
+  padding: 0.75rem 1.5rem;
+  background: #7c3aed;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.max-button:hover {
+  background: #6d28d9;
+}
+
+.max-button:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+}
+
+.hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.stake-button {
+  margin-top: 0.5rem;
+}
+
+.stake-button:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.stake-button:disabled:hover {
+  box-shadow: none;
+}
+
+.tx-success {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #d1fae5;
+  border: 2px solid #10b981;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.tx-success p {
+  margin: 0 0 0.5rem;
+  color: #065f46;
+  font-weight: 600;
+}
+
+.tx-success .explorer-link {
+  color: #10b981;
+}
+
+.tx-success .explorer-link:hover {
+  color: #059669;
+}
+
+.stake-info-box {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  border-left: 4px solid #7c3aed;
+}
+
+.stake-info-box h4 {
+  margin: 0 0 1rem;
+  color: #374151;
+  font-size: 1.1rem;
+}
+
+.stake-info-box ul {
+  margin: 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.stake-info-box ul li {
+  margin: 0.5rem 0;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .balance-display {
+    grid-template-columns: 1fr;
+  }
+
+  .input-with-max {
+    flex-direction: column;
+  }
+
+  .max-button {
+    width: 100%;
+  }
+}

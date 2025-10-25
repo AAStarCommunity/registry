@@ -9,6 +9,8 @@ import { DeployWizard } from "./pages/operator/DeployWizard";
 import { ManagePaymasterFull } from "./pages/operator/ManagePaymasterFull";
 import GetGToken from "./pages/resources/GetGToken";
 import GetPNTs from "./pages/resources/GetPNTs";
+import { GetSBT } from "./pages/resources/GetSBT";
+import { GetXPNTs } from "./pages/resources/GetXPNTs";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -50,6 +52,8 @@ function App() {
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-pnts" element={<GetPNTs />} />
+            <Route path="/get-sbt" element={<GetSBT />} />
+            <Route path="/get-xpnts" element={<GetXPNTs />} />
 
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />

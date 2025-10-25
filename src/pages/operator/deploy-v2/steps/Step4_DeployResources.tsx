@@ -43,6 +43,8 @@ const GTOKEN_STAKING_ADDRESS =
 // ABIs
 const XPNTS_FACTORY_ABI = [
   "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS) external returns (address)",
+  "function hasToken(address community) external view returns (bool)",
+  "function getTokenAddress(address community) external view returns (address)",
 ];
 
 const GTOKEN_ABI = [
@@ -104,11 +106,29 @@ export function Step4_DeployResources({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         XPNTS_FACTORY_ABI,
         signer
       );
+
+      // Check if user already deployed xPNTs token
+      console.log("Checking if xPNTs token already deployed...");
+      const alreadyDeployed = await factory.hasToken(userAddress);
+
+      if (alreadyDeployed) {
+        const existingToken = await factory.getTokenAddress(userAddress);
+        console.log("⚠️ xPNTs token already deployed at:", existingToken);
+        setXPNTsAddress(existingToken);
+        setError(
+          `You already deployed an xPNTs token at ${existingToken.slice(0, 10)}...${existingToken.slice(-8)}. ` +
+          `Using existing token. Click "Use This Token →" to continue.`
+        );
+        setIsLoading(false);
+        return;
+      }
 
       console.log("Deploying xPNTs token via factory...");
 
@@ -226,6 +246,15 @@ export function Step4_DeployResources({
               <div className="form-hint">
                 Default: {MYSBT_ADDRESS} (recommended)
               </div>
+              <div className="form-hint" style={{ marginTop: "0.5rem" }}>
+                <a
+                  href="/get-sbt"
+                  target="_blank"
+                  style={{ color: "#667eea", textDecoration: "underline" }}
+                >
+                  Deploy your own MySBT →
+                </a>
+              </div>
             </div>
 
             <button
@@ -275,19 +304,30 @@ export function Step4_DeployResources({
               />
             </div>
 
-            <button
-              className="btn-primary"
-              onClick={handleDeployXPNTs}
-              disabled={isLoading}
-            >
-              {isLoading ? "Deploying..." : "Deploy xPNTs Token →"}
-            </button>
+            {!xPNTsAddress && (
+              <button
+                className="btn-primary"
+                onClick={handleDeployXPNTs}
+                disabled={isLoading}
+              >
+                {isLoading ? "Deploying..." : "Deploy xPNTs Token →"}
+              </button>
+            )}
 
             {xPNTsAddress && (
-              <div className="success-message">
-                ✅ xPNTs deployed: {xPNTsAddress.slice(0, 10)}...
-                {xPNTsAddress.slice(-8)}
-              </div>
+              <>
+                <div className="success-message">
+                  ✅ xPNTs token: {xPNTsAddress.slice(0, 10)}...
+                  {xPNTsAddress.slice(-8)}
+                </div>
+                <button
+                  className="btn-primary"
+                  onClick={() => setCurrentStep(ResourceStep.StakeGToken)}
+                  style={{ marginTop: "1rem" }}
+                >
+                  Use This Token →
+                </button>
+              </>
             )}
           </div>
         );
@@ -386,7 +426,7 @@ export function Step4_DeployResources({
   return (
     <div className="step4-deploy-resources">
       <div className="step-header">
-        <h2>Step 4: Deploy Resources</h2>
+        <h2>Deploy Resources</h2>
         <p className="step-description">
           Deploy required resources for your Paymaster: SBT, xPNTs, and stake GToken
         </p>

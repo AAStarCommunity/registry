@@ -4,19 +4,171 @@
  * Guides users on how to obtain GToken for staking
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
 import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
+import GTokenStakingABI from "../../contracts/GTokenStaking.json";
 import "./GetGToken.css";
+
+// ERC20 ABI (只包含需要的函数)
+const ERC20_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function approve(address spender, uint256 amount) returns (bool)",
+  "function allowance(address owner, address spender) view returns (uint256)",
+];
 
 const GetGToken: React.FC = () => {
   const navigate = useNavigate();
   const config = getCurrentNetworkConfig();
   const isTest = isTestnet();
 
+  // Wallet & Contract state
+  const [account, setAccount] = useState<string>("");
+  const [gtokenBalance, setGtokenBalance] = useState<string>("0");
+  const [stGtokenBalance, setStGtokenBalance] = useState<string>("0");
+  const [stakeAmount, setStakeAmount] = useState<string>("");
+  const [isStaking, setIsStaking] = useState(false);
+  const [txHash, setTxHash] = useState<string>("");
+
   const handleGoBack = () => {
     navigate(-1);
   };
+
+  // Connect wallet
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("Please install MetaMask!");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      setAccount(accounts[0]);
+      await loadBalances(accounts[0]);
+    } catch (error) {
+      console.error("Failed to connect wallet:", error);
+      alert("Failed to connect wallet. Please try again.");
+    }
+  };
+
+  // Load balances
+  const loadBalances = async (userAddress: string) => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Load GToken balance
+      const gtokenContract = new ethers.Contract(
+        config.contracts.gToken,
+        ERC20_ABI,
+        provider
+      );
+      const gtBalance = await gtokenContract.balanceOf(userAddress);
+      setGtokenBalance(ethers.formatEther(gtBalance));
+
+      // Load stGToken balance
+      const stakingContract = new ethers.Contract(
+        config.contracts.gTokenStaking,
+        GTokenStakingABI.abi,
+        provider
+      );
+      const stGtBalance = await stakingContract.balanceOf(userAddress);
+      setStGtokenBalance(ethers.formatEther(stGtBalance));
+    } catch (error) {
+      console.error("Failed to load balances:", error);
+    }
+  };
+
+  // Handle stake
+  const handleStake = async () => {
+    if (!account) {
+      alert("Please connect your wallet first!");
+      return;
+    }
+
+    if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
+      alert("Please enter a valid stake amount!");
+      return;
+    }
+
+    try {
+      setIsStaking(true);
+      setTxHash("");
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const amountWei = ethers.parseEther(stakeAmount);
+
+      // Step 1: Approve GToken
+      const gtokenContract = new ethers.Contract(
+        config.contracts.gToken,
+        ERC20_ABI,
+        signer
+      );
+
+      const currentAllowance = await gtokenContract.allowance(
+        account,
+        config.contracts.gTokenStaking
+      );
+
+      if (currentAllowance < amountWei) {
+        console.log("Approving GToken...");
+        const approveTx = await gtokenContract.approve(
+          config.contracts.gTokenStaking,
+          amountWei
+        );
+        await approveTx.wait();
+        console.log("Approval successful!");
+      }
+
+      // Step 2: Stake
+      const stakingContract = new ethers.Contract(
+        config.contracts.gTokenStaking,
+        GTokenStakingABI.abi,
+        signer
+      );
+
+      console.log("Staking GToken...");
+      const stakeTx = await stakingContract.stake(amountWei);
+      const receipt = await stakeTx.wait();
+
+      setTxHash(receipt.hash);
+      alert(`Successfully staked ${stakeAmount} GToken!`);
+
+      // Reload balances
+      await loadBalances(account);
+      setStakeAmount("");
+    } catch (error: any) {
+      console.error("Staking failed:", error);
+      alert(`Staking failed: ${error.message || "Unknown error"}`);
+    } finally {
+      setIsStaking(false);
+    }
+  };
+
+  // Load balances on account change
+  useEffect(() => {
+    if (account) {
+      loadBalances(account);
+    }
+  }, [account]);
+
+  // Listen for account changes
+  useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+        } else {
+          setAccount("");
+          setGtokenBalance("0");
+          setStGtokenBalance("0");
+        }
+      });
+    }
+  }, []);
 
   return (
     <div className="get-gtoken-page">
@@ -31,6 +183,99 @@ const GetGToken: React.FC = () => {
             GToken is required for staking in the SuperPaymaster ecosystem
           </p>
         </div>
+
+        {/* Stake GToken Section */}
+        <section className="info-section stake-section">
+          <h2>🔒 Stake GToken</h2>
+
+          {!account ? (
+            <div className="wallet-connect-prompt">
+              <p>Connect your wallet to stake GToken and receive stGToken</p>
+              <button onClick={connectWallet} className="action-button primary">
+                Connect Wallet
+              </button>
+            </div>
+          ) : (
+            <div className="stake-interface">
+              <div className="wallet-info">
+                <p className="connected-account">
+                  Connected: <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                </p>
+              </div>
+
+              <div className="balance-display">
+                <div className="balance-item">
+                  <span className="label">GToken Balance:</span>
+                  <span className="value highlight">{parseFloat(gtokenBalance).toFixed(2)} GT</span>
+                </div>
+                <div className="balance-item">
+                  <span className="label">stGToken Balance:</span>
+                  <span className="value highlight">{parseFloat(stGtokenBalance).toFixed(2)} stGT</span>
+                </div>
+              </div>
+
+              <div className="stake-form">
+                <div className="form-group">
+                  <label htmlFor="stake-amount">Amount to Stake:</label>
+                  <div className="input-with-max">
+                    <input
+                      id="stake-amount"
+                      type="number"
+                      value={stakeAmount}
+                      onChange={(e) => setStakeAmount(e.target.value)}
+                      placeholder="0.0"
+                      disabled={isStaking}
+                      min="0"
+                      step="0.1"
+                    />
+                    <button
+                      className="max-button"
+                      onClick={() => setStakeAmount(gtokenBalance)}
+                      disabled={isStaking}
+                    >
+                      MAX
+                    </button>
+                  </div>
+                  <small className="hint">
+                    Minimum stake: {config.requirements.minGTokenStake} GT
+                  </small>
+                </div>
+
+                <button
+                  onClick={handleStake}
+                  disabled={isStaking || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                  className="action-button primary stake-button"
+                >
+                  {isStaking ? "Staking..." : `Stake ${stakeAmount || "0"} GToken`}
+                </button>
+
+                {txHash && (
+                  <div className="tx-success">
+                    <p>✅ Staking successful!</p>
+                    <a
+                      href={`${config.explorerUrl}/tx/${txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                    >
+                      View Transaction →
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              <div className="stake-info-box">
+                <h4>ℹ️ How Staking Works</h4>
+                <ul>
+                  <li>Stake GToken to receive stGToken (staked GToken) at 1:1 ratio</li>
+                  <li>stGToken represents your staked position in the protocol</li>
+                  <li>You can unstake at any time (with a 7-day cooldown period)</li>
+                  <li>stGToken is required for various protocol operations (MySBT minting, community registration)</li>
+                </ul>
+              </div>
+            </div>
+          )}
+        </section>
 
         {/* What is GToken Section */}
         <section className="info-section">
