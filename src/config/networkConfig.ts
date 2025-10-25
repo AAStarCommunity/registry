@@ -83,7 +83,7 @@ const sepoliaConfig: NetworkConfig = {
   requirements: {
     minEthDeploy: import.meta.env.VITE_MIN_ETH_DEPLOY || "0.02",
     minEthStandardFlow: import.meta.env.VITE_MIN_ETH_STANDARD_FLOW || "0.1",
-    minGTokenStake: import.meta.env.VITE_MIN_GTOKEN_STAKE || "100",
+    minGTokenStake: import.meta.env.VITE_MIN_GTOKEN_STAKE || "30",
     minPntDeposit: import.meta.env.VITE_MIN_PNT_DEPOSIT || "1000",
   },
 };
