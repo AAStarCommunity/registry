@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import "./GetXPNTs.css";
@@ -7,10 +7,6 @@ import "./GetXPNTs.css";
 const XPNTS_FACTORY_ADDRESS =
   import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
   "0x356CF363E136b0880C8F48c9224A37171f375595";
-
-const GTOKEN_STAKING_ADDRESS =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2";
 
 const SEPOLIA_RPC_URL =
   import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
@@ -22,16 +18,11 @@ const XPNTS_FACTORY_ABI = [
   "function getTokenAddress(address community) external view returns (address)",
 ];
 
-const GTOKEN_STAKING_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-];
-
 export function GetXPNTs() {
   const navigate = useNavigate();
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
-  const [stGTokenBalance, setStGTokenBalance] = useState<string>("0");
 
   // xPNTs state
   const [existingToken, setExistingToken] = useState<string>("");
@@ -55,28 +46,10 @@ export function GetXPNTs() {
         method: "eth_requestAccounts",
       });
       setAccount(accounts[0]);
-      await loadBalances(accounts[0]);
       await checkExistingToken(accounts[0]);
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
       setError(err?.message || "Failed to connect wallet");
-    }
-  };
-
-  // Load balances
-  const loadBalances = async (address: string) => {
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
-      const stakingContract = new ethers.Contract(
-        GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
-        rpcProvider
-      );
-
-      const stGTBalance = await stakingContract.balanceOf(address);
-      setStGTokenBalance(ethers.formatEther(stGTBalance));
-    } catch (err) {
-      console.error("Failed to load balances:", err);
     }
   };
 
@@ -133,7 +106,7 @@ export function GetXPNTs() {
       setDeployTxHash(tx.hash);
 
       console.log("Waiting for confirmation...");
-      const receipt = await tx.wait();
+      await tx.wait();
 
       console.log("Deployment successful!");
 
@@ -153,7 +126,6 @@ export function GetXPNTs() {
       window.ethereum.request({ method: "eth_accounts" }).then((accounts: string[]) => {
         if (accounts.length > 0) {
           setAccount(accounts[0]);
-          loadBalances(accounts[0]);
           checkExistingToken(accounts[0]);
         }
       });

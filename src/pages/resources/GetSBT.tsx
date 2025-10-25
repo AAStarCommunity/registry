@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import "./GetSBT.css";
@@ -125,7 +125,7 @@ export function GetSBT() {
       setDeployTxHash(tx.hash);
 
       console.log("Waiting for confirmation...");
-      const receipt = await tx.wait();
+      await tx.wait();
 
       console.log("Deployment successful!");
 
