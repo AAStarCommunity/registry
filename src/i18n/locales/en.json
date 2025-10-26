@@ -49,7 +49,7 @@
       "title": "Choose Your Deployment Mode",
       "description": "Select the deployment mode that best fits your needs. We provide two distinct approaches with different resource requirements and operational characteristics.",
       "modeNames": {
-        "standard": "Enhanced ERC-4337 Flow",
+        "standard": "Enhanced ERC-4337",
         "standardSubtitle": "AOA (Asset Oriented Abstraction) optimizes traditional ERC-4337 by eliminating off-chain signature servers and on-chain verify cost. Uses SBT identity verification + xPNTs for gas-free payments.",
         "super": "Super Mode:AOA+",
         "superSubtitle": "Based on AOA, supports customize gas token and no individual contract deployment needed. Protocol-managed infrastructure for ultimate simplicity."
@@ -142,7 +142,7 @@
       "previewSteps": {
         "title": "Preview: What Happens After You Select?",
         "standard": {
-          "title": "Enhanced ERC-4337 Flow (AOA) - {{totalSteps}} Steps",
+          "title": "Enhanced ERC-4337 (AOA) - {{totalSteps}} Steps",
           "step1": "Configuration",
           "step2": "Deploy Paymaster Contract",
           "step3": "Stake ETH to EntryPoint",
@@ -160,7 +160,7 @@
         }
       },
       "selectButton": {
-        "standard": "Select Enhanced ERC-4337 Flow (AOA)",
+        "standard": "Select Enhanced ERC-4337 (AOA)",
         "super": "Select Super Mode (AOA+)"
       }
     },
@@ -169,7 +169,7 @@
       "description": "Based on your selection, verify that you have the necessary resources. You can acquire missing resources from the provided links.",
       "walletConnected": "Wallet Connected",
       "selectedMode": "Selected Mode:",
-      "modeStandard": "Standard Flow",
+      "modeStandard": "Standard",
       "modeSuper": "Super Mode",
       "resourceCheck": "Resource Check",
       "checkingWallet": "Checking wallet resources...",
@@ -185,7 +185,7 @@
       "recommend": "We recommend",
       "note": "This is just a suggestion based on your current wallet resources. You are free to choose either option at any time."
     },
-    "standardFlow": "Standard ERC-4337 Flow",
+    "standardFlow": "Standard ERC-4337",
     "superMode": "GToken Super Mode",
     "walletStatus": "Current Wallet Status",
     "eth": "ETH",

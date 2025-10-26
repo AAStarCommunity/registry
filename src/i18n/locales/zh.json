@@ -49,7 +49,7 @@
       "title": "选择您的部署模式",
       "description": "选择最适合您需求的部署模式。我们提供两种不同的方式，资源需求和运营特性各不相同。",
       "modeNames": {
-        "standard": "增强型 ERC-4337 流程",
+        "standard": "增强型 ERC-4337",
         "standardSubtitle": "AOA（资产导向抽象）通过消除离线签名服务器和链上验证成本来优化传统 ERC-4337。使用 SBT 身份验证 + xPNTs 实现免 gas 支付。",
         "super": "超级模式:AOA+",
         "superSubtitle": "基于 AOA，支持自定义 gas token，无需单独合约部署。协议托管基础设施，极致简单。"
@@ -142,7 +142,7 @@
       "previewSteps": {
         "title": "预览：选择后会发生什么？",
         "standard": {
-          "title": "增强型 ERC-4337 流程（AOA）- {{totalSteps}} 步",
+          "title": "增强型 ERC-4337（AOA）- {{totalSteps}} 步",
           "step1": "配置",
           "step2": "部署 Paymaster 合约",
           "step3": "Stake ETH 到 EntryPoint",
@@ -160,7 +160,7 @@
         }
       },
       "selectButton": {
-        "standard": "选择增强型 ERC-4337 流程（AOA）",
+        "standard": "选择增强型 ERC-4337（AOA）",
         "super": "选择超级模式（AOA+）"
       }
     },
@@ -169,7 +169,7 @@
       "description": "基于您的选择，验证您拥有必需的资源。您可以从提供的链接获取缺失的资源。",
       "walletConnected": "钱包已连接",
       "selectedMode": "已选择模式：",
-      "modeStandard": "标准流程",
+      "modeStandard": "标准",
       "modeSuper": "超级模式",
       "resourceCheck": "资源检查",
       "checkingWallet": "正在检查钱包资源...",
@@ -185,7 +185,7 @@
       "recommend": "我们建议",
       "note": "这只是基于您当前钱包资源的建议。您可以随时自由选择任一选项。"
     },
-    "standardFlow": "标准 ERC-4337 流程",
+    "standardFlow": "标准 ERC-4337",
     "superMode": "GToken 超级模式",
     "walletStatus": "当前钱包状态",
     "eth": "ETH",
