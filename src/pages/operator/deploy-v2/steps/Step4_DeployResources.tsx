@@ -7,7 +7,7 @@
  * 3. Stake GToken → get sGToken
  */
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import "./Step4_DeployResources.css";
@@ -157,7 +157,7 @@ export function Step4_DeployResources({
   };
 
   // Auto-check when entering respective steps
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentStep === ResourceStep.DeployXPNTs && !xPNTsAddress) {
       checkExistingXPNTs();
     } else if (currentStep === ResourceStep.StakeGToken && !hasExistingStake) {
