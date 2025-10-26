@@ -333,6 +333,7 @@ export function DeployWizard() {
               onNext={handleDeployComplete}
               onBack={handleBack}
               isTestMode={isTestMode}
+              deployedResources={config.deployedResources}
             />
           )
         );

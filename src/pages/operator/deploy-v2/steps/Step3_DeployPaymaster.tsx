@@ -27,12 +27,20 @@ export interface DeployConfig {
   minTokenBalance: string;
 }
 
+export interface DeployedResources {
+  sbtAddress: string;
+  xPNTsAddress: string;
+  sGTokenAmount: string;
+  gTokenStakeTxHash: string;
+}
+
 export interface Step3Props {
   config: DeployConfig;
   chainId: number;
   onNext: (paymasterAddress: string, owner: string) => void;
   onBack: () => void;
   isTestMode?: boolean;
+  deployedResources?: DeployedResources;
 }
 
 export function Step3_DeployPaymaster({
@@ -41,6 +49,7 @@ export function Step3_DeployPaymaster({
   onNext,
   onBack,
   isTestMode = false,
+  deployedResources,
 }: Step3Props) {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployTxHash, setDeployTxHash] = useState<string | null>(null);
@@ -179,7 +188,9 @@ export function Step3_DeployPaymaster({
         pntPriceUSD,
         serviceFeeRate,
         maxGasCostCap,
-        minTokenBalance
+        minTokenBalance,
+        deployedResources?.sbtAddress || ethers.ZeroAddress,     // Initial SBT (optional)
+        deployedResources?.xPNTsAddress || ethers.ZeroAddress    // Initial GasToken (optional)
       );
 
       setDeployTxHash(contract.deploymentTransaction()?.hash || null);
