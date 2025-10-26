@@ -10,7 +10,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
-import { getCurrentNetworkConfig } from "../../../config/networkConfig";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step4_DeployResources.css";
 
 export interface Step4Props {
