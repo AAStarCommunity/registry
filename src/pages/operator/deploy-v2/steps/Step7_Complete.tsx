@@ -225,7 +225,7 @@ export function Step7_Complete({
         <div className="resources-title">💡 Helpful Resources</div>
         <div className="resources-grid">
           <a
-            href="/docs/deployment-guide"
+            href="http://localhost:5173/launch-tutorial"
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"
@@ -233,7 +233,7 @@ export function Step7_Complete({
             📖 Deployment Guide
           </a>
           <a
-            href="/docs/api-reference"
+            href="https://docs.aastar.io/api#/"
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"
@@ -241,7 +241,7 @@ export function Step7_Complete({
             📚 API Reference
           </a>
           <a
-            href="/demo?role=operator"
+            href="https://demo.aastar.io/"
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"
