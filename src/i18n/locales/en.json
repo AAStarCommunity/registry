@@ -49,8 +49,8 @@
       "title": "Choose Your Deployment Mode",
       "description": "Select the deployment mode that best fits your needs. We provide two distinct approaches with different resource requirements and operational characteristics.",
       "modeNames": {
-        "standard": "Enhanced ERC-4337:AOA",
-        "standardSubtitle": "AOA (Account Owned Address) optimizes traditional ERC-4337 by eliminating off-chain signature servers and on-chain verify cost. Uses SBT identity verification + xPNTs for gas-free payments.",
+        "standard": "Enhanced ERC-4337",
+        "standardSubtitle": "AOA (Asset Oriented Abstraction) optimizes traditional ERC-4337 by eliminating off-chain signature servers and on-chain verify cost. Uses SBT identity verification + xPNTs for gas-free payments.",
         "super": "Super Mode:AOA+",
         "superSubtitle": "Based on AOA, supports customize gas token and no individual contract deployment needed. Protocol-managed infrastructure for ultimate simplicity."
       },
@@ -59,13 +59,13 @@
         "title": "Gas Station Metaphor: We Help You Build a Paymaster Gas Station",
         "standard": {
           "title": "🏗️ Enhanced ERC-4337:AOA",
-          "description": "**AOA (Account Owned Address)**: Optimizes traditional ERC-4337 by **eliminating off-chain signature servers** and reducing on-chain verify cost. Use free building materials (open-source code), **build and maintain your own** gas station. Uses **SBT identity verification + xPNTs** for gas-free payments. Full ownership and 100% control.",
-          "highlight": "**Key Feature**: No off-chain signature server needed. Gas (ETH) needs to be **purchased and distributed across chains by yourself**."
+          "description": "AOA (Asset Oriented Abstraction): Optimizes traditional ERC-4337 by eliminating off-chain signature servers and reducing on-chain verify cost. Use free building materials (open-source code), build and maintain your own gas station. Uses SBT identity verification + xPNTs for gas-free payments. 100% control.",
+          "highlight": "Key Feature: No off-chain signature server needed. Gas (ETH) needs to be purchased and distributed across chains by yourself."
         },
         "super": {
           "title": "⚡ Super Mode:AOA+",
-          "description": "**AOA+**: Based on AOA advantages, **supports customize gas token** and **no individual contract deployment needed**. Join SuperPaymaster shared gas station network (like joining a franchise chain). Protocol handles infrastructure, maintenance, and cross-chain operations.",
-          "highlight": "**Key Feature**: Customize gas token support. Protocol handles **cross-chain infrastructure, gas purchase & distribution**."
+          "description": "AOA+: Based on AOA advantages, supports customize gas token and no individual contract deployment needed. Join SuperPaymaster shared gas station network (like joining a franchise chain). Protocol handles infrastructure, maintenance, and cross-chain operations.",
+          "highlight": "Key Feature: Customize gas token support. Protocol handles cross-chain infrastructure, gas purchase & distribution."
         }
       },
       "comparisonTable": {

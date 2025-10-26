@@ -4,13 +4,11 @@ import "./OperatorsPortal.css";
 export function OperatorsPortal() {
   // Revenue Calculator state
   const [dailyTxs, setDailyTxs] = useState(1000);
-  const [avgGasETH, setAvgGasETH] = useState(0.0001); // Changed from USD to ETH
+  const [avgGasUSD, setAvgGasUSD] = useState(0.07); // Layer2 gas cost in USD
   const [feeRate, setFeeRate] = useState(2);
-  const [ethPrice] = useState(2500); // Assumed ETH price in USD
 
   // Calculate revenues based on inputs
   const calculateRevenue = () => {
-    const avgGasUSD = avgGasETH * ethPrice; // Convert ETH to USD
     const dailyRevenue = dailyTxs * avgGasUSD * (feeRate / 100);
     const monthlyRevenue = dailyRevenue * 30;
     const yearlyRevenue = dailyRevenue * 365;
@@ -176,7 +174,7 @@ export function OperatorsPortal() {
           <h2>Revenue Model</h2>
           <div className="revenue-content">
             <div className="revenue-explanation">
-              <h3>How You Earn</h3>
+              <h3>How You Earn(Layer1 Example)</h3>
               <div className="revenue-formula">
                 <div className="formula-item">
                   <span className="formula-label">User Pays:</span>
@@ -203,16 +201,16 @@ export function OperatorsPortal() {
                 <div className="tx-breakdown">
                   <div className="tx-line">
                     <span>Gas cost:</span>
-                    <span>0.001 ETH (~$2.50)</span>
+                    <span>0.0001 ETH (~$0.25)</span>
                   </div>
                   <div className="tx-line">
                     <span>User pays (in PNT):</span>
-                    <span>$2.55 (cost + 2% fee)</span>
+                    <span>$0.255 (cost + 2% fee)</span>
                   </div>
                   <div className="tx-line highlight">
                     <span>Your revenue:</span>
                     <span>
-                      <strong>$0.05</strong>
+                      <strong>$0.005</strong>
                     </span>
                   </div>
                 </div>
@@ -220,7 +218,7 @@ export function OperatorsPortal() {
             </div>
 
             <div className="revenue-calculator">
-              <h3>Revenue Calculator</h3>
+              <h3>Layer2 Revenue Calculator</h3>
               <div className="calculator-card">
                 <div className="calc-input">
                   <label>Daily Transactions:</label>
@@ -232,12 +230,14 @@ export function OperatorsPortal() {
                   />
                 </div>
                 <div className="calc-input">
-                  <label>Avg Gas Cost (ETH):</label>
+                  <label>
+                    Avg Gas Cost (USD): <a href="https://l2fees.info/" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9em', marginLeft: '4px' }}>📊</a>
+                  </label>
                   <input
                     type="number"
-                    step="0.0001"
-                    value={avgGasETH}
-                    onChange={(e) => setAvgGasETH(Number(e.target.value))}
+                    step="0.01"
+                    value={avgGasUSD}
+                    onChange={(e) => setAvgGasUSD(Number(e.target.value))}
                     id="avgGas"
                   />
                 </div>
@@ -267,7 +267,7 @@ export function OperatorsPortal() {
                 </div>
                 <div className="calc-note">
                   <small>
-                    Based on ETH price: ${ethPrice} | Gas Cost: ~${(avgGasETH * ethPrice).toFixed(4)} USD
+                    Based on {dailyTxs} txs/day × ${avgGasUSD} gas × {feeRate}% fee
                   </small>
                 </div>
               </div>
