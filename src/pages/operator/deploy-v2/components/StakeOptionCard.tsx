@@ -64,7 +64,9 @@ export const StakeOptionCard: React.FC<StakeOptionCardProps> = ({
           <h3>{option.title}</h3>
           {option.recommended && <span className="badge recommended">Recommended</span>}
           {option.badge && !option.recommended && (
-            <span className="badge">{option.badge}</span>
+            <span className={`badge ${option.badge === "AOA" ? "badge-aoa" : option.badge === "AOA+" ? "badge-aoa-plus" : ""}`}>
+              {option.badge}
+            </span>
           )}
         </div>
         <p className="stake-option-subtitle">{option.subtitle}</p>

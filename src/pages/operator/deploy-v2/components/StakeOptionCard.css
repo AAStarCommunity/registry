@@ -74,6 +74,35 @@
   color: white;
 }
 
+/* AOA Badge - Bronze/Copper color */
+.stake-option-card .badge.badge-aoa {
+  background: linear-gradient(135deg, #cd7f32 0%, #b87333 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(205, 127, 50, 0.3);
+}
+
+/* AOA+ Badge - Shining Gold color with animation */
+.stake-option-card .badge.badge-aoa-plus {
+  background: linear-gradient(135deg, #ffd700 0%, #ffed4e 50%, #ffd700 100%);
+  background-size: 200% 200%;
+  color: #92400e;
+  font-weight: 800;
+  box-shadow: 0 2px 12px rgba(255, 215, 0, 0.6);
+  animation: shiningGold 2s ease-in-out infinite;
+}
+
+@keyframes shiningGold {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .stake-option-subtitle {
   margin: 0;
   color: #6b7280;

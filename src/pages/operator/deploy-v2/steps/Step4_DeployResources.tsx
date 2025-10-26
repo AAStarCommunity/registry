@@ -174,12 +174,24 @@ export function Step4_DeployResources({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
       const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTOKEN_ABI, signer);
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
         GTOKEN_STAKING_ABI,
         signer
       );
+
+      // Check if user already has a stake
+      const existingStake = await gtokenStaking.getStakeInfo(userAddress);
+      if (existingStake.amount > 0n) {
+        setError(
+          `You have already staked ${ethers.formatEther(existingStake.amount)} GToken. ` +
+          `The contract doesn't support additional stakes. Please use your existing stake or skip this step.`
+        );
+        setIsLoading(false);
+        return;
+      }
 
       const stakeAmount = ethers.parseEther(gTokenStakeAmount);
 
@@ -216,7 +228,16 @@ export function Step4_DeployResources({
       }, 1000);
     } catch (err: any) {
       console.error("GToken staking failed:", err);
-      setError(err?.message || "Failed to stake GToken");
+
+      // Parse custom error
+      let errorMessage = "Failed to stake GToken";
+      if (err?.data?.includes("0x0c45c8ec")) {
+        errorMessage = "You have already staked GToken. The contract doesn't support additional stakes yet. Please unstake first or use your existing stake.";
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
