@@ -49,7 +49,7 @@
       "title": "选择您的部署模式",
       "description": "选择最适合您需求的部署模式。我们提供两种不同的方式，资源需求和运营特性各不相同。",
       "modeNames": {
-        "standard": "增强型 ERC-4337",
+        "standard": "增强型 ERC-4337 流程",
         "standardSubtitle": "AOA（资产导向抽象）通过消除离线签名服务器和链上验证成本来优化传统 ERC-4337。使用 SBT 身份验证 + xPNTs 实现免 gas 支付。",
         "super": "超级模式:AOA+",
         "superSubtitle": "基于 AOA，支持自定义 gas token，无需单独合约部署。协议托管基础设施，极致简单。"
@@ -58,7 +58,7 @@
         "icon": "⛽",
         "title": "加油站比喻：我们帮您建造 Paymaster 加油站",
         "standard": {
-          "title": "🏗️ 增强型 ERC-4337",
+          "title": "🏗️ 增强型 ERC-4337:AOA",
           "description": "AOA（资产导向抽象）：通过消除离线签名服务器和降低链上验证成本来优化传统 ERC-4337。使用免费建筑材料（开源代码），自己建造和维护加油站。使用 SBT 身份验证 + xPNTs 实现免 gas 支付。100% 控制权。",
           "highlight": "核心特性：无需离线签名服务器。Gas（ETH）需要您自己购买并跨链分发。"
         },
