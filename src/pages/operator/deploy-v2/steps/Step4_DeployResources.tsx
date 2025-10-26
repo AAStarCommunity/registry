@@ -85,6 +85,8 @@ export function Step4_DeployResources({
   const [xPNTsSymbol, setXPNTsSymbol] = useState<string>("");
   const [communityENS, setCommunityENS] = useState<string>("");
   const [stakeTxHash, setStakeTxHash] = useState<string>("");
+  const [hasExistingStake, setHasExistingStake] = useState(false);
+  const [existingStakeAmount, setExistingStakeAmount] = useState<string>("0");
 
   // Auto-generate symbol from community name
   const autoGenerateSymbol = () => {
@@ -188,9 +190,12 @@ export function Step4_DeployResources({
       const stakedAmount = existingStake[0]; // amount is first element in tuple
 
       if (stakedAmount > 0n) {
+        const formattedAmount = ethers.formatEther(stakedAmount);
+        setHasExistingStake(true);
+        setExistingStakeAmount(formattedAmount);
         setError(
-          `You have already staked ${ethers.formatEther(stakedAmount)} GToken. ` +
-          `The contract doesn't support additional stakes. Please use your existing stake or skip this step.`
+          `You have already staked ${formattedAmount} GToken. ` +
+          `Click "Use Existing Stake" below to continue with your current stake.`
         );
         setIsLoading(false);
         return;
@@ -244,6 +249,20 @@ export function Step4_DeployResources({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleUseExistingStake = () => {
+    setCurrentStep(ResourceStep.Complete);
+
+    // Auto-proceed to next step
+    setTimeout(() => {
+      onNext({
+        sbtAddress,
+        xPNTsAddress,
+        sGTokenAmount: existingStakeAmount,
+        gTokenStakeTxHash: "existing", // Mark as using existing stake
+      });
+    }, 1000);
   };
 
   const renderStepContent = () => {
@@ -399,6 +418,16 @@ export function Step4_DeployResources({
             >
               {isLoading ? "Staking..." : "Stake GToken →"}
             </button>
+
+            {hasExistingStake && (
+              <button
+                className="btn-secondary"
+                onClick={handleUseExistingStake}
+                style={{ marginTop: "1rem" }}
+              >
+                ✅ Use Existing Stake ({existingStakeAmount} GToken) →
+              </button>
+            )}
           </div>
         );
 
