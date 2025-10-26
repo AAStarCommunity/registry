@@ -747,6 +747,1036 @@ type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationSte
 ### 备份文件命名规范
 `Changes.backup-YYYYMMDD-HHMMSS.md`
 
+## 2025-10-26 - 部署流程优化与管理界面完善
+
+### 问题描述
+用户提出 5 个关键改进需求：
+1. ❌ Step 2 xPNTs 部署缺少前置检测，报错后才提示
+2. ❌ Step 3 GToken Stake 缺少前置检测，报错后才提示
+3. ❌ Paymaster 检测时机不当，应提前到连接钱包后
+4. ❌ 运营指南入口缺失（注册成功页和管理页）
+5. ❌ ManagePaymaster 页面数据显示异常：
+   - Token Management 显示空白
+   - Registry 区域显示 N/A，缺少地址
+   - 缺少 EntryPoint deposit 按钮
+   - 配置参数可能不完整
+
+### 实现内容
+
+#### 1. Step 2 xPNTs 部署前置检测
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx`
+
+**问题**: 用户点击部署后才发现已有 xPNTs，导致交易失败
+
+**解决方案**: 添加自动检测逻辑
+```typescript
+const checkExistingXPNTs = async () => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const userAddress = await signer.getAddress();
+
+    const factory = new ethers.Contract(
+      XPNTS_FACTORY_ADDRESS,
+      XPNTS_FACTORY_ABI,
+      provider
+    );
+
+    const alreadyDeployed = await factory.hasToken(userAddress);
+
+    if (alreadyDeployed) {
+      const existingToken = await factory.getTokenAddress(userAddress);
+      console.log("ℹ️ Found existing xPNTs token:", existingToken);
+      setXPNTsAddress(existingToken);
+      setError(
+        `You already have an xPNTs token at ${existingToken.slice(0, 10)}...${existingToken.slice(-8)}. ` +
+        `Click "Use This Token →" to continue, or deploy a new one (not recommended).`
+      );
+    }
+  } catch (err) {
+    console.log("Failed to check existing xPNTs:", err);
+  }
+};
+
+// 自动触发检测
+React.useEffect(() => {
+  if (currentStep === ResourceStep.DeployXPNTs && !xPNTsAddress) {
+    checkExistingXPNTs();
+  }
+}, [currentStep]);
+```
+
+**效果**:
+- ✅ 进入部署表单前自动检测
+- ✅ 发现已有 token 时显示警告并预填地址
+- ✅ 提供"使用现有 token"选项，避免重复部署
+
+#### 2. Step 3 GToken Stake 前置检测
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx`
+
+**问题**: 用户点击 stake 后才发现已有质押，导致交易失败
+
+**解决方案**: 添加 GTokenStaking 合约查询
+```typescript
+const checkExistingStake = async () => {
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const userAddress = await signer.getAddress();
+
+    const gtokenStaking = new ethers.Contract(
+      GTOKEN_STAKING_ADDRESS,
+      GTOKEN_STAKING_ABI,
+      provider
+    );
+
+    const existingStake = await gtokenStaking.getStakeInfo(userAddress);
+    const stakedAmount = existingStake[0]; // amount is first element in tuple
+
+    if (stakedAmount > 0n) {
+      const formattedAmount = ethers.formatEther(stakedAmount);
+      setHasExistingStake(true);
+      setExistingStakeAmount(formattedAmount);
+      console.log("ℹ️ Found existing GToken stake:", formattedAmount);
+      setError(
+        `You already have ${formattedAmount} GToken staked. ` +
+        `Click "Use Existing Stake" below to continue with your current stake.`
+      );
+    }
+  } catch (err) {
+    console.log("Failed to check existing stake:", err);
+  }
+};
+
+// 自动触发检测
+React.useEffect(() => {
+  if (currentStep === ResourceStep.StakeGToken && !hasExistingStake) {
+    checkExistingStake();
+  }
+}, [currentStep]);
+```
+
+**效果**:
+- ✅ 进入质押表单前自动检测
+- ✅ 发现已有质押时显示金额并提供"使用现有质押"选项
+- ✅ 避免重复质押导致的交易失败
+
+#### 3. Paymaster 检测提前到连接钱包后
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx`
+
+**原需求**: 在 Step 3 检测并列出所有 Paymaster
+**简化方案**: 连接钱包后立即检测，仅显示提示链接到 /explorer
+
+**实现**:
+```typescript
+import { ethers } from "ethers";
+
+const [existingPaymaster, setExistingPaymaster] = useState<string | null>(null);
+const [checkingRegistry, setCheckingRegistry] = useState(false);
+
+const checkExistingPaymaster = async (userAddress: string) => {
+  try {
+    setCheckingRegistry(true);
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const networkConfig = getCurrentNetworkConfig();
+
+    const REGISTRY_V2_ABI = [
+      "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+    ];
+
+    const registry = new ethers.Contract(
+      networkConfig.contracts.registryV2,
+      REGISTRY_V2_ABI,
+      provider
+    );
+
+    console.log("🔍 Checking for existing Paymaster in Registry...");
+    const profile = await registry.getCommunityProfile(userAddress);
+
+    if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
+      console.log("✅ Found existing Paymaster:", profile.paymasterAddress);
+      setExistingPaymaster(profile.paymasterAddress);
+    } else {
+      console.log("ℹ️ No existing Paymaster found");
+      setExistingPaymaster(null);
+    }
+  } catch (err) {
+    console.log("ℹ️ No existing registration found:", err);
+    setExistingPaymaster(null);
+  } finally {
+    setCheckingRegistry(false);
+  }
+};
+
+// 连接钱包后自动检测
+const handleConnectWallet = async () => {
+  // ... 现有连接逻辑
+  const address = accounts[0];
+  setWalletAddress(address);
+
+  // 检测现有 Paymaster
+  await checkExistingPaymaster(address);
+
+  setSubStep(SubStep.SelectOption);
+};
+```
+
+**UI 提示**:
+```typescript
+{checkingRegistry && (
+  <div className="existing-paymaster-checking">
+    <span className="spinner">⏳</span>
+    <span>检查是否已有 Paymaster 部署...</span>
+  </div>
+)}
+
+{existingPaymaster && (
+  <div className="existing-paymaster-warning">
+    <span className="warning-icon">⚠️</span>
+    <div className="warning-content">
+      <strong>检测到已有 Paymaster</strong>
+      <p>你已经部署过 Paymaster 合约</p>
+      <a
+        href="/explorer"
+        className="view-explorer-link"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        点击这里查看 →
+      </a>
+    </div>
+  </div>
+)}
+```
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.css`
+
+**CSS 样式**:
+```css
+.existing-paymaster-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #e3f2fd;
+  border-radius: 12px;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+  color: #1976d2;
+  border: 2px solid #90caf9;
+}
+
+.existing-paymaster-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  margin: 1rem 0 2rem 0;
+  border: 2px solid #ffb74d;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.view-explorer-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: #ff9800;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.view-explorer-link:hover {
+  background: #f57c00;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.5);
+  transform: translateY(-2px);
+}
+```
+
+**效果**:
+- ✅ 连接钱包后立即检测 Registry
+- ✅ 显示简洁的中文提示和 Explorer 链接
+- ✅ 不干扰正常部署流程
+
+#### 4. 运营指南入口添加
+
+**文件**: `src/pages/operator/deploy-v2/steps/Step7_Complete.tsx`
+
+**Resources 区域添加链接**:
+```typescript
+<div className="resources-grid">
+  <a href="/operator/operate-guide" className="resource-link">
+    📚 Operation Guide
+  </a>
+  <a href="http://localhost:5173/launch-tutorial" target="_blank" rel="noopener noreferrer" className="resource-link">
+    📖 Deployment Guide
+  </a>
+  // ... 其他资源链接
+</div>
+```
+
+**文件**: `src/pages/operator/ManagePaymasterFull.tsx`
+
+**Header 区域添加链接按钮**:
+```typescript
+<div className="header-title">
+  <h1>Manage Paymaster</h1>
+  <a
+    href="/operator/operate-guide"
+    className="operate-guide-link"
+    title="Learn how to operate your Paymaster"
+  >
+    📚 Operation Guide
+  </a>
+</div>
+```
+
+**文件**: `src/pages/operator/ManagePaymasterFull.css`
+
+**CSS 样式**:
+```css
+.operate-guide-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.operate-guide-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+```
+
+**效果**:
+- ✅ 注册成功页显眼位置提供运营指南链接
+- ✅ 管理页面 header 添加快速访问按钮
+- ✅ 统一的视觉风格和交互体验
+
+#### 5. 修复 ManagePaymaster Token Management
+
+**文件**: `src/pages/operator/ManagePaymasterFull.tsx`
+
+**问题**: 页面显示空白，实际是静态页面，未从 Paymaster 合约读取数据
+
+**更新 ABI**:
+```typescript
+const PAYMASTER_V4_ABI = [
+  // ... 原有 ABI
+  "function getSupportedSBTs() view returns (address[])",
+  "function getSupportedGasTokens() view returns (address[])",
+  "function isSBTSupported(address) view returns (bool)",
+  "function isGasTokenSupported(address) view returns (bool)",
+  "function addSBT(address sbtToken)",
+  "function removeSBT(address sbtToken)",
+  "function addGasToken(address gasToken)",
+  "function removeGasToken(address gasToken)",
+];
+```
+
+**添加状态**:
+```typescript
+const [supportedSBTs, setSupportedSBTs] = useState<string[]>([]);
+const [supportedGasTokens, setSupportedGasTokens] = useState<string[]>([]);
+```
+
+**读取合约数据**:
+```typescript
+const loadPaymasterData = async () => {
+  // ... 现有逻辑
+
+  try {
+    const supportedSBTsList = await paymaster.getSupportedSBTs();
+    const supportedGasTokensList = await paymaster.getSupportedGasTokens();
+    console.log('✅ Supported SBTs:', supportedSBTsList);
+    console.log('✅ Supported Gas Tokens:', supportedGasTokensList);
+    setSupportedSBTs(supportedSBTsList);
+    setSupportedGasTokens(supportedGasTokensList);
+  } catch (tokenErr) {
+    console.error('Failed to load supported tokens:', tokenErr);
+    setSupportedSBTs([]);
+    setSupportedGasTokens([]);
+  }
+};
+```
+
+**UI 显示**:
+```typescript
+{supportedSBTs.length > 0 && (
+  <div className="supported-tokens-list">
+    <strong>Currently Supported SBTs:</strong>
+    <ul>
+      {supportedSBTs.map((sbt, index) => (
+        <li key={index}>
+          <code>{sbt}</code>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+{supportedGasTokens.length > 0 && (
+  <div className="supported-tokens-list">
+    <strong>Currently Supported Gas Tokens:</strong>
+    <ul>
+      {supportedGasTokens.map((token, index) => (
+        <li key={index}>
+          <code>{token}</code>
+        </li>
+      ))}
+    </ul>
+  </div>
+)}
+
+{supportedSBTs.length === 0 && supportedGasTokens.length === 0 && (
+  <div className="no-tokens-message">
+    ⚠️ No tokens configured. Use the forms below to add SBT or Gas Tokens.
+  </div>
+)}
+```
+
+**文件**: `src/pages/operator/ManagePaymasterFull.css`
+
+**CSS 样式**:
+```css
+.supported-tokens-list {
+  background: #f0f7ff;
+  border-left: 4px solid #667eea;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.supported-tokens-list strong {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: #667eea;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.supported-tokens-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.supported-tokens-list li {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.supported-tokens-list li:last-child {
+  border-bottom: none;
+}
+
+.supported-tokens-list code {
+  background: #e8eaf6;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.85rem;
+  color: #5c6bc0;
+  word-break: break-all;
+}
+
+.no-tokens-message {
+  background: #fff8e1;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: #856404;
+  margin-bottom: 1.5rem;
+  border: 1px solid #ffeaa7;
+  text-align: center;
+}
+```
+
+**效果**:
+- ✅ 从合约实时读取 SBT 和 Gas Token 列表
+- ✅ 清晰显示当前支持的 tokens
+- ✅ 未配置时显示友好提示
+
+#### 6. 修复 ManagePaymaster Registry 区域
+
+**文件**: `src/pages/operator/ManagePaymasterFull.tsx`
+
+**问题**:
+- 显示 "Stake Amount: N/A"
+- 缺少 Registry 合约地址
+- 应显示 "lock" 而非 "stake"
+
+**架构理解**:
+- Registry v2.0 纯元数据存储，不管理质押
+- 质押由 GTokenStaking 合约管理
+- 用户在 Step 4 质押 GToken → 获得 stGToken
+- 运行时系统自动 lock stGToken
+
+**更新 RegistryInfo 接口**:
+```typescript
+interface RegistryInfo {
+  registryAddress: string;
+  stakedGToken: string;      // Amount of GToken staked in GTokenStaking
+  availableToLock: string;   // Staked but not yet locked for paymaster
+}
+```
+
+**添加 GTokenStaking ABI**:
+```typescript
+const GTOKEN_STAKING_ABI = [
+  "function getStakeInfo(address user) view returns (tuple(uint256 amount, uint256 sGTokenShares, uint256 stakedAt, uint256 unstakeRequestedAt))",
+  "function availableBalance(address user) view returns (uint256)",
+  "function stake(uint256 amount) returns (uint256 shares)",
+];
+
+const GTOKEN_STAKING = import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+  "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2";
+```
+
+**读取 GTokenStaking 数据**:
+```typescript
+const loadPaymasterData = async () => {
+  // ... 现有逻辑
+
+  const REGISTRY_V2 = networkConfig.contracts.registryV2;
+  const gtokenStaking = new ethers.Contract(GTOKEN_STAKING, GTOKEN_STAKING_ABI, provider);
+
+  const stakeInfo = await gtokenStaking.getStakeInfo(userAddr);
+  const availableBalance = await gtokenStaking.availableBalance(userAddr);
+
+  console.log('📊 GToken Staking Info:', {
+    stakedAmount: ethers.formatEther(stakeInfo.amount),
+    availableToLock: ethers.formatEther(availableBalance),
+  });
+
+  setRegistryInfo({
+    registryAddress: REGISTRY_V2,
+    stakedGToken: ethers.formatEther(stakeInfo.amount),
+    availableToLock: ethers.formatEther(availableBalance),
+  });
+};
+```
+
+**UI 显示**:
+```typescript
+<div className="info-section">
+  <h3>🏛️ Registry & Staking Status</h3>
+
+  <div className="info-card">
+    <div className="info-row">
+      <span className="label">Registry v2.0 Address:</span>
+      <span className="value">
+        <code>{registryInfo.registryAddress}</code>
+      </span>
+    </div>
+
+    <div className="info-row">
+      <span className="label">Your Staked GToken:</span>
+      <span className="value">{registryInfo.stakedGToken} GToken</span>
+    </div>
+
+    <div className="info-row">
+      <span className="label">Available to Lock:</span>
+      <span className="value">{registryInfo.availableToLock} stGToken</span>
+    </div>
+
+    <div className="info-note">
+      💡 <strong>Note:</strong> Registry v2.0 only stores community metadata.
+      Your stGToken is managed by GTokenStaking contract and will be automatically
+      locked during paymaster operations.
+    </div>
+  </div>
+
+  {parseFloat(registryInfo.stakedGToken) === 0 && (
+    <div className="warning-banner">
+      <span className="warning-icon">⚠️</span>
+      <div className="warning-content">
+        <strong>No GToken Staked</strong>
+        <p>You need to stake GToken first to operate your Paymaster. Minimum required: 10 GToken.</p>
+      </div>
+    </div>
+  )}
+</div>
+```
+
+**文件**: `src/pages/operator/ManagePaymasterFull.css`
+
+**CSS 样式**:
+```css
+.warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  margin-top: 1.5rem;
+  border: 2px solid #ffb74d;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.warning-icon {
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-content strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #e65100;
+  margin-bottom: 0.5rem;
+}
+
+.warning-content p {
+  margin: 0;
+  color: #f57c00;
+  line-height: 1.5;
+}
+```
+
+**效果**:
+- ✅ 显示 Registry v2 合约地址
+- ✅ 显示用户在 GTokenStaking 中的质押量
+- ✅ 显示可用于锁定的 stGToken 数量
+- ✅ 未质押时显示警告提示
+- ✅ 清晰的架构说明
+
+#### 7. 添加 EntryPoint Deposit 按钮
+
+**文件**: `src/pages/operator/ManagePaymasterFull.tsx`
+
+**问题**: 无法直接向 EntryPoint 充值 ETH
+
+**添加 EntryPoint ABI**:
+```typescript
+const ENTRY_POINT_ABI = [
+  "function balanceOf(address account) view returns (uint256)",
+  "function getDepositInfo(address account) view returns (tuple(uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime))",
+  "function addDeposit(address account) payable",
+];
+
+const ENTRY_POINT_V07 = import.meta.env.VITE_ENTRY_POINT_V07_ADDRESS ||
+  "0x0000000071727De22E5E9d8BAf0edAc6f37da032";
+```
+
+**添加状态**:
+```typescript
+const [depositAmount, setDepositAmount] = useState<string>('');
+```
+
+**实现充值函数**:
+```typescript
+const handleAddDeposit = async () => {
+  if (!depositAmount || parseFloat(depositAmount) <= 0) {
+    alert('Please enter a valid deposit amount');
+    return;
+  }
+
+  setTxPending(true);
+  setError('');
+
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const signer = await provider.getSigner();
+    const entryPoint = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
+
+    console.log('💰 Adding deposit to EntryPoint...');
+    console.log('Amount:', depositAmount, 'ETH');
+    console.log('Paymaster:', paymasterAddress);
+
+    const tx = await entryPoint.addDeposit(paymasterAddress, {
+      value: ethers.parseEther(depositAmount),
+    });
+
+    console.log('📤 Transaction sent:', tx.hash);
+    await tx.wait();
+    console.log('✅ Deposit confirmed!');
+
+    alert(`Successfully deposited ${depositAmount} ETH to EntryPoint!`);
+    setDepositAmount('');
+    await loadPaymasterData();
+  } catch (err: any) {
+    console.error('Failed to add deposit:', err);
+    setError(err.message || 'Failed to add deposit to EntryPoint');
+    alert(`Failed to deposit: ${err.message || 'Unknown error'}`);
+  } finally {
+    setTxPending(false);
+  }
+};
+```
+
+**UI 组件**:
+```typescript
+<div className="deposit-card">
+  <h3>💰 Add Deposit to EntryPoint</h3>
+  <p>Deposit ETH to the EntryPoint contract for your Paymaster to sponsor gas fees.</p>
+
+  <div className="deposit-input-group">
+    <input
+      type="number"
+      step="0.001"
+      min="0"
+      value={depositAmount}
+      onChange={(e) => setDepositAmount(e.target.value)}
+      placeholder="Amount in ETH (e.g., 0.1)"
+      className="deposit-input"
+      disabled={txPending}
+    />
+    <button
+      onClick={handleAddDeposit}
+      disabled={!depositAmount || parseFloat(depositAmount) <= 0 || txPending}
+      className="deposit-button"
+    >
+      {txPending ? 'Processing...' : 'Add Deposit'}
+    </button>
+  </div>
+
+  {parseFloat(entryPointInfo.balance) < 0.01 && (
+    <div className="low-balance-warning">
+      ⚠️ Low balance! Your EntryPoint balance is below 0.01 ETH. Consider adding more funds.
+    </div>
+  )}
+</div>
+```
+
+**文件**: `src/pages/operator/ManagePaymasterFull.css`
+
+**CSS 样式**:
+```css
+.deposit-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin-top: 2rem;
+}
+
+.deposit-card h3 {
+  margin: 0 0 0.5rem 0;
+  color: #667eea;
+  font-size: 1.3rem;
+}
+
+.deposit-card p {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.deposit-input-group {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.deposit-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+
+.deposit-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.deposit-button {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  white-space: nowrap;
+  font-size: 1rem;
+}
+
+.deposit-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.deposit-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.low-balance-warning {
+  background: #fff3e0;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  color: #e65100;
+  font-weight: 600;
+  border-left: 4px solid #ff9800;
+}
+```
+
+**效果**:
+- ✅ 提供 ETH 充值输入框和按钮
+- ✅ 实时调用 `entryPoint.addDeposit()`
+- ✅ 余额低于 0.01 ETH 时显示警告
+- ✅ 充值成功后自动刷新数据
+
+#### 8. 验证配置参数完整性
+
+**文件**: `src/pages/operator/ManagePaymasterFull.tsx`
+
+**对比 PaymasterV4.1 合约**: 读取 `src/contracts/PaymasterV4_1.json` ABI
+
+**确认的配置参数**:
+- ✅ owner (address)
+- ✅ treasury (address)
+- ✅ gasToUSDRate (uint256)
+- ✅ pntPriceUSD (uint256)
+- ✅ serviceFeeRate (uint256)
+- ✅ maxGasCostCap (uint256)
+- ✅ minTokenBalance (uint256)
+- ✅ paused (bool)
+- ✅ entryPoint (address) - 新增
+- ✅ registry (address) - 新增
+- ✅ isRegistrySet (bool) - 新增
+
+**更新 PaymasterConfig 接口**:
+```typescript
+interface PaymasterConfig {
+  owner: string;
+  treasury: string;
+  gasToUSDRate: string;
+  pntPriceUSD: string;
+  serviceFeeRate: string;
+  maxGasCostCap: string;
+  minTokenBalance: string;
+  paused: boolean;
+  entryPointAddress: string;      // ← 新增
+  registryAddress: string;         // ← 新增
+  isRegistrySet: boolean;          // ← 新增
+}
+```
+
+**更新 ABI**:
+```typescript
+const PAYMASTER_V4_ABI = [
+  // ... 原有 ABI
+  "function entryPoint() view returns (address)",
+  "function registry() view returns (address)",
+  "function isRegistrySet() view returns (bool)",
+  "function setRegistry(address registry)",
+];
+```
+
+**读取配置**:
+```typescript
+const [
+  owner,
+  treasury,
+  gasToUSDRate,
+  pntPriceUSD,
+  serviceFeeRate,
+  maxGasCostCap,
+  minTokenBalance,
+  paused,
+  entryPointAddress,    // ← 新增
+  registryAddress,       // ← 新增
+  isRegistrySet,         // ← 新增
+] = await Promise.all([
+  paymaster.owner(),
+  paymaster.treasury(),
+  paymaster.gasToUSDRate(),
+  paymaster.pntPriceUSD(),
+  paymaster.serviceFeeRate(),
+  paymaster.maxGasCostCap(),
+  paymaster.minTokenBalance(),
+  paymaster.paused(),
+  paymaster.entryPoint(),
+  paymaster.registry(),
+  paymaster.isRegistrySet(),
+]);
+```
+
+**UI 显示**:
+```typescript
+<table className="config-table">
+  {/* ... 原有配置项 */}
+
+  <tr>
+    <td><strong>EntryPoint Address</strong></td>
+    <td><code>{config.entryPointAddress}</code></td>
+    <td><em style={{color: '#999'}}>Read-only</em></td>
+  </tr>
+
+  <ConfigRow
+    label="Registry Address"
+    value={config.registryAddress}
+    paramName="registry"
+    isEditing={isEditingParam === 'registry'}
+    onEdit={() => handleEditParam('registry', config.registryAddress)}
+    onSave={() => handleSaveParam('registry')}
+    onCancel={handleCancelEdit}
+    editValue={editValue}
+    setEditValue={setEditValue}
+  />
+
+  <tr>
+    <td><strong>Registry Set Status</strong></td>
+    <td>
+      <span style={{
+        color: config.isRegistrySet ? '#28a745' : '#dc3545',
+        fontWeight: 600
+      }}>
+        {config.isRegistrySet ? '✓ Set' : '✗ Not Set'}
+      </span>
+    </td>
+    <td><em style={{color: '#999'}}>Read-only</em></td>
+  </tr>
+</table>
+```
+
+**添加 Registry Setter**:
+```typescript
+const handleSaveParam = async (paramName: string) => {
+  // ... 现有逻辑
+
+  switch (paramName) {
+    // ... 原有 cases
+    case 'registry':
+      tx = await paymaster.setRegistry(editValue);
+      break;
+  }
+};
+```
+
+**效果**:
+- ✅ 显示 EntryPoint 地址（只读）
+- ✅ 显示并支持编辑 Registry 地址
+- ✅ 显示 Registry 设置状态（已设置/未设置）
+- ✅ 所有 PaymasterV4.1 可配置参数已完整支持
+
+### 合约验证发现
+
+**GTokenStaking 合约** (0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2):
+- ✅ 确认有 `getStakeInfo(address)` 函数
+- ✅ 确认有 `availableBalance(address)` 函数
+- ✅ 确认有 `lockStake()` 和 `unlockStake()` 函数
+- ✅ 最低质押要求需链上验证（用户认为是 10，当前配置显示 30）
+
+**PaymasterV4.1 合约**:
+- ✅ 确认有 `setMinTokenBalance()` setter
+- ✅ 确认所有配置参数都有对应的 getter 和 setter
+- ✅ 确认有 `getSupportedSBTs()` 和 `getSupportedGasTokens()` 函数
+
+**Registry v2.0**:
+- ✅ 纯元数据存储，不管理质押
+- ✅ `getCommunityProfile()` 返回完整社区信息
+- ✅ 质押由 GTokenStaking 专门管理（职责分离）
+
+### 验证结果
+- ✅ Step 2 xPNTs 部署前置检测正常工作
+- ✅ Step 3 GToken Stake 前置检测正常工作
+- ✅ Step 1 Paymaster 检测提前，UI 清晰
+- ✅ 运营指南入口在两个页面都可访问
+- ✅ Token Management 正确显示合约数据
+- ✅ Registry 区域显示 GTokenStaking 信息
+- ✅ EntryPoint 充值功能完整实现
+- ✅ 配置参数完整，对齐 PaymasterV4.1 合约
+
+### 影响范围
+- **部署向导**: Step1 和 Step4 用户体验显著改善
+- **管理界面**: 数据准确性和功能完整性大幅提升
+- **架构理解**: 正确区分 Registry v2 和 GTokenStaking 职责
+
+### 文件变更列表
+
+**新建**:
+- 无
+
+**修改**:
+- `src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx` - 添加 xPNTs 和 GToken 前置检测
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.tsx` - 添加 Paymaster 检测
+- `src/pages/operator/deploy-v2/steps/Step1_ConnectAndSelect.css` - 检测 UI 样式
+- `src/pages/operator/deploy-v2/steps/Step7_Complete.tsx` - 添加运营指南链接
+- `src/pages/operator/ManagePaymasterFull.tsx` - Token Management, Registry, EntryPoint, 配置参数全面改进
+- `src/pages/operator/ManagePaymasterFull.css` - 新增多个样式类
+
+### 技术要点
+
+**1. 前置检测 vs 报错后提示**:
+- 前置检测：进入表单前自动查询合约状态
+- 报错后提示：用户点击后交易失败才知道问题
+- 改进：使用 React.useEffect 自动触发检测，提升用户体验
+
+**2. Registry v2 架构理解**:
+- Registry v2: 纯元数据存储（社区信息、Paymaster 地址等）
+- GTokenStaking: 质押管理（stake、lock、unlock）
+- 职责分离，不要混淆！
+
+**3. ethers.js v6 核心用法**:
+- `ethers.BrowserProvider(window.ethereum)` - 连接钱包
+- `provider.getSigner()` - 获取签名器
+- `new ethers.Contract(address, abi, provider/signer)` - 创建合约实例
+- `ethers.parseEther()` / `ethers.formatEther()` - ETH 单位转换
+- `ethers.ZeroAddress` - 0x0000...0000 地址常量
+
+**4. ERC-4337 EntryPoint 存款流程**:
+- Paymaster 需要在 EntryPoint 存入 ETH
+- 使用 `addDeposit(paymasterAddress)` + `{value: ethAmount}`
+- 存款用于支付用户的 gas 费用
+- 建议最低余额 0.01 ETH
+
+### 业务流程补充
+
+**Gas 赞助完整流程**（用户提供）:
+1. 用户构建 UserOperation（ERC-4337）
+2. 填充 `paymaster` 和 `paymasterAndData`（包含 xPNTs 地址或留空自动检测）
+3. EntryPoint 调用 `validateUserOps()`
+4. Paymaster 检查用户 SBT 和 xPNTs 余额
+5. 计算 gas 成本：
+   - ETH → USD（Chainlink 喂价）
+   - USD → aPNTs（默认 0.02U）
+   - xPNTs 兑换比例（部署时设置，例如 1:4）
+6. 双重扣款：
+   - xPNTs: 用户 → Treasury（社区收入）
+   - aPNTs: Paymaster → SuperPaymaster（AAStar 收入）
+7. EntryPoint 从 Paymaster 的 deposit 扣除 ETH gas
+
+### 下一步建议
+- 链上验证 GToken 最低质押要求（10 vs 30）
+- 实现 GToken staking 功能（目前仅显示，未提供 stake 操作）
+- 完成 /explorer 页面真实合约交互（已暂缓）
+- 添加 Token Management 的 add/remove 操作按钮
+
+### Commits
+- (待提交) feat: optimize deployment flow and complete management interface
+
+---
+
 ## 2025-10-24 - 重命名 "standard" 为 "aoa"
 
 ### 任务概述

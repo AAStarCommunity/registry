@@ -22,6 +22,12 @@ const ENTRY_POINT_V07 =
 const REGISTRY_V1_2 =
   import.meta.env.VITE_REGISTRY_ADDRESS ||
   "0x838da93c815a6E45Aa50429529da9106C0621eF0";
+const REGISTRY_V2 =
+  import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
+  "0x3ff7f71725285dB207442f51F6809e9C671E5dEb";
+const GTOKEN_STAKING =
+  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+  "0x199402b3F213A233e89585957F86A07ED1e1cD67";
 
 // ABIs
 const PAYMASTER_V4_ABI = [
@@ -33,8 +39,13 @@ const PAYMASTER_V4_ABI = [
   "function maxGasCostCap() view returns (uint256)",
   "function minTokenBalance() view returns (uint256)",
   "function paused() view returns (bool)",
-  "function supportedSBTs(address) view returns (bool)",
-  "function supportedGasTokens(address) view returns (bool)",
+  "function entryPoint() view returns (address)",
+  "function registry() view returns (address)",
+  "function isRegistrySet() view returns (bool)",
+  "function getSupportedSBTs() view returns (address[])",
+  "function getSupportedGasTokens() view returns (address[])",
+  "function isSBTSupported(address) view returns (bool)",
+  "function isGasTokenSupported(address) view returns (bool)",
   "function transferOwnership(address newOwner)",
   "function setTreasury(address newTreasury)",
   "function setGasToUSDRate(uint256 rate)",
@@ -42,6 +53,7 @@ const PAYMASTER_V4_ABI = [
   "function setServiceFeeRate(uint256 rate)",
   "function setMaxGasCostCap(uint256 cap)",
   "function setMinTokenBalance(uint256 balance)",
+  "function setRegistry(address registry)",
   "function addSBT(address sbtToken)",
   "function removeSBT(address sbtToken)",
   "function addGasToken(address gasToken)",
@@ -53,10 +65,17 @@ const PAYMASTER_V4_ABI = [
 const ENTRY_POINT_ABI = [
   "function balanceOf(address account) view returns (uint256)",
   "function getDepositInfo(address account) view returns (tuple(uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime))",
+  "function addDeposit(address account) payable",
 ];
 
 const REGISTRY_ABI = [
   "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+];
+
+const GTOKEN_STAKING_ABI = [
+  "function getStakeInfo(address user) view returns (tuple(uint256 amount, uint256 sGTokenShares, uint256 stakedAt, uint256 unstakeRequestedAt))",
+  "function availableBalance(address user) view returns (uint256)",
+  "function stake(uint256 amount) returns (uint256 shares)",
 ];
 
 interface PaymasterConfig {
@@ -68,6 +87,9 @@ interface PaymasterConfig {
   maxGasCostCap: string;
   minTokenBalance: string;
   paused: boolean;
+  entryPointAddress: string;
+  registryAddress: string;
+  isRegistrySet: boolean;
 }
 
 interface EntryPointInfo {
@@ -80,7 +102,9 @@ interface EntryPointInfo {
 }
 
 interface RegistryInfo {
-  stake: string;
+  registryAddress: string;
+  stakedGToken: string; // Amount of GToken staked in GTokenStaking contract
+  availableToLock: string; // Staked but not yet locked for paymaster
 }
 
 export function ManagePaymasterFull() {
@@ -108,6 +132,13 @@ export function ManagePaymasterFull() {
   const [checkingGasToken, setCheckingGasToken] = useState(false);
   const [sbtStatus, setSbtStatus] = useState<boolean | null>(null);
   const [gasTokenStatus, setGasTokenStatus] = useState<boolean | null>(null);
+
+  // Lists of currently supported tokens (read from contract)
+  const [supportedSBTs, setSupportedSBTs] = useState<string[]>([]);
+  const [supportedGasTokens, setSupportedGasTokens] = useState<string[]>([]);
+
+  // EntryPoint deposit state
+  const [depositAmount, setDepositAmount] = useState<string>('');
 
   useEffect(() => {
     if (paymasterAddress) {
@@ -142,6 +173,9 @@ export function ManagePaymasterFull() {
         maxGasCostCap,
         minTokenBalance,
         paused,
+        entryPointAddress,
+        registryAddress,
+        isRegistrySet,
       ] = await Promise.all([
         paymaster.owner(),
         paymaster.treasury(),
@@ -151,6 +185,9 @@ export function ManagePaymasterFull() {
         paymaster.maxGasCostCap(),
         paymaster.minTokenBalance(),
         paymaster.paused(),
+        paymaster.entryPoint(),
+        paymaster.registry(),
+        paymaster.isRegistrySet(),
       ]);
 
       setConfig({
@@ -162,6 +199,9 @@ export function ManagePaymasterFull() {
         maxGasCostCap: ethers.formatEther(maxGasCostCap),
         minTokenBalance: ethers.formatEther(minTokenBalance),
         paused,
+        entryPointAddress,
+        registryAddress,
+        isRegistrySet,
       });
 
       setIsOwner(userAddr.toLowerCase() === owner.toLowerCase());
@@ -180,15 +220,36 @@ export function ManagePaymasterFull() {
         withdrawTime: Number(depositInfo.withdrawTime),
       });
 
-      // Load Registry info
-      const registry = new ethers.Contract(REGISTRY_V1_2, REGISTRY_ABI, provider);
-      const info = await registry.getPaymasterInfo(paymasterAddress);
+      // Load GTokenStaking info
+      const gtokenStaking = new ethers.Contract(GTOKEN_STAKING, GTOKEN_STAKING_ABI, provider);
+      const stakeInfo = await gtokenStaking.getStakeInfo(userAddr);
+      const availableBalance = await gtokenStaking.availableBalance(userAddr);
 
-      // Note: The actual Registry contract doesn't return stake info in getPaymasterInfo
-      // It only returns: feeRate, isActive, successCount, totalAttempts, name
-      setRegistryInfo({
-        stake: "N/A", // Stake info not available in current Registry contract
+      console.log('📊 GToken Stake Info:', {
+        staked: ethers.formatEther(stakeInfo.amount),
+        available: ethers.formatEther(availableBalance),
       });
+
+      setRegistryInfo({
+        registryAddress: REGISTRY_V2,
+        stakedGToken: ethers.formatEther(stakeInfo.amount),
+        availableToLock: ethers.formatEther(availableBalance),
+      });
+
+      // Load supported tokens from contract
+      try {
+        const supportedSBTsList = await paymaster.getSupportedSBTs();
+        const supportedGasTokensList = await paymaster.getSupportedGasTokens();
+        console.log('✅ Supported SBTs:', supportedSBTsList);
+        console.log('✅ Supported Gas Tokens:', supportedGasTokensList);
+        setSupportedSBTs(supportedSBTsList);
+        setSupportedGasTokens(supportedGasTokensList);
+      } catch (tokenErr) {
+        console.error('Failed to load supported tokens:', tokenErr);
+        // Don't fail the whole load if tokens fail
+        setSupportedSBTs([]);
+        setSupportedGasTokens([]);
+      }
 
       setLoading(false);
     } catch (err: any) {
@@ -245,6 +306,9 @@ export function ManagePaymasterFull() {
           break;
         case 'minTokenBalance':
           tx = await paymaster.setMinTokenBalance(ethers.parseEther(editValue));
+          break;
+        case 'registry':
+          tx = await paymaster.setRegistry(editValue);
           break;
         default:
           throw new Error('Unknown parameter');
@@ -420,6 +484,44 @@ export function ManagePaymasterFull() {
     } catch (err: any) {
       console.error('Failed to remove GasToken:', err);
       setError(err.message || 'Failed to remove GasToken');
+    } finally {
+      setTxPending(false);
+    }
+  };
+
+  const handleAddDeposit = async () => {
+    if (!depositAmount || parseFloat(depositAmount) <= 0) {
+      alert('Please enter a valid deposit amount');
+      return;
+    }
+
+    setTxPending(true);
+    setError('');
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const entryPoint = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
+
+      console.log('💰 Adding deposit to EntryPoint...');
+      console.log('Amount:', depositAmount, 'ETH');
+      console.log('Paymaster:', paymasterAddress);
+
+      const tx = await entryPoint.addDeposit(paymasterAddress, {
+        value: ethers.parseEther(depositAmount),
+      });
+
+      console.log('📤 Transaction sent:', tx.hash);
+      await tx.wait();
+      console.log('✅ Deposit confirmed!');
+
+      alert(`Successfully deposited ${depositAmount} ETH to EntryPoint!`);
+      setDepositAmount('');
+      await loadPaymasterData(); // Reload to show updated balance
+    } catch (err: any) {
+      console.error('Failed to add deposit:', err);
+      setError(err.message || 'Failed to add deposit to EntryPoint');
+      alert(`Failed to deposit: ${err.message || 'Unknown error'}`);
     } finally {
       setTxPending(false);
     }
@@ -663,6 +765,34 @@ export function ManagePaymasterFull() {
                     inputType="number"
                     placeholder="e.g., 100"
                   />
+                  <tr>
+                    <td><strong>EntryPoint Address</strong></td>
+                    <td><code>{config.entryPointAddress}</code></td>
+                    <td><em style={{color: '#999'}}>Read-only</em></td>
+                  </tr>
+                  <ConfigRow
+                    label="Registry Address"
+                    value={config.registryAddress}
+                    paramName="registry"
+                    editingParam={editingParam}
+                    editValue={editValue}
+                    isOwner={isOwner}
+                    txPending={txPending}
+                    onEdit={handleEditParam}
+                    onSave={handleSaveParam}
+                    onCancel={handleCancelEdit}
+                    onEditValueChange={setEditValue}
+                    inputType="address"
+                  />
+                  <tr>
+                    <td><strong>Registry Set Status</strong></td>
+                    <td>
+                      <span style={{color: config.isRegistrySet ? '#28a745' : '#dc3545', fontWeight: 600}}>
+                        {config.isRegistrySet ? '✓ Set' : '✗ Not Set'}
+                      </span>
+                    </td>
+                    <td><em style={{color: '#999'}}>Read-only</em></td>
+                  </tr>
                 </tbody>
               </table>
             </div>
@@ -728,23 +858,83 @@ export function ManagePaymasterFull() {
                 sufficient balance to cover gas costs.
               </p>
             </div>
+
+            {/* Add Deposit Card */}
+            <div className="deposit-card">
+              <h3>💰 Add Deposit to EntryPoint</h3>
+              <p>Deposit ETH to the EntryPoint contract for your Paymaster to sponsor gas fees.</p>
+
+              <div className="deposit-input-group">
+                <input
+                  type="number"
+                  step="0.001"
+                  min="0"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  placeholder="Amount in ETH (e.g., 0.1)"
+                  className="deposit-input"
+                  disabled={txPending}
+                />
+                <button
+                  onClick={handleAddDeposit}
+                  disabled={!depositAmount || parseFloat(depositAmount) <= 0 || txPending}
+                  className="deposit-button"
+                >
+                  {txPending ? 'Processing...' : 'Add Deposit'}
+                </button>
+              </div>
+
+              {parseFloat(entryPointInfo.balance) < 0.01 && (
+                <div className="low-balance-warning">
+                  ⚠️ Low balance! Your EntryPoint balance is below 0.01 ETH. Consider adding more funds.
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {activeTab === 'registry' && registryInfo && (
           <div className="registry-section">
-            <h2>Registry v1.2 Status</h2>
+            <h2>Registry v2.0 & GToken Staking Status</h2>
+
             <div className="info-card">
               <div className="info-item">
-                <span className="info-label">Stake Amount:</span>
-                <span className="info-value">{registryInfo.stake} GToken</span>
+                <span className="info-label">Registry v2 Address:</span>
+                <span className="info-value">
+                  <code>{registryInfo.registryAddress}</code>
+                </span>
+              </div>
+              <div className="info-item">
+                <span className="info-label">Your Staked GToken:</span>
+                <span className={`info-value ${parseFloat(registryInfo.stakedGToken) > 0 ? 'staked' : 'not-staked'}`}>
+                  {registryInfo.stakedGToken} GToken
+                </span>
+              </div>
+              <div className="info-item">
+                <span className="info-label">Available to Lock:</span>
+                <span className="info-value">
+                  {registryInfo.availableToLock} GToken
+                </span>
               </div>
             </div>
+
             <div className="registry-note">
               <p>
-                <strong>Note:</strong> This is the amount of GToken staked in the AAstar Registry for this Paymaster.
+                <strong>About Registry v2.0:</strong> Registry v2 stores community metadata only.
+                Your stGToken (staked GToken) is managed by the GTokenStaking contract and can be locked
+                for your Paymaster operations. Higher stGToken lock = higher reputation and priority.
               </p>
             </div>
+
+            {parseFloat(registryInfo.stakedGToken) === 0 && (
+              <div className="warning-banner">
+                <span className="warning-icon">⚠️</span>
+                <div className="warning-content">
+                  <strong>No GToken Staked</strong>
+                  <p>You need to stake GToken first to operate your Paymaster. Minimum required: 10 GToken.</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -755,6 +945,26 @@ export function ManagePaymasterFull() {
             <div className="token-management-card">
               <h3>Supported SBT (Soul-Bound Tokens)</h3>
               <p>Add or remove SBT tokens that users must hold to use this Paymaster.</p>
+
+              {/* Display currently supported SBTs */}
+              {supportedSBTs.length > 0 && (
+                <div className="supported-tokens-list">
+                  <strong>Currently Supported SBTs:</strong>
+                  <ul>
+                    {supportedSBTs.map((sbt, index) => (
+                      <li key={index}>
+                        <code>{sbt}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {supportedSBTs.length === 0 && (
+                <div className="no-tokens-message">
+                  ℹ️ No SBT contracts configured yet
+                </div>
+              )}
 
               <div className="token-input-group">
                 <input
@@ -803,6 +1013,26 @@ export function ManagePaymasterFull() {
             <div className="token-management-card">
               <h3>Supported Gas Tokens</h3>
               <p>Add or remove ERC20 tokens that can be used to pay for gas.</p>
+
+              {/* Display currently supported Gas Tokens */}
+              {supportedGasTokens.length > 0 && (
+                <div className="supported-tokens-list">
+                  <strong>Currently Supported Gas Tokens:</strong>
+                  <ul>
+                    {supportedGasTokens.map((token, index) => (
+                      <li key={index}>
+                        <code>{token}</code>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {supportedGasTokens.length === 0 && (
+                <div className="no-tokens-message">
+                  ℹ️ No gas tokens configured yet
+                </div>
+              )}
 
               <div className="token-input-group">
                 <input

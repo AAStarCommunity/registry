@@ -966,3 +966,86 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Existing Paymaster Detection Styles */
+.existing-paymaster-checking {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: #e3f2fd;
+  border-radius: 12px;
+  margin: 1rem 0;
+  font-size: 0.95rem;
+  color: #1976d2;
+  border: 2px solid #90caf9;
+}
+
+.existing-paymaster-checking .spinner {
+  font-size: 1.25rem;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.existing-paymaster-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-radius: 12px;
+  margin: 1rem 0 2rem 0;
+  border: 2px solid #ffb74d;
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+}
+
+.existing-paymaster-warning .warning-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.existing-paymaster-warning .warning-content {
+  flex: 1;
+}
+
+.existing-paymaster-warning .warning-content strong {
+  display: block;
+  font-size: 1.1rem;
+  color: #e65100;
+  margin-bottom: 0.5rem;
+}
+
+.existing-paymaster-warning .warning-content p {
+  margin: 0 0 1rem 0;
+  color: #5d4037;
+  font-size: 0.95rem;
+}
+
+.existing-paymaster-warning .view-explorer-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: #ff9800;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(255, 152, 0, 0.3);
+}
+
+.existing-paymaster-warning .view-explorer-link:hover {
+  background: #f57c00;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 152, 0, 0.4);
+}
