@@ -53,8 +53,9 @@ const GTOKEN_ABI = [
 ];
 
 const GTOKEN_STAKING_ABI = [
-  "function stake(uint256 amount) external",
+  "function stake(uint256 amount) external returns (uint256 shares)",
   "function balanceOf(address account) external view returns (uint256)",
+  "function getStakeInfo(address user) external view returns (tuple(uint256 amount, uint256 sGTokenShares, uint256 stakedAt, uint256 unstakeRequestedAt))",
 ];
 
 // Sub-steps
@@ -184,9 +185,11 @@ export function Step4_DeployResources({
 
       // Check if user already has a stake
       const existingStake = await gtokenStaking.getStakeInfo(userAddress);
-      if (existingStake.amount > 0n) {
+      const stakedAmount = existingStake[0]; // amount is first element in tuple
+
+      if (stakedAmount > 0n) {
         setError(
-          `You have already staked ${ethers.formatEther(existingStake.amount)} GToken. ` +
+          `You have already staked ${ethers.formatEther(stakedAmount)} GToken. ` +
           `The contract doesn't support additional stakes. Please use your existing stake or skip this step.`
         );
         setIsLoading(false);
