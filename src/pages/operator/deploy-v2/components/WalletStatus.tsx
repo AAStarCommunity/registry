@@ -182,8 +182,8 @@ export function WalletStatus({
 
         <div className="contract-item">
           <div className="contract-header">
-            <span className={status.hasSBTContract ? "icon-success" : "icon-warning"}>
-              {status.hasSBTContract ? "✅" : "⚠️"}
+            <span className={status.hasSBTContract ? "icon-success" : "icon-info"}>
+              {status.hasSBTContract ? "✅" : "ℹ️"}
             </span>
             <span className="contract-name">SBT Contract</span>
           </div>
@@ -207,8 +207,8 @@ export function WalletStatus({
 
         <div className="contract-item">
           <div className="contract-header">
-            <span className={status.hasGasTokenContract ? "icon-success" : "icon-warning"}>
-              {status.hasGasTokenContract ? "✅" : "⚠️"}
+            <span className={status.hasGasTokenContract ? "icon-success" : "icon-info"}>
+              {status.hasGasTokenContract ? "✅" : "ℹ️"}
             </span>
             <span className="contract-name">GasToken Contract</span>
           </div>
