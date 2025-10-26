@@ -6,6 +6,20 @@
 
 ---
 
+## 2025-10-26 - PaymasterV4.1 Constructor 增强
+
+增强 PaymasterV4.1 合约 constructor，新增 `_initialSBT` 和 `_initialGasToken` 可选参数。部署时自动传入 Step4 已部署的 SBT 和 xPNTs 地址，无需手动调用 `addSBT()` 和 `addGasToken()`。Token Management 区域现可正确显示已添加代币。
+
+**影响文件**:
+- `PaymasterV4.sol`: 添加 `_addSBT()` 和 `_addGasToken()` internal 函数
+- `PaymasterV4_1.sol`: Constructor 新增 2 个参数并调用 internal 函数
+- `Step3_DeployPaymaster.tsx`: 传入 `deployedResources` 的 SBT 和 xPNTs 地址
+- `DeployWizard.tsx`: 向 Step3 传递 `deployedResources` prop
+
+**Commit**: b847abe
+
+---
+
 ## 2025-10-25 - Registry v2.0 架构迁移完成
 
 ### 问题描述
