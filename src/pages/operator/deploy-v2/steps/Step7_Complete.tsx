@@ -266,6 +266,12 @@ export function Step7_Complete({
         <div className="resources-title">💡 Helpful Resources</div>
         <div className="resources-grid">
           <a
+            href="/operator/operate-guide"
+            className="resource-link"
+          >
+            📚 Operation Guide
+          </a>
+          <a
             href="http://localhost:5173/launch-tutorial"
             target="_blank"
             rel="noopener noreferrer"
@@ -279,7 +285,7 @@ export function Step7_Complete({
             rel="noopener noreferrer"
             className="resource-link"
           >
-            📚 API Reference
+            📋 API Reference
           </a>
           <a
             href="https://demo.aastar.io/"

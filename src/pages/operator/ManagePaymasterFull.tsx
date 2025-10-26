@@ -466,7 +466,18 @@ export function ManagePaymasterFull() {
   return (
     <div className="manage-paymaster-full">
       <div className="manage-header">
-        <h1>Manage Paymaster</h1>
+        <div className="header-top">
+          <div className="header-title">
+            <h1>Manage Paymaster</h1>
+            <a
+              href="/operator/operate-guide"
+              className="operate-guide-link"
+              title="Learn how to operate your Paymaster"
+            >
+              📚 Operation Guide
+            </a>
+          </div>
+        </div>
         <p className="paymaster-address">
           <strong>Address:</strong> <code>{paymasterAddress}</code>
         </p>
