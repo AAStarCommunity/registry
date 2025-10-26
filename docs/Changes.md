@@ -846,4 +846,17 @@ type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationSte
 ### Commits
 - `68ebb70` - fix: 区分选项区域和隐喻区域的标题 (v2.3.13)
 - `24e0067` - refine: 移除选项区域所有 Flow 和流程字样 (v2.3.14)
+- `fce0e4b` - refine: 简化 StakeOptionCard 标题 (v2.3.15)
+
+#### v2.3.15: 简化 StakeOptionCard 标题
+**用户需求**：继续移除遗留的 "Enhanced ERC-4337 Flow: AOA" 标题。
+
+**修改文件**：
+- `src/pages/operator/deploy-v2/components/StakeOptionCard.tsx:220`
+
+**变更**：
+- createStandardFlowOption 函数中的 title
+- 修改前：`"Enhanced ERC-4337 Flow: AOA"`
+- 修改后：`"Enhanced ERC-4337"`
+- 保留 badge 为 `"AOA"`
 
