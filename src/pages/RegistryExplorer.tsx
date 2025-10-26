@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
+import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../config/networkConfig";
 import "./RegistryExplorer.css";
 
-// Mock data for now - will be replaced with contract calls
+type RegistryVersion = "v1.2" | "v2.0";
+
 interface PaymasterInfo {
   address: string;
   name: string;
@@ -14,6 +17,7 @@ interface PaymasterInfo {
   serviceFee: string;
   owner: string;
   registeredAt: string;
+  metadata?: any;
 }
 
 const mockPaymasters: PaymasterInfo[] = [
@@ -72,16 +76,116 @@ const mockPaymasters: PaymasterInfo[] = [
 ];
 
 export function RegistryExplorer() {
-  const [paymasters] = useState<PaymasterInfo[]>(mockPaymasters);
-  const [filteredPaymasters, setFilteredPaymasters] =
-    useState<PaymasterInfo[]>(mockPaymasters);
+  const [registryVersion, setRegistryVersion] = useState<RegistryVersion>("v1.2");
+  const [paymasters, setPaymasters] = useState<PaymasterInfo[]>([]);
+  const [filteredPaymasters, setFilteredPaymasters] = useState<PaymasterInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortBy, setSortBy] = useState("transactions");
-  const [selectedPaymaster, setSelectedPaymaster] =
-    useState<PaymasterInfo | null>(null);
+  const [selectedPaymaster, setSelectedPaymaster] = useState<PaymasterInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>("");
+  const [registryInfo, setRegistryInfo] = useState<{address: string, totalPaymasters: number} | null>(null);
 
   const categories = ["All", "Community", "DeFi", "Gaming", "Social"];
+
+  // Load paymasters from registry contract
+  useEffect(() => {
+    loadPaymasters();
+  }, [registryVersion]);
+
+  const getProvider = () => {
+    const networkConfig = getCurrentNetworkConfig();
+    if (networkConfig.rpcUrl.startsWith('/')) {
+      return new ethers.BrowserProvider(window.ethereum);
+    }
+    return new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+  };
+
+  const loadPaymasters = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const provider = await getProvider();
+      const networkConfig = getCurrentNetworkConfig();
+      const registryAddress = registryVersion === "v1.2"
+        ? networkConfig.contracts.registry
+        : networkConfig.contracts.registryV2;
+
+      setRegistryInfo({
+        address: registryAddress,
+        totalPaymasters: 0,
+      });
+
+      if (registryVersion === "v1.2") {
+        await loadV1Paymasters(provider, registryAddress);
+      } else {
+        await loadV2Paymasters(provider, registryAddress);
+      }
+    } catch (err: any) {
+      console.error("Failed to load paymasters:", err);
+      setError(err.message || "Failed to load registry data");
+      setPaymasters([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadV1Paymasters = async (provider: any, registryAddress: string) => {
+    // Registry v1.2 doesn't have a list function, so we show instruction
+    setPaymasters([]);
+    setError("Registry v1.2 doesn't support listing all paymasters. Use v2.0 or provide specific paymaster address.");
+  };
+
+  const loadV2Paymasters = async (provider: any, registryAddress: string) => {
+    const REGISTRY_V2_ABI = [
+      "function getAllCommunities() external view returns (address[])",
+      "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+    ];
+
+    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_ABI, provider);
+
+    try {
+      const communities = await registry.getAllCommunities();
+      console.log(`📋 Found ${communities.length} communities in Registry v2.0`);
+
+      const paymasterList: PaymasterInfo[] = [];
+
+      for (const communityAddr of communities) {
+        try {
+          const profile = await registry.getCommunityProfile(communityAddr);
+
+          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
+            paymasterList.push({
+              address: profile.paymasterAddress,
+              name: profile.name || "Unnamed",
+              description: profile.description || "",
+              category: profile.mode === 0 ? "AOA" : "Super",
+              verified: profile.isActive,
+              totalTransactions: 0, // TODO: Query from analytics
+              totalGasSponsored: "N/A",
+              supportedTokens: [], // TODO: Query from paymaster
+              serviceFee: "N/A",
+              owner: profile.community,
+              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
+              metadata: profile,
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to load profile for ${communityAddr}:`, err);
+        }
+      }
+
+      setPaymasters(paymasterList);
+      setRegistryInfo({
+        address: registryAddress,
+        totalPaymasters: paymasterList.length,
+      });
+    } catch (err: any) {
+      throw new Error(`Failed to query Registry v2.0: ${err.message}`);
+    }
+  };
 
   // Filter and sort
   useEffect(() => {
@@ -124,6 +228,55 @@ export function RegistryExplorer() {
 
   return (
     <div className="registry-explorer">
+      {/* Registry Info & Version Selector */}
+      <section className="registry-info-section">
+        <div className="registry-header">
+          <div className="registry-title">
+            <h1>🏛️ Registry Explorer</h1>
+            {registryInfo && (
+              <div className="registry-address">
+                <span className="label">Contract:</span>
+                <code>{registryInfo.address}</code>
+              </div>
+            )}
+          </div>
+
+          <div className="version-selector">
+            <label>Registry Version:</label>
+            <div className="version-buttons">
+              <button
+                className={`version-btn ${registryVersion === "v1.2" ? "active" : ""}`}
+                onClick={() => setRegistryVersion("v1.2")}
+                disabled={loading}
+              >
+                v1.2 (Legacy)
+              </button>
+              <button
+                className={`version-btn ${registryVersion === "v2.0" ? "active" : ""}`}
+                onClick={() => setRegistryVersion("v2.0")}
+                disabled={loading}
+              >
+                v2.0 (Current)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="error-banner">
+            <span className="error-icon">⚠️</span>
+            <span>{error}</span>
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading-banner">
+            <span className="spinner">⏳</span>
+            <span>Loading paymasters from {registryVersion}...</span>
+          </div>
+        )}
+      </section>
+
       {/* Stats Bar */}
       <section className="stats-section">
         <div className="stats-bar">
@@ -140,8 +293,8 @@ export function RegistryExplorer() {
             <div className="stat-label">Total Transactions</div>
           </div>
           <div className="stat-item">
-            <div className="stat-value">148.6 ETH</div>
-            <div className="stat-label">Total Gas Sponsored</div>
+            <div className="stat-value">{registryVersion}</div>
+            <div className="stat-label">Registry Version</div>
           </div>
         </div>
       </section>

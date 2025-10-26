@@ -5,6 +5,130 @@
     color: var(--text-color);
 }
 
+/* Registry Info Section */
+.registry-info-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 2rem;
+    color: white;
+}
+
+.registry-header {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.registry-title h1 {
+    margin: 0 0 0.5rem 0;
+    font-size: 2rem;
+}
+
+.registry-address {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
+.registry-address .label {
+    font-weight: 600;
+}
+
+.registry-address code {
+    background: rgba(255, 255, 255, 0.2);
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-family: 'Monaco', monospace;
+    font-size: 0.85rem;
+}
+
+.version-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.version-selector label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    opacity: 0.9;
+}
+
+.version-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.version-btn {
+    padding: 0.5rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.version-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.version-btn.active {
+    background: white;
+    color: #667eea;
+    border-color: white;
+}
+
+.version-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.error-banner {
+    max-width: 1200px;
+    margin: 1rem auto 0;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 107, 107, 0.2);
+    border: 2px solid rgba(255, 107, 107, 0.5);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.error-icon {
+    font-size: 1.5rem;
+}
+
+.loading-banner {
+    max-width: 1200px;
+    margin: 1rem auto 0;
+    padding: 1rem 1.5rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 /* Stats Section */
 .stats-section {
     background: var(--card-bg);
