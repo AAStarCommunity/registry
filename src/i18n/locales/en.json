@@ -58,7 +58,7 @@
         "icon": "⛽",
         "title": "Gas Station Metaphor: We Help You Build a Paymaster Gas Station",
         "standard": {
-          "title": "🏗️ Enhanced ERC-4337:AOA",
+          "title": "🏗️ Enhanced ERC-4337",
           "description": "AOA (Asset Oriented Abstraction): Optimizes traditional ERC-4337 by eliminating off-chain signature servers and reducing on-chain verify cost. Use free building materials (open-source code), build and maintain your own gas station. Uses SBT identity verification + xPNTs for gas-free payments. 100% control.",
           "highlight": "Key Feature: No off-chain signature server needed. Gas (ETH) needs to be purchased and distributed across chains by yourself."
         },
