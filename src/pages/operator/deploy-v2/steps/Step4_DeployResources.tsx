@@ -101,7 +101,10 @@ export function Step4_DeployResources({
   const checkExistingXPNTs = async () => {
     try {
       const networkConfig = getCurrentNetworkConfig();
-      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      // Use BrowserProvider for relative URLs (like /api/rpc-proxy)
+      const provider = networkConfig.rpcUrl.startsWith('/')
+        ? new ethers.BrowserProvider(window.ethereum)
+        : new ethers.JsonRpcProvider(networkConfig.rpcUrl);
       const userAddress = walletStatus.address;
 
       const factory = new ethers.Contract(
@@ -130,7 +133,10 @@ export function Step4_DeployResources({
   const checkExistingStake = async () => {
     try {
       const networkConfig = getCurrentNetworkConfig();
-      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      // Use BrowserProvider for relative URLs (like /api/rpc-proxy)
+      const provider = networkConfig.rpcUrl.startsWith('/')
+        ? new ethers.BrowserProvider(window.ethereum)
+        : new ethers.JsonRpcProvider(networkConfig.rpcUrl);
       const userAddress = walletStatus.address;
 
       const gtokenStaking = new ethers.Contract(
