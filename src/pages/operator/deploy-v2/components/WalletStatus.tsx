@@ -8,6 +8,7 @@ export interface WalletStatusProps {
   onGetGToken?: () => void;
   onGetPNTs?: () => void;
   onGetETH?: () => void;
+  onRefresh?: () => void;
 }
 
 /**
@@ -21,6 +22,7 @@ export function WalletStatus({
   onGetGToken,
   onGetPNTs,
   onGetETH,
+  onRefresh,
 }: WalletStatusProps) {
   if (!status.isConnected) {
     return (
@@ -53,7 +55,14 @@ export function WalletStatus({
 
       {/* Balance Checks */}
       <div className="balance-checks">
-        <div className="section-title">Resource Balance Check</div>
+        <div className="section-title-row">
+          <div className="section-title">Resource Balance Check</div>
+          {onRefresh && (
+            <button className="refresh-button-inline" onClick={onRefresh} title="Refresh balances">
+              🔄 Refresh
+            </button>
+          )}
+        </div>
 
         {/* ETH Balance */}
         <div className={`balance-item ${status.hasEnoughETH ? "sufficient" : "insufficient"}`}>

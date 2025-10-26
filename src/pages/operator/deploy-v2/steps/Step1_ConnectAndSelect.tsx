@@ -615,23 +615,13 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           )}
 
           {!isLoading && walletStatus && (
-            <>
-              <WalletStatus
-                status={walletStatus}
-                onGetGToken={handleGetGToken}
-                onGetPNTs={handleGetPNTs}
-                onGetETH={handleGetETH}
-              />
-
-              <div className="refresh-section">
-                <button className="refresh-button" onClick={handleRefreshResources}>
-                  🔄 {t('common.refresh')}
-                </button>
-                <span className="refresh-help">
-                  {t('step1.substep3.resourceCheck')}
-                </span>
-              </div>
-            </>
+            <WalletStatus
+              status={walletStatus}
+              onGetGToken={handleGetGToken}
+              onGetPNTs={handleGetPNTs}
+              onGetETH={handleGetETH}
+              onRefresh={handleRefreshResources}
+            />
           )}
 
           <div className="help-section">

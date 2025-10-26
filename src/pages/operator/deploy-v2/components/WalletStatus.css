@@ -38,6 +38,31 @@
   margin-bottom: 0.75rem;
 }
 
+.section-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.refresh-button-inline {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+  background: #f0f0f0;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  color: #666;
+}
+
+.refresh-button-inline:hover {
+  background: #e5e5e5;
+  border-color: #ccc;
+  transform: translateY(-1px);
+}
+
 .wallet-address {
   display: flex;
   align-items: center;
