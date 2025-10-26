@@ -10,6 +10,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
+import { getCurrentNetworkConfig } from "../../../config/networkConfig";
 import "./Step4_DeployResources.css";
 
 export interface Step4Props {
@@ -99,9 +100,9 @@ export function Step4_DeployResources({
   // Check for existing xPNTs when entering DeployXPNTs step
   const checkExistingXPNTs = async () => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
+      const networkConfig = getCurrentNetworkConfig();
+      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      const userAddress = walletStatus.address;
 
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
@@ -128,9 +129,9 @@ export function Step4_DeployResources({
   // Check for existing GToken stake when entering StakeGToken step
   const checkExistingStake = async () => {
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const userAddress = await signer.getAddress();
+      const networkConfig = getCurrentNetworkConfig();
+      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+      const userAddress = walletStatus.address;
 
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,

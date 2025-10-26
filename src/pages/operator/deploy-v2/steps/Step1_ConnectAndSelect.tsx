@@ -138,8 +138,8 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
   const checkExistingPaymaster = async (userAddress: string) => {
     try {
       setCheckingRegistry(true);
-      const provider = new ethers.BrowserProvider(window.ethereum);
       const networkConfig = getCurrentNetworkConfig();
+      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
 
       const REGISTRY_V2_ABI = [
         "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
