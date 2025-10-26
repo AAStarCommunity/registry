@@ -785,3 +785,65 @@ type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationSte
 3. 验证 AOA 和 Super 模式的资源检查逻辑
 4. 确认所有文案显示正确
 
+---
+
+## 2025-10-26 - Registry 首页标题简化
+
+### 任务概述
+根据用户反馈，简化 Registry 首页的选项区域标题，移除所有 "Flow" 和 "流程" 字样，使界面更简洁。
+
+### 修改内容
+
+#### v2.3.13: 区分选项区域和隐喻区域的标题
+**问题**：之前错误地将隐喻区域的标题改为了 "Enhanced ERC-4337"，用户希望保留隐喻区域的 AOA 标识。
+
+**修复**：
+- ✅ 选项区域 (modeNames.standard): "Enhanced ERC-4337 Flow"
+- ✅ 隐喻区域 (metaphor.standard.title): "🏗️ Enhanced ERC-4337:AOA" (保留 AOA 标识)
+
+#### v2.3.14: 移除 "Flow" 和 "流程" 字样
+**用户需求**：移除所有与 "Flow" 和 "流程" 相关的字样，简化标题。
+
+**修改文件**：
+1. `src/i18n/locales/en.json`
+2. `src/i18n/locales/zh.json`
+
+**具体变更**：
+
+| 位置 | 修改前 (en) | 修改后 (en) |
+|------|------------|------------|
+| modeNames.standard | Enhanced ERC-4337 Flow | Enhanced ERC-4337 |
+| previewSteps.standard.title | Enhanced ERC-4337 Flow (AOA) - {{totalSteps}} Steps | Enhanced ERC-4337 (AOA) - {{totalSteps}} Steps |
+| selectButton.standard | Select Enhanced ERC-4337 Flow (AOA) | Select Enhanced ERC-4337 (AOA) |
+| substep3.modeStandard | Standard Flow | Standard |
+| step3.standardFlow | Standard ERC-4337 Flow | Standard ERC-4337 |
+
+| 位置 | 修改前 (zh) | 修改后 (zh) |
+|------|------------|------------|
+| modeNames.standard | 增强型 ERC-4337 流程 | 增强型 ERC-4337 |
+| previewSteps.standard.title | 增强型 ERC-4337 流程（AOA）- {{totalSteps}} 步 | 增强型 ERC-4337（AOA）- {{totalSteps}} 步 |
+| selectButton.standard | 选择增强型 ERC-4337 流程（AOA） | 选择增强型 ERC-4337（AOA） |
+| substep3.modeStandard | 标准流程 | 标准 |
+| step3.standardFlow | 标准 ERC-4337 流程 | 标准 ERC-4337 |
+
+**保留不变**：
+- ✅ 隐喻区域标题保持 "🏗️ Enhanced ERC-4337:AOA"（中文："🏗️ 增强型 ERC-4337:AOA"）
+- ✅ Super Mode 标题保持 "Super Mode:AOA+"（中文："超级模式:AOA+"）
+
+### 验证结果
+- ✅ 所有 "Flow" 和 "流程" 字样已移除（共 10 处）
+- ✅ 中英文翻译保持同步
+- ✅ 选项区域和隐喻区域的 AOA 标识区分正确
+- ✅ 代码已提交并推送到远程仓库
+
+### 影响范围
+- 部署向导第一步的选项区域标题
+- 预览步骤的标题显示
+- 选择按钮的文本
+- 已选模式的显示文本
+- 质押流程选项的标题
+
+### Commits
+- `68ebb70` - fix: 区分选项区域和隐喻区域的标题 (v2.3.13)
+- `24e0067` - refine: 移除选项区域所有 Flow 和流程字样 (v2.3.14)
+
