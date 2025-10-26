@@ -157,6 +157,12 @@ export function Step7_Complete({
                 Keep an eye on your EntryPoint balance and registry stake. Top
                 up when needed.
               </div>
+              <button
+                onClick={handleManage}
+                className="step-link"
+              >
+                Manage Paymaster →
+              </button>
             </div>
           </div>
 
