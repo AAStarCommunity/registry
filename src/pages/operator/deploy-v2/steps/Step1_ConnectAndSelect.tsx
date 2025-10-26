@@ -523,23 +523,6 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             </div>
           </div>
 
-          {/* Enhanced ERC-4337 Flow: AOA Mode Important Notes */}
-          <div className="aoa-warning-banner">
-            <div className="warning-header">
-              <span className="warning-icon">⚠️</span>
-              <span className="warning-title">Enhanced ERC-4337 Flow: AOA Mode</span>
-            </div>
-            <div className="warning-content">
-              <p><strong>Important Notes:</strong></p>
-              <ul>
-                <li>Relies on PaymasterV4.1 enhanced contract</li>
-                <li>Requires ETH and stGToken resources</li>
-                <li>AOA (Account Owned Address) optimizes traditional ERC-4337 by eliminating off-chain signature servers</li>
-                <li>Uses SBT identity verification + xPNTs for gas-free payments</li>
-              </ul>
-            </div>
-          </div>
-
           <div className="stake-options-grid">
             <StakeOptionCard
               option={aoaOption}

@@ -49,23 +49,23 @@
       "title": "选择您的部署模式",
       "description": "选择最适合您需求的部署模式。我们提供两种不同的方式，资源需求和运营特性各不相同。",
       "modeNames": {
-        "standard": "增强型 ERC-4337 流程：AOA",
-        "standardSubtitle": "资产导向抽象（Asset Oriented Abstraction）- 无需离线签名服务器和链上验证，只需您的 Gas Token。",
-        "super": "超级模式",
-        "superSubtitle": "AOA 增强版：无服务器，无合约部署"
+        "standard": "增强型 ERC-4337:AOA",
+        "standardSubtitle": "AOA（账户拥有地址）通过消除离线签名服务器和链上验证成本来优化传统 ERC-4337。使用 SBT 身份验证 + xPNTs 实现免 gas 支付。",
+        "super": "超级模式:AOA+",
+        "superSubtitle": "基于 AOA，支持自定义 gas token，无需单独合约部署。协议托管基础设施，极致简单。"
       },
       "metaphor": {
         "icon": "⛽",
         "title": "加油站比喻：我们帮您建造 Paymaster 加油站",
         "standard": {
-          "title": "🏗️ 增强型 ERC-4337 流程",
-          "description": "使用免费建筑材料（开源代码），在每条支持的区块链上**自己建造和维护**加油站。建好后，您拥有**完全所有权和 100% 控制权**。",
-          "highlight": "Gas（ETH）需要**您自己购买并跨链分发**。"
+          "title": "🏗️ 增强型 ERC-4337:AOA",
+          "description": "**AOA（账户拥有地址）**：通过**消除离线签名服务器**和降低链上验证成本来优化传统 ERC-4337。使用免费建筑材料（开源代码），**自己建造和维护**加油站。使用 **SBT 身份验证 + xPNTs** 实现免 gas 支付。完全所有权和 100% 控制权。",
+          "highlight": "**核心特性**：无需离线签名服务器。Gas（ETH）需要**您自己购买并跨链分发**。"
         },
         "super": {
-          "title": "⚡ 超级模式",
-          "description": "**无需建设**。加入 SuperPaymaster 共享加油站网络（类似加入连锁加盟）。协议处理基础设施、维护和跨链操作。",
-          "highlight": "协议处理**跨链基础设施、gas 购买和分发**。"
+          "title": "⚡ 超级模式:AOA+",
+          "description": "**AOA+**：基于 AOA 优势，**支持自定义 gas token** 和**无需单独合约部署**。加入 SuperPaymaster 共享加油站网络（类似加入连锁加盟）。协议处理基础设施、维护和跨链操作。",
+          "highlight": "**核心特性**：支持自定义 gas token。协议处理**跨链基础设施、gas 购买和分发**。"
         }
       },
       "comparisonTable": {

@@ -20,6 +20,19 @@ export function Footer() {
             </p>
             <div className="social-links">
               <a
+                href="https://aastar.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="AAStar Community"
+                style={{ marginRight: '12px' }}
+              >
+                <img
+                  src="https://raw.githubusercontent.com/jhfnetboy/MarkDownImg/main/img/202509171600702.png"
+                  alt="AAStar Logo"
+                  style={{ height: '24px', width: 'auto', verticalAlign: 'middle' }}
+                />
+              </a>
+              <a
                 href="https://github.com/AAStarCommunity"
                 target="_blank"
                 rel="noopener noreferrer"
