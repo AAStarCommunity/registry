@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useSearchParams } from 'react-router-dom';
+import { getCurrentNetworkConfig } from '../../config/networkConfig';
 import './ManagePaymasterFull.css';
 
 /**
@@ -139,6 +140,17 @@ export function ManagePaymasterFull() {
 
   // EntryPoint deposit state
   const [depositAmount, setDepositAmount] = useState<string>('');
+
+  // Helper: Get read-only provider (Alchemy or BrowserProvider fallback)
+  const getReadProvider = () => {
+    const networkConfig = getCurrentNetworkConfig();
+    // Use BrowserProvider for relative URLs (like /api/rpc-proxy)
+    if (networkConfig.rpcUrl.startsWith('/')) {
+      return new ethers.BrowserProvider(window.ethereum);
+    }
+    // Use JsonRpcProvider for full URLs (Alchemy)
+    return new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+  };
 
   useEffect(() => {
     if (paymasterAddress) {
@@ -499,16 +511,30 @@ export function ManagePaymasterFull() {
     setError('');
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const entryPoint = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
+      // Use Alchemy for estimation, MetaMask for signing
+      const readProvider = getReadProvider();
+      const browserProvider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await browserProvider.getSigner();
+
+      // Create contract with read provider for gas estimation
+      const entryPointRead = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, readProvider);
 
       console.log('💰 Adding deposit to EntryPoint...');
       console.log('Amount:', depositAmount, 'ETH');
       console.log('Paymaster:', paymasterAddress);
 
-      const tx = await entryPoint.addDeposit(paymasterAddress, {
+      // Estimate gas using Alchemy (more reliable)
+      const gasLimit = await entryPointRead.addDeposit.estimateGas(paymasterAddress, {
         value: ethers.parseEther(depositAmount),
+        from: await signer.getAddress(),
+      });
+      console.log('⛽ Estimated gas:', gasLimit.toString());
+
+      // Send transaction with MetaMask
+      const entryPointWrite = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
+      const tx = await entryPointWrite.addDeposit(paymasterAddress, {
+        value: ethers.parseEther(depositAmount),
+        gasLimit: gasLimit * 120n / 100n, // Add 20% buffer
       });
 
       console.log('📤 Transaction sent:', tx.hash);
