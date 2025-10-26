@@ -96,6 +96,75 @@ export function Step4_DeployResources({
     }
   };
 
+  // Check for existing xPNTs when entering DeployXPNTs step
+  const checkExistingXPNTs = async () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        XPNTS_FACTORY_ABI,
+        provider
+      );
+
+      const alreadyDeployed = await factory.hasToken(userAddress);
+
+      if (alreadyDeployed) {
+        const existingToken = await factory.getTokenAddress(userAddress);
+        console.log("ℹ️ Found existing xPNTs token:", existingToken);
+        setXPNTsAddress(existingToken);
+        setError(
+          `You already have an xPNTs token at ${existingToken.slice(0, 10)}...${existingToken.slice(-8)}. ` +
+          `Click "Use This Token →" to continue, or deploy a new one (not recommended).`
+        );
+      }
+    } catch (err) {
+      console.log("Failed to check existing xPNTs:", err);
+    }
+  };
+
+  // Check for existing GToken stake when entering StakeGToken step
+  const checkExistingStake = async () => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const gtokenStaking = new ethers.Contract(
+        GTOKEN_STAKING_ADDRESS,
+        GTOKEN_STAKING_ABI,
+        provider
+      );
+
+      const existingStake = await gtokenStaking.getStakeInfo(userAddress);
+      const stakedAmount = existingStake[0]; // amount is first element in tuple
+
+      if (stakedAmount > 0n) {
+        const formattedAmount = ethers.formatEther(stakedAmount);
+        setHasExistingStake(true);
+        setExistingStakeAmount(formattedAmount);
+        console.log("ℹ️ Found existing GToken stake:", formattedAmount);
+        setError(
+          `You already have ${formattedAmount} GToken staked. ` +
+          `Click "Use Existing Stake" below to continue with your current stake.`
+        );
+      }
+    } catch (err) {
+      console.log("Failed to check existing stake:", err);
+    }
+  };
+
+  // Auto-check when entering respective steps
+  React.useEffect(() => {
+    if (currentStep === ResourceStep.DeployXPNTs && !xPNTsAddress) {
+      checkExistingXPNTs();
+    } else if (currentStep === ResourceStep.StakeGToken && !hasExistingStake) {
+      checkExistingStake();
+    }
+  }, [currentStep]);
+
   const handleSelectSBT = () => {
     // For now, use existing MySBT
     console.log("Using existing MySBT:", sbtAddress);
