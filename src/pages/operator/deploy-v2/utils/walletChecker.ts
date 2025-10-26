@@ -210,13 +210,32 @@ export async function checkWalletStatus(
         parseFloat(status.aPNTsBalance) >= parseFloat(requiredAPNTs);
     }
 
-    // TODO: Check for existing SBT contract (needs registry or storage lookup)
-    // For now, set to false
-    status.hasSBTContract = false;
+    // Check for existing xPNTs (GasToken) contract via xPNTsFactory
+    try {
+      const xPNTsFactoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || "0x356CF363E136b0880C8F48c9224A37171f375595";
+      const xPNTsFactoryABI = [
+        "function hasToken(address community) external view returns (bool)",
+        "function getTokenAddress(address community) external view returns (address)",
+      ];
 
-    // TODO: Check for existing GasToken contract (needs registry or storage lookup)
-    // For now, set to false
-    status.hasGasTokenContract = false;
+      const factory = new ethers.Contract(xPNTsFactoryAddress, xPNTsFactoryABI, provider);
+      const hasToken = await factory.hasToken(address);
+
+      if (hasToken) {
+        const tokenAddress = await factory.getTokenAddress(address);
+        status.hasGasTokenContract = true;
+        status.gasTokenAddress = tokenAddress;
+      } else {
+        status.hasGasTokenContract = false;
+      }
+    } catch (error) {
+      console.log("Failed to check xPNTs factory:", error);
+      status.hasGasTokenContract = false;
+    }
+
+    // SBT: Using shared MySBT template, no individual deployment needed
+    // Set to false as user doesn't deploy their own SBT contract
+    status.hasSBTContract = false;
 
     return status;
   } catch (error) {
