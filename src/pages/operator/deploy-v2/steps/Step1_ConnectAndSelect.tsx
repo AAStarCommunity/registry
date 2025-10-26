@@ -131,43 +131,10 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     }
   };
 
-  // Check if user has existing Paymaster in Registry
-  const [existingPaymaster, setExistingPaymaster] = useState<string | null>(null);
-  const [checkingRegistry, setCheckingRegistry] = useState(false);
-
-  const checkExistingPaymaster = async (userAddress: string) => {
-    try {
-      setCheckingRegistry(true);
-      const networkConfig = getCurrentNetworkConfig();
-      const provider = new ethers.JsonRpcProvider(networkConfig.rpcUrl);
-
-      const REGISTRY_V2_ABI = [
-        "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
-      ];
-
-      const registry = new ethers.Contract(
-        networkConfig.contracts.registryV2,
-        REGISTRY_V2_ABI,
-        provider
-      );
-
-      console.log("🔍 Checking for existing Paymaster in Registry...");
-      const profile = await registry.getCommunityProfile(userAddress);
-
-      if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
-        console.log("✅ Found existing Paymaster:", profile.paymasterAddress);
-        setExistingPaymaster(profile.paymasterAddress);
-      } else {
-        console.log("ℹ️ No existing Paymaster found");
-        setExistingPaymaster(null);
-      }
-    } catch (err) {
-      console.log("ℹ️ No existing registration found:", err);
-      setExistingPaymaster(null);
-    } finally {
-      setCheckingRegistry(false);
-    }
-  };
+  // NOTE: Registry v1.2 doesn't support reverse lookup (owner -> paymaster)
+  // We use Registry v1.2 for registration, but it only queries by paymaster address
+  // Future: implement backend API for user paymaster listing
+  // For now, we skip this check and rely on /explorer page
 
   // SubStep 1: Connect Wallet (basic connection only)
   const handleConnectWallet = async () => {
@@ -200,9 +167,6 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
       const address = accounts[0];
       setWalletAddress(address);
-
-      // Check for existing Paymaster after connecting
-      await checkExistingPaymaster(address);
 
       setSubStep(SubStep.SelectOption);
       console.log(`✅ Wallet connected: ${address}`);
@@ -450,32 +414,6 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
               {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
             </span>
           </div>
-
-          {/* Existing Paymaster Warning */}
-          {checkingRegistry && (
-            <div className="existing-paymaster-checking">
-              <span className="spinner">⏳</span>
-              <span>检查是否已有 Paymaster 部署...</span>
-            </div>
-          )}
-
-          {existingPaymaster && (
-            <div className="existing-paymaster-warning">
-              <span className="warning-icon">⚠️</span>
-              <div className="warning-content">
-                <strong>检测到已有 Paymaster</strong>
-                <p>你已经部署过 Paymaster 合约</p>
-                <a
-                  href="/explorer"
-                  className="view-explorer-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  点击这里查看 →
-                </a>
-              </div>
-            </div>
-          )}
 
           {/* Gas Station Metaphor */}
           <div className="metaphor-banner">
