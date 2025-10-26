@@ -42,7 +42,7 @@ export function Step6_RegisterRegistry({
   onNext,
   onBack,
 }: Step6Props) {
-  const [gTokenAmount, setGTokenAmount] = useState<string>("10");
+  const [gTokenAmount, setGTokenAmount] = useState<string>("30");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [allowance, setAllowance] = useState<string>("0");
   const [isApproving, setIsApproving] = useState(false);
@@ -277,7 +277,7 @@ export function Step6_RegisterRegistry({
             id="gtoken-amount"
             type="number"
             step="1"
-            min="10"
+            min="30"
             value={gTokenAmount}
             onChange={(e) => {
               setGTokenAmount(e.target.value);
@@ -286,11 +286,11 @@ export function Step6_RegisterRegistry({
                 parseFloat(allowance) < parseFloat(e.target.value)
               );
             }}
-            placeholder="10"
+            placeholder="30"
             disabled={isApproving || isRegistering}
           />
           <div className="form-hint">
-            Minimum: 10 GToken. Higher stake improves your Paymaster's
+            Minimum: 30 GToken. Higher stake improves your Paymaster's
             reputation.
           </div>
         </div>
