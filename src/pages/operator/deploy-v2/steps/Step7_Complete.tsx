@@ -1,4 +1,5 @@
 import React from "react";
+import type { DeployedResources } from "./Step4_DeployResources";
 import "./Step7_Complete.css";
 
 export interface Step7Props {
@@ -7,6 +8,7 @@ export interface Step7Props {
   owner: string;
   entryPointTxHash?: string;
   registryTxHash?: string;
+  deployedResources?: DeployedResources;
 }
 
 export function Step7_Complete({
@@ -15,6 +17,7 @@ export function Step7_Complete({
   owner,
   entryPointTxHash,
   registryTxHash,
+  deployedResources,
 }: Step7Props) {
   const handleViewOnExplorer = () => {
     window.open(`/paymaster/${paymasterAddress}`, "_blank");
@@ -73,6 +76,44 @@ export function Step7_Complete({
             <span className="label">Owner:</span>
             <span className="value address">{owner}</span>
           </div>
+          {deployedResources?.sbtAddress && (
+            <div className="summary-item">
+              <span className="label">SBT Contract:</span>
+              <span className="value address">{deployedResources.sbtAddress}</span>
+              <button
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(deployedResources.sbtAddress);
+                  alert("SBT address copied to clipboard!");
+                }}
+                title="Copy SBT address"
+              >
+                📋
+              </button>
+            </div>
+          )}
+          {deployedResources?.xPNTsAddress && (
+            <div className="summary-item">
+              <span className="label">xPNTs Token:</span>
+              <span className="value address">{deployedResources.xPNTsAddress}</span>
+              <button
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(deployedResources.xPNTsAddress);
+                  alert("xPNTs address copied to clipboard!");
+                }}
+                title="Copy xPNTs address"
+              >
+                📋
+              </button>
+            </div>
+          )}
+          {deployedResources?.sGTokenAmount && (
+            <div className="summary-item">
+              <span className="label">Staked GToken:</span>
+              <span className="value">{deployedResources.sGTokenAmount} sGToken</span>
+            </div>
+          )}
           {entryPointTxHash && (
             <div className="summary-item">
               <span className="label">EntryPoint Deposit TX:</span>

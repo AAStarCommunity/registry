@@ -397,6 +397,7 @@ export function DeployWizard() {
               owner={finalOwner}
               entryPointTxHash={config.entryPointTxHash}
               registryTxHash={config.registryTxHash}
+              deployedResources={config.deployedResources}
             />
           )
         );
