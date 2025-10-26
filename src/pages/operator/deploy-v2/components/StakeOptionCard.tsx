@@ -217,7 +217,7 @@ export function createStandardFlowOption(
 
   return {
     type: "aoa",
-    title: "Enhanced ERC-4337 Flow: AOA",
+    title: "Enhanced ERC-4337",
     subtitle: "Asset Oriented Abstraction - No off-chain signature server, just Your Gas Token",
     recommended: ethBalance >= minEth && gTokenBalance >= minGToken,
     badge: "AOA",
