@@ -4,7 +4,7 @@ import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import "./RegistryExplorer.css";
 
-type RegistryVersion = "v1.2" | "v2.0";
+type RegistryVersion = "v1.2" | "v2.0" | "v2.1";
 
 interface PaymasterInfo {
   address: string;
@@ -110,9 +110,16 @@ export function RegistryExplorer() {
     try {
       const provider = await getProvider();
       const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = registryVersion === "v1.2"
-        ? networkConfig.contracts.registry
-        : networkConfig.contracts.registryV2;
+
+      // Select registry address based on version
+      let registryAddress: string;
+      if (registryVersion === "v1.2") {
+        registryAddress = networkConfig.contracts.registry;
+      } else if (registryVersion === "v2.1" && networkConfig.contracts.registryV2_1) {
+        registryAddress = networkConfig.contracts.registryV2_1;
+      } else {
+        registryAddress = networkConfig.contracts.registryV2;
+      }
 
       setRegistryInfo({
         address: registryAddress,
@@ -122,6 +129,7 @@ export function RegistryExplorer() {
       if (registryVersion === "v1.2") {
         await loadV1Paymasters(provider, registryAddress);
       } else {
+        // v2.0 and v2.1 use the same interface (backward compatible)
         await loadV2Paymasters(provider, registryAddress);
       }
     } catch (err: any) {
@@ -317,7 +325,15 @@ export function RegistryExplorer() {
                 onClick={() => setRegistryVersion("v2.0")}
                 disabled={loading}
               >
-                v2.0 (Current)
+                v2.0
+              </button>
+              <button
+                className={`version-btn ${registryVersion === "v2.1" ? "active" : ""}`}
+                onClick={() => setRegistryVersion("v2.1")}
+                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2_1}
+                title={!getCurrentNetworkConfig().contracts.registryV2_1 ? "v2.1 not deployed yet" : ""}
+              >
+                v2.1 (Latest)
               </button>
             </div>
           </div>
