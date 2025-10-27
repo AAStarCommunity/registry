@@ -22,7 +22,7 @@ export interface Step6Props {
   onBack: () => void;
 }
 
-// Registry v2.0 ABI - only registerCommunity needed
+// Registry v2.0 ABI - registerCommunity with stGTokenAmount parameter
 const REGISTRY_V2_ABI = [
   `function registerCommunity(
     tuple(
@@ -43,7 +43,8 @@ const REGISTRY_V2_ABI = [
       uint256 lastUpdatedAt,
       bool isActive,
       uint256 memberCount
-    ) profile
+    ) profile,
+    uint256 stGTokenAmount
   ) external`,
   "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
 ];
@@ -115,8 +116,11 @@ export function Step6_RegisterRegistry_v2({
 
       console.log("Community profile:", profile);
 
-      // Register to Registry v2
-      const tx = await registry.registerCommunity(profile);
+      // Register to Registry v2 - must pass stGTokenAmount (0 if already staked)
+      // AOA mode: typically pass 30-50 GT here
+      // Super mode: pass 0 if already locked via SuperPaymaster
+      const stGTokenAmount = 0; // Assume already locked in previous step
+      const tx = await registry.registerCommunity(profile, stGTokenAmount);
       console.log("📤 Registration tx sent:", tx.hash);
 
       // Wait for confirmation
