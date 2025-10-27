@@ -1916,3 +1916,59 @@ info={ "method": "getAllCommunities", "signature": "getAllCommunities()" })
 - Configured as locker in GTokenStaking: `0xD8235F8920815175BD46f76a2cb99e15E02cED68`
 - Zero communities registered yet (fresh deployment)
 
+
+## 2025-10-27: Fixed ethers.js ABI Format Issue (CRITICAL BUG)
+
+### Issue
+v2.1 Explorer was calling the correct contract address but still failing:
+```
+could not decode result data (value="0x", info={ "method": "getCommunityCount" })
+```
+
+### Root Cause
+**ethers.js Human-Readable ABI format incompatibility**
+
+The ABI definitions included Solidity's `external` keyword:
+```typescript
+❌ "function getCommunityCount() external view returns (uint256)"
+```
+
+ethers.js v6 Human-Readable ABI parser **does not support** the `external` keyword.
+This keyword is only valid in Solidity source code, not in ABI specifications.
+
+### Solution
+Removed `external` keyword from all ABI definitions:
+```typescript
+✓ "function getCommunityCount() view returns (uint256)"
+✓ "function getCommunities(uint256, uint256) view returns (address[])"
+✓ "function getCommunityProfile(address) view returns (...)"
+```
+
+### Files Changed
+- `src/pages/RegistryExplorer.tsx`
+  - Fixed REGISTRY_V2_ABI (line 221-224)
+  - Fixed REGISTRY_V2_1_ABI (line 270-274)
+
+### Debug Process
+1. Added console logs to track contract addresses → correct address confirmed
+2. Tested contract with `cast` CLI → functions work correctly
+3. Identified ABI format mismatch → ethers.js parser rejects `external` keyword
+4. Removed `external` from all Human-Readable ABI strings → fixed
+
+### Verification
+```bash
+# Contract functions work via cast:
+cast call 0x3F7E...eb3 "getCommunityCount()" → 0x0...0 (success)
+
+# Frontend now works with corrected ABI
+```
+
+### Key Learning
+**ethers.js Human-Readable ABI syntax:**
+- ✓ `function name(params) view returns (type)`
+- ✓ `function name(params) returns (type)` 
+- ✗ `function name(params) external view returns (type)` ← INVALID
+
+The `external`/`internal`/`public`/`private` visibility modifiers are 
+Solidity-specific and **must not** appear in ABI definitions.
+
