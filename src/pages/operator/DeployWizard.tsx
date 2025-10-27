@@ -8,7 +8,7 @@ import { Step2_ConfigForm } from './deploy-v2/steps/Step2_ConfigForm';
 import { Step3_DeployPaymaster } from './deploy-v2/steps/Step3_DeployPaymaster';
 import { Step4_DeployResources, type DeployedResources } from './deploy-v2/steps/Step4_DeployResources';
 import { Step5_Stake } from './deploy-v2/steps/Step5_Stake';
-import { Step6_RegisterRegistry } from './deploy-v2/steps/Step6_RegisterRegistry';
+import { Step6_RegisterRegistry_v2 } from './deploy-v2/steps/Step6_RegisterRegistry_v2';
 import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
 
 // Import types and utilities
@@ -367,11 +367,19 @@ export function DeployWizard() {
             ? config.paymasterAddress
             : getSuperPaymasterAddress();
 
+        // Registry v2.1 requires xPNTs and SBT addresses from deployed resources
+        const xPNTsAddress = config.deployedResources?.xPNTsAddress;
+        const sbtAddress = config.deployedResources?.sbtAddress;
+
         return (
           config.walletStatus &&
-          paymasterForRegister && (
-            <Step6_RegisterRegistry
+          paymasterForRegister &&
+          xPNTsAddress &&
+          sbtAddress && (
+            <Step6_RegisterRegistry_v2
               paymasterAddress={paymasterForRegister}
+              xPNTsAddress={xPNTsAddress}
+              sbtAddress={sbtAddress}
               walletStatus={config.walletStatus}
               communityName={config.communityName}
               serviceFeeRate={config.serviceFeeRate}

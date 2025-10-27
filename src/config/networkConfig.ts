@@ -98,12 +98,17 @@ const mainnetConfig: NetworkConfig = {
   contracts: {
     paymasterV4: "", // TBD
     registry: "", // TBD
+    registryV2: "", // TBD
     pntToken: "", // TBD
     gToken: "", // TBD
+    gTokenStaking: "", // TBD
     gasTokenFactory: "", // TBD
     sbtContract: "", // TBD
     usdtContract: "0xdac17f958d2ee523a2206206994597c13d831ec7", // Real USDT
     entryPointV07: "0x0000000071727De22E5E9d8BAf0edAc6f37da032",
+    xPNTsFactory: "", // TBD
+    mySBT: "", // TBD
+    superPaymasterV2: "", // TBD
   },
 
   resources: {
