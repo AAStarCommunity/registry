@@ -56,9 +56,9 @@ const sepoliaConfig: NetworkConfig = {
 
   contracts: {
     paymasterV4: import.meta.env.VITE_PAYMASTER_V4_ADDRESS || "0xBC56D82374c3CdF1234fa67E28AF9d3E31a9D445",
-    registry: import.meta.env.VITE_REGISTRY_ADDRESS || "0x838da93c815a6E45Aa50429529da9106C0621eF0",
-    registryV2: import.meta.env.VITE_REGISTRY_V2_ADDRESS || "0x6806e4937038e783cA0D3961B7E258A3549A0043",
-    registryV2_1: import.meta.env.VITE_REGISTRY_V2_1_ADDRESS, // TBD: Deploy and update
+    registry: import.meta.env.VITE_REGISTRY_ADDRESS || "0x838da93c815a6E45Aa50429529da9106C0621eF0", // v1.2 (keep for reference)
+    registryV2: import.meta.env.VITE_REGISTRY_V2_ADDRESS || "0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3", // v2.1 DEFAULT
+    registryV2_1: import.meta.env.VITE_REGISTRY_V2_1_ADDRESS || "0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3", // v2.1
     pntToken: import.meta.env.VITE_PNT_TOKEN_ADDRESS || "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
     gToken: import.meta.env.VITE_GTOKEN_ADDRESS || "0x868F843723a98c6EECC4BF0aF3352C53d5004147",
     gTokenStaking: import.meta.env.VITE_GTOKEN_STAKING_ADDRESS || "0x199402b3F213A233e89585957F86A07ED1e1cD67",
