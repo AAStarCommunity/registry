@@ -219,8 +219,8 @@ export function RegistryExplorer() {
 
   const loadV2Paymasters = async (provider: any, registryAddress: string) => {
     const REGISTRY_V2_ABI = [
-      "function getAllCommunities() external view returns (address[])",
-      "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+      "function getAllCommunities() view returns (address[])",
+      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
     ];
 
     const registry = new ethers.Contract(registryAddress, REGISTRY_V2_ABI, provider);
@@ -268,9 +268,9 @@ export function RegistryExplorer() {
 
   const loadV2_1Paymasters = async (provider: any, registryAddress: string) => {
     const REGISTRY_V2_1_ABI = [
-      "function getCommunityCount() external view returns (uint256)",
-      "function getCommunities(uint256 offset, uint256 limit) external view returns (address[])",
-      "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+      "function getCommunityCount() view returns (uint256)",
+      "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
+      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
     ];
 
     const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_ABI, provider);
