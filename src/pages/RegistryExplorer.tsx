@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
+import { getProvider } from "../utils/rpc-provider";
 import "./RegistryExplorer.css";
 
 type RegistryVersion = "v1.2" | "v2.0";
@@ -132,12 +133,17 @@ export function RegistryExplorer() {
     }
   };
 
-  const loadV1Paymasters = async (provider: any, registryAddress: string) => {
+  const loadV1Paymasters = async (_provider: any, registryAddress: string) => {
     // ✅ Registry v1.2 DOES support listing all paymasters
+    // Use independent RPC provider (not MetaMask) as per CLAUDE.md best practices
+    const provider = getProvider();
+
     const REGISTRY_V1_ABI = [
       "function getActivePaymasters() external view returns (address[])",
       "function getPaymasterCount() external view returns (uint256)",
-      "function getPaymasterFullInfo(address) external view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+      // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
+      "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+      "function isPaymasterActive(address paymaster) view returns (bool)",
     ];
 
     const registry = new ethers.Contract(registryAddress, REGISTRY_V1_ABI, provider);
@@ -150,21 +156,33 @@ export function RegistryExplorer() {
 
       for (const pmAddress of paymasterAddresses) {
         try {
-          const info = await registry.getPaymasterFullInfo(pmAddress);
+          // Use getPaymasterInfo instead of getPaymasterFullInfo (bug in v1.2)
+          const info = await registry.getPaymasterInfo(pmAddress);
+          const isActive = await registry.isPaymasterActive(pmAddress);
+
+          // Skip if not registered (name is empty)
+          if (!info.name || info.name.length === 0) {
+            console.warn(`Skipping unregistered paymaster: ${pmAddress}`);
+            continue;
+          }
 
           paymasterList.push({
-            address: info.paymasterAddress,
+            address: pmAddress,
             name: info.name || "Unnamed Paymaster",
             description: "", // v1.2 doesn't store description
             category: "Paymaster", // v1.2 doesn't have mode/category distinction
-            verified: info.isActive,
+            verified: isActive,
             totalTransactions: Number(info.totalAttempts),
             totalGasSponsored: "N/A", // TODO: Calculate from analytics events
             supportedTokens: [], // TODO: Query from paymaster contract
             serviceFee: `${Number(info.feeRate) / 100}%`, // Convert basis points to percentage
-            owner: info.paymasterAddress, // v1.2 doesn't store owner separately
-            registeredAt: new Date(Number(info.registeredAt) * 1000).toLocaleDateString(),
-            metadata: info,
+            owner: pmAddress, // v1.2 doesn't store owner separately
+            registeredAt: "N/A", // getPaymasterInfo doesn't return registeredAt
+            metadata: {
+              feeRate: info.feeRate,
+              successCount: info.successCount,
+              totalAttempts: info.totalAttempts
+            },
           });
         } catch (err) {
           console.warn(`Failed to load info for ${pmAddress}:`, err);
