@@ -6,6 +6,21 @@
 
 ---
 
+## 2025-10-27 - Launch Paymaster迁移到Registry v2.1
+
+Launch Paymaster部署流程从Registry v1.2迁移到v2.1。DeployWizard现使用Step6_RegisterRegistry_v2，传递xPNTs/SBT地址。Registry v2.1合约支持4种节点类型（AOA/Super/ANode/KMS）和阶梯Slash（2%-10%）。
+
+**前端** (registry repo):
+- DeployWizard.tsx: Step6改用v2.1，传入deployedResources
+- networkConfig.ts: mainnet配置添加v2.1字段
+
+**合约** (SuperPaymaster repo):
+- TestRegistryLaunchPaymaster.s.sol: 添加nodeType字段支持
+
+**Commits**: registry@12e7cea, SuperPaymaster@2dd874b
+
+---
+
 ## 2025-10-26 - PaymasterV4.1 Constructor 增强
 
 增强 PaymasterV4.1 合约 constructor，新增 `_initialSBT` 和 `_initialGasToken` 可选参数。部署时自动传入 Step4 已部署的 SBT 和 xPNTs 地址，无需手动调用 `addSBT()` 和 `addGasToken()`。Token Management 区域现可正确显示已添加代币。
