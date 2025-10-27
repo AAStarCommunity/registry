@@ -291,3 +291,112 @@ category: profile.mode === 0 ? "AOA" : "Super"
 **修复者**: Claude Code
 **状态**: ✅ 已完成
 **影响**: Registry v1.2现在可以在RegistryExplorer页面正常显示所有paymaster列表
+
+---
+
+## 后续修复 - getPaymasterFullInfo错误 (2025-01-26)
+
+### 问题
+
+初次修复后，调用`getPaymasterFullInfo`时出现"execution reverted"错误：
+
+```
+MetaMask - RPC Error: execution reverted
+Failed to load info for 0x9091a98e43966cDa2677350CCc41efF9cedeff4c:
+Error: missing revert data
+```
+
+### 根本原因
+
+参考PaymasterDetail.tsx的实现发现两个问题：
+
+1. **使用了有bug的函数**: `getPaymasterFullInfo`在v1.2中有bug
+2. **使用了MetaMask provider**: 应该使用独立RPC provider
+
+```typescript
+// PaymasterDetail.tsx:92 (正确的实现)
+// Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
+const info = await registry.getPaymasterInfo(address);
+const isActive = await registry.isPaymasterActive(address);
+```
+
+### 修复方案
+
+#### 1. 使用独立RPC Provider (参考CLAUDE.md)
+
+```typescript
+// ❌ 错误：使用传入的provider (MetaMask)
+const registry = new ethers.Contract(registryAddress, REGISTRY_V1_ABI, provider);
+
+// ✅ 正确：使用getProvider() (独立RPC)
+import { getProvider } from "../utils/rpc-provider";
+const provider = getProvider();
+const registry = new ethers.Contract(registryAddress, REGISTRY_V1_ABI, provider);
+```
+
+#### 2. 使用getPaymasterInfo代替getPaymasterFullInfo
+
+```typescript
+const REGISTRY_V1_ABI = [
+  "function getActivePaymasters() external view returns (address[])",
+  "function getPaymasterCount() external view returns (uint256)",
+  // ❌ 错误：getPaymasterFullInfo有bug
+  // "function getPaymasterFullInfo(address) external view returns (tuple(...))",
+
+  // ✅ 正确：使用getPaymasterInfo
+  "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+  "function isPaymasterActive(address paymaster) view returns (bool)",
+];
+```
+
+#### 3. 处理未注册的paymaster
+
+```typescript
+for (const pmAddress of paymasterAddresses) {
+  try {
+    const info = await registry.getPaymasterInfo(pmAddress);
+    const isActive = await registry.isPaymasterActive(pmAddress);
+
+    // ✅ 跳过未注册的paymaster (name为空)
+    if (!info.name || info.name.length === 0) {
+      console.warn(`Skipping unregistered paymaster: ${pmAddress}`);
+      continue;
+    }
+
+    // ... 处理数据
+  } catch (err) {
+    console.warn(`Failed to load info for ${pmAddress}:`, err);
+  }
+}
+```
+
+### Registry v1.2 函数对比
+
+| 函数 | 返回值 | 状态 | 说明 |
+|------|--------|------|------|
+| `getPaymasterFullInfo` | `PaymasterInfo struct` | ❌ 有bug | 在某些情况下会revert |
+| `getPaymasterInfo` | `(feeRate, isActive, successCount, totalAttempts, name)` | ✅ 稳定 | Dashboard使用此函数 |
+| `isPaymasterActive` | `bool` | ✅ 稳定 | 单独查询active状态 |
+
+### 技术栈对比
+
+| 实现 | Provider | 函数 | 结果 |
+|------|----------|------|------|
+| **RegistryExplorer (错误)** | MetaMask provider | `getPaymasterFullInfo` | ❌ execution reverted |
+| **RegistryExplorer (修复)** | `getProvider()` | `getPaymasterInfo` + `isPaymasterActive` | ✅ 正常工作 |
+| **Dashboard (参考)** | `getProvider()` | `getPaymasterInfo` + `isPaymasterActive` | ✅ 正常工作 |
+
+### 参考文档
+
+- `/Volumes/UltraDisk/Dev2/aastar/SuperPaymaster/docs/CLAUDE.md` - Balance Queries最佳实践
+- `/Volumes/UltraDisk/Dev2/aastar/registry/src/pages/analytics/PaymasterDetail.tsx` - 正确实现参考
+- `/Volumes/UltraDisk/Dev2/aastar/registry/src/utils/rpc-provider.ts` - getProvider实现
+
+### Commit
+
+```bash
+git commit -m "fix: 修复getPaymasterFullInfo错误，参考dashboard技术栈"
+# Commit: 88003c2
+```
+
+**最终状态**: ✅ 完全修复，Registry v1.2可正常工作
