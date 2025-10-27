@@ -121,6 +121,13 @@ export function RegistryExplorer() {
         registryAddress = networkConfig.contracts.registryV2;
       }
 
+      console.log("=== Registry Explorer Debug ===");
+      console.log("Version selected:", registryVersion);
+      console.log("networkConfig.contracts.registryV2:", networkConfig.contracts.registryV2);
+      console.log("networkConfig.contracts.registryV2_1:", networkConfig.contracts.registryV2_1);
+      console.log("Final registryAddress used:", registryAddress);
+      console.log("==============================");
+
       setRegistryInfo({
         address: registryAddress,
         totalPaymasters: 0,
