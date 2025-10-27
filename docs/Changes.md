@@ -6,18 +6,28 @@
 
 ---
 
-## 2025-10-27 - Launch Paymaster迁移到Registry v2.1
+## 2025-10-27 - Registry v2.1完整集成：合约+前端+Explorer
 
-Launch Paymaster部署流程从Registry v1.2迁移到v2.1。DeployWizard现使用Step6_RegisterRegistry_v2，传递xPNTs/SBT地址。Registry v2.1合约支持4种节点类型（AOA/Super/ANode/KMS）和阶梯Slash（2%-10%）。
+### Launch Paymaster迁移
+Launch Paymaster部署流程从v1.2迁移到v2.1。DeployWizard使用Step6_RegisterRegistry_v2，传递xPNTs/SBT地址。
 
-**前端** (registry repo):
-- DeployWizard.tsx: Step6改用v2.1，传入deployedResources
-- networkConfig.ts: mainnet配置添加v2.1字段
+### Explorer多版本支持
+RegistryExplorer现支持v1.2/v2.0/v2.1三版本切换。v2.1按钮disabled直到部署（自动检测registryV2_1配置）。
 
-**合约** (SuperPaymaster repo):
-- TestRegistryLaunchPaymaster.s.sol: 添加nodeType字段支持
+### Registry v2.1合约改进
+- ✅ 4种节点类型（AOA/Super/ANode/KMS）vs 2种
+- ✅ 阶梯Slash（2%-10%）vs 固定10%
+- ✅ 可配置NodeTypeConfig（治理调整）
+- ✅ setSuperPaymasterV2()显式存储
+- ✅ 向后兼容v2.0 API
 
-**Commits**: registry@12e7cea, SuperPaymaster@2dd874b
+**文件修改**:
+- RegistryExplorer.tsx: 添加v2.1版本按钮，复用v2.0 loadV2Paymasters
+- networkConfig.ts: 添加registryV2_1可选字段
+- DeployRegistryV2_1.s.sol: 独立部署脚本（复用GTokenStaking）
+- Registry-v2.1-Deployment.md: 完整部署指南
+
+**Commits**: registry@664e5d0, SuperPaymaster@02ad416
 
 ---
 
