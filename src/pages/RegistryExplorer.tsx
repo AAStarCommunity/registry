@@ -128,8 +128,11 @@ export function RegistryExplorer() {
 
       if (registryVersion === "v1.2") {
         await loadV1Paymasters(provider, registryAddress);
+      } else if (registryVersion === "v2.1") {
+        // v2.1 uses paginated API
+        await loadV2_1Paymasters(provider, registryAddress);
       } else {
-        // v2.0 and v2.1 use the same interface (backward compatible)
+        // v2.0 uses getAllCommunities
         await loadV2Paymasters(provider, registryAddress);
       }
     } catch (err: any) {
@@ -253,6 +256,69 @@ export function RegistryExplorer() {
       });
     } catch (err: any) {
       throw new Error(`Failed to query Registry v2.0: ${err.message}`);
+    }
+  };
+
+  const loadV2_1Paymasters = async (provider: any, registryAddress: string) => {
+    const REGISTRY_V2_1_ABI = [
+      "function getCommunityCount() external view returns (uint256)",
+      "function getCommunities(uint256 offset, uint256 limit) external view returns (address[])",
+      "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+    ];
+
+    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_ABI, provider);
+
+    try {
+      // Get total count first
+      const count = await registry.getCommunityCount();
+      console.log(`📋 Found ${count} communities in Registry v2.1`);
+
+      // If no communities, return early
+      if (count === 0n) {
+        setPaymasters([]);
+        setRegistryInfo({
+          address: registryAddress,
+          totalPaymasters: 0,
+        });
+        return;
+      }
+
+      // Get all communities using paginated API
+      const communities = await registry.getCommunities(0, count);
+      const paymasterList: PaymasterInfo[] = [];
+
+      for (const communityAddr of communities) {
+        try {
+          const profile = await registry.getCommunityProfile(communityAddr);
+
+          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
+            paymasterList.push({
+              address: profile.paymasterAddress,
+              name: profile.name || "Unnamed",
+              description: profile.description || "",
+              category: profile.mode === 0 ? "AOA" : "Super",
+              verified: profile.isActive,
+              totalTransactions: 0, // TODO: Query from analytics
+              totalGasSponsored: "N/A",
+              supportedTokens: [], // TODO: Query from paymaster
+              serviceFee: "N/A",
+              owner: profile.community,
+              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
+              metadata: profile,
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to load profile for ${communityAddr}:`, err);
+        }
+      }
+
+      setPaymasters(paymasterList);
+      setRegistryInfo({
+        address: registryAddress,
+        totalPaymasters: paymasterList.length,
+      });
+    } catch (err: any) {
+      throw new Error(`Failed to query Registry v2.1: ${err.message}`);
     }
   };
 

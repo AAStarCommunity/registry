@@ -1878,3 +1878,41 @@ const handleSaveParam = async (paramName: string) => {
 
 ---
 
+
+## 2025-10-27: Registry v2.1 Explorer API Compatibility Fix
+
+### Issue
+Explorer failed when clicking "v2.1 (Latest)" button with error:
+```
+Failed to query Registry v2.0: could not decode result data (value="0x",
+info={ "method": "getAllCommunities", "signature": "getAllCommunities()" })
+```
+
+### Root Cause
+- Registry v2.1 changed from `getAllCommunities()` to paginated API
+- New API: `getCommunityCount()` + `getCommunities(offset, limit)`
+- Frontend was using v2.0 ABI which doesn't match v2.1 contract
+
+### Solution
+**File**: `src/pages/RegistryExplorer.tsx`
+- Added new `loadV2_1Paymasters()` function using v2.1 paginated API
+- Updated version routing logic to distinguish v2.0 vs v2.1
+- Added v2.1 ABI with correct function signatures:
+  ```typescript
+  const REGISTRY_V2_1_ABI = [
+    "function getCommunityCount() external view returns (uint256)",
+    "function getCommunities(uint256 offset, uint256 limit) external view returns (address[])",
+    "function getCommunityProfile(...) external view returns (...)"
+  ];
+  ```
+
+### Result
+- v2.1 button now works correctly (shows 0 communities for fresh deployment)
+- Backward compatible: v2.0 still uses `getAllCommunities()`
+- Dev server running on http://localhost:3002
+
+### Technical Notes
+- v2.1 contract deployed at: `0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3`
+- Configured as locker in GTokenStaking: `0xD8235F8920815175BD46f76a2cb99e15E02cED68`
+- Zero communities registered yet (fresh deployment)
+
