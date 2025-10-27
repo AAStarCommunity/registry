@@ -6,28 +6,34 @@
 
 ---
 
-## 2025-10-27 - Registry v2.1完整集成：合约+前端+Explorer
+## 2025-10-27 - Registry v2.1完整部署：合约+前端+全面启用
+
+### 部署成功 ✅
+- **地址**: 0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3
+- **网络**: Sepolia (11155111)
+- **验证**: Sourcify
+- **Locker**: 已配置到GTokenStaking (Tx: 0xfd564b...efcd6d)
+- **状态**: 所有配置已更新为DEFAULT
 
 ### Launch Paymaster迁移
 Launch Paymaster部署流程从v1.2迁移到v2.1。DeployWizard使用Step6_RegisterRegistry_v2，传递xPNTs/SBT地址。
 
 ### Explorer多版本支持
-RegistryExplorer现支持v1.2/v2.0/v2.1三版本切换。v2.1按钮disabled直到部署（自动检测registryV2_1配置）。
+RegistryExplorer现支持v1.2/v2.0/v2.1三版本切换。v2.1按钮已激活并设为默认。
 
-### Registry v2.1合约改进
+### Registry v2.1合约特性
 - ✅ 4种节点类型（AOA/Super/ANode/KMS）vs 2种
 - ✅ 阶梯Slash（2%-10%）vs 固定10%
 - ✅ 可配置NodeTypeConfig（治理调整）
 - ✅ setSuperPaymasterV2()显式存储
 - ✅ 向后兼容v2.0 API
 
-**文件修改**:
-- RegistryExplorer.tsx: 添加v2.1版本按钮，复用v2.0 loadV2Paymasters
-- networkConfig.ts: 添加registryV2_1可选字段
-- DeployRegistryV2_1.s.sol: 独立部署脚本（复用GTokenStaking）
-- Registry-v2.1-Deployment.md: 完整部署指南
+### 配置更新
+- networkConfig.ts: registryV2默认值=v2.1地址
+- SuperPaymaster .env: V2_REGISTRY=v2.1地址
+- 所有前端组件默认使用v2.1
 
-**Commits**: registry@664e5d0, SuperPaymaster@02ad416
+**Commits**: registry@09709d7, SuperPaymaster@03740ce
 
 ---
 
