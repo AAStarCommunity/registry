@@ -133,9 +133,52 @@ export function RegistryExplorer() {
   };
 
   const loadV1Paymasters = async (provider: any, registryAddress: string) => {
-    // Registry v1.2 doesn't have a list function, so we show instruction
-    setPaymasters([]);
-    setError("Registry v1.2 doesn't support listing all paymasters. Use v2.0 or provide specific paymaster address.");
+    // ✅ Registry v1.2 DOES support listing all paymasters
+    const REGISTRY_V1_ABI = [
+      "function getActivePaymasters() external view returns (address[])",
+      "function getPaymasterCount() external view returns (uint256)",
+      "function getPaymasterFullInfo(address) external view returns (tuple(address paymasterAddress, string name, uint256 feeRate, uint256 stakedAmount, uint256 reputation, bool isActive, uint256 successCount, uint256 totalAttempts, uint256 registeredAt, uint256 lastActiveAt))",
+    ];
+
+    const registry = new ethers.Contract(registryAddress, REGISTRY_V1_ABI, provider);
+
+    try {
+      const paymasterAddresses = await registry.getActivePaymasters();
+      console.log(`📋 Found ${paymasterAddresses.length} paymasters in Registry v1.2`);
+
+      const paymasterList: PaymasterInfo[] = [];
+
+      for (const pmAddress of paymasterAddresses) {
+        try {
+          const info = await registry.getPaymasterFullInfo(pmAddress);
+
+          paymasterList.push({
+            address: info.paymasterAddress,
+            name: info.name || "Unnamed Paymaster",
+            description: "", // v1.2 doesn't store description
+            category: "Paymaster", // v1.2 doesn't have mode/category distinction
+            verified: info.isActive,
+            totalTransactions: Number(info.totalAttempts),
+            totalGasSponsored: "N/A", // TODO: Calculate from analytics events
+            supportedTokens: [], // TODO: Query from paymaster contract
+            serviceFee: `${Number(info.feeRate) / 100}%`, // Convert basis points to percentage
+            owner: info.paymasterAddress, // v1.2 doesn't store owner separately
+            registeredAt: new Date(Number(info.registeredAt) * 1000).toLocaleDateString(),
+            metadata: info,
+          });
+        } catch (err) {
+          console.warn(`Failed to load info for ${pmAddress}:`, err);
+        }
+      }
+
+      setPaymasters(paymasterList);
+      setRegistryInfo({
+        address: registryAddress,
+        totalPaymasters: paymasterList.length,
+      });
+    } catch (err: any) {
+      throw new Error(`Failed to query Registry v1.2: ${err.message}`);
+    }
   };
 
   const loadV2Paymasters = async (provider: any, registryAddress: string) => {
