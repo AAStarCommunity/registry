@@ -2061,3 +2061,52 @@ v2.0 Registry contract existed but caused compatibility issues, showing user-unf
 ### Commits
 - `d770c23` - refactor: 移除 Registry v2.0 按钮和相关代码
 
+---
+
+## 2025-10-28: Step 1 SBT Configuration UI Text Update
+
+### Issue
+SBT configuration text needed to emphasize that MySBT is a shared official contract used by all communities, and the input field should be read-only.
+
+### Changes
+**File**: `src/pages/operator/deploy-v2/steps/Step4_DeployResources.tsx`
+
+1. **Title Update** (line ~100):
+   - Before: "Step 1: Select SBT Contract"
+   - After: "Step 1: Config SBT Contract"
+
+2. **Description Update** (lines ~101-105):
+   - Before: "SBT (Soul Bound Token) is used for identity verification. You can use the default MySBT contract or deploy your own."
+   - After: "SBTs (Soul-Bound Tokens) act as the credentials for protocol membership and for permissioned access to its applications. We can use the default MySBT contract."
+
+3. **Input Field Made Read-Only** (lines ~107-113):
+   ```typescript
+   // Before
+   disabled={isLoading}
+
+   // After
+   disabled={true}
+   style={{
+     backgroundColor: "#f5f5f5",
+     color: "#666",
+     cursor: "not-allowed"
+   }}
+   ```
+
+4. **Link Text Update** (line ~115):
+   - Before: "Deploy your own MySBT →"
+   - After: "Config Community SBT or Get your own SBT →"
+
+5. **Button Text Update** (line ~125):
+   - Before: "Use This SBT →"
+   - After: "Use Default SBT Config"
+
+### Result
+- ✅ UI clearly communicates MySBT is a shared official contract
+- ✅ Input field is visually read-only (gray background, disabled cursor)
+- ✅ Text emphasizes SBT's role as protocol credentials
+- ✅ Link and button text updated to reflect configuration nature
+
+### Commits
+- `df7dbfc` - refactor: update SBT configuration UI text and styling
+
