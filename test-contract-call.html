@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Registry v2.1 Contract Call</title>
+  <script type="module">
+    import { ethers } from 'https://cdn.ethers.io/lib/ethers-5.7.2.esm.min.js';
+
+    async function testContractCall() {
+      const output = document.getElementById('output');
+
+      output.innerHTML += '<p><strong>Testing Registry v2.1 Contract Call</strong></p>';
+
+      // Public RPC
+      const rpcUrl = "https://rpc.sepolia.org";
+      const registryAddress = "0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3";
+
+      output.innerHTML += `<p>RPC: ${rpcUrl}</p>`;
+      output.innerHTML += `<p>Registry: ${registryAddress}</p>`;
+      output.innerHTML += '<hr>';
+
+      try {
+        // Test 1: Wrong ABI (with 'external')
+        output.innerHTML += '<h3>Test 1: ABI with "external" keyword (SHOULD FAIL)</h3>';
+        try {
+          const wrongABI = [
+            "function getCommunityCount() external view returns (uint256)"
+          ];
+          const provider1 = new ethers.providers.JsonRpcProvider(rpcUrl);
+          const contract1 = new ethers.Contract(registryAddress, wrongABI, provider1);
+          const count1 = await contract1.getCommunityCount();
+          output.innerHTML += `<p style="color: green;">✓ Unexpectedly succeeded: ${count1.toString()}</p>`;
+        } catch (err) {
+          output.innerHTML += `<p style="color: red;">✗ Failed as expected: ${err.message}</p>`;
+        }
+
+        // Test 2: Correct ABI (without 'external')
+        output.innerHTML += '<h3>Test 2: ABI without "external" keyword (SHOULD WORK)</h3>';
+        try {
+          const correctABI = [
+            "function getCommunityCount() view returns (uint256)"
+          ];
+          const provider2 = new ethers.providers.JsonRpcProvider(rpcUrl);
+          const contract2 = new ethers.Contract(registryAddress, correctABI, provider2);
+          const count2 = await contract2.getCommunityCount();
+          output.innerHTML += `<p style="color: green;">✓ Success: ${count2.toString()} communities</p>`;
+        } catch (err) {
+          output.innerHTML += `<p style="color: red;">✗ Failed: ${err.message}</p>`;
+        }
+
+        // Test 3: ethers.js v6 format
+        output.innerHTML += '<h3>Test 3: ethers.js v6 style (if available)</h3>';
+        output.innerHTML += '<p>Note: This page uses ethers.js v5, skipping v6 test</p>';
+
+      } catch (err) {
+        output.innerHTML += `<p style="color: red;">Fatal error: ${err.message}</p>`;
+      }
+    }
+
+    window.addEventListener('load', testContractCall);
+  </script>
+</head>
+<body>
+  <h1>Registry v2.1 ABI Test</h1>
+  <div id="output"></div>
+</body>
+</html>

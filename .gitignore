@@ -141,3 +141,7 @@ vite.config.ts.timestamp-*
 
 # Backup directory for Web3 reference code
 backup/
+
+# Test results
+test-results/
+playwright-report/
