@@ -346,11 +346,11 @@ export function Step4_DeployResources({
       case ResourceStep.SelectSBT:
         return (
           <div className="step-content">
-            <h3>Step 1: Select SBT Contract</h3>
+            <h3>Step 1: Config SBT Contract</h3>
             <p>
-              SBT (Soul Bound Token) is used for identity verification.
+              SBTs (Soul-Bound Tokens) act as the credentials for protocol membership and for permissioned access to its applications.
               <br />
-              You can use the default MySBT contract or deploy your own.
+              We can use the default MySBT contract.
             </p>
 
             <div className="form-group">
@@ -360,7 +360,12 @@ export function Step4_DeployResources({
                 value={sbtAddress}
                 onChange={(e) => setSbtAddress(e.target.value)}
                 placeholder="0x..."
-                disabled={isLoading}
+                disabled={true}
+                style={{
+                  backgroundColor: "#f5f5f5",
+                  color: "#666",
+                  cursor: "not-allowed"
+                }}
               />
               <div className="form-hint">
                 Default: {MYSBT_ADDRESS} (recommended)
@@ -371,7 +376,7 @@ export function Step4_DeployResources({
                   target="_blank"
                   style={{ color: "#667eea", textDecoration: "underline" }}
                 >
-                  Deploy your own MySBT →
+                  Config Community SBT or Get your own SBT →
                 </a>
               </div>
             </div>
@@ -381,7 +386,7 @@ export function Step4_DeployResources({
               onClick={handleSelectSBT}
               disabled={isLoading || !ethers.isAddress(sbtAddress)}
             >
-              Use This SBT →
+              Use Default SBT Config
             </button>
           </div>
         );
