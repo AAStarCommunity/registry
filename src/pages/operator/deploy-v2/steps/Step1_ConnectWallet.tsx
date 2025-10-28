@@ -29,7 +29,6 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
         gTokenBalance: '1200',
         pntsBalance: '800',
         aPNTsBalance: '600',
-        hasSBTContract: false,
         hasGasTokenContract: false,
         hasEnoughETH: true,
         hasEnoughGToken: true,

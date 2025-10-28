@@ -19,8 +19,6 @@ export interface WalletStatus {
   aPNTsBalance: string; // in aPNT (for Super Mode)
 
   // Contract checks
-  hasSBTContract: boolean;
-  sbtContractAddress?: string;
   hasGasTokenContract: boolean;
   gasTokenAddress?: string;
 
@@ -161,7 +159,6 @@ export async function checkWalletStatus(
     gTokenBalance: "0",
     pntsBalance: "0",
     aPNTsBalance: "0",
-    hasSBTContract: false,
     hasGasTokenContract: false,
     hasEnoughETH: false,
     hasEnoughGToken: false,
@@ -234,38 +231,6 @@ export async function checkWalletStatus(
     } catch (error) {
       console.log("Failed to check xPNTs factory:", error);
       status.hasGasTokenContract = false;
-    }
-
-    // SBT: Check if using official MySBT contract (shared template)
-    try {
-      const mySBTAddress = import.meta.env.VITE_MYSBT_ADDRESS || "0xB330a8A396Da67A1b50903E734750AAC81B0C711";
-      const mySBTABI = [
-        "function balanceOf(address owner) view returns (uint256)",
-      ];
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const mySBT = new ethers.Contract(mySBTAddress, mySBTABI, provider);
-
-      // Check if user has SBT tokens (meaning they're using the official MySBT)
-      const balance = await mySBT.balanceOf(address);
-
-      if (balance > 0n) {
-        status.hasSBTContract = true;
-        status.sbtContractAddress = mySBTAddress;
-        console.log("✅ Using official MySBT contract:", mySBTAddress);
-      } else {
-        // User can still use MySBT even without tokens, it's the default
-        status.hasSBTContract = true;
-        status.sbtContractAddress = mySBTAddress;
-        console.log("ℹ️ Will use official MySBT contract (no tokens yet):", mySBTAddress);
-      }
-    } catch (error) {
-      console.log("Failed to check MySBT:", error);
-      // Default to true since MySBT is the official shared contract
-      const mySBTAddress = import.meta.env.VITE_MYSBT_ADDRESS || "0xB330a8A396Da67A1b50903E734750AAC81B0C711";
-      status.hasSBTContract = true;
-      status.sbtContractAddress = mySBTAddress;
-      console.log("ℹ️ Using default MySBT address:", mySBTAddress);
     }
 
     return status;

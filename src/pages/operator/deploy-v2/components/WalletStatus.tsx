@@ -182,31 +182,6 @@ export function WalletStatus({
 
         <div className="contract-item">
           <div className="contract-header">
-            <span className={status.hasSBTContract ? "icon-success" : "icon-info"}>
-              {status.hasSBTContract ? "✅" : "ℹ️"}
-            </span>
-            <span className="contract-name">SBT Contract</span>
-          </div>
-          <div className="contract-status-text">
-            {status.hasSBTContract ? (
-              <>
-                <span className="status-deployed">Deployed</span>
-                <span className="contract-address">
-                  {status.sbtContractAddress?.slice(0, 6)}...
-                  {status.sbtContractAddress?.slice(-4)}
-                </span>
-              </>
-            ) : (
-              <span className="status-not-deployed">Not deployed yet</span>
-            )}
-          </div>
-          <div className="contract-help">
-            SBT (Soulbound Token) for user identity verification
-          </div>
-        </div>
-
-        <div className="contract-item">
-          <div className="contract-header">
             <span className={status.hasGasTokenContract ? "icon-success" : "icon-info"}>
               {status.hasGasTokenContract ? "✅" : "ℹ️"}
             </span>
