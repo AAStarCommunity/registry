@@ -217,9 +217,9 @@ export function RegistryExplorer() {
             owner: pmAddress, // v1.2 doesn't store owner separately
             registeredAt: "N/A", // getPaymasterInfo doesn't return registeredAt
             metadata: {
-              feeRate: info.feeRate,
-              successCount: info.successCount,
-              totalAttempts: info.totalAttempts
+              feeRate: Number(info.feeRate),
+              successCount: Number(info.successCount),
+              totalAttempts: Number(info.totalAttempts)
             },
           });
         } catch (err) {
