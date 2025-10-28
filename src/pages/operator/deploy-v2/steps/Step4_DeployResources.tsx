@@ -28,9 +28,10 @@ export interface DeployedResources {
 }
 
 // Contract addresses from env
-const MYSBT_ADDRESS =
-  import.meta.env.VITE_MYSBT_ADDRESS ||
-  "0xB330a8A396Da67A1b50903E734750AAC81B0C711";
+const MYSBT_V2_3_ADDRESS =
+  import.meta.env.VITE_MYSBT_V2_3_ADDRESS ||
+  "0xc1085841307d85d4a8dC973321Df2dF7c01cE5C8";
+const MYSBT_ADDRESS = MYSBT_V2_3_ADDRESS; // Use MySBT v2.3 by default
 const XPNTS_FACTORY_ADDRESS =
   import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
   "0x356CF363E136b0880C8F48c9224A37171f375595";
@@ -40,6 +41,15 @@ const GTOKEN_ADDRESS =
 const GTOKEN_STAKING_ADDRESS =
   import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
   "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2";
+
+// Helper function to get block explorer URL
+const getExplorerUrl = (address: string): string => {
+  const network = getCurrentNetworkConfig();
+  const baseUrl = network.name === "sepolia"
+    ? "https://sepolia.etherscan.io"
+    : "https://etherscan.io";
+  return `${baseUrl}/address/${address}`;
+};
 
 // ABIs
 const XPNTS_FACTORY_ABI = [
@@ -350,7 +360,7 @@ export function Step4_DeployResources({
             <p>
               SBTs (Soul-Bound Tokens) act as the credentials for protocol membership and for permissioned access to its applications.
               <br />
-              We can use the default MySBT contract.
+              We use the default protocol MySBT 2.3 contract.
             </p>
 
             <div className="form-group">
@@ -368,15 +378,24 @@ export function Step4_DeployResources({
                 }}
               />
               <div className="form-hint">
-                Default: {MYSBT_ADDRESS} (recommended)
+                Default: {MYSBT_ADDRESS} (
+                <a
+                  href={getExplorerUrl(MYSBT_ADDRESS)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#667eea", textDecoration: "underline" }}
+                >
+                  View on Etherscan
+                </a>
+                ) (recommended)
               </div>
               <div className="form-hint" style={{ marginTop: "0.5rem" }}>
                 <a
-                  href="/get-sbt"
+                  href="/my-sbt"
                   target="_blank"
                   style={{ color: "#667eea", textDecoration: "underline" }}
                 >
-                  Config Community SBT or Get your own SBT →
+                  Config Community SBT (only Protocol Operator or Community Multisig Safe Contract) or Get your own SBT →
                 </a>
               </div>
             </div>
