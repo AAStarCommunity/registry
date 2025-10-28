@@ -81,12 +81,12 @@ export function Step3_DeployPaymaster({
         const networkConfig = getCurrentNetworkConfig();
 
         const registry = new ethers.Contract(
-          networkConfig.contracts.registryV2,
+          networkConfig.contracts.registryV2_1,
           REGISTRY_V2_ABI,
           provider
         );
 
-        console.log("🔍 Checking if user has existing paymaster...");
+        console.log("🔍 Checking if user has existing paymaster in Registry v2.1...");
         const profile = await registry.getCommunityProfile(userAddress);
 
         // Check if paymaster address is not zero address

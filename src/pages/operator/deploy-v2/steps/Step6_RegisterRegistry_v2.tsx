@@ -1,5 +1,5 @@
 /**
- * Step 6: Register to Registry v2.0
+ * Step 6: Register to Registry v2.1
  *
  * Pure metadata registration - NO staking required
  * (stGToken was already staked in Step 4)
@@ -22,8 +22,8 @@ export interface Step6Props {
   onBack: () => void;
 }
 
-// Registry v2.0 ABI - registerCommunity with stGTokenAmount parameter
-const REGISTRY_V2_ABI = [
+// Registry v2.1 ABI - registerCommunity with stGTokenAmount parameter (backward compatible with v2.0)
+const REGISTRY_V2_1_ABI = [
   `function registerCommunity(
     tuple(
       string name,
@@ -83,13 +83,13 @@ export function Step6_RegisterRegistry_v2({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const registry = new ethers.Contract(
-        config.contracts.registryV2,
-        REGISTRY_V2_ABI,
+        config.contracts.registryV2_1,
+        REGISTRY_V2_1_ABI,
         signer
       );
 
-      console.log("📝 Registering community to Registry v2...");
-      console.log("Registry v2:", config.contracts.registryV2);
+      console.log("📝 Registering community to Registry v2.1...");
+      console.log("Registry v2.1:", config.contracts.registryV2_1);
       console.log("Paymaster:", paymasterAddress);
       console.log("xPNTs:", xPNTsAddress);
 
