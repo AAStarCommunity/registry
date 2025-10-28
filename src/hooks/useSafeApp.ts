@@ -1,5 +1,14 @@
 import { useEffect, useState } from 'react';
-import SafeAppsSDK, { SafeInfo } from '@safe-global/safe-apps-sdk';
+import SafeAppsSDK from '@safe-global/safe-apps-sdk';
+
+// Define SafeInfo type based on SDK response
+interface SafeInfo {
+  safeAddress: string;
+  chainId: number;
+  threshold: number;
+  owners: string[];
+  isReadOnly: boolean;
+}
 
 interface UseSafeAppReturn {
   sdk: SafeAppsSDK | null;
