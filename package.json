@@ -13,6 +13,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@safe-global/safe-apps-react-sdk": "^4.7.2",
+    "@safe-global/safe-apps-sdk": "^9.1.0",
     "ethers": "^6.15.0",
     "i18next": "^25.6.0",
     "i18next-browser-languagedetector": "^8.2.0",

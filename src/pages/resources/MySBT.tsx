@@ -480,25 +480,86 @@ export function MySBT() {
               </ul>
             </div>
 
-            {/* Action Footer */}
-            <div className="action-footer">
-              <a href="/get-gtoken" className="action-button outline">
-                Get GToken First
-              </a>
-              <a
-                href="https://thegraph.com/studio/subgraph/mysbt-v-2-3"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="action-button outline"
-              >
-                View Subgraph →
-              </a>
-              <button className="action-button secondary" onClick={() => navigate(-1)}>
-                Back to Home
-              </button>
+            {/* Community Operator Section */}
+            <div className="info-section operator-section">
+              <h3>🔐 For Community Operators</h3>
+              <p className="section-description">
+                Manage your community with enhanced security using Gnosis Safe multi-signature wallet.
+              </p>
+
+              <div className="operator-features">
+                <div className="feature-card">
+                  <h4>Why Use Gnosis Safe?</h4>
+                  <ul className="help-list">
+                    <li>Multi-signature security for community management</li>
+                    <li>Transparent on-chain governance</li>
+                    <li>Lower gas fees on Layer 2 networks</li>
+                    <li>Team-based decision making</li>
+                  </ul>
+                </div>
+
+                <div className="feature-card">
+                  <h4>Recommended Setup</h4>
+                  <ul className="help-list">
+                    <li>
+                      <strong>Network</strong>: Optimism (Layer 2 - lower fees)
+                    </li>
+                    <li>
+                      <strong>Threshold</strong>: 2/3 or 3/5 for security
+                    </li>
+                    <li>
+                      <strong>Signers</strong>: Core team members only
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="safe-actions">
+                <a
+                  href="https://app.safe.global/new-safe/create?chain=oeth"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button primary"
+                >
+                  Create Safe on Optimism →
+                </a>
+                <a
+                  href="https://app.safe.global/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button outline"
+                >
+                  Open Existing Safe
+                </a>
+              </div>
+
+              <div className="info-banner operator-info">
+                <div className="info-item">
+                  <span className="label">Alternative Option</span>
+                  <span className="value">You can also manage with your EOA (regular wallet)</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
+
+        {/* Action Footer - Always visible */}
+        <div className="action-footer">
+          <a href="/get-gtoken" className="action-button outline">
+            Get GToken First
+          </a>
+          <a
+            href="https://thegraph.com/studio/subgraph/mysbt-v-2-3"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="action-button outline"
+          >
+            View Subgraph →
+          </a>
+          <button className="action-button secondary" onClick={() => navigate(-1)}>
+            Back to Home
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@safe-global/safe-apps-react-sdk':
+        specifier: ^4.7.2
+        version: 4.7.2(react@19.2.0)(typescript@5.9.3)(zod@3.22.4)
+      '@safe-global/safe-apps-sdk':
+        specifier: ^9.1.0
+        version: 9.1.0(typescript@5.9.3)(zod@3.22.4)
       ethers:
         specifier: ^6.15.0
         version: 6.15.0
@@ -988,6 +994,18 @@ packages:
     resolution: {integrity: sha512-bf9PtUa0u8IXDVxzRToFQKsNCRz9qLYfR/MpECxl4mRoWYjAeFjgxj1XdZr2M/GNVpT05p+LgQOHopYDlUu6/w==}
     cpu: [x64]
     os: [win32]
+
+  '@safe-global/safe-apps-react-sdk@4.7.2':
+    resolution: {integrity: sha512-du7Bp3yPT2nQ8HhbfiyGit/ItcYwZ1tLEG5fbajMe8tjgr2D2YQMgNcNFmBpgHFyq+FpoA4a+toEKMEifQCMPg==}
+    peerDependencies:
+      react: 16.x.x || 17.x.x || 18.x.x
+
+  '@safe-global/safe-apps-sdk@9.1.0':
+    resolution: {integrity: sha512-N5p/ulfnnA2Pi2M3YeWjULeWbjo7ei22JwU/IXnhoHzKq3pYCN6ynL9mJBOlvDVv892EgLPCWCOwQk/uBT2v0Q==}
+
+  '@safe-global/safe-gateway-typescript-sdk@3.23.1':
+    resolution: {integrity: sha512-6ORQfwtEJYpalCeVO21L4XXGSdbEMfyp2hEv6cP82afKXSwvse6d3sdelgaPWUxHIsFRkWvHDdzh8IyyKHZKxw==}
+    engines: {node: '>=16'}
 
   '@scure/base@1.1.9':
     resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
@@ -3721,6 +3739,28 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.52.4':
     optional: true
+
+  '@safe-global/safe-apps-react-sdk@4.7.2(react@19.2.0)(typescript@5.9.3)(zod@3.22.4)':
+    dependencies:
+      '@safe-global/safe-apps-sdk': 9.1.0(typescript@5.9.3)(zod@3.22.4)
+      react: 19.2.0
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@safe-global/safe-apps-sdk@9.1.0(typescript@5.9.3)(zod@3.22.4)':
+    dependencies:
+      '@safe-global/safe-gateway-typescript-sdk': 3.23.1
+      viem: 2.9.9(typescript@5.9.3)(zod@3.22.4)
+    transitivePeerDependencies:
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@safe-global/safe-gateway-typescript-sdk@3.23.1': {}
 
   '@scure/base@1.1.9': {}
 
