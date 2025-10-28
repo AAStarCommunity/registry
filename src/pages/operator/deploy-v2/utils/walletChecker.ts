@@ -212,10 +212,11 @@ export async function checkWalletStatus(
 
     // Check for existing xPNTs (GasToken) contract via xPNTsFactory
     try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const xPNTsFactoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || "0x356CF363E136b0880C8F48c9224A37171f375595";
       const xPNTsFactoryABI = [
-        "function hasToken(address community) external view returns (bool)",
-        "function getTokenAddress(address community) external view returns (address)",
+        "function hasToken(address community) view returns (bool)",
+        "function getTokenAddress(address community) view returns (address)",
       ];
 
       const factory = new ethers.Contract(xPNTsFactoryAddress, xPNTsFactoryABI, provider);
@@ -225,17 +226,47 @@ export async function checkWalletStatus(
         const tokenAddress = await factory.getTokenAddress(address);
         status.hasGasTokenContract = true;
         status.gasTokenAddress = tokenAddress;
+        console.log("✅ Found existing xPNTs contract:", tokenAddress);
       } else {
         status.hasGasTokenContract = false;
+        console.log("ℹ️ No xPNTs contract found for this address");
       }
     } catch (error) {
       console.log("Failed to check xPNTs factory:", error);
       status.hasGasTokenContract = false;
     }
 
-    // SBT: Using shared MySBT template, no individual deployment needed
-    // Set to false as user doesn't deploy their own SBT contract
-    status.hasSBTContract = false;
+    // SBT: Check if using official MySBT contract (shared template)
+    try {
+      const mySBTAddress = import.meta.env.VITE_MYSBT_ADDRESS || "0xB330a8A396Da67A1b50903E734750AAC81B0C711";
+      const mySBTABI = [
+        "function balanceOf(address owner) view returns (uint256)",
+      ];
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const mySBT = new ethers.Contract(mySBTAddress, mySBTABI, provider);
+
+      // Check if user has SBT tokens (meaning they're using the official MySBT)
+      const balance = await mySBT.balanceOf(address);
+
+      if (balance > 0n) {
+        status.hasSBTContract = true;
+        status.sbtContractAddress = mySBTAddress;
+        console.log("✅ Using official MySBT contract:", mySBTAddress);
+      } else {
+        // User can still use MySBT even without tokens, it's the default
+        status.hasSBTContract = true;
+        status.sbtContractAddress = mySBTAddress;
+        console.log("ℹ️ Will use official MySBT contract (no tokens yet):", mySBTAddress);
+      }
+    } catch (error) {
+      console.log("Failed to check MySBT:", error);
+      // Default to true since MySBT is the official shared contract
+      const mySBTAddress = import.meta.env.VITE_MYSBT_ADDRESS || "0xB330a8A396Da67A1b50903E734750AAC81B0C711";
+      status.hasSBTContract = true;
+      status.sbtContractAddress = mySBTAddress;
+      console.log("ℹ️ Using default MySBT address:", mySBTAddress);
+    }
 
     return status;
   } catch (error) {
