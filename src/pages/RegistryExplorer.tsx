@@ -266,7 +266,10 @@ export function RegistryExplorer() {
     }
   };
 
-  const loadV2_1Paymasters = async (provider: any, registryAddress: string) => {
+  const loadV2_1Paymasters = async (_provider: any, registryAddress: string) => {
+    // Use independent RPC provider (not MetaMask) as per v1.2 pattern
+    const provider = getProvider();
+
     const REGISTRY_V2_1_ABI = [
       "function getCommunityCount() view returns (uint256)",
       "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
