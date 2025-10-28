@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { useSafeApp } from "../hooks/useSafeApp";
+import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
 import "./MySBT.css";
 
 // Contract addresses from env
@@ -44,6 +46,9 @@ const GTOKEN_ABI = [
 export function MySBT() {
   const navigate = useNavigate();
 
+  // Safe App detection
+  const { sdk, safe, isSafeApp, isLoading: isSafeLoading } = useSafeApp();
+
   // Wallet state
   const [account, setAccount] = useState<string>("");
   const [gtokenBalance, setGtokenBalance] = useState<string>("0");
@@ -64,9 +69,18 @@ export function MySBT() {
   const [queryAddress, setQueryAddress] = useState<string>("");
   const [queryReputation, setQueryReputation] = useState<string>("");
 
-  // Connect wallet
+  // Connect wallet (EOA or Safe)
   const connectWallet = async () => {
     try {
+      // If in Safe context, use Safe address
+      if (isSafeApp && safe) {
+        setAccount(safe.safeAddress);
+        await loadData(safe.safeAddress);
+        console.log("Connected to Safe:", safe.safeAddress);
+        return;
+      }
+
+      // Otherwise use MetaMask
       if (!window.ethereum) {
         setError("Please install MetaMask to use this feature");
         return;
@@ -77,6 +91,7 @@ export function MySBT() {
       });
       setAccount(accounts[0]);
       await loadData(accounts[0]);
+      console.log("Connected to MetaMask:", accounts[0]);
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
       setError(err?.message || "Failed to connect wallet");
@@ -145,7 +160,7 @@ export function MySBT() {
     }
   };
 
-  // Mint or add membership (permissionless)
+  // Mint or add membership (permissionless) - supports Safe & EOA
   const handleMint = async () => {
     if (!newCommunityAddress) {
       setError("Please enter a community address");
@@ -162,51 +177,103 @@ export function MySBT() {
     setMintTxHash("");
 
     try {
-      if (!window.ethereum) {
-        throw new Error("MetaMask not installed");
-      }
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      // Check and approve GToken if needed
+      // Use RPC provider to check current state
+      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTOKEN_ABI,
-        signer
+        rpcProvider
       );
 
       const allowance = await gtokenContract.allowance(account, MYSBT_V2_3_ADDRESS);
       const feeAmount = ethers.parseEther(mintFeeAmount);
 
+      // Prepare transactions
+      const transactions: BaseTransaction[] = [];
+
+      // Add approve transaction if needed
       if (allowance < feeAmount) {
-        console.log("Approving GToken...");
-        const approveTx = await gtokenContract.approve(
+        const gtokenInterface = new ethers.Interface(GTOKEN_ABI);
+        const approveData = gtokenInterface.encodeFunctionData("approve", [
           MYSBT_V2_3_ADDRESS,
-          ethers.parseEther("1000") // Approve more for multiple mints
-        );
-        await approveTx.wait();
-        console.log("GToken approved!");
+          ethers.parseEther("1000"), // Approve more for multiple mints
+        ]);
+
+        transactions.push({
+          to: GTOKEN_ADDRESS,
+          value: "0",
+          data: approveData,
+        });
       }
 
-      // Mint or add membership
-      const sbtContract = new ethers.Contract(
-        MYSBT_V2_3_ADDRESS,
-        MYSBT_ABI,
-        signer
-      );
+      // Add mint transaction
+      const sbtInterface = new ethers.Interface(MYSBT_ABI);
+      const mintData = sbtInterface.encodeFunctionData("mintOrAddMembership", [
+        account,
+        metadata,
+      ]);
 
-      console.log("Minting/Adding membership...");
-      console.log("Community:", newCommunityAddress);
-      console.log("Metadata:", metadata);
+      transactions.push({
+        to: MYSBT_V2_3_ADDRESS,
+        value: "0",
+        data: mintData,
+      });
 
-      const tx = await sbtContract.mintOrAddMembership(account, metadata);
-      setMintTxHash(tx.hash);
+      // Execute based on wallet type
+      if (isSafeApp && sdk && safe) {
+        // Safe transaction
+        console.log(`Proposing ${transactions.length} transaction(s) to Safe...`);
+        const safeTxResult = await sdk.txs.send({ txs: transactions });
+        console.log("Safe transaction proposed:", safeTxResult.safeTxHash);
+        setMintTxHash(safeTxResult.safeTxHash);
 
-      console.log("Waiting for confirmation...");
-      const receipt = await tx.wait();
+        alert(
+          `Transaction proposed to Safe! Hash: ${safeTxResult.safeTxHash}\n\n` +
+            `Safe signers need to approve this transaction in the Safe UI.`
+        );
+      } else {
+        // EOA transaction (MetaMask)
+        if (!window.ethereum) {
+          throw new Error("MetaMask not installed");
+        }
 
-      console.log("Mint successful!", receipt);
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+
+        // Execute approve if needed
+        if (transactions.length === 2) {
+          console.log("Approving GToken...");
+          const gtokenContractWithSigner = new ethers.Contract(
+            GTOKEN_ADDRESS,
+            GTOKEN_ABI,
+            signer
+          );
+          const approveTx = await gtokenContractWithSigner.approve(
+            MYSBT_V2_3_ADDRESS,
+            ethers.parseEther("1000")
+          );
+          await approveTx.wait();
+          console.log("GToken approved!");
+        }
+
+        // Execute mint
+        console.log("Minting/Adding membership...");
+        console.log("Account:", account);
+        console.log("Metadata:", metadata);
+
+        const sbtContract = new ethers.Contract(
+          MYSBT_V2_3_ADDRESS,
+          MYSBT_ABI,
+          signer
+        );
+
+        const tx = await sbtContract.mintOrAddMembership(account, metadata);
+        setMintTxHash(tx.hash);
+
+        console.log("Waiting for confirmation...");
+        const receipt = await tx.wait();
+        console.log("Mint successful!", receipt);
+      }
 
       // Reload data
       await loadData(account);
@@ -214,7 +281,6 @@ export function MySBT() {
       // Clear form
       setNewCommunityAddress("");
       setMetadata("");
-
     } catch (err: any) {
       console.error("Mint failed:", err);
       setError(err?.message || "Failed to mint/add membership");
@@ -223,8 +289,19 @@ export function MySBT() {
     }
   };
 
-  // Auto-connect on mount
+  // Auto-connect on mount (Safe or MetaMask)
   useEffect(() => {
+    if (isSafeLoading) return; // Wait for Safe detection
+
+    // If in Safe context, auto-connect with Safe address
+    if (isSafeApp && safe) {
+      setAccount(safe.safeAddress);
+      loadData(safe.safeAddress);
+      console.log("Auto-connected to Safe:", safe.safeAddress);
+      return;
+    }
+
+    // Otherwise try MetaMask auto-connect
     if (window.ethereum) {
       window.ethereum
         .request({ method: "eth_accounts" })
@@ -232,10 +309,11 @@ export function MySBT() {
           if (accounts.length > 0) {
             setAccount(accounts[0]);
             loadData(accounts[0]);
+            console.log("Auto-connected to MetaMask:", accounts[0]);
           }
         });
     }
-  }, []);
+  }, [isSafeApp, isSafeLoading, safe]);
 
   return (
     <div className="mysbt-page">
@@ -342,7 +420,13 @@ export function MySBT() {
               <h2>Your Status</h2>
               <div className="user-info-grid">
                 <div className="info-card">
-                  <span className="label">Wallet</span>
+                  <span className="label">Wallet Type</span>
+                  <span className="value">
+                    {isSafeApp ? "🔐 Gnosis Safe (Multisig)" : "👤 MetaMask (EOA)"}
+                  </span>
+                </div>
+                <div className="info-card">
+                  <span className="label">Address</span>
                   <span className="value mono">
                     {account.slice(0, 6)}...{account.slice(-4)}
                   </span>
@@ -356,6 +440,14 @@ export function MySBT() {
                   <span className="value">{myTokenId || "No SBT yet"}</span>
                 </div>
               </div>
+              {isSafeApp && safe && (
+                <div className="safe-info-banner">
+                  <p>
+                    <strong>Multisig Mode:</strong> Transactions will be proposed to Safe and require{" "}
+                    {safe.threshold} of {safe.owners.length} signers to execute.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Permissionless Mint Section */}

@@ -671,6 +671,27 @@
   border-left: 4px solid #06b6d4;
 }
 
+.safe-info-banner {
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  border-left: 4px solid #2563eb;
+}
+
+.safe-info-banner p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.safe-info-banner strong {
+  color: #1e3a8a;
+  font-weight: 700;
+}
+
 .mint-section {
   background: linear-gradient(to bottom, #f0fdfa, #ffffff);
   border-left: 4px solid #10b981;
