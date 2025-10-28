@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
+import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
 import "./RegistryExplorer.css";
 
 type RegistryVersion = "v1.2" | "v2.0" | "v2.1";
@@ -87,8 +88,13 @@ export function RegistryExplorer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [registryInfo, setRegistryInfo] = useState<{address: string, totalPaymasters: number} | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   const categories = ["All", "Community", "DeFi", "Gaming", "Social"];
+
+  // Cache key generator
+  const getCacheKey = (version: RegistryVersion, address: string) =>
+    `registry_explorer_${version}_${address.toLowerCase()}`;
 
   // Load paymasters from registry contract
   useEffect(() => {
@@ -115,9 +121,7 @@ export function RegistryExplorer() {
 
       console.log("=== Registry Explorer Debug ===");
       console.log("Version selected:", registryVersion);
-      console.log("networkConfig.contracts.registryV2:", networkConfig.contracts.registryV2);
-      console.log("networkConfig.contracts.registryV2_1:", networkConfig.contracts.registryV2_1);
-      console.log("Final registryAddress used:", registryAddress);
+      console.log("Registry address:", registryAddress);
       console.log("==============================");
 
       setRegistryInfo({
@@ -125,15 +129,39 @@ export function RegistryExplorer() {
         totalPaymasters: 0,
       });
 
-      if (registryVersion === "v1.2") {
-        await loadV1Paymasters(provider, registryAddress);
-      } else if (registryVersion === "v2.1") {
-        // v2.1 uses paginated API
-        await loadV2_1Paymasters(provider, registryAddress);
-      } else {
-        // v2.0 uses getAllCommunities
-        await loadV2Paymasters(provider, registryAddress);
+      // Check cache first
+      const cacheKey = getCacheKey(registryVersion, registryAddress);
+      const cached = loadFromCache<PaymasterInfo[]>(cacheKey);
+
+      if (cached) {
+        console.log(`📦 Loaded from cache (${formatCacheAge(cached.timestamp)})`);
+        setPaymasters(cached.data);
+        setLastUpdated(cached.timestamp);
+        setRegistryInfo({
+          address: registryAddress,
+          totalPaymasters: cached.data.length,
+        });
+        setLoading(false);
+        return;
       }
+
+      // No cache, query blockchain
+      console.log("🔍 Querying blockchain...");
+      let result: PaymasterInfo[] = [];
+
+      if (registryVersion === "v1.2") {
+        result = await loadV1Paymasters(provider, registryAddress);
+      } else if (registryVersion === "v2.1") {
+        result = await loadV2_1Paymasters(provider, registryAddress);
+      } else {
+        result = await loadV2Paymasters(provider, registryAddress);
+      }
+
+      // Save to cache
+      saveToCache(cacheKey, result, 3600); // 1 hour TTL
+      setLastUpdated(Date.now());
+      console.log(`💾 Saved to cache`);
+
     } catch (err: any) {
       console.error("Failed to load paymasters:", err);
       setError(err.message || "Failed to load registry data");
@@ -204,6 +232,7 @@ export function RegistryExplorer() {
         address: registryAddress,
         totalPaymasters: paymasterList.length,
       });
+      return paymasterList;
     } catch (err: any) {
       throw new Error(`Failed to query Registry v1.2: ${err.message}`);
     }
@@ -253,8 +282,11 @@ export function RegistryExplorer() {
         address: registryAddress,
         totalPaymasters: paymasterList.length,
       });
+      return paymasterList;
     } catch (err: any) {
-      throw new Error(`Failed to query Registry v2.0: ${err.message}`);
+      // v2.0 contract might not exist or have getAllCommunities method
+      console.warn(`Registry v2.0 query failed: ${err.message}`);
+      throw new Error(`Registry v2.0 not available at this address. Try v1.2 or v2.1 instead.`);
     }
   };
 
@@ -275,14 +307,14 @@ export function RegistryExplorer() {
       const count = await registry.getCommunityCount();
       console.log(`📋 Found ${count} communities in Registry v2.1`);
 
-      // If no communities, return early
+      // If no communities, return empty array
       if (count === 0n) {
         setPaymasters([]);
         setRegistryInfo({
           address: registryAddress,
           totalPaymasters: 0,
         });
-        return;
+        return [];
       }
 
       // Get all communities using paginated API
@@ -319,6 +351,7 @@ export function RegistryExplorer() {
         address: registryAddress,
         totalPaymasters: paymasterList.length,
       });
+      return paymasterList;
     } catch (err: any) {
       throw new Error(`Failed to query Registry v2.1: ${err.message}`);
     }
@@ -375,6 +408,12 @@ export function RegistryExplorer() {
                 <span className="label">Contract:</span>
                 <code>{registryInfo.address}</code>
               </div>
+            )}
+            {lastUpdated && (
+              <p className="cache-status">
+                Last updated: {formatCacheAge(lastUpdated)}
+                {loading && <span className="refreshing"> (refreshing...)</span>}
+              </p>
             )}
           </div>
 
