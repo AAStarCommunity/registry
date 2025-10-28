@@ -95,20 +95,12 @@ export function RegistryExplorer() {
     loadPaymasters();
   }, [registryVersion]);
 
-  const getProvider = () => {
-    const networkConfig = getCurrentNetworkConfig();
-    if (networkConfig.rpcUrl.startsWith('/')) {
-      return new ethers.BrowserProvider(window.ethereum);
-    }
-    return new ethers.JsonRpcProvider(networkConfig.rpcUrl);
-  };
-
   const loadPaymasters = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const provider = await getProvider();
+      const provider = getProvider();
       const networkConfig = getCurrentNetworkConfig();
 
       // Select registry address based on version
