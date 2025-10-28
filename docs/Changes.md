@@ -1966,9 +1966,98 @@ cast call 0x3F7E...eb3 "getCommunityCount()" → 0x0...0 (success)
 ### Key Learning
 **ethers.js Human-Readable ABI syntax:**
 - ✓ `function name(params) view returns (type)`
-- ✓ `function name(params) returns (type)` 
+- ✓ `function name(params) returns (type)`
 - ✗ `function name(params) external view returns (type)` ← INVALID
 
-The `external`/`internal`/`public`/`private` visibility modifiers are 
+The `external`/`internal`/`public`/`private` visibility modifiers are
 Solidity-specific and **must not** appear in ABI definitions.
+
+
+## 2025-10-28: Remove Registry v2.0 Button and Related Code
+
+### Issue
+v2.0 Registry contract existed but caused compatibility issues, showing user-unfriendly error messages. Decision made to remove v2.0 support entirely from frontend.
+
+### Changes
+**File**: `src/pages/RegistryExplorer.tsx`
+
+1. **Type Definition** (line 8):
+   - Before: `type RegistryVersion = "v1.2" | "v2.0" | "v2.1"`
+   - After: `type RegistryVersion = "v1.2" | "v2.1"`
+
+2. **Registry Address Selection** (lines 114-119):
+   ```typescript
+   // Before: 3-branch conditional
+   if (registryVersion === "v1.2") {
+     registryAddress = networkConfig.contracts.registry;
+   } else if (registryVersion === "v2.1" && networkConfig.contracts.registryV2_1) {
+     registryAddress = networkConfig.contracts.registryV2_1;
+   } else {
+     registryAddress = networkConfig.contracts.registryV2;
+   }
+
+   // After: 2-branch conditional
+   if (registryVersion === "v1.2") {
+     registryAddress = networkConfig.contracts.registry;
+   } else {
+     // v2.1
+     registryAddress = networkConfig.contracts.registryV2_1;
+   }
+   ```
+
+3. **Load Logic** (lines 152-156):
+   ```typescript
+   // Before: 3-branch routing
+   if (registryVersion === "v1.2") {
+     result = await loadV1Paymasters(provider, registryAddress);
+   } else if (registryVersion === "v2.1") {
+     result = await loadV2_1Paymasters(provider, registryAddress);
+   } else {
+     result = await loadV2Paymasters(provider, registryAddress);
+   }
+
+   // After: 2-branch routing
+   if (registryVersion === "v1.2") {
+     result = await loadV1Paymasters(provider, registryAddress);
+   } else {
+     // v2.1
+     result = await loadV2_1Paymasters(provider, registryAddress);
+   }
+   ```
+
+4. **Deleted Function** `loadV2Paymasters()` (52 lines removed):
+   - Removed entire v2.0-specific loading function
+   - Included v2.0 ABI definitions (`getAllCommunities`, `getCommunityProfile`)
+   - Removed v2.0-specific error handling
+
+5. **UI Changes** (lines 366-386):
+   - Removed v2.0 button from version selector
+   - Now only displays: v1.2 (Legacy) | v2.1 (Latest)
+
+### Code Statistics
+- **Lines removed**: 66 lines
+- **Lines added**: 5 lines
+- **Net reduction**: -61 lines
+
+### Result
+- ✅ v2.0 button no longer visible in Registry Explorer
+- ✅ v2.0 loading logic completely removed
+- ✅ Cleaner codebase with only 2 supported versions
+- ✅ No TypeScript errors
+- ✅ All v2.0 references eliminated from frontend (config kept for reference)
+
+### Registry Version Summary
+| Version | Status | Address | Use Case |
+|---------|--------|---------|----------|
+| v1.2 | ✅ Active (Legacy) | 0x838da93c815a6E45Aa50429529da9106C0621eF0 | Historical data, ETH staking model |
+| v2.0 | ❌ Removed | 0x6806e4937038e783cA0D3961B7E258A3549A0043 | Deprecated, frontend support removed |
+| v2.1 | ✅ Active (Latest) | 0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3 | Current production, paginated API |
+
+### Technical Notes
+- Config file (`networkConfig.ts`) still retains `registryV2` address for reference
+- No breaking changes to existing v1.2 or v2.1 functionality
+- Cache keys remain version-specific (no cache invalidation needed)
+
+### Commits
+- `d770c23` - refactor: 移除 Registry v2.0 按钮和相关代码
 
