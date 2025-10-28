@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { useSafeApp } from "../hooks/useSafeApp";
+import { useSafeApp } from "../../hooks/useSafeApp";
 import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
 import "./MySBT.css";
 
@@ -107,7 +107,7 @@ export function MySBT() {
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
         MYSBT_ABI,
-        rpcProvider
+        rpcProvider,
       );
 
       // Get user's token ID (balance should be 1 if they have an SBT)
@@ -130,11 +130,10 @@ export function MySBT() {
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTOKEN_ABI,
-        rpcProvider
+        rpcProvider,
       );
       const gtBalance = await gtokenContract.balanceOf(address);
       setGtokenBalance(ethers.formatEther(gtBalance));
-
     } catch (err) {
       console.error("Failed to load data:", err);
     }
@@ -149,10 +148,13 @@ export function MySBT() {
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
         MYSBT_ABI,
-        rpcProvider
+        rpcProvider,
       );
 
-      const reputation = await sbtContract.getCommunityReputation(account, queryAddress);
+      const reputation = await sbtContract.getCommunityReputation(
+        account,
+        queryAddress,
+      );
       setQueryReputation(reputation.toString());
     } catch (err: any) {
       console.error("Failed to query reputation:", err);
@@ -182,10 +184,13 @@ export function MySBT() {
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTOKEN_ABI,
-        rpcProvider
+        rpcProvider,
       );
 
-      const allowance = await gtokenContract.allowance(account, MYSBT_V2_3_ADDRESS);
+      const allowance = await gtokenContract.allowance(
+        account,
+        MYSBT_V2_3_ADDRESS,
+      );
       const feeAmount = ethers.parseEther(mintFeeAmount);
 
       // Prepare transactions
@@ -222,14 +227,16 @@ export function MySBT() {
       // Execute based on wallet type
       if (isSafeApp && sdk && safe) {
         // Safe transaction
-        console.log(`Proposing ${transactions.length} transaction(s) to Safe...`);
+        console.log(
+          `Proposing ${transactions.length} transaction(s) to Safe...`,
+        );
         const safeTxResult = await sdk.txs.send({ txs: transactions });
         console.log("Safe transaction proposed:", safeTxResult.safeTxHash);
         setMintTxHash(safeTxResult.safeTxHash);
 
         alert(
           `Transaction proposed to Safe! Hash: ${safeTxResult.safeTxHash}\n\n` +
-            `Safe signers need to approve this transaction in the Safe UI.`
+            `Safe signers need to approve this transaction in the Safe UI.`,
         );
       } else {
         // EOA transaction (MetaMask)
@@ -246,11 +253,11 @@ export function MySBT() {
           const gtokenContractWithSigner = new ethers.Contract(
             GTOKEN_ADDRESS,
             GTOKEN_ABI,
-            signer
+            signer,
           );
           const approveTx = await gtokenContractWithSigner.approve(
             MYSBT_V2_3_ADDRESS,
-            ethers.parseEther("1000")
+            ethers.parseEther("1000"),
           );
           await approveTx.wait();
           console.log("GToken approved!");
@@ -264,7 +271,7 @@ export function MySBT() {
         const sbtContract = new ethers.Contract(
           MYSBT_V2_3_ADDRESS,
           MYSBT_ABI,
-          signer
+          signer,
         );
 
         const tx = await sbtContract.mintOrAddMembership(account, metadata);
@@ -325,7 +332,8 @@ export function MySBT() {
           </button>
           <h1>My SBT (Soul Bound Token)</h1>
           <p className="subtitle">
-            MySBT v2.3 - Security Enhanced with Permissionless Community Membership
+            MySBT v2.3 - Security Enhanced with Permissionless Community
+            Membership
           </p>
         </div>
 
@@ -333,32 +341,34 @@ export function MySBT() {
         <div className="info-section">
           <h2>What is MySBT v2.3?</h2>
           <p>
-            MySBT (Soul Bound Token) v2.3 is a security-enhanced, non-transferable NFT
-            representing your multi-community identity. Join any community permissionlessly!
+            MySBT (Soul Bound Token) v2.3 is a security-enhanced,
+            non-transferable NFT representing your multi-community identity.
+            Join any community permissionlessly!
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Permissionless Access</strong>: Join any community without approval -
-              true decentralization
+              <strong>Permissionless Access</strong>: Join any community without
+              approval - true decentralization
             </li>
             <li>
-              <strong>Multi-Community Support</strong>: One SBT for all your communities,
-              track reputation across each
+              <strong>Multi-Community Support</strong>: One SBT for all your
+              communities, track reputation across each
             </li>
             <li>
-              <strong>Security Enhanced</strong>: Rate limiting (5min), real-time NFT verification,
-              Pausable mechanism
+              <strong>Security Enhanced</strong>: Rate limiting (5min),
+              real-time NFT verification, Pausable mechanism
             </li>
             <li>
-              <strong>NFT Binding</strong>: Bind community NFTs to boost reputation
-              (Custodial & Non-Custodial modes)
+              <strong>NFT Binding</strong>: Bind community NFTs to boost
+              reputation (Custodial & Non-Custodial modes)
             </li>
             <li>
-              <strong>Activity Tracking</strong>: Build reputation through on-chain activities
-              with automatic scoring
+              <strong>Activity Tracking</strong>: Build reputation through
+              on-chain activities with automatic scoring
             </li>
             <li>
-              <strong>Gas Optimized</strong>: 40% gas reduction vs v2.1 (39k vs 65k per activity)
+              <strong>Gas Optimized</strong>: 40% gas reduction vs v2.1 (39k vs
+              65k per activity)
             </li>
           </ul>
         </div>
@@ -381,7 +391,9 @@ export function MySBT() {
             </div>
             <div className="info-row">
               <span className="label">Mint Fee</span>
-              <span className="value highlight">{mintFeeAmount} GT (burned)</span>
+              <span className="value highlight">
+                {mintFeeAmount} GT (burned)
+              </span>
             </div>
             <div className="info-row">
               <span className="label">Rate Limit</span>
@@ -422,7 +434,9 @@ export function MySBT() {
                 <div className="info-card">
                   <span className="label">Wallet Type</span>
                   <span className="value">
-                    {isSafeApp ? "🔐 Gnosis Safe (Multisig)" : "👤 MetaMask (EOA)"}
+                    {isSafeApp
+                      ? "🔐 Gnosis Safe (Multisig)"
+                      : "👤 MetaMask (EOA)"}
                   </span>
                 </div>
                 <div className="info-card">
@@ -433,7 +447,9 @@ export function MySBT() {
                 </div>
                 <div className="info-card">
                   <span className="label">GToken Balance</span>
-                  <span className="value">{parseFloat(gtokenBalance).toFixed(2)} GT</span>
+                  <span className="value">
+                    {parseFloat(gtokenBalance).toFixed(2)} GT
+                  </span>
                 </div>
                 <div className="info-card">
                   <span className="label">SBT Token ID</span>
@@ -443,8 +459,9 @@ export function MySBT() {
               {isSafeApp && safe && (
                 <div className="safe-info-banner">
                   <p>
-                    <strong>Multisig Mode:</strong> Transactions will be proposed to Safe and require{" "}
-                    {safe.threshold} of {safe.owners.length} signers to execute.
+                    <strong>Multisig Mode:</strong> Transactions will be
+                    proposed to Safe and require {safe.threshold} of{" "}
+                    {safe.owners.length} signers to execute.
                   </p>
                 </div>
               )}
@@ -454,7 +471,8 @@ export function MySBT() {
             <div className="info-section mint-section">
               <h2>🚀 Join Community (Permissionless)</h2>
               <p className="section-description">
-                Join any community by minting/adding membership. No permission needed!
+                Join any community by minting/adding membership. No permission
+                needed!
               </p>
 
               <div className="mint-form">
@@ -488,15 +506,21 @@ export function MySBT() {
 
                 {parseFloat(gtokenBalance) < parseFloat(mintFeeAmount) && (
                   <div className="warning-banner">
-                    Insufficient GToken balance. You need {mintFeeAmount} GT to mint.
-                    <a href="/get-gtoken" className="link">Get GToken →</a>
+                    Insufficient GToken balance. You need {mintFeeAmount} GT to
+                    mint.
+                    <a href="/get-gtoken" className="link">
+                      Get GToken →
+                    </a>
                   </div>
                 )}
 
                 <button
                   className="action-button primary mint-button"
                   onClick={handleMint}
-                  disabled={isMinting || parseFloat(gtokenBalance) < parseFloat(mintFeeAmount)}
+                  disabled={
+                    isMinting ||
+                    parseFloat(gtokenBalance) < parseFloat(mintFeeAmount)
+                  }
                 >
                   {isMinting ? "Minting..." : "Join Community"}
                 </button>
@@ -555,19 +579,24 @@ export function MySBT() {
               <h3>💡 How It Works</h3>
               <ul className="help-list">
                 <li>
-                  <strong>Permissionless</strong>: Anyone can join any community without approval
+                  <strong>Permissionless</strong>: Anyone can join any community
+                  without approval
                 </li>
                 <li>
-                  <strong>First Mint</strong>: Creates your SBT token (costs {mintFeeAmount} GT)
+                  <strong>First Mint</strong>: Creates your SBT token (costs{" "}
+                  {mintFeeAmount} GT)
                 </li>
                 <li>
-                  <strong>Add Membership</strong>: Subsequent joins add new community memberships
+                  <strong>Add Membership</strong>: Subsequent joins add new
+                  community memberships
                 </li>
                 <li>
-                  <strong>Reputation</strong>: Build reputation through activity and NFT binding
+                  <strong>Reputation</strong>: Build reputation through activity
+                  and NFT binding
                 </li>
                 <li>
-                  <strong>Rate Limit</strong>: 5 minute interval between activities
+                  <strong>Rate Limit</strong>: 5 minute interval between
+                  activities
                 </li>
               </ul>
             </div>
@@ -576,7 +605,8 @@ export function MySBT() {
             <div className="info-section operator-section">
               <h3>🔐 For Community Operators</h3>
               <p className="section-description">
-                Manage your community with enhanced security using Gnosis Safe multi-signature wallet.
+                Manage your community with enhanced security using Gnosis Safe
+                multi-signature wallet.
               </p>
 
               <div className="operator-features">
@@ -628,7 +658,9 @@ export function MySBT() {
               <div className="info-banner operator-info">
                 <div className="info-item">
                   <span className="label">Alternative Option</span>
-                  <span className="value">You can also manage with your EOA (regular wallet)</span>
+                  <span className="value">
+                    You can also manage with your EOA (regular wallet)
+                  </span>
                 </div>
               </div>
             </div>
@@ -648,7 +680,10 @@ export function MySBT() {
           >
             View Subgraph →
           </a>
-          <button className="action-button secondary" onClick={() => navigate(-1)}>
+          <button
+            className="action-button secondary"
+            onClick={() => navigate(-1)}
+          >
             Back to Home
           </button>
         </div>
