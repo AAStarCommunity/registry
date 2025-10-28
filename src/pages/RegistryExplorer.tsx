@@ -5,7 +5,7 @@ import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
 import "./RegistryExplorer.css";
 
-type RegistryVersion = "v1.2" | "v2.0" | "v2.1";
+type RegistryVersion = "v1.2" | "v2.1";
 
 interface PaymasterInfo {
   address: string;
@@ -113,10 +113,9 @@ export function RegistryExplorer() {
       let registryAddress: string;
       if (registryVersion === "v1.2") {
         registryAddress = networkConfig.contracts.registry;
-      } else if (registryVersion === "v2.1" && networkConfig.contracts.registryV2_1) {
-        registryAddress = networkConfig.contracts.registryV2_1;
       } else {
-        registryAddress = networkConfig.contracts.registryV2;
+        // v2.1
+        registryAddress = networkConfig.contracts.registryV2_1;
       }
 
       console.log("=== Registry Explorer Debug ===");
@@ -151,10 +150,9 @@ export function RegistryExplorer() {
 
       if (registryVersion === "v1.2") {
         result = await loadV1Paymasters(provider, registryAddress);
-      } else if (registryVersion === "v2.1") {
-        result = await loadV2_1Paymasters(provider, registryAddress);
       } else {
-        result = await loadV2Paymasters(provider, registryAddress);
+        // v2.1
+        result = await loadV2_1Paymasters(provider, registryAddress);
       }
 
       // Save to cache
@@ -235,58 +233,6 @@ export function RegistryExplorer() {
       return paymasterList;
     } catch (err: any) {
       throw new Error(`Failed to query Registry v1.2: ${err.message}`);
-    }
-  };
-
-  const loadV2Paymasters = async (provider: any, registryAddress: string) => {
-    const REGISTRY_V2_ABI = [
-      "function getAllCommunities() view returns (address[])",
-      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
-    ];
-
-    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_ABI, provider);
-
-    try {
-      const communities = await registry.getAllCommunities();
-      console.log(`📋 Found ${communities.length} communities in Registry v2.0`);
-
-      const paymasterList: PaymasterInfo[] = [];
-
-      for (const communityAddr of communities) {
-        try {
-          const profile = await registry.getCommunityProfile(communityAddr);
-
-          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
-            paymasterList.push({
-              address: profile.paymasterAddress,
-              name: profile.name || "Unnamed",
-              description: profile.description || "",
-              category: profile.mode === 0 ? "AOA" : "Super",
-              verified: profile.isActive,
-              totalTransactions: 0, // TODO: Query from analytics
-              totalGasSponsored: "N/A",
-              supportedTokens: [], // TODO: Query from paymaster
-              serviceFee: "N/A",
-              owner: profile.community,
-              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
-              metadata: profile,
-            });
-          }
-        } catch (err) {
-          console.warn(`Failed to load profile for ${communityAddr}:`, err);
-        }
-      }
-
-      setPaymasters(paymasterList);
-      setRegistryInfo({
-        address: registryAddress,
-        totalPaymasters: paymasterList.length,
-      });
-      return paymasterList;
-    } catch (err: any) {
-      // v2.0 contract might not exist or have getAllCommunities method
-      console.warn(`Registry v2.0 query failed: ${err.message}`);
-      throw new Error(`Registry v2.0 not available at this address. Try v1.2 or v2.1 instead.`);
     }
   };
 
@@ -426,13 +372,6 @@ export function RegistryExplorer() {
                 disabled={loading}
               >
                 v1.2 (Legacy)
-              </button>
-              <button
-                className={`version-btn ${registryVersion === "v2.0" ? "active" : ""}`}
-                onClick={() => setRegistryVersion("v2.0")}
-                disabled={loading}
-              >
-                v2.0
               </button>
               <button
                 className={`version-btn ${registryVersion === "v2.1" ? "active" : ""}`}
