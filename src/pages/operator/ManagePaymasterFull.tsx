@@ -176,6 +176,7 @@ export function ManagePaymasterFull() {
       // Load Paymaster config
       const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
 
+      // Fetch basic config (all versions)
       const [
         owner,
         treasury,
@@ -186,8 +187,6 @@ export function ManagePaymasterFull() {
         minTokenBalance,
         paused,
         entryPointAddress,
-        registryAddress,
-        isRegistrySet,
       ] = await Promise.all([
         paymaster.owner(),
         paymaster.treasury(),
@@ -198,9 +197,18 @@ export function ManagePaymasterFull() {
         paymaster.minTokenBalance(),
         paymaster.paused(),
         paymaster.entryPoint(),
-        paymaster.registry(),
-        paymaster.isRegistrySet(),
       ]);
+
+      // Try fetching registry (v4.1 only) - optional
+      let registryAddress = ethers.ZeroAddress;
+      let isRegistrySet = false;
+      try {
+        registryAddress = await paymaster.registry();
+        isRegistrySet = await paymaster.isRegistrySet();
+      } catch (e) {
+        // PaymasterV4 (old version) doesn't have registry functions
+        console.log("Note: This Paymaster doesn't support Registry (v4.0)");
+      }
 
       setConfig({
         owner,
