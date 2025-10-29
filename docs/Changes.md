@@ -312,6 +312,76 @@ SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N
 - ✅ 使用 `/api/rpc-proxy` 后端代理保护 API key
 - ✅ 代理会自动 fallback 到公共 RPC（无需 API key）
 
+### 用户资金定位与迁移指引
+
+#### 问题：注册失败显示 stGToken 余额 0.0
+
+**诊断过程**:
+使用 `cast` 检查用户 `0x411BD567E46C0781248dbB6a9211891C032885e5` 的资金分布：
+
+```bash
+# 检查 GToken 余额
+cast call 0x868F843723a98c6EECC4BF0aF3352C53d5004147 \
+  "balanceOf(address)(uint256)" 0x411BD567E46C0781248dbB6a9211891C032885e5
+# 结果: 510000000000000000000 = 510.0 GT ✅
+
+# 检查旧合约 V1 (0xc3aa...) stGToken 余额
+cast call 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2 \
+  "balanceOf(address)(uint256)" 0x411BD567E46C0781248dbB6a9211891C032885e5
+# 结果: 50000000000000000000 = 50.0 stGT ⚠️
+
+# 检查新合约 V2 (0x1994...) stGToken 余额
+cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
+  "balanceOf(address)(uint256)" 0x411BD567E46C0781248dbB6a9211891C032885e5
+# 结果: 0 = 0.0 stGT ❌
+
+# 检查旧合约质押详情
+cast call 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2 \
+  "getStakeInfo(address)(uint256,uint256,uint256,uint256)" \
+  0x411BD567E46C0781248dbB6a9211891C032885e5
+# 结果:
+#   - stakedAmount: 50.0 GT
+#   - shares: 50.0
+#   - stakedAt: 1761326652 (2025-10-24 00:50:52)
+#   - unstakeRequestedAt: 0 (无 pending unstake)
+```
+
+**诊断结论**:
+- ✅ 用户有 510 GT 可用余额
+- ⚠️ 用户在**旧合约 V1** 上质押了 50 GT（2025-10-24）
+- ❌ 用户在**新合约 V2** 上余额为 0
+- ❌ Registry v2.1 只接受**新合约 V2** 的 stGToken
+
+**解决方案**:
+
+**方案 A（推荐）**: 在新合约上直接质押新的 50 GT
+- 用户有 510 GT 可用余额，足够质押
+- 无需等待 unstake cooldown
+- 保留旧合约质押作为备份
+
+操作步骤：
+1. 重启开发服务器清除缓存：
+   ```bash
+   pkill -f "node.*vite"
+   rm -rf node_modules/.vite
+   npm run dev
+   ```
+2. 浏览器硬刷新 (Cmd+Shift+R / Ctrl+Shift+R)
+3. 进入 Deploy Wizard Step 4
+4. 质押 50 GT 到新合约 V2 (0x1994...)
+5. 继续 Step 6 注册到 Registry v2.1
+
+**方案 B（可选）**: 从旧合约 unstake，然后在新合约 stake
+- 节省 GToken，复用同一笔资金
+- 可能需要等待 cooldown period
+- 操作步骤：
+  1. 在旧合约上调用 `requestUnstake()`
+  2. 等待 cooldown period（如果有）
+  3. 调用 `withdraw()` 提取 GToken
+  4. 在新合约上质押
+
+**工具脚本**: 创建了 `check-stgtoken-balance.js` 用于诊断余额分布
+
 ---
 
 **技术栈**: React + TypeScript + ethers.js v6 + ERC-4337 (EntryPoint v0.7)

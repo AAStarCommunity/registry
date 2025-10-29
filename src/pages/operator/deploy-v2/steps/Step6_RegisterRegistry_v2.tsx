@@ -50,11 +50,10 @@ const REGISTRY_V2_1_ABI = [
   "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
 ];
 
-// GTokenStaking ABI for balance check and approval
+// GTokenStaking ABI - share-based staking (non-transferable)
+// NOTE: stGToken does NOT support approve/allowance/transfer
 const GTOKEN_STAKING_ABI = [
   "function balanceOf(address account) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
 ];
 
 enum PaymasterMode {
@@ -157,33 +156,9 @@ Solutions:
         }
         console.log("✅ Sufficient stGToken balance");
 
-        // Check and approve stGToken for Registry if needed
-        const stGTokenStakingSigner = new ethers.Contract(
-          config.contracts.gTokenStaking,
-          GTOKEN_STAKING_ABI,
-          signer
-        );
-
-        const currentAllowance = await stGTokenStakingSigner.allowance(
-          userAddress,
-          config.contracts.registryV2_1
-        );
-
-        console.log("📊 Current stGToken allowance for Registry:", ethers.formatEther(currentAllowance), "stGT");
-
-        if (currentAllowance < stGTokenAmountWei) {
-          console.log("📝 Approving stGToken for Registry...");
-          const approveTx = await stGTokenStakingSigner.approve(
-            config.contracts.registryV2_1,
-            stGTokenAmountWei
-          );
-          console.log("📤 Approval tx sent:", approveTx.hash);
-
-          await approveTx.wait();
-          console.log("✅ stGToken approved for Registry");
-        } else {
-          console.log("✅ stGToken already approved for Registry");
-        }
+        // NOTE: Registry v2.1 does NOT transfer stGToken from user
+        // It only records the stGTokenAmount as metadata
+        // stGToken stays in user's wallet (non-transferable share token)
       }
 
       const registry = new ethers.Contract(
