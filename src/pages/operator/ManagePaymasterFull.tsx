@@ -168,10 +168,15 @@ export function ManagePaymasterFull() {
         throw new Error('MetaMask is not installed');
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      // Use MetaMask for user address
+      const browserProvider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await browserProvider.getSigner();
       const userAddr = await signer.getAddress();
       setUserAddress(userAddr);
+
+      // Use independent RPC for read-only queries (more reliable)
+      const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
 
       // Load Paymaster config
       const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
