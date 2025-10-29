@@ -50,6 +50,11 @@ const REGISTRY_V2_1_ABI = [
   "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
 ];
 
+// GTokenStaking ABI for balance check
+const GTOKEN_STAKING_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+];
+
 enum PaymasterMode {
   INDEPENDENT = 0, // AOA mode
   SUPER = 1,       // Super mode
@@ -84,16 +89,74 @@ export function Step6_RegisterRegistry_v2({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      console.log("🔍 Pre-registration checks...");
+      console.log("User address:", userAddress);
+      console.log("Registry v2.1:", config.contracts.registryV2_1);
+      console.log("Paymaster:", paymasterAddress);
+      console.log("xPNTs:", xPNTsAddress);
+      console.log("SBT:", sbtAddress);
+      console.log("stGToken amount:", sGTokenAmount, "GT");
+
+      // Check if contracts exist
+      const paymasterCode = await provider.getCode(paymasterAddress);
+      if (paymasterCode === "0x") {
+        throw new Error(`Paymaster contract not found at ${paymasterAddress}`);
+      }
+      console.log("✅ Paymaster contract exists");
+
+      const xPNTsCode = await provider.getCode(xPNTsAddress);
+      if (xPNTsCode === "0x") {
+        throw new Error(`xPNTs contract not found at ${xPNTsAddress}`);
+      }
+      console.log("✅ xPNTs contract exists");
+
+      const sbtCode = await provider.getCode(sbtAddress);
+      if (sbtCode === "0x") {
+        throw new Error(`SBT contract not found at ${sbtAddress}`);
+      }
+      console.log("✅ SBT contract exists");
+
+      // Check stGToken balance
+      if (sGTokenAmount && parseFloat(sGTokenAmount) > 0) {
+        const stGTokenAmountWei = ethers.parseEther(sGTokenAmount);
+        const gTokenStaking = new ethers.Contract(
+          config.contracts.gTokenStaking,
+          GTOKEN_STAKING_ABI,
+          provider
+        );
+
+        const userBalance = await gTokenStaking.balanceOf(userAddress);
+        console.log("User stGToken balance:", ethers.formatEther(userBalance), "stGT");
+        console.log("Required stGToken:", sGTokenAmount, "stGT");
+
+        if (userBalance < stGTokenAmountWei) {
+          throw new Error(
+            `Insufficient stGToken balance. You have ${ethers.formatEther(userBalance)} stGT but need ${sGTokenAmount} stGT. Please stake more GToken in Step 4.`
+          );
+        }
+        console.log("✅ Sufficient stGToken balance");
+      }
+
       const registry = new ethers.Contract(
         config.contracts.registryV2_1,
         REGISTRY_V2_1_ABI,
         signer
       );
 
+      // Check if already registered
+      try {
+        const existingProfile = await registry.getCommunityProfile(userAddress);
+        if (existingProfile.paymasterAddress && existingProfile.paymasterAddress !== ethers.ZeroAddress) {
+          console.warn("⚠️ User already has a registered paymaster:", existingProfile.paymasterAddress);
+          // Don't throw error, allow re-registration
+        }
+      } catch (e) {
+        console.log("ℹ️ No existing registration (first-time registration)");
+      }
+
       console.log("📝 Registering community to Registry v2.1...");
-      console.log("Registry v2.1:", config.contracts.registryV2_1);
-      console.log("Paymaster:", paymasterAddress);
-      console.log("xPNTs:", xPNTsAddress);
 
       // Build community profile
       const profile = {
@@ -123,15 +186,40 @@ export function Step6_RegisterRegistry_v2({
       const stGTokenAmountWei = ethers.parseEther(sGTokenAmount || "0");
       console.log("📊 Staked GToken amount:", sGTokenAmount, "GT (", stGTokenAmountWei.toString(), "wei)");
 
-      const tx = await registry.registerCommunity(profile, stGTokenAmountWei);
-      console.log("📤 Registration tx sent:", tx.hash);
+      console.log("🚀 Calling registerCommunity() with profile:", profile);
 
-      // Wait for confirmation
-      const receipt = await tx.wait();
-      console.log("✅ Registration confirmed:", receipt);
+      try {
+        const tx = await registry.registerCommunity(profile, stGTokenAmountWei);
+        console.log("📤 Registration tx sent:", tx.hash);
 
-      // Proceed to next step
-      onNext(tx.hash);
+        // Wait for confirmation
+        const receipt = await tx.wait();
+        console.log("✅ Registration confirmed:", receipt);
+
+        // Proceed to next step
+        onNext(tx.hash);
+      } catch (regError: any) {
+        console.error("❌ registerCommunity() call failed:", regError);
+
+        // Try to get more detailed error info
+        let errorMessage = "Failed to register to Registry v2.1.";
+
+        if (regError.message) {
+          errorMessage = regError.message;
+        }
+
+        if (regError.data) {
+          console.error("Error data:", regError.data);
+          errorMessage += `\nError data: ${JSON.stringify(regError.data)}`;
+        }
+
+        if (regError.reason) {
+          console.error("Error reason:", regError.reason);
+          errorMessage = regError.reason;
+        }
+
+        throw new Error(errorMessage);
+      }
     } catch (err: any) {
       console.error("❌ Registration failed:", err);
       setError(
