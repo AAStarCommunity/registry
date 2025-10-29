@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useSearchParams } from 'react-router-dom';
 import { getCurrentNetworkConfig } from '../../config/networkConfig';
+import { getProvider } from '../../utils/rpc-provider';
 import './ManagePaymasterFull.css';
 
 /**
@@ -174,9 +175,9 @@ export function ManagePaymasterFull() {
       const userAddr = await signer.getAddress();
       setUserAddress(userAddr);
 
-      // Use independent RPC for read-only queries (more reliable)
-      const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
-      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      // Use independent RPC provider for read-only queries
+      // getProvider() handles /api/rpc-proxy and public RPC fallbacks
+      const provider = getProvider();
 
       // Load Paymaster config
       const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
