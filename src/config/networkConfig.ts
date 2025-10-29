@@ -74,7 +74,7 @@ const sepoliaConfig: NetworkConfig = {
       return addr;
     })(),
     gTokenStaking: (() => {
-      const addr = import.meta.env.VITE_GTOKEN_STAKING_ADDRESS || "0xD8235F8920815175BD46f76a2cb99e15E02cED68";
+      const addr = import.meta.env.VITE_GTOKEN_STAKING_ADDRESS || "0x199402b3F213A233e89585957F86A07ED1e1cD67";
       console.log("[networkConfig] VITE_GTOKEN_STAKING_ADDRESS:", import.meta.env.VITE_GTOKEN_STAKING_ADDRESS, "-> using:", addr);
       return addr;
     })(),
