@@ -292,11 +292,25 @@ if (currentAllowance < stGTokenAmountWei) {
 - 使用 `transferFrom(user, registry, amount)` 实现转移
 - transferFrom 需要用户先 approve
 
-**RPC 配置更新**
-`.env.local` 已更新为直接使用 Alchemy RPC（不再依赖 `/api/rpc-proxy`）：
+**RPC 配置（安全架构）**
+
+**前端** (`.env.local`):
 ```bash
-VITE_SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N
+# 使用后端代理，不暴露 API key
+VITE_SEPOLIA_RPC_URL=/api/rpc-proxy
 ```
+
+**后端** (`.env.local`):
+```bash
+# 后端环境变量，不会暴露到前端
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N
+```
+
+**安全说明**:
+- ⚠️ **绝对不要在 VITE_ 变量中直接使用私有 RPC URL**
+- ✅ VITE_ 变量会被打包到前端代码，任何人都可以看到
+- ✅ 使用 `/api/rpc-proxy` 后端代理保护 API key
+- ✅ 代理会自动 fallback 到公共 RPC（无需 API key）
 
 ---
 
