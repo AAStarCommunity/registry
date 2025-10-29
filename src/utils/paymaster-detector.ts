@@ -16,8 +16,7 @@ interface PaymasterInfo {
 
 // 已知的 SuperPaymaster (AOA+) 合约地址
 const KNOWN_SUPER_PAYMASTERS: Set<string> = new Set([
-  // 添加已部署的 SuperPaymaster 地址（小写）
-  // "0x...".toLowerCase(),
+  "0xe25b068d4239c6dac484b8c51d62cc86f44859a7", // SuperPaymasterV2 Sepolia
 ]);
 
 // 合约 ABI 片段
