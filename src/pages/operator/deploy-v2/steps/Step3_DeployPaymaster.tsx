@@ -71,8 +71,11 @@ export function Step3_DeployPaymaster({
 
   // Check if user already has a registered paymaster
   useEffect(() => {
+    // Prevent double execution in React Strict Mode
+    let cancelled = false;
+
     const checkExistingPaymaster = async () => {
-      if (isTestMode) {
+      if (isTestMode || cancelled) {
         setIsCheckingRegistry(false);
         return;
       }
@@ -83,19 +86,28 @@ export function Step3_DeployPaymaster({
           return;
         }
 
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        // Get user address from MetaMask
+        const browserProvider = new ethers.BrowserProvider(window.ethereum);
+        const signer = await browserProvider.getSigner();
         const userAddress = await signer.getAddress();
+
+        if (cancelled) return;
+
+        // Use independent RPC provider for read-only queries (best practice)
         const networkConfig = getCurrentNetworkConfig();
+        const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+        const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
         const registry = new ethers.Contract(
           networkConfig.contracts.registryV2_1,
           REGISTRY_V2_ABI,
-          provider
+          rpcProvider // Use independent provider, not MetaMask
         );
 
         console.log("🔍 Checking if user has existing paymaster in Registry v2.1...");
         const profile = await registry.getCommunityProfile(userAddress);
+
+        if (cancelled) return;
 
         // Check if paymaster address is not zero address
         if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
@@ -105,14 +117,23 @@ export function Step3_DeployPaymaster({
           console.log("ℹ️ No existing paymaster found");
         }
       } catch (err) {
-        console.log("ℹ️ No existing registration found or error checking:", err);
+        if (!cancelled) {
+          console.log("ℹ️ No existing registration found (first-time deployment)");
+        }
         // Ignore errors - user probably doesn't have a registration yet
       } finally {
-        setIsCheckingRegistry(false);
+        if (!cancelled) {
+          setIsCheckingRegistry(false);
+        }
       }
     };
 
     checkExistingPaymaster();
+
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      cancelled = true;
+    };
   }, [isTestMode]);
 
   const handleDeploy = async () => {
