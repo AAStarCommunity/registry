@@ -30,6 +30,7 @@ const GetGToken: React.FC = () => {
   const [stakeAmount, setStakeAmount] = useState<string>("");
   const [isStaking, setIsStaking] = useState(false);
   const [txHash, setTxHash] = useState<string>("");
+  const [error, setError] = useState<string>("");
 
   const handleGoBack = () => {
     navigate(-1);
@@ -83,66 +84,151 @@ const GetGToken: React.FC = () => {
   // Handle stake
   const handleStake = async () => {
     if (!account) {
-      alert("Please connect your wallet first!");
+      setError("Please connect your wallet first!");
       return;
     }
 
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
-      alert("Please enter a valid stake amount!");
+      setError("Please enter a valid stake amount!");
       return;
     }
 
     try {
       setIsStaking(true);
       setTxHash("");
+      setError("");
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
       const amountWei = ethers.parseEther(stakeAmount);
 
-      // Step 1: Approve GToken
+      console.log("=== Staking Pre-flight Checks ===");
+      console.log("User address:", account);
+      console.log("Stake amount:", stakeAmount, "GT");
+      console.log("GToken contract:", config.contracts.gToken);
+      console.log("GTokenStaking contract:", config.contracts.gTokenStaking);
+
+      // Pre-flight Check 1: Verify GToken balance
       const gtokenContract = new ethers.Contract(
+        config.contracts.gToken,
+        ERC20_ABI,
+        provider
+      );
+      const gTokenBalance = await gtokenContract.balanceOf(account);
+      console.log("GToken balance:", ethers.formatEther(gTokenBalance), "GT");
+
+      if (gTokenBalance < amountWei) {
+        setError(
+          `Insufficient GToken balance!\n\n` +
+          `You have: ${ethers.formatEther(gTokenBalance)} GT\n` +
+          `Required: ${stakeAmount} GT\n\n` +
+          `GToken contract: ${config.contracts.gToken}`
+        );
+        return;
+      }
+      console.log("✅ Sufficient GToken balance");
+
+      // Pre-flight Check 2: Check existing stake
+      const stakingContract = new ethers.Contract(
+        config.contracts.gTokenStaking,
+        GTokenStakingABI.abi,
+        provider
+      );
+
+      const stakeInfo = await stakingContract.getStakeInfo(account);
+      const stakedAmount = stakeInfo[0];
+      const unstakeRequestedAt = stakeInfo[3];
+
+      if (stakedAmount > 0n) {
+        console.log(
+          `⚠️ Existing stake: ${ethers.formatEther(stakedAmount)} GT\n` +
+          `New stake: ${stakeAmount} GT\n` +
+          `Total will be: ${ethers.formatEther(stakedAmount + amountWei)} GT`
+        );
+      }
+
+      // Pre-flight Check 3: Pending unstake request
+      if (unstakeRequestedAt > 0n) {
+        setError(
+          `You have a pending unstake request!\n\n` +
+          `Requested at: ${new Date(Number(unstakeRequestedAt) * 1000).toLocaleString()}\n\n` +
+          `Please complete or cancel the unstake before staking more.`
+        );
+        return;
+      }
+      console.log("✅ No pending unstake request");
+
+      // Step 1: Approve GToken
+      const gtokenContractSigner = new ethers.Contract(
         config.contracts.gToken,
         ERC20_ABI,
         signer
       );
 
-      const currentAllowance = await gtokenContract.allowance(
+      const currentAllowance = await gtokenContractSigner.allowance(
         account,
         config.contracts.gTokenStaking
       );
 
       if (currentAllowance < amountWei) {
-        console.log("Approving GToken...");
-        const approveTx = await gtokenContract.approve(
+        console.log("📝 Approving GToken...");
+        const approveTx = await gtokenContractSigner.approve(
           config.contracts.gTokenStaking,
           amountWei
         );
         await approveTx.wait();
-        console.log("Approval successful!");
+        console.log("✅ Approval successful!");
+      } else {
+        console.log("✅ Already approved");
       }
 
       // Step 2: Stake
-      const stakingContract = new ethers.Contract(
+      const stakingContractSigner = new ethers.Contract(
         config.contracts.gTokenStaking,
         GTokenStakingABI.abi,
         signer
       );
 
-      console.log("Staking GToken...");
-      const stakeTx = await stakingContract.stake(amountWei);
+      console.log("🔒 Staking GToken...");
+      const stakeTx = await stakingContractSigner.stake(amountWei);
+      console.log("Transaction sent:", stakeTx.hash);
+
       const receipt = await stakeTx.wait();
+      console.log("✅ Staking successful!");
 
       setTxHash(receipt.hash);
-      alert(`Successfully staked ${stakeAmount} GToken!`);
+      setError(""); // Clear any previous errors
 
       // Reload balances
       await loadBalances(account);
       setStakeAmount("");
     } catch (error: any) {
-      console.error("Staking failed:", error);
-      alert(`Staking failed: ${error.message || "Unknown error"}`);
+      console.error("❌ Staking failed:", error);
+
+      // Enhanced error message
+      let errorMsg = "Staking failed!\n\n";
+
+      if (error.code === "CALL_EXCEPTION") {
+        errorMsg += `Transaction reverted.\n\n`;
+        if (error.data) {
+          errorMsg += `Error data: ${error.data}\n\n`;
+        }
+        errorMsg += `Possible reasons:\n`;
+        errorMsg += `• Insufficient GToken balance\n`;
+        errorMsg += `• Pending unstake request\n`;
+        errorMsg += `• Contract interaction issue\n\n`;
+        errorMsg += `Contract addresses:\n`;
+        errorMsg += `GToken: ${config.contracts.gToken}\n`;
+        errorMsg += `GTokenStaking: ${config.contracts.gTokenStaking}\n\n`;
+        errorMsg += `Please check browser console for details.`;
+      } else if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction cancelled by user.";
+      } else {
+        errorMsg += error.message || "Unknown error";
+      }
+
+      setError(errorMsg);
     } finally {
       setIsStaking(false);
     }
@@ -248,6 +334,12 @@ const GetGToken: React.FC = () => {
                 >
                   {isStaking ? "Staking..." : `Stake ${stakeAmount || "0"} GToken`}
                 </button>
+
+                {error && (
+                  <div className="error-message" style={{ whiteSpace: 'pre-wrap', marginTop: '1rem', padding: '1rem', background: '#fee', border: '1px solid #fcc', borderRadius: '4px', color: '#c33' }}>
+                    {error}
+                  </div>
+                )}
 
                 {txHash && (
                   <div className="tx-success">
