@@ -32,29 +32,24 @@ const GTOKEN_STAKING =
   "0x199402b3F213A233e89585957F86A07ED1e1cD67";
 
 // ABIs
+// PaymasterV4 ABI - Removed gasToUSDRate/pntPriceUSD (not in V4, uses Chainlink)
 const PAYMASTER_V4_ABI = [
   "function owner() view returns (address)",
   "function treasury() view returns (address)",
-  "function gasToUSDRate() view returns (uint256)",
-  "function pntPriceUSD() view returns (uint256)",
   "function serviceFeeRate() view returns (uint256)",
   "function maxGasCostCap() view returns (uint256)",
-  "function minTokenBalance() view returns (uint256)",
   "function paused() view returns (bool)",
   "function entryPoint() view returns (address)",
   "function registry() view returns (address)",
   "function isRegistrySet() view returns (bool)",
-  "function getSupportedSBTs() view returns (address[])",
-  "function getSupportedGasTokens() view returns (address[])",
+  "function supportedSBTs(uint256) view returns (address)",
+  "function supportedGasTokens(uint256) view returns (address)",
   "function isSBTSupported(address) view returns (bool)",
   "function isGasTokenSupported(address) view returns (bool)",
   "function transferOwnership(address newOwner)",
   "function setTreasury(address newTreasury)",
-  "function setGasToUSDRate(uint256 rate)",
-  "function setPntPriceUSD(uint256 price)",
   "function setServiceFeeRate(uint256 rate)",
   "function setMaxGasCostCap(uint256 cap)",
-  "function setMinTokenBalance(uint256 balance)",
   "function setRegistry(address registry)",
   "function addSBT(address sbtToken)",
   "function removeSBT(address sbtToken)",
@@ -80,14 +75,12 @@ const GTOKEN_STAKING_ABI = [
   "function stake(uint256 amount) returns (uint256 shares)",
 ];
 
+// PaymasterV4 uses Chainlink for price feeds (no manual gasToUSDRate/pntPriceUSD)
 interface PaymasterConfig {
   owner: string;
   treasury: string;
-  gasToUSDRate: string;
-  pntPriceUSD: string;
   serviceFeeRate: string;
   maxGasCostCap: string;
-  minTokenBalance: string;
   paused: boolean;
   entryPointAddress: string;
   registryAddress: string;
@@ -182,25 +175,19 @@ export function ManagePaymasterFull() {
       // Load Paymaster config
       const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
 
-      // Fetch basic config (all versions)
+      // Fetch basic config (PaymasterV4 uses Chainlink, no manual rates)
       const [
         owner,
         treasury,
-        gasToUSDRate,
-        pntPriceUSD,
         serviceFeeRate,
         maxGasCostCap,
-        minTokenBalance,
         paused,
         entryPointAddress,
       ] = await Promise.all([
         paymaster.owner(),
         paymaster.treasury(),
-        paymaster.gasToUSDRate(),
-        paymaster.pntPriceUSD(),
         paymaster.serviceFeeRate(),
         paymaster.maxGasCostCap(),
-        paymaster.minTokenBalance(),
         paymaster.paused(),
         paymaster.entryPoint(),
       ]);
@@ -220,11 +207,8 @@ export function ManagePaymasterFull() {
       setConfig({
         owner,
         treasury,
-        gasToUSDRate: ethers.formatUnits(gasToUSDRate, 18),
-        pntPriceUSD: ethers.formatUnits(pntPriceUSD, 18),
         serviceFeeRate: serviceFeeRate.toString(),
         maxGasCostCap: ethers.formatEther(maxGasCostCap),
-        minTokenBalance: ethers.formatEther(minTokenBalance),
         paused,
         entryPointAddress,
         registryAddress,
