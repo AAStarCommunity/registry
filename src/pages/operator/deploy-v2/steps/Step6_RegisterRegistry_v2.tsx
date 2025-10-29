@@ -18,6 +18,7 @@ export interface Step6Props {
   walletStatus: WalletStatus;
   communityName: string;
   serviceFeeRate: string;
+  sGTokenAmount: string; // Staked GToken amount from Step 2
   onNext: (registryTxHash: string) => void;
   onBack: () => void;
 }
@@ -61,6 +62,7 @@ export function Step6_RegisterRegistry_v2({
   walletStatus,
   communityName,
   serviceFeeRate,
+  sGTokenAmount,
   onNext,
   onBack,
 }: Step6Props) {
@@ -116,11 +118,12 @@ export function Step6_RegisterRegistry_v2({
 
       console.log("Community profile:", profile);
 
-      // Register to Registry v2 - must pass stGTokenAmount (0 if already staked)
-      // AOA mode: typically pass 30-50 GT here
-      // Super mode: pass 0 if already locked via SuperPaymaster
-      const stGTokenAmount = 0; // Assume already locked in previous step
-      const tx = await registry.registerCommunity(profile, stGTokenAmount);
+      // Register to Registry v2.1 - pass the staked GToken amount from Step 2
+      // Convert from decimal string to wei (18 decimals)
+      const stGTokenAmountWei = ethers.parseEther(sGTokenAmount || "0");
+      console.log("📊 Staked GToken amount:", sGTokenAmount, "GT (", stGTokenAmountWei.toString(), "wei)");
+
+      const tx = await registry.registerCommunity(profile, stGTokenAmountWei);
       console.log("📤 Registration tx sent:", tx.hash);
 
       // Wait for confirmation

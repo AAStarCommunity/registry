@@ -479,6 +479,7 @@ export function DeployWizard() {
               walletStatus={config.walletStatus}
               communityName={config.communityName}
               serviceFeeRate={config.serviceFeeRate}
+              sGTokenAmount={config.deployedResources?.sGTokenAmount || "0"}
               onNext={handleRegisterComplete}
               onBack={handleBack}
             />
