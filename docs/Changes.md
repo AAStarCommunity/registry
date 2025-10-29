@@ -8,6 +8,37 @@
 
 ---
 
+## 2025-10-29 (深夜) - Paymaster AOA/AOA+ 架构改进
+
+### SuperPaymaster Chainlink 集成 ✅
+集成 Chainlink 价格预言机到 SuperPaymasterV2，实现实时 ETH/USD 价格获取。
+
+#### 技术改进
+- 添加 AggregatorV3Interface 集成
+- 修改 `_calculateAPNTsAmount()` 使用实时价格
+- 添加价格 staleness 检查（1小时阈值）
+- 创建 MockChainlinkAggregator 用于测试
+- 更新部署脚本配置 Sepolia ETH/USD Feed
+
+#### 合约改动
+- SuperPaymasterV2.sol: 添加 ethUsdPriceFeed immutable 变量
+- MockChainlinkAggregator.sol: 新建测试 mock
+- DeploySuperPaymasterV2.s.sol: 添加 price feed 配置
+
+### Registry Paymaster 类型检测 ✅
+新增 paymaster-detector.ts 工具，支持自动识别 AOA 和 AOA+ 模式。
+
+#### 功能实现
+- detectPaymasterType(): 智能检测合约类型
+- AOA: PaymasterV4 独立合约（单operator）
+- AOA+: SuperPaymaster 统一合约（多operator账户）
+- 检测逻辑：已知地址 → accounts() → serviceFeeRate()+owner()
+
+#### 文件改动
+- paymaster-detector.ts: 新建类型检测工具（156行）
+
+---
+
 ## 2025-10-29 (晚间) - Registry v2.1 前端 ABI 修复 ✅ 最终解决
 
 ### 问题描述
