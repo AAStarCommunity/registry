@@ -4,60 +4,7 @@
 
 本文档记录 AAStar Registry 项目的开发进展和重要变更。
 
----
-
-## 2025-10-29 (深夜) - ManagePaymasterFull 跨设备 RPC Provider 修复 ✅
-
-### 问题描述
-在另一台 Mac 上 pull 最新代码后，`ManagePaymasterFull` 页面仍然报错：
-```
-unsupported protocol /api/rpc-proxy
-(info={ "protocol": "/api/rpc-proxy" }, operation="request", code=UNSUPPORTED_OPERATION, version=6.15.0)
-```
-
-### 根本原因
-`ManagePaymasterFull.tsx:179-180` 尝试直接使用 `JsonRpcProvider` 创建 provider：
-```typescript
-const rpcUrl = import.meta.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
-const provider = new ethers.JsonRpcProvider(rpcUrl);
-```
-
-**问题**:
-1. 环境变量名错误：`SEPOLIA_RPC_URL` 缺少 `VITE_` 前缀，Vite 不会暴露给前端
-2. 即使修正为 `VITE_SEPOLIA_RPC_URL`，其值是 `/api/rpc-proxy` (后端代理路径)
-3. `ethers.JsonRpcProvider` 不支持相对路径，需要 HTTP(S) URL
-
-### 解决方案
-使用现有的 `getProvider()` 工具函数 (`src/utils/rpc-provider.ts`)，它已经正确处理：
-- `/api/rpc-proxy` 后端代理 → 使用 `ProxyRpcProvider`
-- 公共 RPC URL → 使用 `JsonRpcProvider`
-- 无配置 → 使用多端点 fallback provider
-
-### 修改的文件
-
-**`src/pages/operator/ManagePaymasterFull.tsx`**:
-```diff
-+ import { getProvider } from '../../utils/rpc-provider';
-
-- // Use independent RPC for read-only queries (more reliable)
-- // Note: VITE_SEPOLIA_RPC_URL is /api/rpc-proxy (proxy), use backend RPC or public
-- const rpcUrl = import.meta.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
-- const provider = new ethers.JsonRpcProvider(rpcUrl);
-
-+ // Use independent RPC provider for read-only queries
-+ // getProvider() handles /api/rpc-proxy and public RPC fallbacks
-+ const provider = getProvider();
-```
-
-### 影响范围
-- ✅ 修复跨设备浏览器缓存问题
-- ✅ 统一使用 `getProvider()` 工具函数
-- ✅ 支持后端代理和公共 RPC 两种部署方式
-
-### 测试验证
-- [ ] 在使用 `/api/rpc-proxy` 的环境测试
-- [ ] 在使用公共 RPC URL 的环境测试
-- [ ] 验证 Paymaster 管理页面正常加载
+> **Changes.md 写入规则**: 仅记录修改≥3文件且>30行代码的重大变更
 
 ---
 
