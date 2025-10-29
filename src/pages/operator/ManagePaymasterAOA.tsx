@@ -85,6 +85,9 @@ interface PaymasterConfig {
   entryPointAddress: string;
   registryAddress: string;
   isRegistrySet: boolean;
+  gasToUSDRate: string;
+  pntPriceUSD: string;
+  minTokenBalance: string;
 }
 
 interface EntryPointInfo {
@@ -102,7 +105,7 @@ interface RegistryInfo {
   availableToLock: string; // Staked but not yet locked for paymaster
 }
 
-export function ManagePaymasterFull() {
+export default function ManagePaymasterAOA() {
   const [searchParams] = useSearchParams();
   const paymasterAddress = searchParams.get('address') || '';
 

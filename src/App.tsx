@@ -6,7 +6,7 @@ import { LaunchTutorial } from "./pages/LaunchTutorial";
 import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { DeployWizard } from "./pages/operator/DeployWizard";
-import { ManagePaymasterFull } from "./pages/operator/ManagePaymasterFull";
+import ManagePaymaster from "./pages/operator/ManagePaymaster";
 import GetGToken from "./pages/resources/GetGToken";
 import GetPNTs from "./pages/resources/GetPNTs";
 import { GetSBT } from "./pages/resources/GetSBT";
@@ -33,7 +33,7 @@ function App() {
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/operator/wizard" element={<DeployWizard />} />
-            <Route path="/operator/manage" element={<ManagePaymasterFull />} />
+            <Route path="/operator/manage" element={<ManagePaymaster />} />
             <Route path="/launch-guide" element={<LaunchTutorial />} />
             <Route path="/launch-tutorial" element={<LaunchTutorial />} />
             <Route path="/demo" element={<Navigate to="/launch-tutorial" replace />} />

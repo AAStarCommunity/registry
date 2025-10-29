@@ -987,3 +987,76 @@ cast call GTokenStaking "getLockerConfig(address)" RegistryV2_1
 **执行者**: Claude Code (with user approval)
 **验证状态**: ✅ 已验证成功
 
+
+## 2025-10-29: Registry 统一 Paymaster 管理架构
+
+### 背景
+配合 SuperPaymaster Chainlink 集成，需要统一 AOA (PaymasterV4) 和 AOA+ (SuperPaymaster) 的管理页面入口。
+
+### Registry 仓库变更
+
+#### 1. 创建 Paymaster 类型检测工具
+**文件**: `src/utils/paymaster-detector.ts` (新建, 156 行)
+
+功能：
+- 自动检测 Paymaster 类型（AOA vs AOA+）
+- 检测逻辑：已知地址 → 调用 accounts() → 调用 serviceFeeRate()+owner()
+- 使用 `as const` 替代 enum（兼容 erasableSyntaxOnly）
+
+核心接口：
+```typescript
+export const PaymasterType = {
+  AOA: "AOA",          // PaymasterV4 - 独立合约
+  AOA_PLUS: "AOA_PLUS", // SuperPaymaster - 统一合约
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+detectPaymasterType(address, provider): Promise<PaymasterInfo>
+```
+
+#### 2. 重构管理页面架构
+**文件重命名**: `ManagePaymasterFull.tsx` → `ManagePaymasterAOA.tsx`
+- 函数重命名: `ManagePaymasterFull()` → `ManagePaymasterAOA()`
+- 改为默认导出: `export default function ManagePaymasterAOA()`
+- 修复 PaymasterConfig 接口，添加缺失字段：gasToUSDRate, pntPriceUSD, minTokenBalance
+
+**新建统一入口**: `src/pages/operator/ManagePaymaster.tsx` (132 行)
+- 读取 URL 参数 `?address=...`
+- 自动调用类型检测
+- 根据检测结果路由到对应组件：
+  - AOA → `<ManagePaymasterAOA />`
+  - AOA+ → 占位页面（开发中）
+  - UNKNOWN → 错误提示
+
+#### 3. 更新路由配置
+**文件**: `src/App.tsx`
+```typescript
+// 修改前
+import { ManagePaymasterFull } from "./pages/operator/ManagePaymasterFull";
+<Route path="/operator/manage" element={<ManagePaymasterFull />} />
+
+// 修改后
+import ManagePaymaster from "./pages/operator/ManagePaymaster";
+<Route path="/operator/manage" element={<ManagePaymaster />} />
+```
+
+**文件**: `src/pages/operator/index.ts`
+```typescript
+export { default as ManagePaymaster } from './ManagePaymaster';
+```
+
+#### 4. 修复 TypeScript 编译问题
+- 将 `@/utils/*` 路径别名改为相对路径导入（`../../utils/*`）
+- 将 enum 改为 `as const` 对象（兼容 tsconfig erasableSyntaxOnly）
+- 修复导出方式（命名导出 vs 默认导出）
+
+### 使用方式
+```
+/operator/manage?address=0x...  
+→ 自动检测类型 → 路由到对应管理页面
+```
+
+### 下一步
+1. 实现 AOA+ (SuperPaymaster) 管理组件
+2. Playwright 集成测试
+3. 部署 SuperPaymasterV2 后更新已知地址列表

@@ -1,10 +1,12 @@
 import { ethers } from "ethers";
 
-export enum PaymasterType {
-  AOA = "AOA", // PaymasterV4 - 独立合约，单个operator
-  AOA_PLUS = "AOA_PLUS", // SuperPaymaster - 统一合约，多个operator账户
-  UNKNOWN = "UNKNOWN",
-}
+export const PaymasterType = {
+  AOA: "AOA", // PaymasterV4 - 独立合约，单个operator
+  AOA_PLUS: "AOA_PLUS", // SuperPaymaster - 统一合约，多个operator账户
+  UNKNOWN: "UNKNOWN",
+} as const;
+
+export type PaymasterType = typeof PaymasterType[keyof typeof PaymasterType];
 
 interface PaymasterInfo {
   type: PaymasterType;
