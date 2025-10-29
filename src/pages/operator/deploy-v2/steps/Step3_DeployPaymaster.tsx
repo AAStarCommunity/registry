@@ -12,6 +12,14 @@ const ENTRYPOINT_ADDRESSES: Record<number, string> = {
   1: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", // Ethereum Mainnet
 };
 
+// Chainlink ETH/USD Price Feed addresses
+const CHAINLINK_ETH_USD_FEED: Record<number, string> = {
+  11155111: "0x694AA1769357215DE4FAC081bf1f309aDC325306", // Sepolia
+  11155420: "0x61Ec26aA57019C486B10502285c5A3D4A4750AD7", // OP Sepolia
+  10: "0x13e3Ee699D1909E989722E753853AE30b17e08c5",       // OP Mainnet
+  1: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",        // Ethereum Mainnet
+};
+
 // Registry v2.0 ABI for checking existing registration
 const REGISTRY_V2_ABI = [
   "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
@@ -141,9 +149,17 @@ export function Step3_DeployPaymaster({
         throw new Error(`EntryPoint not configured for chain ID ${chainId}`);
       }
 
+      // Get Chainlink ETH/USD price feed for current chain
+      const ethUsdPriceFeed = CHAINLINK_ETH_USD_FEED[chainId];
+      if (!ethUsdPriceFeed) {
+        throw new Error(`Chainlink ETH/USD price feed not configured for chain ID ${chainId}`);
+      }
+
+      // Get Registry v2.1 address
+      const networkConfig = getCurrentNetworkConfig();
+      const registryAddress = networkConfig.contracts.registryV2_1 || ethers.ZeroAddress;
+
       // Parse constructor parameters
-      const gasToUSDRate = ethers.parseUnits(config.gasToUSDRate, 18);
-      const pntPriceUSD = ethers.parseUnits(config.pntPriceUSD, 18);
       const serviceFeeRate = parseInt(config.serviceFeeRate) * 100; // Convert % to basis points
       const maxGasCostCap = ethers.parseEther(config.maxGasCostCap);
       const minTokenBalance = ethers.parseUnits(config.minTokenBalance, 18);
@@ -152,11 +168,11 @@ export function Step3_DeployPaymaster({
       console.log("  EntryPoint:", entryPoint);
       console.log("  Owner:", ownerAddress);
       console.log("  Treasury:", config.treasury);
-      console.log("  Gas to USD Rate:", gasToUSDRate.toString());
-      console.log("  PNT Price USD:", pntPriceUSD.toString());
+      console.log("  ETH/USD Price Feed:", ethUsdPriceFeed);
       console.log("  Service Fee Rate (bp):", serviceFeeRate);
       console.log("  Max Gas Cost Cap:", maxGasCostCap.toString());
       console.log("  Min Token Balance:", minTokenBalance.toString());
+      console.log("  Registry v2.1:", registryAddress);
 
       // Create ContractFactory
       const factory = new ethers.ContractFactory(
@@ -170,11 +186,13 @@ export function Step3_DeployPaymaster({
         entryPoint,
         ownerAddress,
         config.treasury,
-        gasToUSDRate,
-        pntPriceUSD,
+        ethUsdPriceFeed,
         serviceFeeRate,
         maxGasCostCap,
-        minTokenBalance
+        minTokenBalance,
+        deployedResources?.sbtAddress || ethers.ZeroAddress,
+        deployedResources?.xPNTsAddress || ethers.ZeroAddress,
+        registryAddress
       ).then((tx) => provider.estimateGas(tx));
 
       setEstimatedGas(ethers.formatEther(gasEstimate));
@@ -184,13 +202,13 @@ export function Step3_DeployPaymaster({
         entryPoint,
         ownerAddress,
         config.treasury,
-        gasToUSDRate,
-        pntPriceUSD,
+        ethUsdPriceFeed,
         serviceFeeRate,
         maxGasCostCap,
         minTokenBalance,
-        deployedResources?.sbtAddress || ethers.ZeroAddress,     // Initial SBT (optional)
-        deployedResources?.xPNTsAddress || ethers.ZeroAddress    // Initial GasToken (optional)
+        deployedResources?.sbtAddress || ethers.ZeroAddress,
+        deployedResources?.xPNTsAddress || ethers.ZeroAddress,
+        registryAddress
       );
 
       setDeployTxHash(contract.deploymentTransaction()?.hash || null);

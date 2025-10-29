@@ -14,6 +14,14 @@ import { Step7_Complete } from './deploy-v2/steps/Step7_Complete';
 // Import types and utilities
 import type { WalletStatus } from './deploy-v2/utils/walletChecker';
 import { getCurrentNetworkConfig } from '../../config/networkConfig';
+import {
+  saveProgress,
+  loadProgress,
+  validateProgress,
+  clearProgress,
+  shouldShowRestorePrompt,
+  type WizardProgress,
+} from './deploy-v2/utils/progressManager';
 
 /**
  * DeployWizard - Dynamic deployment flow with branching paths
@@ -200,6 +208,11 @@ export function DeployWizard() {
     minTokenBalance: '100',
   });
 
+  // Progress restoration state
+  const [savedProgress, setSavedProgress] = useState<WizardProgress | null>(null);
+  const [showRestorePrompt, setShowRestorePrompt] = useState(false);
+  const [isValidatingProgress, setIsValidatingProgress] = useState(false);
+
   // Check for test mode on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -238,6 +251,20 @@ export function DeployWizard() {
       console.log('🧪 Test Mode Enabled - Skipping to Step 2 with mock data');
     }
   }, []);
+
+  // Load and validate saved progress on mount
+  useEffect(() => {
+    // Skip progress restoration in test mode
+    if (isTestMode) {
+      return;
+    }
+
+    const progress = loadProgress();
+    if (progress && shouldShowRestorePrompt(progress, currentStep)) {
+      setSavedProgress(progress);
+      setShowRestorePrompt(true);
+    }
+  }, [isTestMode, currentStep]);
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -288,6 +315,76 @@ export function DeployWizard() {
     setConfig((prev) => ({ ...prev, registryTxHash: txHash }));
     handleNext();
   };
+
+  // Progress restoration handlers
+  const handleRestoreProgress = async () => {
+    if (!savedProgress || !window.ethereum) {
+      return;
+    }
+
+    setIsValidatingProgress(true);
+    setShowRestorePrompt(false);
+
+    try {
+      const provider = new (await import('ethers')).ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const currentOwnerAddress = await signer.getAddress();
+      const network = await provider.getNetwork();
+      const currentChainId = Number(network.chainId);
+
+      // Validate progress
+      const validation = await validateProgress(savedProgress, currentChainId, currentOwnerAddress);
+
+      if (!validation.isValid) {
+        alert(`Cannot restore progress: ${validation.reason || 'Validation failed'}`);
+        clearProgress();
+        setSavedProgress(null);
+        setIsValidatingProgress(false);
+        return;
+      }
+
+      // Restore config and steps
+      setConfig(savedProgress.config);
+      setSteps(getStepsForOption(savedProgress.stakeOption, t));
+      setCurrentStep(validation.validatedStep);
+
+      if (validation.validatedStep < savedProgress.currentStep) {
+        alert(
+          `Some steps could not be validated. Resuming from step ${validation.validatedStep}.`
+        );
+      }
+
+      console.log('✅ Progress restored successfully');
+    } catch (error) {
+      console.error('❌ Failed to restore progress:', error);
+      alert('Failed to restore progress. Starting from beginning.');
+      clearProgress();
+      setSavedProgress(null);
+    } finally {
+      setIsValidatingProgress(false);
+    }
+  };
+
+  const handleDeclineRestore = () => {
+    setShowRestorePrompt(false);
+    clearProgress();
+    setSavedProgress(null);
+  };
+
+  // Save progress after each step (except first and last)
+  useEffect(() => {
+    if (isTestMode || currentStep <= 1 || currentStep >= steps.length) {
+      return;
+    }
+
+    const ownerAddress = config.walletStatus?.address || config.owner;
+    if (!ownerAddress) {
+      return;
+    }
+
+    const chainId = SUPPORTED_NETWORKS[config.network].chainId;
+    saveProgress(currentStep, chainId, ownerAddress, config);
+  }, [currentStep, config, steps.length, isTestMode]);
 
   const renderStepContent = () => {
     const stepKey = steps[currentStep - 1]?.stepKey;
@@ -423,6 +520,72 @@ export function DeployWizard() {
           {t('wizard.subtitle', { totalSteps: steps.length })}
         </p>
       </div>
+
+      {/* Progress restoration prompt */}
+      {showRestorePrompt && savedProgress && (
+        <div
+          style={{
+            backgroundColor: '#f0f9ff',
+            border: '2px solid #3b82f6',
+            borderRadius: '8px',
+            padding: '16px 20px',
+            margin: '20px 0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px',
+          }}
+        >
+          <div style={{ flex: '1', minWidth: '250px' }}>
+            <div style={{ fontSize: '16px', fontWeight: '600', marginBottom: '4px', color: '#1e40af' }}>
+              📋 Previous Progress Found
+            </div>
+            <div style={{ fontSize: '14px', color: '#1e3a8a' }}>
+              Resume from Step {savedProgress.currentStep} ({savedProgress.stakeOption.toUpperCase()} mode) - saved{' '}
+              {Math.round((Date.now() - savedProgress.timestamp) / 1000 / 60)} minutes ago
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {isValidatingProgress ? (
+              <div style={{ padding: '8px 16px', color: '#6b7280' }}>Validating...</div>
+            ) : (
+              <>
+                <button
+                  onClick={handleRestoreProgress}
+                  style={{
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ✅ Resume Progress
+                </button>
+                <button
+                  onClick={handleDeclineRestore}
+                  style={{
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151',
+                    border: '1px solid #d1d5db',
+                    borderRadius: '6px',
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ❌ Start Fresh
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <div className="network-selector">
         <label htmlFor="network-select" className="network-label">
