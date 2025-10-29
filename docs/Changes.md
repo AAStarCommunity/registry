@@ -221,6 +221,85 @@ npm run dev
 
 ---
 
+### Step6 stGToken Approval 修复 (最终修复)
+
+#### 问题
+Registry 注册时报错 "missing revert data"，所有预检查都通过但 `registerCommunity()` 调用失败
+
+#### 根本原因
+**Registry v2.1 需要从用户账户转移 stGToken，但用户未授权（approve）stGToken 给 Registry 合约**
+
+错误表现：
+```
+missing revert data (action="estimateGas", data=null, reason=null)
+```
+
+这是典型的 ERC20 `transferFrom` 失败且未提供 revert message 的错误。
+
+#### 解决方案
+文件: `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx:160-187`
+
+添加 approval 流程：
+
+```typescript
+// Check and approve stGToken for Registry if needed
+const stGTokenStakingSigner = new ethers.Contract(
+  config.contracts.gTokenStaking,
+  GTOKEN_STAKING_ABI,
+  signer
+);
+
+const currentAllowance = await stGTokenStakingSigner.allowance(
+  userAddress,
+  config.contracts.registryV2_1
+);
+
+if (currentAllowance < stGTokenAmountWei) {
+  console.log("📝 Approving stGToken for Registry...");
+  const approveTx = await stGTokenStakingSigner.approve(
+    config.contracts.registryV2_1,
+    stGTokenAmountWei
+  );
+  await approveTx.wait();
+  console.log("✅ stGToken approved for Registry");
+}
+```
+
+#### 完整注册流程
+
+**Step 4: 质押 GToken**
+1. 用户质押 GToken 到 GTokenStaking
+2. 收到 stGToken (share token)
+
+**Step 6: 注册到 Registry v2.1**
+1. ✅ 检查合约存在性（Paymaster, xPNTs, SBT）
+2. ✅ 检查 stGToken 余额
+3. ✅ **检查 stGToken allowance** (新增)
+4. ✅ **自动 approve stGToken 给 Registry** (新增)
+5. ✅ 检查是否已注册
+6. ✅ 调用 `registerCommunity(profile, stGTokenAmount)`
+
+#### 技术细节
+
+**stGToken 是什么？**
+- stGToken 是 GTokenStaking 合约的 share token
+- GTokenStaking 实现了 ERC20 接口（balanceOf, approve, allowance, transferFrom）
+- 用户质押 GToken → 收到 stGToken
+- stGToken 数量代表在质押池中的份额
+
+**为什么需要 approve？**
+- Registry v2.1 的 `registerCommunity()` 需要从用户账户转移 stGToken
+- 使用 `transferFrom(user, registry, amount)` 实现转移
+- transferFrom 需要用户先 approve
+
+**RPC 配置更新**
+`.env.local` 已更新为直接使用 Alchemy RPC（不再依赖 `/api/rpc-proxy`）：
+```bash
+VITE_SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/Bx4QRW1-vnwJUePSAAD7N
+```
+
+---
+
 **技术栈**: React + TypeScript + ethers.js v6 + ERC-4337 (EntryPoint v0.7)
 **测试网**: Sepolia
 **关键合约**: Registry v2.1, GTokenStaking V2, MySBT v2.3
