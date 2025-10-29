@@ -278,9 +278,26 @@ export function Step4_DeployResources({
         signer
       );
 
-      // Check if user already has a stake
+      const stakeAmount = ethers.parseEther(gTokenStakeAmount);
+
+      // Pre-flight checks
+      console.log("🔍 Running pre-flight checks...");
+
+      // Check 1: GToken balance
+      const gTokenBalance = await gToken.balanceOf(userAddress);
+      console.log("GToken balance:", ethers.formatEther(gTokenBalance), "GT");
+
+      if (gTokenBalance < stakeAmount) {
+        throw new Error(
+          `Insufficient GToken balance.\n\nYou have: ${ethers.formatEther(gTokenBalance)} GT\nRequired: ${gTokenStakeAmount} GT\n\nPlease get more GToken from the faucet or reduce the stake amount.`
+        );
+      }
+      console.log("✅ Sufficient GToken balance");
+
+      // Check 2: Existing stake
       const existingStake = await gtokenStaking.getStakeInfo(userAddress);
-      const stakedAmount = existingStake[0]; // amount is first element in tuple
+      const stakedAmount = existingStake[0]; // amount
+      const unstakeRequestedAt = existingStake[3]; // unstakeRequestedAt
 
       if (stakedAmount > 0n) {
         const formattedAmount = ethers.formatEther(stakedAmount);
@@ -294,7 +311,13 @@ export function Step4_DeployResources({
         return;
       }
 
-      const stakeAmount = ethers.parseEther(gTokenStakeAmount);
+      // Check 3: Pending unstake request
+      if (unstakeRequestedAt > 0n) {
+        throw new Error(
+          `You have a pending unstake request.\n\nRequested at: ${new Date(Number(unstakeRequestedAt) * 1000).toLocaleString()}\n\nPlease complete or cancel the unstake before staking again.`
+        );
+      }
+      console.log("✅ No existing stake or pending unstake");
 
       console.log("Step 1/2: Approving GToken for staking...");
 
