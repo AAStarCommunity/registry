@@ -243,7 +243,7 @@ export function RegistryExplorer() {
     const REGISTRY_V2_1_ABI = [
       "function getCommunityCount() view returns (uint256)",
       "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
-      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
     ];
 
     const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_ABI, provider);

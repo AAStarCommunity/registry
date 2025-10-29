@@ -6,6 +6,137 @@
 
 ---
 
+## 2025-10-29 (晚间) - Registry v2.1 前端 ABI 修复 ✅ 最终解决
+
+### 问题描述
+Registry v2.1 重新部署后，前端注册仍然失败，错误信息从链上调用返回 `Error: cannot use object value with unnamed components`。
+
+### 根本原因
+**前端 ABI 定义与合约结构体不匹配** - `CommunityProfile` 结构体缺少 `nodeType` 字段
+
+**合约 `CommunityProfile` 结构体** (按顺序):
+```solidity
+struct CommunityProfile {
+    string name;
+    string ensName;
+    string description;
+    string website;
+    string logoURI;
+    string twitterHandle;
+    string githubOrg;
+    string telegramGroup;
+    address xPNTsToken;
+    address[] supportedSBTs;
+    PaymasterMode mode;         // uint8 - 第11个
+    NodeType nodeType;          // uint8 - 第12个 ❌ 前端缺少！
+    address paymasterAddress;   // 第13个
+    address community;          // 第14个
+    uint256 registeredAt;
+    uint256 lastUpdatedAt;
+    bool isActive;
+    uint256 memberCount;
+}
+```
+
+**前端旧 ABI** (错误):
+```typescript
+tuple(
+  ...,
+  uint8 mode,              // 第11个
+  address paymasterAddress, // 第12个 ← 位置错了！缺少 nodeType
+  address community,        // 第13个
+  ...
+)
+```
+
+### 修复方案
+
+#### 1. 更新所有前端文件的 `registerCommunity()` ABI
+添加 `uint8 nodeType` 字段（位于 `mode` 和 `paymasterAddress` 之间）
+
+**修改文件**:
+- ✅ `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx` (Line 41)
+- ✅ `src/pages/RegistryExplorer.tsx` (Line 246)
+- ✅ `src/pages/operator/deploy-v2/steps/Step3_DeployPaymaster.tsx` (Line 25)
+
+#### 2. 更新 `getCommunityProfile()` ABI
+同样添加 `uint8 nodeType` 字段
+
+**修改文件**:
+- ✅ `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx` (Line 51)
+- ✅ `src/pages/RegistryExplorer.tsx` (Line 246)
+- ✅ `src/pages/operator/deploy-v2/steps/Step3_DeployPaymaster.tsx` (Line 25)
+
+#### 3. 更新 profile 对象构建
+在 Step6 构建 profile 时添加 `nodeType` 字段：
+
+```typescript
+const profile = {
+  name: communityName,
+  ensName: "",
+  description: description,
+  website: website,
+  logoURI: "",
+  twitterHandle: twitterHandle,
+  githubOrg: "",
+  telegramGroup: "",
+  xPNTsToken: xPNTsAddress,
+  supportedSBTs: [sbtAddress],
+  mode: PaymasterMode.INDEPENDENT, // 0
+  nodeType: 0, // NodeType.PAYMASTER_AOA (映射自 INDEPENDENT mode)
+  paymasterAddress: paymasterAddress,
+  community: walletStatus.address,
+  registeredAt: 0,
+  lastUpdatedAt: 0,
+  isActive: true,
+  memberCount: 0,
+};
+```
+
+**修改文件**: `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx` (Line 197)
+
+### NodeType 映射关系
+
+根据合约逻辑（Registry.sol:279-281）：
+```solidity
+NodeType nodeType = profile.mode == PaymasterMode.INDEPENDENT
+    ? NodeType.PAYMASTER_AOA
+    : NodeType.PAYMASTER_SUPER;
+```
+
+| PaymasterMode | NodeType | 值 |
+|--------------|----------|---|
+| INDEPENDENT (0) | PAYMASTER_AOA | 0 |
+| SUPER (1) | PAYMASTER_SUPER | 1 |
+
+### 影响分析
+
+**修复前** ❌:
+- 前端传入的 profile 数据结构与合约不匹配
+- ethers.js 无法正确编码参数（字段数量/顺序不对）
+- 调用 `registerCommunity()` 时出错: "cannot use object value with unnamed components"
+- MetaMask 返回: "execution reverted: missing revert data"
+
+**修复后** ✅:
+- 前端 ABI 完全匹配合约 `CommunityProfile` 结构体
+- ethers.js 正确编码所有字段
+- 用户可以成功注册社区到 Registry v2.1
+- Registry Explorer 可以正确查询社区信息
+
+### 测试验证
+
+待用户刷新前端页面后测试：
+1. 访问 Deploy Wizard Step 6
+2. 确认 profile 对象包含 `nodeType: 0`
+3. 点击 "Register to Registry v2.1" 按钮
+4. 预期: 交易成功，社区注册完成
+
+### 相关文档
+- [Registry v2.1 重新部署报告](../REGISTRY-V2.1-REDEPLOYMENT-SUCCESS.md)
+- [合约源代码](../../SuperPaymaster/src/paymasters/v2/core/Registry.sol)
+
+---
+
 ## 2025-10-29 - Registry v2.1 注册流程修复与配置统一
 
 ### 核心问题修复

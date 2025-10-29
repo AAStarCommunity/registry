@@ -20,9 +20,9 @@ const CHAINLINK_ETH_USD_FEED: Record<number, string> = {
   1: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",        // Ethereum Mainnet
 };
 
-// Registry v2.0 ABI for checking existing registration
+// Registry v2.0/v2.1 ABI for checking existing registration
 const REGISTRY_V2_ABI = [
-  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
 ];
 
 export interface DeployConfig {

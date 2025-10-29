@@ -38,6 +38,7 @@ const REGISTRY_V2_1_ABI = [
       address xPNTsToken,
       address[] supportedSBTs,
       uint8 mode,
+      uint8 nodeType,
       address paymasterAddress,
       address community,
       uint256 registeredAt,
@@ -47,7 +48,7 @@ const REGISTRY_V2_1_ABI = [
     ) profile,
     uint256 stGTokenAmount
   ) external`,
-  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
 ];
 
 // GTokenStaking ABI - share-based staking (non-transferable)
@@ -193,6 +194,7 @@ Solutions:
         xPNTsToken: xPNTsAddress,
         supportedSBTs: [sbtAddress], // Array of SBT addresses
         mode: PaymasterMode.INDEPENDENT, // AOA mode
+        nodeType: 0, // NodeType.PAYMASTER_AOA (maps from INDEPENDENT mode)
         paymasterAddress: paymasterAddress,
         community: walletStatus.address, // Will be overwritten by contract
         registeredAt: 0, // Will be set by contract
