@@ -63,10 +63,10 @@ const sepoliaConfig: NetworkConfig = {
       return addr;
     })(), // v2.0 (getAllCommunities API)
     registryV2_1: (() => {
-      const addr = import.meta.env.VITE_REGISTRY_V2_1_ADDRESS || "0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3";
+      const addr = import.meta.env.VITE_REGISTRY_V2_1_ADDRESS || "0x113D473b1bC6DC8fdb7aA222C344A08399a4E1BC";
       console.log("[networkConfig] VITE_REGISTRY_V2_1_ADDRESS:", import.meta.env.VITE_REGISTRY_V2_1_ADDRESS, "-> using:", addr);
       return addr;
-    })(), // v2.1
+    })(), // v2.1 (REDEPLOYED 2025-10-29 with correct GTokenStaking)
     pntToken: import.meta.env.VITE_PNT_TOKEN_ADDRESS || "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180",
     gToken: (() => {
       const addr = import.meta.env.VITE_GTOKEN_ADDRESS || "0x868F843723a98c6EECC4BF0aF3352C53d5004147";
