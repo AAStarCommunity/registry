@@ -121,6 +121,10 @@ export function Step6_RegisterRegistry_v2({
       // Check stGToken balance
       if (sGTokenAmount && parseFloat(sGTokenAmount) > 0) {
         const stGTokenAmountWei = ethers.parseEther(sGTokenAmount);
+        console.log("🔍 Checking stGToken balance...");
+        console.log("GTokenStaking contract:", config.contracts.gTokenStaking);
+        console.log("User address:", userAddress);
+
         const gTokenStaking = new ethers.Contract(
           config.contracts.gTokenStaking,
           GTOKEN_STAKING_ABI,
@@ -128,13 +132,26 @@ export function Step6_RegisterRegistry_v2({
         );
 
         const userBalance = await gTokenStaking.balanceOf(userAddress);
-        console.log("User stGToken balance:", ethers.formatEther(userBalance), "stGT");
-        console.log("Required stGToken:", sGTokenAmount, "stGT");
+        console.log("📊 User stGToken balance:", ethers.formatEther(userBalance), "stGT");
+        console.log("📋 Required stGToken:", sGTokenAmount, "stGT");
 
         if (userBalance < stGTokenAmountWei) {
-          throw new Error(
-            `Insufficient stGToken balance. You have ${ethers.formatEther(userBalance)} stGT but need ${sGTokenAmount} stGT. Please stake more GToken in Step 4.`
-          );
+          const errorMsg = `Insufficient stGToken balance.
+
+You have: ${ethers.formatEther(userBalance)} stGT
+Required: ${sGTokenAmount} stGT
+
+Checked contract: ${config.contracts.gTokenStaking}
+User address: ${userAddress}
+
+⚠️ POSSIBLE ISSUE: You may have staked to a different GTokenStaking contract address.
+Please check if Step 4 used a different contract address (check browser console logs).
+
+Solutions:
+1. Go back to Step 4 and stake ${sGTokenAmount} GT to the correct address
+2. Or check Etherscan for your previous staking transaction`;
+
+          throw new Error(errorMsg);
         }
         console.log("✅ Sufficient stGToken balance");
       }

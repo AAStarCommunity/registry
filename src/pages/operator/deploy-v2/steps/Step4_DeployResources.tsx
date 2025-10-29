@@ -40,7 +40,7 @@ const GTOKEN_ADDRESS =
   "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35";
 const GTOKEN_STAKING_ADDRESS =
   import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2";
+  "0x199402b3F213A233e89585957F86A07ED1e1cD67"; // Must match networkConfig.ts
 
 // Helper function to get block explorer URL
 const getExplorerUrl = (address: string): string => {
@@ -264,6 +264,13 @@ export function Step4_DeployResources({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
+
+      console.log("🔍 GToken Staking Info:");
+      console.log("GToken contract:", GTOKEN_ADDRESS);
+      console.log("GTokenStaking contract:", GTOKEN_STAKING_ADDRESS);
+      console.log("User address:", userAddress);
+      console.log("Amount to stake:", gTokenStakeAmount, "GT");
+
       const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTOKEN_ABI, signer);
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
