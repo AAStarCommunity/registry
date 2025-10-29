@@ -466,6 +466,150 @@ cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
 # 结果: Error: execution reverted ✅ 证明函数不存在
 ```
 
+### 🔍 发现 Registry v2.1 根本问题 - 缺少 Locker 授权
+
+#### 问题分析过程
+
+**症状**: `registerCommunity()` 失败，error: "missing revert data"
+
+**诊断步骤**:
+
+1. **检查部署脚本** (`DeployRegistryV2_1.s.sol`)
+   - Line 114-116 发现关键提示：
+     ```solidity
+     console.log("1. Add Registry v2.1 as locker in GTokenStaking:");
+     ```
+   - **部署后需要手动添加 locker 授权！**
+
+2. **分析 Registry 源码** (`Registry.sol`)
+   - Line 295-299 找到关键调用：
+     ```solidity
+     GTOKEN_STAKING.lockStake(
+         msg.sender,
+         stGTokenAmount,
+         "Registry community registration"
+     );
+     ```
+   - Registry 需要调用 `GTokenStaking.lockStake()` 来锁定用户的 stGToken
+
+3. **分析 GTokenStaking 源码** (`GTokenStaking.sol`)
+   - Line 317-320 发现权限检查：
+     ```solidity
+     LockerConfig memory config = lockerConfigs[msg.sender];
+     if (!config.authorized) {
+         revert UnauthorizedLocker(msg.sender);
+     }
+     ```
+   - **只有授权的 locker 才能调用 lockStake()！**
+
+4. **验证当前状态**:
+   ```bash
+   # 检查 GTokenStaking owner
+   cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 "owner()(address)"
+   # 结果: 0x411BD567... (用户自己！)
+
+   # 检查 Registry v2.1 是否被授权
+   cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
+     "getLockerConfig(address)" 0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3
+   # 结果: (false, 0, [], [], 0x000...)
+   #        ^^^^^ authorized = FALSE ❌
+   ```
+
+#### 根本原因
+
+**Registry v2.1 没有被添加为 GTokenStaking 的授权 locker！**
+
+这是部署后遗漏的必需配置步骤，导致：
+- Registry 调用 `lockStake()` 时被 `UnauthorizedLocker` 错误拒绝
+- 错误在复杂调用链中被包装，显示为 "missing revert data"
+- 所有用户注册尝试都失败
+
+#### 解决方案
+
+**前提条件**:
+- ✅ 用户是 GTokenStaking 的 owner (`0x411BD567...`)
+- ✅ 可以直接调用 `configureLocker()` 授权 Registry v2.1
+
+**修复步骤**:
+
+调用 `GTokenStaking.configureLocker()` 授权 Registry v2.1：
+
+```bash
+cast send 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
+  "configureLocker(address,bool,uint256,uint256[],uint256[],address)" \
+  0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3 \
+  true \
+  0 \
+  "[]" \
+  "[]" \
+  0x0000000000000000000000000000000000000000 \
+  --rpc-url $SEPOLIA_RPC_URL \
+  --private-key $PRIVATE_KEY
+```
+
+**参数说明**:
+- `0x3F7E...`: Registry v2.1 地址
+- `true`: authorized = true（授权）
+- `0`: baseExitFee = 0（Registry unlock 不收手续费）
+- `[]`: timeTiers = 空（无时间层级费用）
+- `[]`: tierFees = 空（无层级费用）
+- `0x000...`: feeRecipient = 零地址（不适用）
+
+#### 工具和文档
+
+**创建的文件**:
+1. `REGISTRY-V2.1-FIX.md` - 完整诊断报告和修复指南
+2. `authorize-registry-locker.mjs` - JavaScript 自动化脚本
+
+**验证修复**:
+```bash
+# 执行授权后验证
+cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
+  "getLockerConfig(address)" 0x3F7E822C7FD54dBF8df29C6EC48E08Ce8AcEBeb3
+
+# 期望结果: (true, 0, [], [], 0x000...)
+#            ^^^^^ authorized = TRUE ✅
+```
+
+#### 技术细节
+
+**Locker 机制设计**:
+- GTokenStaking 实现了锁定机制，允许授权的外部合约（locker）锁定用户的 stGToken
+- 设计目的：支持 Registry、SBT、KMS 等合约锁定用户质押作为抵押/保证金
+- 权限控制：只有 owner 能添加/移除 locker，防止未授权合约锁定用户资金
+
+**错误传播链**:
+```
+用户调用 Registry.registerCommunity()
+  → Registry 调用 GTokenStaking.lockStake()
+    → GTokenStaking 检查 lockerConfigs[msg.sender].authorized
+      → authorized = false
+        → revert UnauthorizedLocker(msg.sender)
+          → 错误在 Registry 的 estimateGas 阶段失败
+            → MetaMask 显示 "execution reverted"
+              → ethers.js 报告 "missing revert data"
+```
+
+**为什么错误信息丢失**:
+- `estimateGas` 调用失败时，Sepolia RPC 可能不返回详细的 revert 数据
+- Registry v2.1 合约可能未在 Etherscan 验证，无法解码错误
+- 复杂的调用链包装了原始错误
+
+#### 经验教训
+
+1. **部署后配置检查清单必须执行**
+   - 部署脚本明确标注了 "Next Steps"
+   - 应该在部署时立即执行所有必需配置
+
+2. **合约间依赖需要文档化**
+   - Registry v2.1 依赖 GTokenStaking locker 授权
+   - 应在前端添加部署前检查
+
+3. **错误诊断流程**
+   - "missing revert data" 通常意味着权限或配置问题
+   - 需要查看合约源码理解调用链
+   - 使用 `cast` 直接模拟调用来诊断
+
 ---
 
 **技术栈**: React + TypeScript + ethers.js v6 + ERC-4337 (EntryPoint v0.7)
