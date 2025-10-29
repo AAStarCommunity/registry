@@ -6,6 +6,25 @@
 
 ---
 
+## 2025-10-29 - Registry v2.1注册Bug修复
+
+### Step6注册传参修复
+修复了Launch Paymaster向Registry v2.1注册时的关键bug：Step6_RegisterRegistry_v2将stGTokenAmount硬编码为0，导致`registerCommunity()`调用时出现"missing revert data"错误。
+
+**修复内容**:
+- Step6Props新增`sGTokenAmount: string`参数
+- DeployWizard传递`config.deployedResources?.sGTokenAmount`到Step6
+- 注册前正确转换为wei：`ethers.parseEther(sGTokenAmount || "0")`
+- Registry现在能正确追踪社区质押的GToken数量
+
+**影响文件**:
+- `Step6_RegisterRegistry_v2.tsx`: 接收并使用sGTokenAmount参数
+- `DeployWizard.tsx`: 传递实际质押金额到Step6
+
+**Commit**: f2c635b
+
+---
+
 ## 2025-10-27 - Registry v2.1完整部署：合约+前端+全面启用
 
 ### 部署成功 ✅
