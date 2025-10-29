@@ -44,6 +44,8 @@ const PAYMASTER_V4_ABI = [
   "function isRegistrySet() view returns (bool)",
   "function supportedSBTs(uint256) view returns (address)",
   "function supportedGasTokens(uint256) view returns (address)",
+  "function getSupportedSBTs() view returns (address[])",
+  "function getSupportedGasTokens() view returns (address[])",
   "function isSBTSupported(address) view returns (bool)",
   "function isGasTokenSupported(address) view returns (bool)",
   "function transferOwnership(address newOwner)",
