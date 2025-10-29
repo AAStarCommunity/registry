@@ -382,6 +382,90 @@ cast call 0xc3aa5816B000004F790e1f6B9C65f4dd5520c7b2 \
 
 **工具脚本**: 创建了 `check-stgtoken-balance.js` 用于诊断余额分布
 
+### 修复错误的 stGToken Approval 逻辑 (commit: a98fc8f)
+
+#### 问题
+用户完成 Step 4 质押后，Step 6 注册时调用 `allowance()` 失败：
+```
+execution reverted (action="call", ...)
+"to": "0x199402b3F213A233e89585957F86A07ED1e1cD67"  // GTokenStaking V2
+Function: allowance(address,address)
+```
+
+#### 根本原因
+**GTokenStaking V2 不支持 ERC20 的 approve/allowance/transfer 机制**
+
+1. **stGToken 是不可转移的 share token**
+   - 代表用户在质押池中的份额
+   - 不支持 `approve()`, `allowance()`, `transfer()`, `transferFrom()`
+   - 只支持 `balanceOf()` 查询余额
+
+2. **Registry v2.1 不需要转移 stGToken**
+   - 注释明确说明："Pure metadata registration - NO staking required"
+   - `stGTokenAmount` 参数只是 metadata 记录
+   - Registry 检查余额但不转移 stGToken
+   - stGToken 始终留在用户钱包中
+
+3. **之前的 approval 逻辑是错误的**
+   - Commit 200ccb6 错误地添加了 approval 检查
+   - 基于对 stGToken 性质的误解
+   - 导致所有注册尝试都在 allowance() 调用时失败
+
+#### 解决方案
+文件: `src/pages/operator/deploy-v2/steps/Step6_RegisterRegistry_v2.tsx`
+
+**移除的代码** (Line 160-187):
+```typescript
+// ❌ REMOVED - GTokenStaking V2 doesn't support these
+const currentAllowance = await stGTokenStakingSigner.allowance(...);
+if (currentAllowance < stGTokenAmountWei) {
+  await stGTokenStakingSigner.approve(...);
+}
+```
+
+**新增注释** (Line 160-163):
+```typescript
+// NOTE: Registry v2.1 does NOT transfer stGToken from user
+// It only records the stGTokenAmount as metadata
+// stGToken stays in user's wallet (non-transferable share token)
+```
+
+**更新 ABI** (Line 53-57):
+```typescript
+// GTokenStaking ABI - share-based staking (non-transferable)
+// NOTE: stGToken does NOT support approve/allowance/transfer
+const GTOKEN_STAKING_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+];
+```
+
+#### 技术细节
+
+**Share-based Staking 机制**:
+```
+用户质押 50 GT → 收到 50 stGToken (shares)
+stGToken 数量 = 用户在池中的份额
+价值会随 slashing 调整，但 shares 本身不转移
+```
+
+**Registry v2.1 注册流程**:
+1. ✅ 检查用户 stGToken 余额 >= required amount
+2. ✅ 调用 `registerCommunity(profile, stGTokenAmount)`
+3. ✅ Registry 记录 stGTokenAmount 作为 metadata
+4. ❌ **不执行** stGToken 转移
+
+**为什么不转移？**
+- stGToken 代表质押池份额，不应该被转移
+- 用户需要保留 stGToken 来证明质押状态
+- Registry 只需要验证用户确实质押了足够金额
+
+**诊断工具**: 使用 `cast` 验证合约不支持 allowance:
+```bash
+cast call 0x199402b3F213A233e89585957F86A07ED1e1cD67 \
+  "allowance(address,address)(uint256)" <owner> <spender>
+# 结果: Error: execution reverted ✅ 证明函数不存在
+```
+
 ---
 
 **技术栈**: React + TypeScript + ethers.js v6 + ERC-4337 (EntryPoint v0.7)
