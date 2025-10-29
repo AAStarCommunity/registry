@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
+// PaymasterV4.1 - Latest version with Registry support
+// All new deployments use V4.1 (updated Oct 29, 2025)
 import PaymasterV4_1 from "../../../../contracts/PaymasterV4_1.json";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step3_DeployPaymaster.css";

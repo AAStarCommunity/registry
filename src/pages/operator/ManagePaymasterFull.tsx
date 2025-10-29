@@ -206,8 +206,9 @@ export function ManagePaymasterFull() {
         registryAddress = await paymaster.registry();
         isRegistrySet = await paymaster.isRegistrySet();
       } catch (e) {
-        // PaymasterV4 (old version) doesn't have registry functions
-        console.log("Note: This Paymaster doesn't support Registry (v4.0)");
+        // PaymasterV4 (old version, deployed before Oct 26, 2025) doesn't have registry functions
+        // All new deployments use PaymasterV4.1 with Registry support
+        console.log("Note: This is an older Paymaster (v4.0) without Registry support");
       }
 
       setConfig({
