@@ -6,14 +6,12 @@
  */
 
 import {
-  getContracts,
   getCoreContracts,
   getTokenContracts,
   getPaymasterV4,
   getSuperPaymasterV2,
   getEntryPoint,
   getChainId,
-  getRpcUrl as getSharedRpcUrl,
   getBlockExplorer,
   getTxUrl,
   getAddressUrl,
@@ -98,7 +96,6 @@ function getNetworkName(): ContractNetwork {
 // Sepolia Testnet Configuration
 const sepoliaConfig: NetworkConfig = (() => {
   const network = 'sepolia';
-  const contracts = getContracts(network);
   const core = getCoreContracts(network);
   const tokens = getTokenContracts(network);
 

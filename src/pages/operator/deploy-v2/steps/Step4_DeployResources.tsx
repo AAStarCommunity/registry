@@ -45,7 +45,7 @@ const GTOKEN_STAKING_ADDRESS =
 // Helper function to get block explorer URL
 const getExplorerUrl = (address: string): string => {
   const network = getCurrentNetworkConfig();
-  const baseUrl = network.name === "sepolia"
+  const baseUrl = network.chainId === 11155111
     ? "https://sepolia.etherscan.io"
     : "https://etherscan.io";
   return `${baseUrl}/address/${address}`;
