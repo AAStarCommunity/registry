@@ -1,48 +1,192 @@
-/**
- * Get xPNTs Resource Page
- *
- * Guides users on how to obtain and use xPNTs (Extended Points Token)
- */
-
-import React from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
+import { ethers } from "ethers";
 import "./GetXPNTs.css";
 
-const GetXPNTs: React.FC = () => {
+// Contract addresses from env
+const XPNTS_FACTORY_ADDRESS =
+  import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
+  "0xC2AFEA0F736403E7e61D3F7C7c6b4E5E63B5cab6"; // Unified Architecture (2025-10-30)
+
+const SEPOLIA_RPC_URL =
+  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+
+// Shared SuperPaymaster V2 address (for AOA+ mode)
+const SUPER_PAYMASTER_V2_ADDRESS =
+  import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
+  "0x50c4Daf685170aa29513BA6dd89B8417b5b0FE4a";
+
+// ABIs
+const XPNTS_FACTORY_ABI = [
+  "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS, uint256 exchangeRate, address paymasterAOA) external returns (address)",
+  "function hasToken(address community) external view returns (bool)",
+  "function getTokenAddress(address community) external view returns (address)",
+];
+
+export function GetXPNTs() {
   const navigate = useNavigate();
-  const config = getCurrentNetworkConfig();
-  const isTest = isTestnet();
 
-  const factoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || "0xC2AFEA0F736403E7e61D3F7C7c6b4E5E63B5cab6";
+  // Wallet state
+  const [account, setAccount] = useState<string>("");
 
-  const handleGoBack = () => {
-    navigate(-1);
+  // xPNTs state
+  const [existingToken, setExistingToken] = useState<string>("");
+  const [tokenName, setTokenName] = useState<string>("");
+  const [tokenSymbol, setTokenSymbol] = useState<string>("");
+  const [communityName, setCommunityName] = useState<string>("");
+  const [communityENS, setCommunityENS] = useState<string>("");
+  const [paymasterMode, setPaymasterMode] = useState<"AOA+" | "AOA">("AOA+");
+  const [paymasterAddress, setPaymasterAddress] = useState<string>("");
+  const [exchangeRate, setExchangeRate] = useState<string>("1");
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployTxHash, setDeployTxHash] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  // Connect wallet
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        setError("Please install MetaMask to use this feature");
+        return;
+      }
+
+      const accounts = await window.ethereum.request({
+        method: "eth_requestAccounts",
+      });
+      setAccount(accounts[0]);
+      await checkExistingToken(accounts[0]);
+    } catch (err: any) {
+      console.error("Wallet connection failed:", err);
+      setError(err?.message || "Failed to connect wallet");
+    }
   };
 
+  // Check if user already deployed xPNTs token
+  const checkExistingToken = async (address: string) => {
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        XPNTS_FACTORY_ABI,
+        rpcProvider
+      );
+
+      const hasToken = await factory.hasToken(address);
+      if (hasToken) {
+        const tokenAddress = await factory.getTokenAddress(address);
+        setExistingToken(tokenAddress);
+      }
+    } catch (err) {
+      console.error("Failed to check existing token:", err);
+    }
+  };
+
+  // Deploy new xPNTs token
+  const handleDeployToken = async () => {
+    setIsDeploying(true);
+    setError("");
+    setDeployTxHash("");
+
+    try {
+      if (!window.ethereum) {
+        throw new Error("MetaMask not installed");
+      }
+
+      if (!tokenName || !tokenSymbol) {
+        throw new Error("Please enter token name and symbol");
+      }
+
+      if (paymasterMode === "AOA" && !paymasterAddress) {
+        throw new Error("Please enter paymaster address for AOA mode");
+      }
+
+      if (paymasterMode === "AOA" && !ethers.isAddress(paymasterAddress)) {
+        throw new Error("Invalid paymaster address");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        XPNTS_FACTORY_ABI,
+        signer
+      );
+
+      // Calculate exchangeRate in wei (1 = 1e18)
+      const exchangeRateWei = ethers.parseEther(exchangeRate || "1");
+
+      // Determine paymaster address based on mode
+      const paymasterAddr = paymasterMode === "AOA+"
+        ? ethers.ZeroAddress
+        : paymasterAddress;
+
+      console.log("Deploying xPNTs token...");
+      console.log("Mode:", paymasterMode);
+      console.log("Paymaster:", paymasterAddr);
+      console.log("Exchange Rate:", exchangeRate, "->", exchangeRateWei.toString());
+
+      const tx = await factory.deployxPNTsToken(
+        tokenName,
+        tokenSymbol,
+        communityName || tokenName,
+        communityENS || "",
+        exchangeRateWei,
+        paymasterAddr
+      );
+      setDeployTxHash(tx.hash);
+
+      console.log("Waiting for confirmation...");
+      await tx.wait();
+
+      console.log("Deployment successful!");
+
+      // Reload to get new token info
+      await checkExistingToken(account);
+    } catch (err: any) {
+      console.error("Deployment failed:", err);
+      setError(err?.message || "Failed to deploy xPNTs token");
+    } finally {
+      setIsDeploying(false);
+    }
+  };
+
+  // Auto-connect on mount
+  useEffect(() => {
+    if (window.ethereum) {
+      window.ethereum.request({ method: "eth_accounts" }).then((accounts: string[]) => {
+        if (accounts.length > 0) {
+          setAccount(accounts[0]);
+          checkExistingToken(accounts[0]);
+        }
+      });
+    }
+  }, []);
+
   return (
-    <div className="get-xpnts-page">
-      <div className="get-xpnts-container">
+    <div className="get-sbt-page">
+      <div className="get-sbt-container">
         {/* Header */}
-        <div className="get-xpnts-header">
-          <button onClick={handleGoBack} className="back-button">
+        <div className="get-sbt-header">
+          <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h1>Get xPNTs</h1>
+          <h1>Get xPNTs Token</h1>
           <p className="subtitle">
-            Extended Points Tokens - Community-branded tokens with gasless operations
+            Deploy your community points token with auto-approval
           </p>
         </div>
 
-        {/* What is xPNTs Section */}
-        <section className="info-section">
-          <h2>💎 What are xPNTs?</h2>
+        {/* What is xPNTs */}
+        <div className="info-section">
+          <h2>What is xPNTs?</h2>
           <p>
-            xPNTs (Extended Points Token) are community points tokens designed for gasless operations in the SuperPaymaster ecosystem:
+            xPNTs (Extended Points Token) is a community points token designed for
+            gasless operations. It includes:
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Auto-Approval System</strong>: Pre-approved for SuperPaymaster and factory operations
+              <strong>Auto-Approval System</strong>: Pre-approved for SuperPaymaster
+              and factory operations
             </li>
             <li>
               <strong>Gasless Support</strong>: Native integration with Account Abstraction
@@ -51,295 +195,289 @@ const GetXPNTs: React.FC = () => {
               <strong>Community Branding</strong>: Custom name, symbol, and community metadata
             </li>
             <li>
-              <strong>Flexible Exchange Rate</strong>: Configurable conversion rate with aPNTs
+              <strong>Mint & Burn</strong>: Flexible token supply management
             </li>
             <li>
-              <strong>Mint & Burn</strong>: Community owners can manage token supply
+              <strong>Rewards Integration</strong>: Compatible with staking and reward systems
             </li>
           </ul>
-        </section>
+        </div>
 
-        {/* Factory Information */}
-        <section className="info-section">
-          <h2>📋 xPNTs Factory Information</h2>
+        {/* Contract Info */}
+        <div className="info-section">
+          <h2>Contract Information</h2>
           <div className="contract-info">
             <div className="info-row">
-              <span className="label">Factory Address:</span>
-              <span className="value mono">
-                {factoryAddress}
-                <a
-                  href={`${config.explorerUrl}/address/${factoryAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="explorer-link"
-                >
-                  View on Explorer →
-                </a>
-              </span>
+              <span className="label">Factory Address</span>
+              <span className="value mono">{XPNTS_FACTORY_ADDRESS}</span>
             </div>
             <div className="info-row">
-              <span className="label">Network:</span>
-              <span className="value">{config.chainName}</span>
+              <span className="label">Network</span>
+              <span className="value">Sepolia Testnet</span>
             </div>
             <div className="info-row">
-              <span className="label">Deploy Fee:</span>
+              <span className="label">Deploy Fee</span>
               <span className="value highlight">Free (Gas Only)</span>
             </div>
             <div className="info-row">
-              <span className="label">Token Standard:</span>
+              <span className="label">Token Standard</span>
               <span className="value">ERC-20 Extended</span>
             </div>
-            <div className="info-row">
-              <span className="label">Default Exchange Rate:</span>
-              <span className="value">1:1 with aPNTs</span>
-            </div>
           </div>
-        </section>
+        </div>
 
-        {/* How to Get xPNTs */}
-        <section className="info-section">
-          <h2>🚀 How to Get xPNTs?</h2>
+        {/* Deploy Section */}
+        <div className="info-section deploy-section">
+          <h2>Deploy Your xPNTs Token</h2>
 
-          {isTest ? (
-            // Testnet Options
-            <>
-              <div className="method-card recommended">
-                <div className="method-header">
-                  <h3>Method 1: Deploy Your Own (Recommended)</h3>
-                  <span className="badge">FREE</span>
-                </div>
-                <p>Create your community's xPNTs token in minutes</p>
-                <ul>
-                  <li>Custom branding (name, symbol, ENS)</li>
-                  <li>Configurable exchange rate</li>
-                  <li>Auto-approved for gasless operations</li>
-                  <li>Community owner controls</li>
-                </ul>
-                <button
-                  className="action-button primary"
-                  onClick={() => navigate("/get-xpnts/deploy")}
-                >
-                  Deploy xPNTs Token →
-                </button>
-              </div>
-
-              <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 2: Buy from Community</h3>
-                </div>
-                <p>Purchase xPNTs tokens from existing communities</p>
-                <ul>
-                  <li>Exchange rate set by community</li>
-                  <li>Instant delivery</li>
-                  <li>Support community growth</li>
-                </ul>
-                <button
-                  className="action-button secondary"
-                  onClick={() => navigate("/communities")}
-                >
-                  Browse Communities →
-                </button>
-              </div>
-
-              <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 3: Convert from aPNTs</h3>
-                </div>
-                <p>Swap your aPNTs for community xPNTs</p>
-                <ul>
-                  <li>Dynamic exchange rate (configured per community)</li>
-                  <li>Direct conversion in SuperPaymaster</li>
-                  <li>No intermediary fees</li>
-                </ul>
-                <a
-                  href="https://shop.aastar.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="action-button secondary"
-                >
-                  Get aPNTs First →
-                </a>
-              </div>
-            </>
-          ) : (
-            // Mainnet Options
-            <>
-              <div className="method-card recommended">
-                <div className="method-header">
-                  <h3>Method 1: Deploy Your Community Token</h3>
-                  <span className="badge">BEST FOR COMMUNITIES</span>
-                </div>
-                <p>Launch your community's branded points token</p>
-                <ul>
-                  <li>Full customization and control</li>
-                  <li>Integrated with SuperPaymaster ecosystem</li>
-                  <li>Built-in gasless operation support</li>
-                </ul>
-                <button
-                  className="action-button primary"
-                  onClick={() => navigate("/get-xpnts/deploy")}
-                >
-                  Deploy xPNTs Token →
-                </button>
-              </div>
-
-              <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 2: Community Marketplace</h3>
-                </div>
-                <p>Buy xPNTs from active communities</p>
-                <ul>
-                  <li>Discover thriving communities</li>
-                  <li>Market-driven pricing</li>
-                  <li>Instant access to community benefits</li>
-                </ul>
-                <button
-                  className="action-button secondary"
-                  onClick={() => navigate("/communities")}
-                >
-                  Explore Communities →
-                </button>
-              </div>
-
-              <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 3: Earn Through Participation</h3>
-                </div>
-                <p>Receive xPNTs by contributing to communities</p>
-                <ul>
-                  <li>Community rewards programs</li>
-                  <li>Governance participation</li>
-                  <li>Activity-based airdrops</li>
-                </ul>
-                <a
-                  href="https://community.superpaymaster.io"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="action-button secondary"
-                >
-                  Join Communities →
-                </a>
-              </div>
-            </>
-          )}
-        </section>
-
-        {/* Add to Wallet Section */}
-        <section className="info-section">
-          <h2>🦊 Add xPNTs to MetaMask</h2>
-          <p>After deploying or receiving xPNTs, add them to your MetaMask wallet:</p>
-          <details className="manual-add">
-            <summary>How to add xPNTs manually</summary>
-            <div className="manual-add-content">
-              <p>Open MetaMask → Assets → Import tokens, then enter:</p>
-              <ul>
-                <li>
-                  <strong>Token Address:</strong> Your xPNTs contract address
-                </li>
-                <li>
-                  <strong>Token Symbol:</strong> Your custom symbol (e.g., xMYC)
-                </li>
-                <li>
-                  <strong>Decimals:</strong> 18
-                </li>
-              </ul>
-              <p style={{ marginTop: "1rem", color: "#667eea", fontWeight: 600 }}>
-                💡 Tip: The deployment page will show a button to add your token automatically!
-              </p>
+          {!account ? (
+            <div className="wallet-connect-prompt">
+              <p>Connect your wallet to deploy xPNTs token</p>
+              <button className="action-button primary" onClick={connectWallet}>
+                Connect Wallet
+              </button>
             </div>
-          </details>
-        </section>
+          ) : (
+            <div className="deploy-interface">
+              {/* Wallet Info */}
+              <div className="wallet-info">
+                <p className="connected-account">
+                  Connected: <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                </p>
+              </div>
 
-        {/* FAQ Section */}
-        <section className="info-section">
-          <h2>❓ Frequently Asked Questions</h2>
+              {/* Existing Token */}
+              {existingToken && (
+                <div className="existing-sbt-box">
+                  <h4>Your xPNTs Token</h4>
+                  <p className="mono">{existingToken}</p>
+                  <a
+                    href={`https://sepolia.etherscan.io/address/${existingToken}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="explorer-link"
+                  >
+                    View on Etherscan →
+                  </a>
+                </div>
+              )}
 
-          <details className="faq-item">
-            <summary>What's the difference between xPNTs and aPNTs?</summary>
-            <p>
-              <strong>xPNTs</strong> are community-branded tokens that can be exchanged for <strong>aPNTs</strong> (Abstract Points).
-              aPNTs are the base currency in SuperPaymaster used to pay for gas. Each xPNTs token has a configurable
-              exchange rate with aPNTs (default 1:1). This allows communities to create their own branded points
-              while maintaining compatibility with the gas payment system.
-            </p>
-          </details>
+              {/* Deploy Form */}
+              {!existingToken && (
+                <div className="deploy-form">
+                  <h4>Deploy New xPNTs Token</h4>
+                  <p className="hint">
+                    Deploy a community points token with auto-approval for SuperPaymaster operations.
+                  </p>
 
-          <details className="faq-item">
-            <summary>Can I customize the exchange rate?</summary>
-            <p>
-              Yes! When deploying your xPNTs token, you can set a custom exchange rate. For example:
-              <ul style={{ marginTop: "0.5rem" }}>
-                <li>1:1 ratio: 1 aPNTs = 1 xPNTs (default)</li>
-                <li>2:1 ratio: 1 aPNTs = 2 xPNTs (community bonus)</li>
-                <li>0.5:1 ratio: 1 aPNTs = 0.5 xPNTs (premium token)</li>
-              </ul>
-              Community owners can update this rate later as needed.
-            </p>
-          </details>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Token Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={tokenName}
+                        onChange={(e) => setTokenName(e.target.value)}
+                        placeholder="e.g., My Community Points"
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                        }}
+                      />
+                    </div>
 
-          <details className="faq-item">
-            <summary>What is AOA vs AOA+ mode?</summary>
-            <p>
-              When deploying xPNTs, you choose the paymaster mode:
-              <br /><br />
-              <strong>AOA+ Mode (Recommended)</strong>: Uses the shared SuperPaymaster V2. Simple setup,
-              no additional paymaster deployment needed. Best for most communities.
-              <br /><br />
-              <strong>AOA Mode</strong>: Deploy your own PaymasterV4. Full control over gas sponsorship,
-              custom fee structures, and independent treasury. Best for advanced operators.
-            </p>
-          </details>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Token Symbol *
+                      </label>
+                      <input
+                        type="text"
+                        value={tokenSymbol}
+                        onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                        placeholder="e.g., MCP"
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                        }}
+                      />
+                    </div>
 
-          <details className="faq-item">
-            <summary>Can I mint more xPNTs tokens later?</summary>
-            <p>
-              Yes! As the community owner, you have full control to mint additional xPNTs tokens or burn existing ones.
-              This flexibility allows you to manage your community's token economy, reward members, or adjust supply
-              based on community needs.
-            </p>
-          </details>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Community Name (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={communityName}
+                        onChange={(e) => setCommunityName(e.target.value)}
+                        placeholder="e.g., My Community"
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                        }}
+                      />
+                    </div>
 
-          <details className="faq-item">
-            <summary>Is there a deployment fee?</summary>
-            <p>
-              No deployment fee! You only pay the gas cost for the transaction (typically a few cents on Sepolia testnet,
-              or a few dollars on mainnet depending on gas prices). The xPNTs Factory is completely free to use.
-            </p>
-          </details>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Community ENS (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={communityENS}
+                        onChange={(e) => setCommunityENS(e.target.value)}
+                        placeholder="e.g., mycommunity.eth"
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                        }}
+                      />
+                    </div>
 
-          <details className="faq-item">
-            <summary>How do gasless operations work?</summary>
-            <p>
-              xPNTs tokens are pre-approved for gasless operations. When users deposit xPNTs into SuperPaymaster,
-              they're automatically converted to aPNTs which are used to sponsor gas fees. This means users can
-              interact with your dApp without holding ETH, using their community tokens instead!
-            </p>
-          </details>
-        </section>
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Paymaster Mode *
+                      </label>
+                      <div style={{ display: "flex", gap: "1rem" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="paymasterMode"
+                            value="AOA+"
+                            checked={paymasterMode === "AOA+"}
+                            onChange={(e) => setPaymasterMode(e.target.value as "AOA+" | "AOA")}
+                          />
+                          <span style={{ fontWeight: 500 }}>
+                            AOA+ <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>(共享SuperPaymaster V2)</span>
+                          </span>
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                          <input
+                            type="radio"
+                            name="paymasterMode"
+                            value="AOA"
+                            checked={paymasterMode === "AOA"}
+                            onChange={(e) => setPaymasterMode(e.target.value as "AOA+" | "AOA")}
+                          />
+                          <span style={{ fontWeight: 500 }}>
+                            AOA <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>(自有Paymaster)</span>
+                          </span>
+                        </label>
+                      </div>
+                      <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                        {paymasterMode === "AOA+"
+                          ? "使用共享SuperPaymaster V2，无需部署自己的Paymaster"
+                          : "需要先部署自己的PaymasterV4合约"}
+                      </p>
+                    </div>
 
-        {/* Action Buttons */}
+                    {paymasterMode === "AOA" && (
+                      <div>
+                        <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                          Paymaster Address *
+                        </label>
+                        <input
+                          type="text"
+                          value={paymasterAddress}
+                          onChange={(e) => setPaymasterAddress(e.target.value)}
+                          placeholder="0x..."
+                          style={{
+                            width: "100%",
+                            padding: "0.75rem",
+                            borderRadius: "8px",
+                            border: "2px solid #e5e7eb",
+                            fontSize: "1rem",
+                            fontFamily: "Monaco, Courier New, monospace",
+                          }}
+                        />
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                          输入你已部署的PaymasterV4合约地址
+                        </p>
+                      </div>
+                    )}
+
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Exchange Rate (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={exchangeRate}
+                        onChange={(e) => setExchangeRate(e.target.value)}
+                        placeholder="1"
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                        }}
+                      />
+                      <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                        1 aPNTs = {exchangeRate || "1"} xPNTs (默认 1:1)
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="action-button primary deploy-button"
+                    onClick={handleDeployToken}
+                    disabled={
+                      isDeploying ||
+                      !tokenName ||
+                      !tokenSymbol ||
+                      (paymasterMode === "AOA" && !paymasterAddress)
+                    }
+                  >
+                    {isDeploying ? "Deploying..." : "Deploy xPNTs Token"}
+                  </button>
+
+                  {error && (
+                    <div className="error-message">{error}</div>
+                  )}
+
+                  {deployTxHash && (
+                    <div className="tx-success">
+                      <p>Transaction submitted!</p>
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${deployTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="explorer-link"
+                      >
+                        View on Etherscan →
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Action Footer */}
         <div className="action-footer">
-          <button onClick={handleGoBack} className="action-button secondary">
-            ← Back
-          </button>
-          <button
-            onClick={() => navigate("/get-xpnts/deploy")}
-            className="action-button primary"
-          >
-            Deploy Your xPNTs →
-          </button>
-          <a
-            href={`${config.explorerUrl}/address/${factoryAddress}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="action-button outline"
-          >
-            View Factory on Explorer
+          <a href="/get-sbt" className="action-button outline">
+            Get MySBT Token
           </a>
+          <button className="action-button secondary" onClick={() => navigate(-1)}>
+            Back to Home
+          </button>
         </div>
       </div>
     </div>
   );
-};
-
-export default GetXPNTs;
+}
