@@ -289,7 +289,7 @@ function findUnqueriedRanges(
  * Query events from a Paymaster in a specific block range
  */
 async function queryPaymasterRange(
-  provider: ethers.JsonRpcProvider,
+  provider: ethers.Provider,
   paymasterAddress: string,
   fromBlock: number,
   toBlock: number,

@@ -218,6 +218,10 @@ export default function ManagePaymasterAOA() {
         entryPointAddress,
         registryAddress,
         isRegistrySet,
+        // PaymasterV4 uses Chainlink for price feeds, these are not fetched from contract
+        gasToUSDRate: 'N/A (Chainlink)',
+        pntPriceUSD: 'N/A (Chainlink)',
+        minTokenBalance: 'N/A',
       });
 
       setIsOwner(userAddr.toLowerCase() === owner.toLowerCase());
