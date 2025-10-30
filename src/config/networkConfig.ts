@@ -2,7 +2,7 @@
  * Network Configuration Module
  *
  * Now uses @aastar/shared-config for contract addresses
- * This file only provides UI-specific configuration
+ * This file only provides UI-specific configuration and backward compatibility
  */
 
 import {
@@ -26,22 +26,47 @@ export interface NetworkConfig {
   rpcUrl: string;
   explorerUrl: string;
 
-  // Contract addresses (from shared-config)
+  // Contract addresses
   contracts: {
+    // ========================================
+    // Current Contracts (from shared-config)
+    // ========================================
+    /** PaymasterV4 - AOA mode independent paymaster */
     paymasterV4: string;
-    registry: string; // Legacy v1.2 (ETH staking)
-    registryV2: string; // v2.0 (metadata only)
-    registryV2_1: string; // v2.1 (from shared-config)
-    pntToken: string;
+    /** Registry v2.1 - Latest with node types + progressive slash */
+    registryV2_1: string;
+    /** GToken - Governance token (sGT) */
     gToken: string;
+    /** GTokenStaking - Stake management */
     gTokenStaking: string;
-    gasTokenFactory: string;
-    sbtContract: string;
-    usdtContract: string;
-    entryPointV07: string;
+    /** xPNTsFactory - Unified architecture gas token factory */
     xPNTsFactory: string;
+    /** MySBT v2.3 - White-label SBT for community identity */
     mySBT: string;
+    /** SuperPaymaster V2 - AOA+ mode shared paymaster */
     superPaymasterV2: string;
+    /** EntryPoint v0.7 - ERC-4337 official EntryPoint */
+    entryPointV07: string;
+
+    // ========================================
+    // Legacy Contracts (for backward compatibility)
+    // ========================================
+    /** @deprecated Use registryV2_1 instead. Registry v1.2 (ETH staking) */
+    registry: string;
+    /** @deprecated Use registryV2_1 instead. Registry v2.0 (metadata only) */
+    registryV2: string;
+    /** @deprecated Use xPNTsFactory to deploy new tokens. Old PNT token */
+    pntToken: string;
+    /** @deprecated Use xPNTsFactory instead. Old gas token factory */
+    gasTokenFactory: string;
+    /** @deprecated Use mySBT instead. Old SBT contract */
+    sbtContract: string;
+
+    // ========================================
+    // Other Contracts
+    // ========================================
+    /** Mock USDT for testing */
+    usdtContract: string;
   };
 
   // Resource acquisition links
@@ -84,9 +109,11 @@ const sepoliaConfig: NetworkConfig = (() => {
     explorerUrl: getBlockExplorer(network),
 
     contracts: {
-      // From shared-config
+      // ========================================
+      // Current Contracts (from shared-config)
+      // ========================================
       paymasterV4: getPaymasterV4(network),
-      registryV2_1: core.registry, // v2.1
+      registryV2_1: core.registry,
       gToken: core.gToken,
       gTokenStaking: core.gTokenStaking,
       xPNTsFactory: tokens.xPNTsFactory,
@@ -94,25 +121,36 @@ const sepoliaConfig: NetworkConfig = (() => {
       superPaymasterV2: getSuperPaymasterV2(network),
       entryPointV07: getEntryPoint(network),
 
-      // Legacy addresses (keep for backward compatibility)
+      // ========================================
+      // Legacy Contracts (for backward compatibility)
+      // Only kept for RegistryExplorer version switching
+      // ========================================
       registry:
         import.meta.env.VITE_REGISTRY_ADDRESS ||
-        '0x838da93c815a6E45Aa50429529da9106C0621eF0', // v1.2
+        '0x838da93c815a6E45Aa50429529da9106C0621eF0', // v1.2 (ETH staking)
       registryV2:
         import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
-        '0x6806e4937038e783cA0D3961B7E258A3549A0043', // v2.0
+        '0x6806e4937038e783cA0D3961B7E258A3549A0043', // v2.0 (metadata only)
+
+      // ========================================
+      // Deprecated Contracts (should migrate)
+      // ========================================
       pntToken:
         import.meta.env.VITE_PNT_TOKEN_ADDRESS ||
-        '0xD14E87d8D8B69016Fcc08728c33799bD3F66F180',
+        '0xD14E87d8D8B69016Fcc08728c33799bD3F66F180', // Old PNT
       gasTokenFactory:
         import.meta.env.VITE_GASTOKEN_FACTORY_ADDRESS ||
-        '0x6720Dc8ce5021bC6F3F126054556b5d3C125101F',
+        '0x6720Dc8ce5021bC6F3F126054556b5d3C125101F', // Old factory
       sbtContract:
         import.meta.env.VITE_SBT_CONTRACT_ADDRESS ||
-        '0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f',
+        '0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f', // Old SBT
+
+      // ========================================
+      // Other Contracts
+      // ========================================
       usdtContract:
         import.meta.env.VITE_USDT_CONTRACT_ADDRESS ||
-        '0x14EaC6C3D49AEDff3D59773A7d7bfb50182bCfDc',
+        '0x14EaC6C3D49AEDff3D59773A7d7bfb50182bCfDc', // Mock USDT
     },
 
     resources: {
@@ -153,19 +191,23 @@ const mainnetConfig: NetworkConfig = {
 
   contracts: {
     paymasterV4: '', // TBD
-    registry: '', // TBD
-    registryV2: '', // TBD
     registryV2_1: '', // TBD
-    pntToken: '', // TBD
     gToken: '', // TBD
     gTokenStaking: '', // TBD
-    gasTokenFactory: '', // TBD
-    sbtContract: '', // TBD
-    usdtContract: '0xdac17f958d2ee523a2206206994597c13d831ec7', // Real USDT
-    entryPointV07: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
     xPNTsFactory: '', // TBD
     mySBT: '', // TBD
     superPaymasterV2: '', // TBD
+    entryPointV07: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+
+    // Legacy
+    registry: '', // TBD
+    registryV2: '', // TBD
+    pntToken: '', // TBD
+    gasTokenFactory: '', // TBD
+    sbtContract: '', // TBD
+
+    // Other
+    usdtContract: '0xdac17f958d2ee523a2206206994597c13d831ec7', // Real USDT
   },
 
   resources: {
@@ -248,3 +290,31 @@ export default getCurrentNetworkConfig();
 
 // Re-export shared-config utilities for convenience
 export { getTxUrl, getAddressUrl, getChainId };
+
+// ========================================
+// Migration Helper Functions
+// ========================================
+
+/**
+ * Get latest registry address (always returns v2.1)
+ * Use this instead of accessing config.contracts.registry directly
+ */
+export function getLatestRegistry(): string {
+  return getCurrentNetworkConfig().contracts.registryV2_1;
+}
+
+/**
+ * Get latest SBT contract (MySBT v2.3)
+ * Use this instead of accessing config.contracts.sbtContract directly
+ */
+export function getLatestSBT(): string {
+  return getCurrentNetworkConfig().contracts.mySBT;
+}
+
+/**
+ * Get latest gas token factory (xPNTsFactory)
+ * Use this instead of accessing config.contracts.gasTokenFactory directly
+ */
+export function getLatestGasTokenFactory(): string {
+  return getCurrentNetworkConfig().contracts.xPNTsFactory;
+}
