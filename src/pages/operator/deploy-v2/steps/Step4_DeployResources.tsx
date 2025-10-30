@@ -53,7 +53,7 @@ const getExplorerUrl = (address: string): string => {
 
 // ABIs
 const XPNTS_FACTORY_ABI = [
-  "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS) external returns (address)",
+  "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS, uint256 exchangeRate, address paymasterAOA) external returns (address)",
   "function hasToken(address community) external view returns (bool)",
   "function getTokenAddress(address community) external view returns (address)",
 ];
@@ -229,7 +229,9 @@ export function Step4_DeployResources({
         tokenName,
         tokenSymbol,
         communityName,
-        ens
+        ens,
+        ethers.parseEther("1"),  // exchangeRate: 1:1 default (1 aPNTs = 1 xPNTs)
+        ethers.ZeroAddress       // paymasterAOA: use SuperPaymaster V2 (AOA+ mode)
       );
 
       console.log("Deployment tx:", tx.hash);
