@@ -12,6 +12,7 @@ import GetPNTs from "./pages/resources/GetPNTs";
 import { GetSBT } from "./pages/resources/GetSBT";
 import { MySBT } from "./pages/resources/MySBT";
 import { GetXPNTs } from "./pages/resources/GetXPNTs";
+import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -56,6 +57,7 @@ function App() {
             <Route path="/get-sbt" element={<GetSBT />} />
             <Route path="/my-sbt" element={<MySBT />} />
             <Route path="/get-xpnts" element={<GetXPNTs />} />
+            <Route path="/register-community" element={<RegisterCommunity />} />
 
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />
