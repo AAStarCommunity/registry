@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 // All new deployments use V4.1 (updated Oct 29, 2025)
 import PaymasterV4_1 from "../../../../contracts/PaymasterV4_1.json";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { getRpcUrl } from "../../../../config/rpc";
 import "./Step3_DeployPaymaster.css";
 
 // EntryPoint v0.7 addresses - from shared-config
@@ -95,7 +96,7 @@ export function Step3_DeployPaymaster({
 
         // Use independent RPC provider for read-only queries (best practice)
         const networkConfig = getCurrentNetworkConfig();
-        const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+        const rpcUrl = getRpcUrl();
         const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
         const registry = new ethers.Contract(

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getRpcUrl } from "../../config/rpc";
 import "./GetXPNTs.css";
 
 // ABIs
@@ -19,9 +20,7 @@ export function GetXPNTs() {
   const XPNTS_FACTORY_ADDRESS =
     import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
     networkConfig.contracts.xPNTsFactory;
-  const SEPOLIA_RPC_URL =
-    import.meta.env.VITE_SEPOLIA_RPC_URL ||
-    networkConfig.rpcUrl;
+  const RPC_URL = getRpcUrl();
   const SUPER_PAYMASTER_V2_ADDRESS =
     import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
     networkConfig.contracts.superPaymasterV2;
@@ -64,7 +63,7 @@ export function GetXPNTs() {
   // Check if user already deployed xPNTs token
   const checkExistingToken = async (address: string) => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         XPNTS_FACTORY_ABI,

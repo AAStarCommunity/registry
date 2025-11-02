@@ -1,1 +1,1 @@
-npm install @aastar/shared-config@0.2.9 --legacy-peer-deps
+pnpm install @aastar/shared-config@0.2.9 --legacy-peer-deps

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getRpcUrl } from "../../config/rpc";
 import "./GetSBT.css";
 
 // ABIs
@@ -28,9 +29,7 @@ export function GetSBT() {
   const GTOKEN_STAKING_ADDRESS =
     import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
     networkConfig.contracts.gTokenStaking;
-  const SEPOLIA_RPC_URL =
-    import.meta.env.VITE_SEPOLIA_RPC_URL ||
-    networkConfig.rpcUrl;
+  const RPC_URL = getRpcUrl();
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -66,7 +65,7 @@ export function GetSBT() {
   // Load balances
   const loadBalances = async (address: string) => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const stakingContract = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
         GTOKEN_STAKING_ABI,
@@ -83,7 +82,7 @@ export function GetSBT() {
   // Check if user already deployed SBT
   const checkExistingSBT = async (address: string) => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const factory = new ethers.Contract(
         MYSBT_FACTORY_ADDRESS,
         MYSBT_FACTORY_ABI,

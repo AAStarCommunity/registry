@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getRpcUrl } from "../../config/rpc";
 import "./RegisterCommunity.css";
 
 // Registry ABI (CommunityProfile struct fields)
@@ -28,9 +29,7 @@ export function RegisterCommunity() {
   const GTOKEN_STAKING_ADDRESS =
     import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
     networkConfig.contracts.gTokenStaking;
-  const SEPOLIA_RPC_URL =
-    import.meta.env.VITE_SEPOLIA_RPC_URL ||
-    networkConfig.rpcUrl;
+  const RPC_URL = getRpcUrl();
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -82,7 +81,7 @@ export function RegisterCommunity() {
   // Check if community already registered
   const checkExistingCommunity = async (address: string) => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
         REGISTRY_ABI,
@@ -102,7 +101,7 @@ export function RegisterCommunity() {
   // Load minimum stake requirement for AOA mode
   const loadMinStake = async () => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
         REGISTRY_ABI,
@@ -124,7 +123,7 @@ export function RegisterCommunity() {
         return;
       }
 
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const staking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
         GTOKEN_STAKING_ABI,
