@@ -141,8 +141,8 @@ export function DeployWizardNew() {
           <h1 className="wizard-title">🧙 部署向导</h1>
           <p className="wizard-subtitle">
             {currentStep === 1 && '连接钱包并选择部署模式'}
-            {currentStep === 2 && '检测资源并完成缺失项'}
-            {currentStep === 3 && '部署完成'}
+            {currentStep === 2 && '资源检测&准备'}
+            {currentStep === 3 && '发射'}
           </p>
         </div>
 
@@ -159,12 +159,12 @@ export function DeployWizardNew() {
             <div className="progress-step-circle">
               {currentStep > 2 ? '✓' : '2'}
             </div>
-            <div className="progress-step-label">资源检测</div>
+            <div className="progress-step-label">资源检测&准备</div>
           </div>
 
           <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
             <div className="progress-step-circle">3</div>
-            <div className="progress-step-label">完成</div>
+            <div className="progress-step-label">发射</div>
           </div>
         </div>
 

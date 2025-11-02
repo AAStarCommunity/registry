@@ -15,7 +15,7 @@
     "explorer": "Explorer",
     "developers": "Developers",
     "github": "GitHub",
-    "launchPaymaster": "Launch Paymaster"
+    "launchPaymaster": "Launch Wizard"
   },
   "wizard": {
     "title": "Deploy Your Paymaster",

@@ -15,7 +15,7 @@
     "explorer": "浏览器",
     "developers": "开发者",
     "github": "GitHub",
-    "launchPaymaster": "启动 Paymaster"
+    "launchPaymaster": "启动向导"
   },
   "wizard": {
     "title": "部署您的 Paymaster",

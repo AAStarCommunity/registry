@@ -437,7 +437,7 @@ export function RegisterCommunity() {
                 <small>启用后，用户无需邀请即可铸造社区 MySBT</small>
                 {!allowPermissionlessMint && (
                   <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                    <strong>⚠️ 警告:</strong> 每个社区成员都需要你沟通成员并人工mint
+                    <strong>⚠️ 警告:</strong> 每个社区成员都需要你邀请、沟通并人工mint
                   </div>
                 )}
               </div>
