@@ -194,13 +194,13 @@ export function RegisterCommunity() {
         // Step 2: Stake GToken to GTokenStaking
         const staking = new ethers.Contract(
           GTOKEN_STAKING_ADDRESS,
-          ["function stake(uint256 amount) external returns (uint256)", "function balanceOf(address account) external view returns (uint256)"],
+          ["function stake(uint256 amount) external returns (uint256)", "function availableBalance(address user) external view returns (uint256)"],
           signer
         );
 
-        // Check if user has enough staked balance
-        const stakedBalance = await staking.balanceOf(account);
-        const needToStake = gTokenAmount > stakedBalance ? gTokenAmount - stakedBalance : 0n;
+        // Check if user has enough AVAILABLE (unlocked) staked balance
+        const availableBalance = await staking.availableBalance(account);
+        const needToStake = gTokenAmount > availableBalance ? gTokenAmount - availableBalance : 0n;
 
         if (needToStake > 0n) {
           const stakeTx = await staking.stake(needToStake);
