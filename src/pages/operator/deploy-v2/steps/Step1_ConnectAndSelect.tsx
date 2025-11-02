@@ -638,22 +638,19 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           )}
 
           <div className="help-section">
-            <div className="help-title">💡 Resource Guide</div>
+            <div className="help-title">{t('step1.substep3.resourceGuide.title')}</div>
             <div className="help-content">
               <div className="help-item">
-                <strong>ETH:</strong> Required for {selectedOption === 'aoa' ? 'deploying contracts and paying gas fees' : 'transaction gas fees'}.
-                {selectedOption === 'aoa'
-                  ? ` You need ${config.requirements.minEthDeploy} ETH for deployment and staking.`
-                  : ' Super Mode only needs minimal ETH for gas.'}
+                <strong>{t('step1.substep3.resourceGuide.eth.title')}</strong> {selectedOption === 'aoa'
+                  ? t('step1.substep3.resourceGuide.eth.aoaDescription', { amount: config.requirements.minEthDeploy })
+                  : t('step1.substep3.resourceGuide.eth.superDescription')}
               </div>
               <div className="help-item">
-                <strong>GToken:</strong> Governance token required for staking. You need GToken in your wallet
-                to lock and receive stGToken credentials. Minimum {config.requirements.minGTokenStake} GToken recommended.
+                <strong>{t('step1.substep3.resourceGuide.gtoken.title')}</strong> {t('step1.substep3.resourceGuide.gtoken.description', { amount: config.requirements.minGTokenStake })}
               </div>
               {selectedOption === 'super' && (
                 <div className="help-item">
-                  <strong>aPNTs:</strong> Advanced PNTs required for SuperPaymaster ({config.requirements.minPntDeposit}+ minimum).
-                  Purchase from AAStar Community to enable fast deployment.
+                  <strong>{t('step1.substep3.resourceGuide.apnts.title')}</strong> {t('step1.substep3.resourceGuide.apnts.description', { amount: config.requirements.minPntDeposit })}
                 </div>
               )}
             </div>

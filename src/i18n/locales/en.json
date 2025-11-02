@@ -174,7 +174,23 @@
       "resourceCheck": "Resource Check",
       "checkingWallet": "Checking wallet resources...",
       "proceedButton": "Next → Configuration",
-      "notReady": "Please ensure all required resources are met"
+      "notReady": "Please ensure all required resources are met",
+      "resourceGuide": {
+        "title": "💡 Resource Guide",
+        "eth": {
+          "title": "ETH:",
+          "aoaDescription": "Required for deploying contracts and paying gas fees. You need {{amount}} ETH for deployment and staking.",
+          "superDescription": "Required for transaction gas fees. Super Mode only needs minimal ETH for gas."
+        },
+        "gtoken": {
+          "title": "GToken:",
+          "description": "Governance token required for staking. You need GToken in your wallet to lock and receive stGToken credentials. Minimum {{amount}} GToken recommended."
+        },
+        "apnts": {
+          "title": "aPNTs:",
+          "description": "Advanced PNTs required for SuperPaymaster ({{amount}}+ minimum). Purchase from AAStar Community to enable fast deployment."
+        }
+      }
     }
   },
   "step3": {

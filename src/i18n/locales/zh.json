@@ -174,7 +174,23 @@
       "resourceCheck": "资源检查",
       "checkingWallet": "正在检查钱包资源...",
       "proceedButton": "继续配置 →",
-      "notReady": "请确保满足所有必需资源"
+      "notReady": "请确保满足所有必需资源",
+      "resourceGuide": {
+        "title": "💡 资源指南",
+        "eth": {
+          "title": "ETH：",
+          "aoaDescription": "用于部署合约和支付 gas 费用。您需要 {{amount}} ETH 用于部署和质押。",
+          "superDescription": "用于交易 gas 费用。超级模式只需要少量 ETH 用于 gas。"
+        },
+        "gtoken": {
+          "title": "GToken：",
+          "description": "质押所需的治理代币。您需要在钱包中持有 GToken 以锁定并获得 stGToken 凭证。建议最少 {{amount}} GToken。"
+        },
+        "apnts": {
+          "title": "aPNTs：",
+          "description": "SuperPaymaster 所需的高级 PNTs（最少 {{amount}}+）。从 AAStar 社区购买以启用快速部署。"
+        }
+      }
     }
   },
   "step3": {
