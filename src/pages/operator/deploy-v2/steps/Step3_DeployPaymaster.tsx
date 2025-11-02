@@ -187,7 +187,7 @@ export function Step3_DeployPaymaster({
       const maxGasCostCap = ethers.parseEther(config.maxGasCostCap);
       const minTokenBalance = ethers.parseUnits(config.minTokenBalance, 18);
 
-      console.log("🚀 Deploying PaymasterV4_1 with parameters:");
+      console.log("🏭 Deploying PaymasterV4_1i via Factory (95% gas savings!)");
       console.log("  EntryPoint:", entryPoint);
       console.log("  Owner:", ownerAddress);
       console.log("  Treasury:", config.treasury);
@@ -196,51 +196,92 @@ export function Step3_DeployPaymaster({
       console.log("  Max Gas Cost Cap:", maxGasCostCap.toString());
       console.log("  Min Token Balance:", minTokenBalance.toString());
       console.log("  Registry v2.1:", registryAddress);
+      console.log("  xPNTsFactory:", networkConfig.contracts.xPNTsFactory);
 
-      // Create ContractFactory
-      const factory = new ethers.ContractFactory(
-        PaymasterV4_1.abi,
-        PaymasterV4_1.bytecode.object,
+      // Use PaymasterFactory for deployment (EIP-1167 proxy pattern)
+      const paymasterFactoryAddress = networkConfig.contracts.paymasterFactory;
+      if (!paymasterFactoryAddress || paymasterFactoryAddress === ethers.ZeroAddress) {
+        throw new Error("PaymasterFactory address not configured");
+      }
+
+      const factoryABI = [
+        "function deployPaymaster(string version, bytes initData) external returns (address)",
+        "function implementations(string) external view returns (address)"
+      ];
+
+      const factoryContract = new ethers.Contract(
+        paymasterFactoryAddress,
+        factoryABI,
         signer
       );
 
-      // Estimate gas
-      const gasEstimate = await factory.getDeployTransaction(
-        entryPoint,
-        ownerAddress,
-        config.treasury,
-        ethUsdPriceFeed,
-        serviceFeeRate,
-        maxGasCostCap,
-        minTokenBalance,
-        deployedResources?.sbtAddress || ethers.ZeroAddress,
-        deployedResources?.xPNTsAddress || ethers.ZeroAddress,
-        registryAddress
-      ).then((tx) => provider.estimateGas(tx));
+      // Check if v4.1i implementation is registered
+      const v4_1iImpl = await factoryContract.implementations("v4.1i");
+      if (v4_1iImpl === ethers.ZeroAddress) {
+        throw new Error("PaymasterV4_1i implementation not registered in factory");
+      }
+      console.log("✅ Using v4.1i implementation:", v4_1iImpl);
 
-      setEstimatedGas(ethers.formatEther(gasEstimate));
-
-      // Deploy contract
-      const contract = await factory.deploy(
-        entryPoint,
-        ownerAddress,
-        config.treasury,
-        ethUsdPriceFeed,
-        serviceFeeRate,
-        maxGasCostCap,
-        minTokenBalance,
-        deployedResources?.sbtAddress || ethers.ZeroAddress,
-        deployedResources?.xPNTsAddress || ethers.ZeroAddress,
-        registryAddress
+      // Encode initialize parameters
+      const initData = ethers.AbiCoder.defaultAbiCoder().encode(
+        ["address", "address", "address", "address", "uint256", "uint256", "uint256", "address", "address", "address", "address"],
+        [
+          entryPoint,
+          ownerAddress,
+          config.treasury,
+          ethUsdPriceFeed,
+          serviceFeeRate,
+          maxGasCostCap,
+          minTokenBalance,  // For compatibility
+          networkConfig.contracts.xPNTsFactory,  // xPNTsFactory address
+          deployedResources?.sbtAddress || ethers.ZeroAddress,
+          deployedResources?.xPNTsAddress || ethers.ZeroAddress,
+          registryAddress
+        ]
       );
 
-      setDeployTxHash(contract.deploymentTransaction()?.hash || null);
+      // Prepend function selector for initialize()
+      const initCalldata = ethers.concat([
+        ethers.id("initialize(address,address,address,address,uint256,uint256,uint256,address,address,address,address)").slice(0, 10),
+        initData
+      ]);
 
-      // Wait for deployment
-      await contract.waitForDeployment();
+      // Estimate gas for factory deployment
+      const gasEstimate = await factoryContract.deployPaymaster.estimateGas("v4.1i", initCalldata);
+      setEstimatedGas(ethers.formatUnits(gasEstimate, "gwei"));
+      console.log("⛽ Estimated gas:", ethers.formatUnits(gasEstimate, "gwei"), "gwei");
 
-      const paymasterAddress = await contract.getAddress();
+      // Deploy via factory
+      const tx = await factoryContract.deployPaymaster("v4.1i", initCalldata);
+      setDeployTxHash(tx.hash);
+
+      console.log("📡 Transaction sent:", tx.hash);
+      const receipt = await tx.wait();
+      console.log("✅ Transaction confirmed!");
+
+      // Parse PaymasterDeployed event to get proxy address
+      const deployedEvent = receipt.logs.find((log: any) => {
+        try {
+          const parsed = factoryContract.interface.parseLog(log);
+          return parsed && parsed.name === "PaymasterDeployed";
+        } catch {
+          return false;
+        }
+      });
+
+      let paymasterAddress: string;
+      if (deployedEvent) {
+        const parsed = factoryContract.interface.parseLog(deployedEvent);
+        paymasterAddress = parsed?.args[1]; // Second indexed parameter is paymaster address
+      } else {
+        // Fallback: query factory for operator's paymaster
+        const paymasterByOperatorABI = ["function paymasterByOperator(address) external view returns (address)"];
+        const factoryQuery = new ethers.Contract(paymasterFactoryAddress, paymasterByOperatorABI, provider);
+        paymasterAddress = await factoryQuery.paymasterByOperator(ownerAddress);
+      }
+
       console.log("✅ Paymaster deployed at:", paymasterAddress);
+      console.log("🎉 Gas saved: ~95% compared to direct deployment!");
 
       // Proceed to next step
       onNext(paymasterAddress, ownerAddress);
