@@ -151,6 +151,15 @@ export function RegisterCommunity() {
         throw new Error("请输入社区名称");
       }
 
+      // Validate stake amount for AOA mode
+      if (mode === "AOA") {
+        const stakeAmountNum = parseFloat(stakeAmount || "0");
+        const minStakeNum = parseFloat(minStake || "0");
+        if (stakeAmountNum < minStakeNum) {
+          throw new Error(`AOA 模式最低质押: ${minStake} GToken`);
+        }
+      }
+
       // Paymaster address is now optional for AOA mode
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -402,18 +411,26 @@ export function RegisterCommunity() {
 
 
               <div className="form-group">
-                <label>质押数量 (GToken)</label>
+                <label>
+                  质押数量 (GToken)
+                  {mode === "AOA" && minStake !== "0" && <span className="required">*</span>}
+                </label>
                 <input
                   type="number"
-                  placeholder="0"
+                  placeholder={mode === "AOA" ? minStake : "0"}
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
-                  min="0"
+                  min={mode === "AOA" ? minStake : "0"}
                   step="0.01"
                 />
                 {mode === "AOA" && (
                   <small className="required">
                     AOA 模式最低质押: {minStake} GToken
+                  </small>
+                )}
+                {mode === "SUPER" && (
+                  <small className="helper-text">
+                    SUPER 模式可选质押，质押越多权重越高
                   </small>
                 )}
               </div>
