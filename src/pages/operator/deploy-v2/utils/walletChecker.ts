@@ -16,8 +16,7 @@ export interface WalletStatus {
   // Balance checks
   ethBalance: string; // in ETH
   gTokenBalance: string; // in GToken
-  pntsBalance: string; // in PNT
-  aPNTsBalance: string; // in aPNT (for Super Mode)
+  aPNTsBalance: string; // in aPNT (for AOA+ mode only)
 
   // Contract checks
   hasGasTokenContract: boolean;
@@ -30,24 +29,20 @@ export interface WalletStatus {
   // Resource sufficiency
   hasEnoughETH: boolean; // >= 0.05 ETH (deploy + gas)
   hasEnoughGToken: boolean; // >= minimum stake requirement
-  hasEnoughPNTs: boolean; // >= minimum deposit requirement
-  hasEnoughAPNTs: boolean; // >= minimum aPNTs requirement (Super Mode)
+  hasEnoughAPNTs: boolean; // >= minimum aPNTs requirement (AOA+ mode only)
 
   // Requirements
   requiredETH: string;
   requiredGToken: string;
-  requiredPNTs: string;
-  requiredAPNTs: string;
+  requiredAPNTs: string; // 0 for AOA mode, 1000 for AOA+ (Super) mode
 }
 
 export interface CheckOptions {
   requiredETH?: string; // Default: "0.05"
-  requiredGToken?: string; // Default: "100"
-  requiredPNTs?: string; // Default: "1000"
-  requiredAPNTs?: string; // Default: "1000" (for Super Mode)
+  requiredGToken?: string; // Default: "330" (or 300 if community registered)
+  requiredAPNTs?: string; // Default: "0" for AOA, "1000" for AOA+ (Super Mode)
   gTokenAddress?: string; // GToken contract address
-  pntAddress?: string; // PNT token contract address
-  aPNTAddress?: string; // aPNT token contract address (Super Mode)
+  aPNTAddress?: string; // aPNT token contract address (AOA+ mode only)
 }
 
 // Standard ERC-20 ABI for balance checking
@@ -179,11 +174,9 @@ export async function checkWalletStatus(
 ): Promise<WalletStatus> {
   const {
     requiredETH = "0.05",
-    requiredGToken = "100",
-    requiredPNTs = "1000",
-    requiredAPNTs = "1000",
+    requiredGToken, // Will be calculated based on registration status
+    requiredAPNTs = "0", // 0 for AOA, 1000 for AOA+ (Super)
     gTokenAddress,
-    pntAddress,
     aPNTAddress,
   } = options;
 
@@ -193,17 +186,14 @@ export async function checkWalletStatus(
     address: "",
     ethBalance: "0",
     gTokenBalance: "0",
-    pntsBalance: "0",
     aPNTsBalance: "0",
     hasGasTokenContract: false,
     isCommunityRegistered: false,
     hasEnoughETH: false,
     hasEnoughGToken: false,
-    hasEnoughPNTs: false,
     hasEnoughAPNTs: false,
     requiredETH,
-    requiredGToken,
-    requiredPNTs,
+    requiredGToken: requiredGToken || "330", // Will be updated after checking registration
     requiredAPNTs,
   };
 
@@ -241,14 +231,7 @@ export async function checkWalletStatus(
         parseFloat(status.gTokenBalance) >= parseFloat(status.requiredGToken);
     }
 
-    // Check PNT balance (if address provided)
-    if (pntAddress) {
-      status.pntsBalance = await checkTokenBalance(pntAddress, address);
-      status.hasEnoughPNTs =
-        parseFloat(status.pntsBalance) >= parseFloat(requiredPNTs);
-    }
-
-    // Check aPNT balance (if address provided - for Super Mode)
+    // Check aPNT balance (if address provided - for AOA+ / Super Mode only)
     if (aPNTAddress) {
       status.aPNTsBalance = await checkTokenBalance(aPNTAddress, address);
       status.hasEnoughAPNTs =

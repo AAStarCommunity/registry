@@ -114,16 +114,16 @@ export const Step4_StakeOption: React.FC<Step4Props> = ({
             </span>
           </div>
           <div className="wallet-item">
-            <span className="wallet-label">PNTs:</span>
+            <span className="wallet-label">aPNTs:</span>
             <span
               className={`wallet-value ${
-                parseFloat(walletStatus.pntsBalance) >=
+                parseFloat(walletStatus.aPNTsBalance) >=
                 parseFloat(config.requirements.minPntDeposit)
                   ? "sufficient"
                   : "insufficient"
               }`}
             >
-              {walletStatus.pntsBalance} PNT
+              {walletStatus.aPNTsBalance} aPNT
             </span>
           </div>
         </div>
@@ -297,7 +297,7 @@ function calculateRecommendation(
 ): { option: StakeOptionType; reason: string } | null {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
-  const pntsBalance = parseFloat(walletStatus.pntsBalance);
+  const aPNTsBalance = parseFloat(walletStatus.aPNTsBalance);
 
   // Check if requirements are met
   const aoaMet = aoaOption.requirements.every((r) => r.met);
@@ -308,7 +308,7 @@ function calculateRecommendation(
     // Calculate "excess" for each option
     const aoaExcess = ethBalance / 0.1; // relative to 0.1 ETH requirement
     const superExcess =
-      (gTokenBalance / 100 + pntsBalance / 1000 + ethBalance / 0.02) / 3;
+      (gTokenBalance / 100 + aPNTsBalance / 1000 + ethBalance / 0.02) / 3;
 
     if (aoaExcess > superExcess * 1.5) {
       return {

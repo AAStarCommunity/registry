@@ -98,17 +98,14 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
         ethBalance: '1.5',
         gTokenBalance: '1200',
-        pntsBalance: '800',
         aPNTsBalance: '600',
         hasGasTokenContract: false,
         isCommunityRegistered: false,
         hasEnoughETH: true,
         hasEnoughGToken: true,
-        hasEnoughPNTs: true,
         hasEnoughAPNTs: true,
         requiredETH: '0.1',
         requiredGToken: '330',
-        requiredPNTs: '1000',
         requiredAPNTs: '1000',
       };
       setWalletAddress(mockWalletStatus.address);
@@ -207,19 +204,15 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         ? {
             requiredETH: config.requirements.minEthStandardFlow, // 0.1 ETH for deployment + stake
             requiredGToken: config.requirements.minGTokenStake, // 100 GToken
-            requiredPNTs: "0", // AOA flow doesn't need PNTs
             requiredAPNTs: "0", // AOA flow doesn't need aPNTs
             gTokenAddress: config.contracts.gToken,
-            pntAddress: config.contracts.bPNTs,
             aPNTAddress: config.contracts.aPNTs,
           }
         : {
             requiredETH: config.requirements.minEthDeploy, // Super mode only needs small ETH for gas
             requiredGToken: config.requirements.minGTokenStake, // 100 GToken
-            requiredPNTs: config.requirements.minPntDeposit, // 1000 PNTs
             requiredAPNTs: config.requirements.minPntDeposit, // Using same requirement for aPNTs
             gTokenAddress: config.contracts.gToken,
-            pntAddress: config.contracts.bPNTs,
             aPNTAddress: config.contracts.aPNTs,
           };
 
@@ -265,7 +258,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     if (selectedOption === 'aoa') {
       return walletStatus.hasEnoughETH && walletStatus.hasEnoughGToken;
     } else {
-      return walletStatus.hasEnoughETH && walletStatus.hasEnoughGToken && walletStatus.hasEnoughPNTs;
+      return walletStatus.hasEnoughETH && walletStatus.hasEnoughGToken && walletStatus.hasEnoughAPNTs;
     }
   };
 
@@ -388,17 +381,14 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
         address: walletAddress!,
         ethBalance: "0", // Will check after selection
         gTokenBalance: "0",
-        pntsBalance: "0",
         aPNTsBalance: "0",
         hasGasTokenContract: false,
         isCommunityRegistered: false,
         hasEnoughETH: false,
         hasEnoughGToken: false,
-        hasEnoughPNTs: false,
         hasEnoughAPNTs: false,
         requiredETH: "0",
         requiredGToken: "0",
-        requiredPNTs: "0",
         requiredAPNTs: "0",
       };
 

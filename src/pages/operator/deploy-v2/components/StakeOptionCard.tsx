@@ -274,15 +274,15 @@ export function createSuperModeOption(
 ): StakeOption {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
-  const pntsBalance = parseFloat(walletStatus.pntsBalance);
+  const aPNTsBalance = parseFloat(walletStatus.aPNTsBalance);
   const minEth = parseFloat(config.requirements.minEthDeploy);
   const minGToken = parseFloat(config.requirements.minGTokenStake);
-  const minPnts = parseFloat(config.requirements.minPntDeposit);
+  const minAPNTs = parseFloat(config.requirements.minPntDeposit);
 
   const allResourcesMet =
     ethBalance >= minEth &&
     gTokenBalance >= minGToken &&
-    pntsBalance >= minPnts;
+    aPNTsBalance >= minAPNTs;
 
   return {
     type: "super",
@@ -308,9 +308,9 @@ export function createSuperModeOption(
       {
         label: "aPNTs (long-term supply: gas backing token)",
         value: showBalances
-          ? `Need ≥ ${config.requirements.minPntDeposit} aPNT (Current: ${walletStatus.pntsBalance} aPNT)`
+          ? `Need ≥ ${config.requirements.minPntDeposit} aPNT (Current: ${walletStatus.aPNTsBalance} aPNT)`
           : `Need ≥ ${config.requirements.minPntDeposit} aPNT`,
-        met: pntsBalance >= minPnts,
+        met: aPNTsBalance >= minAPNTs,
       },
     ],
     steps: [

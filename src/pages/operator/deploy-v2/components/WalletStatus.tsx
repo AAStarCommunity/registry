@@ -169,34 +169,34 @@ export function WalletStatus({
 
         {/* aPNTs Balance */}
         <div className={`balance-item ${
-          parseFloat(status.requiredPNTs) === 0
+          parseFloat(status.requiredAPNTs) === 0
             ? "optional"
-            : status.hasEnoughPNTs ? "sufficient" : "insufficient"
+            : status.hasEnoughAPNTs ? "sufficient" : "insufficient"
         }`}>
           <div className="balance-header">
             <div className="balance-name">
               <span className={
-                parseFloat(status.requiredPNTs) === 0
+                parseFloat(status.requiredAPNTs) === 0
                   ? "icon-info"
-                  : status.hasEnoughPNTs ? "icon-success" : "icon-error"
+                  : status.hasEnoughAPNTs ? "icon-success" : "icon-error"
               }>
-                {parseFloat(status.requiredPNTs) === 0
+                {parseFloat(status.requiredAPNTs) === 0
                   ? "ℹ️"
-                  : status.hasEnoughPNTs ? "✅" : "❌"}
+                  : status.hasEnoughAPNTs ? "✅" : "❌"}
               </span>
               <span>aPNTs Balance</span>
             </div>
             <div className="balance-value">
-              {formatBalance(status.pntsBalance)} aPNT
+              {formatBalance(status.aPNTsBalance)} aPNT
             </div>
           </div>
           <div className="balance-details">
             <span className="balance-required">
-              {parseFloat(status.requiredPNTs) === 0
+              {parseFloat(status.requiredAPNTs) === 0
                 ? "Not required for AOA mode"
-                : `Required: ${status.requiredPNTs} aPNT`}
+                : `Required: ${status.requiredAPNTs} aPNT`}
             </span>
-            {!status.hasEnoughPNTs && parseFloat(status.requiredPNTs) > 0 && (
+            {!status.hasEnoughAPNTs && parseFloat(status.requiredAPNTs) > 0 && (
               <div className="balance-action">
                 <button
                   className="action-button"
@@ -208,11 +208,11 @@ export function WalletStatus({
               </div>
             )}
           </div>
-          {parseFloat(status.requiredPNTs) === 0 ? (
+          {parseFloat(status.requiredAPNTs) === 0 ? (
             <div className="balance-help">
               aPNTs only required for AOA+ (Super Mode). Not needed for AOA mode.
             </div>
-          ) : !status.hasEnoughPNTs && (
+          ) : !status.hasEnoughAPNTs && (
             <div className="balance-help">
               Advanced PNTs for SuperPaymaster (1000+ aPNTs required)
             </div>

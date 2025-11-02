@@ -179,7 +179,7 @@ export function createChecklistItems(
 ): ChecklistItemData[] {
   const ethBalance = parseFloat(walletStatus.ethBalance);
   const gTokenBalance = parseFloat(walletStatus.gTokenBalance);
-  const pntsBalance = parseFloat(walletStatus.pntsBalance);
+  const aPNTsBalance = parseFloat(walletStatus.aPNTsBalance);
 
   const items: ChecklistItemData[] = [];
 
@@ -221,20 +221,20 @@ export function createChecklistItems(
     description: "用于在治理合约中进行 Stake，获得 Paymaster 运营资格",
   });
 
-  // PNTs requirement (only for Fast Flow)
+  // aPNTs requirement (only for Fast Flow)
   if (selectedOption === "fast") {
-    const requiredPnts = parseFloat(config.requirements.minPntDeposit);
+    const requiredAPNTs = parseFloat(config.requirements.minPntDeposit);
     items.push({
-      id: "pnts",
-      label: "PNTs (协议积分)",
-      required: `≥ ${config.requirements.minPntDeposit} PNT`,
-      current: `${walletStatus.pntsBalance} PNT`,
+      id: "apnts",
+      label: "aPNTs (AAStar 积分)",
+      required: `≥ ${config.requirements.minPntDeposit} aPNT`,
+      current: `${walletStatus.aPNTsBalance} aPNT`,
       status: "pending",
-      met: pntsBalance >= requiredPnts,
+      met: aPNTsBalance >= requiredAPNTs,
       actionLink: "/get-pnts",
-      actionLabel: "获取 PNTs",
+      actionLabel: "获取 aPNTs",
       description:
-        "Fast Flow 使用 PNTs 进行 Deposit，协议会自动将 GToken 转换为 ETH",
+        "Fast Flow 使用 aPNTs 进行 Deposit，协议会自动将 GToken 转换为 ETH",
     });
   }
 

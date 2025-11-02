@@ -28,17 +28,14 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
         address: '0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb',
         ethBalance: '1.5',
         gTokenBalance: '1200',
-        pntsBalance: '800',
         aPNTsBalance: '600',
         hasGasTokenContract: false,
         isCommunityRegistered: false,
         hasEnoughETH: true,
         hasEnoughGToken: true,
-        hasEnoughPNTs: true,
         hasEnoughAPNTs: true,
         requiredETH: '0.1',
         requiredGToken: '330',
-        requiredPNTs: '1000',
         requiredAPNTs: '1000',
       };
       setWalletStatus(mockWalletStatus);
@@ -67,10 +64,8 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
       const status = await checkWalletStatus({
         requiredETH: "0.05",
         requiredGToken: "100",
-        requiredPNTs: "1000",
         requiredAPNTs: "1000",
         gTokenAddress: getCurrentNetworkConfig().contracts.gToken,
-        pntAddress: getCurrentNetworkConfig().contracts.bPNTs,
         aPNTAddress: getCurrentNetworkConfig().contracts.aPNTs,
       });
 
