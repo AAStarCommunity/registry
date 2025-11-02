@@ -6,6 +6,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
 import "./Step3_Complete.css";
 
@@ -16,6 +17,7 @@ export interface Step3Props {
 }
 
 export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const getExplorerLink = (address: string): string => {
@@ -26,25 +28,25 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     <div className="step3-complete">
       <div className="completion-header">
         <div className="success-icon">🎉</div>
-        <h2>部署完成！</h2>
+        <h2>{t('step3Complete.header.title')}</h2>
         <p className="subtitle">
-          恭喜！您已成功完成{mode === "aoa" ? "AOA 模式" : "AOA+ 模式"}的资源部署
+          {t('step3Complete.header.subtitle')}{mode === "aoa" ? t('step3Complete.header.aoaMode') : t('step3Complete.header.aoaPlusMode')}的资源部署
         </p>
       </div>
 
       {/* Deployment Summary */}
       <div className="deployment-summary">
-        <h3>📋 部署摘要</h3>
+        <h3>{t('step3Complete.summary.title')}</h3>
 
         <div className="summary-grid">
           {/* Community */}
           <div className="summary-card">
             <div className="card-icon">🏛️</div>
             <div className="card-content">
-              <h4>社区信息</h4>
+              <h4>{t('step3Complete.summary.community.title')}</h4>
               <p className="card-value">{resources.communityName}</p>
               <p className="card-detail">
-                注册时间: {new Date(resources.communityRegisteredAt! * 1000).toLocaleDateString()}
+                {t('step3Complete.summary.community.registered')} {new Date(resources.communityRegisteredAt! * 1000).toLocaleDateString()}
               </p>
             </div>
           </div>

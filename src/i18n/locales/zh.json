@@ -252,5 +252,137 @@
       "resourceCheck": "资源检测&准备",
       "launch": "发射"
     }
+  },
+  "step2ResourceCheck": {
+    "header": {
+      "checking": "检查资源状态",
+      "checkingSubtitle": "正在检测已部署的资源...",
+      "failed": "检测失败",
+      "failedSubtitle": "无法检测资源状态",
+      "title": "资源检测",
+      "aoaMode": "AOA 模式 - 独立 Paymaster",
+      "aoaPlusMode": "AOA+ 模式 - SuperPaymaster"
+    },
+    "loading": {
+      "spinner": "加载中..."
+    },
+    "error": {
+      "button": "重新检测"
+    },
+    "resources": {
+      "community": {
+        "title": "社区注册",
+        "registered": "已注册:",
+        "notRegistered": "未注册",
+        "action": "立即注册 →"
+      },
+      "xpnts": {
+        "title": "xPNTs Token",
+        "deployed": "已部署",
+        "address": "地址:",
+        "exchangeRate": "汇率: 1 xPNT =",
+        "exchangeRateSuffix": "aPNTs",
+        "notDeployed": "未部署",
+        "action": "立即部署 →"
+      },
+      "paymaster": {
+        "title": "Paymaster 部署",
+        "deployed": "已部署",
+        "address": "地址:",
+        "notDeployed": "未部署",
+        "action": "立即部署 →"
+      },
+      "sbt": {
+        "title": "MySBT 绑定",
+        "requirePaymaster": "需先部署 Paymaster",
+        "bound": "已绑定",
+        "notBound": "未绑定",
+        "action": "立即绑定 →"
+      },
+      "gtoken": {
+        "title": "GToken 余额",
+        "balance": "余额:",
+        "suffix": "GT",
+        "required": "需要:",
+        "action": "获取 GToken →"
+      },
+      "apnts": {
+        "title": "aPNTs 余额",
+        "balance": "余额:",
+        "suffix": "aPNTs",
+        "required": "需要:",
+        "action": "获取 aPNTs →"
+      },
+      "eth": {
+        "title": "ETH 余额",
+        "balance": "余额:",
+        "suffix": "ETH",
+        "required": "需要:",
+        "requiredSuffix": "ETH (用于 gas)",
+        "faucetNote": "请从水龙头获取 Sepolia ETH"
+      }
+    },
+    "summary": {
+      "allReady": "所有资源已就绪！",
+      "allReadyDescription": "您可以继续下一步完成部署流程。",
+      "notReady": "还有资源未准备好",
+      "notReadyDescription": "请完成上述缺失的资源部署，然后点击"重新检测"。"
+    },
+    "actions": {
+      "recheck": "🔄 重新检测",
+      "back": "← 返回",
+      "continue": "继续 →"
+    }
+  },
+  "step3Complete": {
+    "header": {
+      "title": "部署完成！",
+      "subtitle": "恭喜！您已成功完成",
+      "aoaMode": "AOA 模式",
+      "aoaPlusMode": "AOA+ 模式"
+    },
+    "summary": {
+      "title": "📋 部署摘要",
+      "community": {
+        "title": "社区信息",
+        "registered": "注册时间:"
+      },
+      "xpnts": {
+        "title": "xPNTs Token",
+        "rate": "汇率: 1 xPNT =",
+        "rateSuffix": "aPNTs",
+        "viewExplorer": "在 Etherscan 查看 ↗"
+      },
+      "paymaster": {
+        "title": "Paymaster",
+        "sbtBound": "MySBT 已绑定:",
+        "viewExplorer": "在 Etherscan 查看 ↗"
+      },
+      "balances": {
+        "title": "余额状态",
+        "eth": "ETH:",
+        "gtoken": "GToken:",
+        "apnts": "aPNTs:"
+      }
+    },
+    "nextSteps": {
+      "title": "🎯 下一步操作",
+      "aoa": {
+        "step1": "向 EntryPoint 存入 ETH 以支持 gas 赞助",
+        "step2": "使用样例交易测试您的 Paymaster",
+        "step3": "监控 Paymaster 性能和 gas 使用情况"
+      },
+      "aoaPlus": {
+        "step1": "向 SuperPaymaster 仪表板存入 aPNTs",
+        "step2": "监控您社区的使用统计",
+        "step3": "通过服务质量赚取奖励"
+      }
+    },
+    "actions": {
+      "viewDocs": "📚 查看文档",
+      "explorer": "🔍 在浏览器查看",
+      "restart": "🔄 部署另一个",
+      "goHome": "🏠 返回首页"
+    }
   }
 }

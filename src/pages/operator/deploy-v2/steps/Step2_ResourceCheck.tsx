@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { checkResources, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
 import "./Step2_ResourceCheck.css";
 
@@ -23,6 +24,7 @@ export interface Step2Props {
 }
 
 export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Step2Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [resources, setResources] = useState<ResourceStatus | null>(null);
@@ -83,12 +85,12 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
     return (
       <div className="step2-resource-check">
         <div className="step-header">
-          <h2>🔍 检查资源状态</h2>
-          <p className="step-subtitle">正在检测已部署的资源...</p>
+          <h2>🔍 {t('step2ResourceCheck.header.checking')}</h2>
+          <p className="step-subtitle">{t('step2ResourceCheck.header.checkingSubtitle')}</p>
         </div>
         <div className="loading-spinner">
           <div className="spinner"></div>
-          <p>加载中...</p>
+          <p>{t('step2ResourceCheck.loading.spinner')}</p>
         </div>
       </div>
     );
@@ -98,18 +100,18 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
     return (
       <div className="step2-resource-check">
         <div className="step-header">
-          <h2>⚠️ 检测失败</h2>
-          <p className="step-subtitle">无法检测资源状态</p>
+          <h2>⚠️ {t('step2ResourceCheck.header.failed')}</h2>
+          <p className="step-subtitle">{t('step2ResourceCheck.header.failedSubtitle')}</p>
         </div>
         <div className="error-box">
           <p>{error}</p>
           <button className="btn-primary" onClick={checkResourcesStatus}>
-            重新检测
+            {t('step2ResourceCheck.error.button')}
           </button>
         </div>
         <div className="step-actions">
           <button className="btn-secondary" onClick={onBack}>
-            ← 返回
+            {t('step2ResourceCheck.actions.back')}
           </button>
         </div>
       </div>
@@ -119,9 +121,9 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
   return (
     <div className="step2-resource-check">
       <div className="step-header">
-        <h2>🔍 资源检测</h2>
+        <h2>🔍 {t('step2ResourceCheck.header.title')}</h2>
         <p className="step-subtitle">
-          {mode === "aoa" ? "AOA 模式 - 独立 Paymaster" : "AOA+ 模式 - SuperPaymaster"}
+          {mode === "aoa" ? t('step2ResourceCheck.header.aoaMode') : t('step2ResourceCheck.header.aoaPlusMode')}
         </p>
       </div>
 
@@ -133,19 +135,19 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             {resources?.isCommunityRegistered ? "✅" : "❌"}
           </div>
           <div className="resource-info">
-            <h3>社区注册</h3>
+            <h3>{t('step2ResourceCheck.resources.community.title')}</h3>
             {resources?.isCommunityRegistered ? (
               <p className="status-text success">
-                已注册: {resources.communityName}
+                {t('step2ResourceCheck.resources.community.registered')} {resources.communityName}
               </p>
             ) : (
               <>
-                <p className="status-text error">未注册</p>
+                <p className="status-text error">{t('step2ResourceCheck.resources.community.notRegistered')}</p>
                 <button
                   className="action-btn"
                   onClick={() => handleNavigate("/register-community")}
                 >
-                  立即注册 →
+                  {t('step2ResourceCheck.resources.community.action')}
                 </button>
               </>
             )}
@@ -158,27 +160,27 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             {resources?.hasXPNTs ? "✅" : "❌"}
           </div>
           <div className="resource-info">
-            <h3>xPNTs Token</h3>
+            <h3>{t('step2ResourceCheck.resources.xpnts.title')}</h3>
             {resources?.hasXPNTs ? (
               <>
-                <p className="status-text success">已部署</p>
+                <p className="status-text success">{t('step2ResourceCheck.resources.xpnts.deployed')}</p>
                 <p className="detail-text">
-                  地址: {resources.xPNTsAddress?.slice(0, 10)}...
+                  {t('step2ResourceCheck.resources.xpnts.address')} {resources.xPNTsAddress?.slice(0, 10)}...
                 </p>
                 {resources.xPNTsExchangeRate && (
                   <p className="detail-text">
-                    汇率: 1 xPNT = {resources.xPNTsExchangeRate} aPNTs
+                    {t('step2ResourceCheck.resources.xpnts.exchangeRate')} {resources.xPNTsExchangeRate} {t('step2ResourceCheck.resources.xpnts.exchangeRateSuffix')}
                   </p>
                 )}
               </>
             ) : (
               <>
-                <p className="status-text error">未部署</p>
+                <p className="status-text error">{t('step2ResourceCheck.resources.xpnts.notDeployed')}</p>
                 <button
                   className="action-btn"
                   onClick={() => handleNavigate("/get-xpnts")}
                 >
-                  立即部署 →
+                  {t('step2ResourceCheck.resources.xpnts.action')}
                 </button>
               </>
             )}
@@ -194,22 +196,22 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                 {resources?.hasPaymaster ? "✅" : "❌"}
               </div>
               <div className="resource-info">
-                <h3>Paymaster 部署</h3>
+                <h3>{t('step2ResourceCheck.resources.paymaster.title')}</h3>
                 {resources?.hasPaymaster ? (
                   <>
-                    <p className="status-text success">已部署</p>
+                    <p className="status-text success">{t('step2ResourceCheck.resources.paymaster.deployed')}</p>
                     <p className="detail-text">
-                      地址: {resources.paymasterAddress?.slice(0, 10)}...
+                      {t('step2ResourceCheck.resources.paymaster.address')} {resources.paymasterAddress?.slice(0, 10)}...
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="status-text error">未部署</p>
+                    <p className="status-text error">{t('step2ResourceCheck.resources.paymaster.notDeployed')}</p>
                     <button
                       className="action-btn"
                       onClick={() => handleNavigate("/launch-paymaster")}
                     >
-                      立即部署 →
+                      {t('step2ResourceCheck.resources.paymaster.action')}
                     </button>
                   </>
                 )}
@@ -234,19 +236,19 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                   : "❌"}
               </div>
               <div className="resource-info">
-                <h3>MySBT 绑定</h3>
+                <h3>{t('step2ResourceCheck.resources.sbt.title')}</h3>
                 {!resources?.hasPaymaster ? (
-                  <p className="status-text disabled">需先部署 Paymaster</p>
+                  <p className="status-text disabled">{t('step2ResourceCheck.resources.sbt.requirePaymaster')}</p>
                 ) : resources.hasSBTBinding ? (
-                  <p className="status-text success">已绑定</p>
+                  <p className="status-text success">{t('step2ResourceCheck.resources.sbt.bound')}</p>
                 ) : (
                   <>
-                    <p className="status-text error">未绑定</p>
+                    <p className="status-text error">{t('step2ResourceCheck.resources.sbt.notBound')}</p>
                     <button
                       className="action-btn"
                       onClick={() => handleNavigate("/bind-sbt")}
                     >
-                      立即绑定 →
+                      {t('step2ResourceCheck.resources.sbt.action')}
                     </button>
                   </>
                 )}
@@ -261,19 +263,19 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             {resources?.hasEnoughGToken ? "✅" : "⚠️"}
           </div>
           <div className="resource-info">
-            <h3>GToken 余额</h3>
+            <h3>{t('step2ResourceCheck.resources.gtoken.title')}</h3>
             <p className={`status-text ${resources?.hasEnoughGToken ? "success" : "warning"}`}>
-              余额: {resources?.gTokenBalance} GT
+              {t('step2ResourceCheck.resources.gtoken.balance')} {resources?.gTokenBalance} {t('step2ResourceCheck.resources.gtoken.suffix')}
             </p>
             <p className="detail-text">
-              需要: {resources?.requiredGToken} GT
+              {t('step2ResourceCheck.resources.gtoken.required')} {resources?.requiredGToken} {t('step2ResourceCheck.resources.gtoken.suffix')}
             </p>
             {!resources?.hasEnoughGToken && (
               <button
                 className="action-btn"
                 onClick={() => handleNavigate("/get-gtoken")}
               >
-                获取 GToken →
+                {t('step2ResourceCheck.resources.gtoken.action')}
               </button>
             )}
           </div>
@@ -286,19 +288,19 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
               {resources?.hasEnoughAPNTs ? "✅" : "⚠️"}
             </div>
             <div className="resource-info">
-              <h3>aPNTs 余额</h3>
+              <h3>{t('step2ResourceCheck.resources.apnts.title')}</h3>
               <p className={`status-text ${resources?.hasEnoughAPNTs ? "success" : "warning"}`}>
-                余额: {resources?.aPNTsBalance} aPNTs
+                {t('step2ResourceCheck.resources.apnts.balance')} {resources?.aPNTsBalance} {t('step2ResourceCheck.resources.apnts.suffix')}
               </p>
               <p className="detail-text">
-                需要: {resources?.requiredAPNTs} aPNTs
+                {t('step2ResourceCheck.resources.apnts.required')} {resources?.requiredAPNTs} {t('step2ResourceCheck.resources.apnts.suffix')}
               </p>
               {!resources?.hasEnoughAPNTs && (
                 <button
                   className="action-btn"
                   onClick={() => handleNavigate("/get-pnts")}
                 >
-                  获取 aPNTs →
+                  {t('step2ResourceCheck.resources.apnts.action')}
                 </button>
               )}
             </div>
@@ -311,16 +313,16 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             {resources?.hasEnoughETH ? "✅" : "⚠️"}
           </div>
           <div className="resource-info">
-            <h3>ETH 余额</h3>
+            <h3>{t('step2ResourceCheck.resources.eth.title')}</h3>
             <p className={`status-text ${resources?.hasEnoughETH ? "success" : "warning"}`}>
-              余额: {resources?.ethBalance} ETH
+              {t('step2ResourceCheck.resources.eth.balance')} {resources?.ethBalance} {t('step2ResourceCheck.resources.eth.suffix')}
             </p>
             <p className="detail-text">
-              需要: {resources?.requiredETH} ETH (用于 gas)
+              {t('step2ResourceCheck.resources.eth.required')} {resources?.requiredETH} {t('step2ResourceCheck.resources.eth.requiredSuffix')}
             </p>
             {!resources?.hasEnoughETH && (
               <p className="detail-text error">
-                请从水龙头获取 Sepolia ETH
+                {t('step2ResourceCheck.resources.eth.faucetNote')}
               </p>
             )}
           </div>
@@ -331,32 +333,32 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
       <div className="step-summary">
         {areAllResourcesReady() ? (
           <div className="success-message">
-            <h3>✅ 所有资源已就绪！</h3>
-            <p>您可以继续下一步完成部署流程。</p>
+            <h3>✅ {t('step2ResourceCheck.summary.allReady')}</h3>
+            <p>{t('step2ResourceCheck.summary.allReadyDescription')}</p>
           </div>
         ) : (
           <div className="warning-message">
-            <h3>⚠️ 还有资源未准备好</h3>
-            <p>请完成上述缺失的资源部署，然后点击"重新检测"。</p>
+            <h3>⚠️ {t('step2ResourceCheck.summary.notReady')}</h3>
+            <p>{t('step2ResourceCheck.summary.notReadyDescription')}</p>
           </div>
         )}
 
         <button className="btn-refresh" onClick={checkResourcesStatus}>
-          🔄 重新检测
+          {t('step2ResourceCheck.actions.recheck')}
         </button>
       </div>
 
       {/* Navigation Actions */}
       <div className="step-actions">
         <button className="btn-secondary" onClick={onBack}>
-          ← 返回
+          {t('step2ResourceCheck.actions.back')}
         </button>
         <button
           className="btn-primary"
           onClick={onNext}
           disabled={!areAllResourcesReady()}
         >
-          继续 →
+          {t('step2ResourceCheck.actions.continue')}
         </button>
       </div>
     </div>

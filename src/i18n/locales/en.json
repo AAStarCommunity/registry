@@ -252,5 +252,137 @@
       "resourceCheck": "Resource Check & Prepare",
       "launch": "Launch"
     }
+  },
+  "step2ResourceCheck": {
+    "header": {
+      "checking": "Check Resource Status",
+      "checkingSubtitle": "Detecting deployed resources...",
+      "failed": "Detection Failed",
+      "failedSubtitle": "Unable to detect resource status",
+      "title": "Resource Detection",
+      "aoaMode": "AOA Mode - Independent Paymaster",
+      "aoaPlusMode": "AOA+ Mode - SuperPaymaster"
+    },
+    "loading": {
+      "spinner": "Loading..."
+    },
+    "error": {
+      "button": "Retry Detection"
+    },
+    "resources": {
+      "community": {
+        "title": "Community Registration",
+        "registered": "Registered:",
+        "notRegistered": "Not Registered",
+        "action": "Register Now →"
+      },
+      "xpnts": {
+        "title": "xPNTs Token",
+        "deployed": "Deployed",
+        "address": "Address:",
+        "exchangeRate": "Rate: 1 xPNT =",
+        "exchangeRateSuffix": "aPNTs",
+        "notDeployed": "Not Deployed",
+        "action": "Deploy Now →"
+      },
+      "paymaster": {
+        "title": "Paymaster Deployment",
+        "deployed": "Deployed",
+        "address": "Address:",
+        "notDeployed": "Not Deployed",
+        "action": "Deploy Now →"
+      },
+      "sbt": {
+        "title": "MySBT Binding",
+        "requirePaymaster": "Deploy Paymaster first",
+        "bound": "Bound",
+        "notBound": "Not Bound",
+        "action": "Bind Now →"
+      },
+      "gtoken": {
+        "title": "GToken Balance",
+        "balance": "Balance:",
+        "suffix": "GT",
+        "required": "Required:",
+        "action": "Get GToken →"
+      },
+      "apnts": {
+        "title": "aPNTs Balance",
+        "balance": "Balance:",
+        "suffix": "aPNTs",
+        "required": "Required:",
+        "action": "Get aPNTs →"
+      },
+      "eth": {
+        "title": "ETH Balance",
+        "balance": "Balance:",
+        "suffix": "ETH",
+        "required": "Required:",
+        "requiredSuffix": "ETH (for gas)",
+        "faucetNote": "Please get Sepolia ETH from faucet"
+      }
+    },
+    "summary": {
+      "allReady": "All Resources Ready!",
+      "allReadyDescription": "You can proceed to the next step to complete the deployment.",
+      "notReady": "Some Resources Not Ready",
+      "notReadyDescription": "Please complete the missing resource deployments above, then click \"Re-detect\"."
+    },
+    "actions": {
+      "recheck": "Re-detect",
+      "back": "← Back",
+      "continue": "Continue →"
+    }
+  },
+  "step3Complete": {
+    "header": {
+      "title": "Deployment Complete!",
+      "subtitle": "Congratulations! You have successfully completed resource deployment for",
+      "aoaMode": "AOA Mode",
+      "aoaPlusMode": "AOA+ Mode"
+    },
+    "summary": {
+      "title": "📋 Deployment Summary",
+      "community": {
+        "title": "Community Info",
+        "registered": "Registered:"
+      },
+      "xpnts": {
+        "title": "xPNTs Token",
+        "rate": "Rate: 1 xPNT =",
+        "rateSuffix": "aPNTs",
+        "viewExplorer": "View on Etherscan ↗"
+      },
+      "paymaster": {
+        "title": "Paymaster",
+        "sbtBound": "MySBT Bound:",
+        "viewExplorer": "View on Etherscan ↗"
+      },
+      "balances": {
+        "title": "Balance Status",
+        "eth": "ETH:",
+        "gtoken": "GToken:",
+        "apnts": "aPNTs:"
+      }
+    },
+    "nextSteps": {
+      "title": "🎯 Next Steps",
+      "aoa": {
+        "step1": "Deposit ETH to EntryPoint for gas sponsorship",
+        "step2": "Test your Paymaster with sample transactions",
+        "step3": "Monitor Paymaster performance and gas usage"
+      },
+      "aoaPlus": {
+        "step1": "Deposit aPNTs to SuperPaymaster dashboard",
+        "step2": "Monitor your community's usage stats",
+        "step3": "Earn rewards through service quality"
+      }
+    },
+    "actions": {
+      "viewDocs": "📚 View Documentation",
+      "explorer": "🔍 View on Explorer",
+      "restart": "🔄 Deploy Another",
+      "goHome": "🏠 Back to Home"
+    }
   }
 }
