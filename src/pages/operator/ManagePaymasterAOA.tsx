@@ -17,20 +17,6 @@ import './ManagePaymasterFull.css';
  * - Pause/unpause functionality
  */
 
-// Contract addresses - read from env with fallback
-const ENTRY_POINT_V07 =
-  import.meta.env.VITE_ENTRY_POINT_V07 ||
-  "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // Official v0.7 EntryPoint
-const REGISTRY_V1_2 =
-  import.meta.env.VITE_REGISTRY_ADDRESS ||
-  "0x838da93c815a6E45Aa50429529da9106C0621eF0";
-const REGISTRY_V2 =
-  import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
-  "0x3ff7f71725285dB207442f51F6809e9C671E5dEb";
-const GTOKEN_STAKING =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0x199402b3F213A233e89585957F86A07ED1e1cD67";
-
 // ABIs
 // PaymasterV4 ABI - Removed gasToUSDRate/pntPriceUSD (not in V4, uses Chainlink)
 const PAYMASTER_V4_ABI = [
@@ -110,6 +96,21 @@ interface RegistryInfo {
 export default function ManagePaymasterAOA() {
   const [searchParams] = useSearchParams();
   const paymasterAddress = searchParams.get('address') || '';
+
+  // Get addresses from config with env overrides
+  const networkConfig = getCurrentNetworkConfig();
+  const ENTRY_POINT_V07 =
+    import.meta.env.VITE_ENTRY_POINT_V07 ||
+    networkConfig.contracts.entryPointV07;
+  const REGISTRY_V1_2 =
+    import.meta.env.VITE_REGISTRY_ADDRESS ||
+    networkConfig.contracts.registry; // v1.2 (legacy)
+  const REGISTRY_V2 =
+    import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
+    networkConfig.contracts.registryV2;
+  const GTOKEN_STAKING =
+    import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+    networkConfig.contracts.gTokenStaking;
 
   const [config, setConfig] = useState<PaymasterConfig | null>(null);
   const [entryPointInfo, setEntryPointInfo] = useState<EntryPointInfo | null>(null);

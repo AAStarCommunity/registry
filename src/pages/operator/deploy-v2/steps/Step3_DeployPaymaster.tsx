@@ -6,12 +6,10 @@ import PaymasterV4_1 from "../../../../contracts/PaymasterV4_1.json";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step3_DeployPaymaster.css";
 
-// EntryPoint v0.7 addresses
-const ENTRYPOINT_ADDRESSES: Record<number, string> = {
-  11155111: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", // Sepolia
-  11155420: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", // OP Sepolia
-  10: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", // OP Mainnet
-  1: "0x0000000071727De22E5E9d8BAf0edAc6f37da032", // Ethereum Mainnet
+// EntryPoint v0.7 addresses - from shared-config
+const getEntryPointAddress = (chainId: number): string => {
+  const config = getCurrentNetworkConfig();
+  return config.contracts.entryPointV07;
 };
 
 // Chainlink ETH/USD Price Feed addresses
@@ -167,7 +165,7 @@ export function Step3_DeployPaymaster({
       const ownerAddress = await signer.getAddress();
 
       // Get EntryPoint address for current chain
-      const entryPoint = ENTRYPOINT_ADDRESSES[chainId];
+      const entryPoint = getEntryPointAddress(chainId);
       if (!entryPoint) {
         throw new Error(`EntryPoint not configured for chain ID ${chainId}`);
       }

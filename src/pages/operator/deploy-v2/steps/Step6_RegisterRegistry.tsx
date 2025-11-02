@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step6_RegisterRegistry.css";
 
 export interface Step6Props {
@@ -11,16 +12,6 @@ export interface Step6Props {
   onNext: (registryTxHash: string) => void;
   onBack: () => void;
 }
-
-// Registry v1.2 address on Sepolia - read from env with fallback
-const REGISTRY_V1_2 =
-  import.meta.env.VITE_REGISTRY_ADDRESS ||
-  "0x838da93c815a6E45Aa50429529da9106C0621eF0";
-
-// GToken address on Sepolia - read from env with fallback
-const GTOKEN_ADDRESS =
-  import.meta.env.VITE_GTOKEN_ADDRESS ||
-  "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180";
 
 // Simple ABI
 const REGISTRY_ABI = [
@@ -42,6 +33,15 @@ export function Step6_RegisterRegistry({
   onNext,
   onBack,
 }: Step6Props) {
+  // Get addresses from config with env overrides
+  const networkConfig = getCurrentNetworkConfig();
+  const REGISTRY_V1_2 =
+    import.meta.env.VITE_REGISTRY_ADDRESS ||
+    networkConfig.contracts.registry; // v1.2 (legacy)
+  const GTOKEN_ADDRESS =
+    import.meta.env.VITE_GTOKEN_ADDRESS ||
+    networkConfig.contracts.gToken;
+
   const [gTokenAmount, setGTokenAmount] = useState<string>("30");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [allowance, setAllowance] = useState<string>("0");

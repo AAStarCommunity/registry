@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import "./RegisterCommunity.css";
-
-// Contract addresses from env
-const REGISTRY_ADDRESS =
-  import.meta.env.VITE_REGISTRY_ADDRESS ||
-  "0x529912C52a934fA02441f9882F50acb9b73A3c5B"; // Registry v2.1
-
-const GTOKEN_STAKING_ADDRESS =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0x0"; // GTokenStaking address
-
-const SEPOLIA_RPC_URL =
-  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 
 // Registry ABI (CommunityProfile struct fields)
 const REGISTRY_ABI = [
@@ -30,6 +19,18 @@ const GTOKEN_STAKING_ABI = [
 
 export function RegisterCommunity() {
   const navigate = useNavigate();
+
+  // Get addresses from config with env overrides
+  const networkConfig = getCurrentNetworkConfig();
+  const REGISTRY_ADDRESS =
+    import.meta.env.VITE_REGISTRY_ADDRESS ||
+    networkConfig.contracts.registryV2_1; // Registry v2.1
+  const GTOKEN_STAKING_ADDRESS =
+    import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+    networkConfig.contracts.gTokenStaking;
+  const SEPOLIA_RPC_URL =
+    import.meta.env.VITE_SEPOLIA_RPC_URL ||
+    networkConfig.rpcUrl;
 
   // Wallet state
   const [account, setAccount] = useState<string>("");

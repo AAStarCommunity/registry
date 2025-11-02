@@ -6,6 +6,7 @@
  */
 
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 
 export interface WalletStatus {
   // Connection status
@@ -210,7 +211,8 @@ export async function checkWalletStatus(
     // Check for existing xPNTs (GasToken) contract via xPNTsFactory
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const xPNTsFactoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || "0x356CF363E136b0880C8F48c9224A37171f375595";
+      const networkConfig = getCurrentNetworkConfig();
+      const xPNTsFactoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || networkConfig.contracts.xPNTsFactory;
       const xPNTsFactoryABI = [
         "function hasToken(address community) view returns (bool)",
         "function getTokenAddress(address community) view returns (address)",

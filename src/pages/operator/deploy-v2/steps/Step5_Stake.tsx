@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { StakeToSuperPaymaster } from "../components/StakeToSuperPaymaster";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step5_Stake.css";
 
 export interface Step5Props {
@@ -48,10 +49,11 @@ function Step5_StandardFlow({
   onBack,
 }: Step5Props) {
 
-// EntryPoint v0.7 address - read from env with fallback
+// EntryPoint v0.7 address - from shared-config with env override
+const networkConfig = getCurrentNetworkConfig();
 const ENTRY_POINT_V07 =
   import.meta.env.VITE_ENTRY_POINT_V07 ||
-  "0x0000000071727De22E5E9d8BAf0edAc6f37da032"; // Official v0.7 EntryPoint
+  networkConfig.contracts.entryPointV07;
 
 // Simple EntryPoint ABI for depositTo
 const ENTRY_POINT_ABI = [

@@ -1,20 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import "./GetXPNTs.css";
-
-// Contract addresses from env
-const XPNTS_FACTORY_ADDRESS =
-  import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
-  "0xC2AFEA0F736403E7e61D3F7C7c6b4E5E63B5cab6"; // Unified Architecture (2025-10-30)
-
-const SEPOLIA_RPC_URL =
-  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
-
-// Shared SuperPaymaster V2 address (for AOA+ mode)
-const SUPER_PAYMASTER_V2_ADDRESS =
-  import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
-  "0x50c4Daf685170aa29513BA6dd89B8417b5b0FE4a";
 
 // ABIs
 const XPNTS_FACTORY_ABI = [
@@ -25,6 +13,18 @@ const XPNTS_FACTORY_ABI = [
 
 export function GetXPNTs() {
   const navigate = useNavigate();
+
+  // Get addresses from config with env overrides
+  const networkConfig = getCurrentNetworkConfig();
+  const XPNTS_FACTORY_ADDRESS =
+    import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
+    networkConfig.contracts.xPNTsFactory;
+  const SEPOLIA_RPC_URL =
+    import.meta.env.VITE_SEPOLIA_RPC_URL ||
+    networkConfig.rpcUrl;
+  const SUPER_PAYMASTER_V2_ADDRESS =
+    import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
+    networkConfig.contracts.superPaymasterV2;
 
   // Wallet state
   const [account, setAccount] = useState<string>("");

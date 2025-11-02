@@ -1,19 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import "./GetSBT.css";
-
-// Contract addresses from env
-const MYSBT_FACTORY_ADDRESS =
-  import.meta.env.VITE_MYSBT_FACTORY_ADDRESS ||
-  "0x7ffd4B7db8A60015fAD77530892505bD69c6b8Ec";
-
-const GTOKEN_STAKING_ADDRESS =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0x199402b3F213A233e89585957F86A07ED1e1cD67";
-
-const SEPOLIA_RPC_URL =
-  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
 
 // ABIs
 const MYSBT_FACTORY_ABI = [
@@ -30,6 +19,18 @@ const GTOKEN_STAKING_ABI = [
 
 export function GetSBT() {
   const navigate = useNavigate();
+
+  // Get addresses from config with env overrides
+  const networkConfig = getCurrentNetworkConfig();
+  const MYSBT_FACTORY_ADDRESS =
+    import.meta.env.VITE_MYSBT_FACTORY_ADDRESS ||
+    networkConfig.contracts.mySBT;
+  const GTOKEN_STAKING_ADDRESS =
+    import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
+    networkConfig.contracts.gTokenStaking;
+  const SEPOLIA_RPC_URL =
+    import.meta.env.VITE_SEPOLIA_RPC_URL ||
+    networkConfig.rpcUrl;
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
