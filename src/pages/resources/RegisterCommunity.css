@@ -4,24 +4,69 @@
   padding: 40px 20px;
 }
 
-.hero-section {
-  text-align: center;
+.register-community-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  margin-bottom: 60px;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+  border-radius: 16px 16px 0 0;
+  margin-bottom: 0;
 }
 
-.hero-section h1 {
-  font-size: 3rem;
+.register-community-header .back-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.register-community-header .back-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
+}
+
+.register-community-header .header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.register-community-header .wizard-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.register-community-header .wizard-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
+.register-community-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
   font-weight: 700;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-.hero-section .subtitle {
-  font-size: 1.3rem;
+.register-community-header .subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 1.1rem;
   opacity: 0.95;
-  max-width: 700px;
-  margin: 0 auto;
 }
 
 .form-container {
@@ -270,12 +315,29 @@
 }
 
 @media (max-width: 768px) {
-  .hero-section h1 {
+  .register-community-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .register-community-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .register-community-header h1 {
     font-size: 2rem;
   }
 
-  .hero-section .subtitle {
-    font-size: 1rem;
+  .register-community-header .back-button {
+    top: 1rem;
+    left: 1rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .register-community-header .header-content {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
   }
 
   .form-container {

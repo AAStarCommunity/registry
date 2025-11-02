@@ -264,10 +264,17 @@ const GetGToken: React.FC = () => {
           <button onClick={handleGoBack} className="back-button">
             ← Back
           </button>
-          <h1>Get Governance Token</h1>
-          <p className="subtitle">
-            GToken is required for staking in the SuperPaymaster ecosystem
-          </p>
+          <div className="header-content">
+            <div>
+              <h1>Get Governance Token</h1>
+              <p className="subtitle">
+                GToken is required for staking in the SuperPaymaster ecosystem
+              </p>
+            </div>
+            <a href="/operator/wizard" className="wizard-link">
+              🚀 Launch Wizard
+            </a>
+          </div>
         </div>
 
         {/* Stake GToken Section */}

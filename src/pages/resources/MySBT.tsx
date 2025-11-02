@@ -333,11 +333,18 @@ export function MySBT() {
           <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h1>My SBT (Soul Bound Token)</h1>
-          <p className="subtitle">
-            MySBT v2.3 - Security Enhanced with Permissionless Community
-            Membership
-          </p>
+          <div className="header-content">
+            <div>
+              <h1>My SBT (Soul Bound Token)</h1>
+              <p className="subtitle">
+                MySBT v2.3 - Security Enhanced with Permissionless Community
+                Membership
+              </p>
+            </div>
+            <a href="/operator/wizard" className="wizard-link">
+              🚀 Launch Wizard
+            </a>
+          </div>
         </div>
 
         {/* What is MySBT v2.3 */}

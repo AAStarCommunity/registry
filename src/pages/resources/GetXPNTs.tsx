@@ -162,17 +162,24 @@ export function GetXPNTs() {
   }, []);
 
   return (
-    <div className="get-sbt-page">
-      <div className="get-sbt-container">
+    <div className="get-xpnts-page">
+      <div className="get-xpnts-container">
         {/* Header */}
-        <div className="get-sbt-header">
+        <div className="get-xpnts-header">
           <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h1>Get xPNTs Token</h1>
-          <p className="subtitle">
-            Deploy your community points token with auto-approval
-          </p>
+          <div className="header-content">
+            <div>
+              <h1>Get xPNTs Token</h1>
+              <p className="subtitle">
+                Deploy your community points token with auto-approval
+              </p>
+            </div>
+            <a href="/operator/wizard" className="wizard-link">
+              🚀 Launch Wizard
+            </a>
+          </div>
         </div>
 
         {/* What is xPNTs */}

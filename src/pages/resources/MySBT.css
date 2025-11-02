@@ -43,6 +43,30 @@
   transform: translateX(-2px);
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+}
+
+.wizard-link {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.wizard-link:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+}
+
 .mysbt-header h1 {
   margin: 0;
   font-size: 2.5rem;

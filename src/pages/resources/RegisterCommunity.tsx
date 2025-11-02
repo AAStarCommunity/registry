@@ -44,7 +44,6 @@ export function RegisterCommunity() {
   const [githubOrg, setGithubOrg] = useState<string>("");
   const [telegramGroup, setTelegramGroup] = useState<string>("");
   const [xPNTsToken, setXPNTsToken] = useState<string>("");
-  const [paymasterAddress, setPaymasterAddress] = useState<string>("");
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("0");
   const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
@@ -171,7 +170,7 @@ export function RegisterCommunity() {
         supportedSBTs: [], // Empty for now
         mode: mode === "AOA" ? 0 : 1, // PaymasterMode: INDEPENDENT=0, SUPER=1
         nodeType: mode === "AOA" ? 0 : 1, // NodeType: PAYMASTER_AOA=0, PAYMASTER_SUPER=1
-        paymasterAddress: paymasterAddress || ethers.ZeroAddress,
+        paymasterAddress: ethers.ZeroAddress, // Paymaster address is optional, use ZeroAddress
         community: account,
         registeredAt: 0,
         lastUpdatedAt: 0,
@@ -219,11 +218,21 @@ export function RegisterCommunity() {
 
   return (
     <div className="register-community-page">
-      <div className="hero-section">
-        <h1>注册社区</h1>
-        <p className="subtitle">
-          在 SuperPaymaster Registry 上注册您的社区，获得去中心化身份和服务
-        </p>
+      <div className="register-community-header">
+        <button className="back-button" onClick={() => navigate(-1)}>
+          ← Back
+        </button>
+        <div className="header-content">
+          <div>
+            <h1>注册社区</h1>
+            <p className="subtitle">
+              在 SuperPaymaster Registry 上注册您的社区，获得去中心化身份和服务
+            </p>
+          </div>
+          <a href="/operator/wizard" className="wizard-link">
+            🚀 Launch Wizard
+          </a>
+        </div>
       </div>
 
       <div className="form-container">
@@ -391,18 +400,6 @@ export function RegisterCommunity() {
                 </div>
               </div>
 
-              {mode === "AOA" && (
-                <div className="form-group">
-                  <label>Paymaster 地址</label>
-                  <input
-                    type="text"
-                    placeholder="0x..."
-                    value={paymasterAddress}
-                    onChange={(e) => setPaymasterAddress(e.target.value)}
-                  />
-                  <small>可选，您的独立 Paymaster 合约地址</small>
-                </div>
-              )}
 
               <div className="form-group">
                 <label>质押数量 (GToken)</label>
