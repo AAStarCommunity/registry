@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { useSafeApp } from "../../hooks/useSafeApp";
 import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getRpcUrl } from "../../config/rpc";
 import "./MySBT.css";
 
 // Get contract addresses from shared-config via networkConfig
@@ -16,8 +17,8 @@ const GTOKEN_ADDRESS =
   import.meta.env.VITE_GTOKEN_ADDRESS ||
   networkConfig.contracts.gToken;
 
-const SEPOLIA_RPC_URL =
-  import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
+// Use /api/rpc-proxy endpoint to hide RPC keys
+const RPC_URL = getRpcUrl();
 
 // MySBT v2.3 ABI (essential functions)
 const MYSBT_ABI = [
@@ -103,7 +104,7 @@ export function MySBT() {
   // Load all data
   const loadData = async (address: string) => {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
 
       // Load MySBT contract info
       const sbtContract = new ethers.Contract(
@@ -146,7 +147,7 @@ export function MySBT() {
     if (!queryAddress || !account) return;
 
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
         MYSBT_ABI,
@@ -182,7 +183,7 @@ export function MySBT() {
 
     try {
       // Use RPC provider to check current state
-      const rpcProvider = new ethers.JsonRpcProvider(SEPOLIA_RPC_URL);
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTOKEN_ABI,
