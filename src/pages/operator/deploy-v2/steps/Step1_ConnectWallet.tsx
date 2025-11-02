@@ -63,16 +63,14 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
     setError(null);
 
     try {
-      const networkConfig = getCurrentNetworkConfig();
-
       const status = await checkWalletStatus({
         requiredETH: "0.05",
         requiredGToken: "100",
         requiredPNTs: "1000",
         requiredAPNTs: "1000",
-        gTokenAddress: networkConfig.contracts.gToken,
-        pntAddress: networkConfig.contracts.bPNTs,
-        aPNTAddress: networkConfig.contracts.aPNTs,
+        gTokenAddress: getCurrentNetworkConfig().contracts.gToken,
+        pntAddress: getCurrentNetworkConfig().contracts.bPNTs,
+        aPNTAddress: getCurrentNetworkConfig().contracts.aPNTs,
       });
 
       setWalletStatus(status);
@@ -156,6 +154,7 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
         <>
           <WalletStatus
             status={walletStatus}
+            gTokenAddress={getCurrentNetworkConfig().contracts.gToken}
             onGetGToken={handleGetGToken}
             onGetPNTs={handleGetPNTs}
             onGetETH={handleGetETH}

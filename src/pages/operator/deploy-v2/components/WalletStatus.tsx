@@ -1,10 +1,12 @@
 import React from "react";
 import type { WalletStatus as WalletStatusType } from "../utils/walletChecker";
 import { formatBalance } from "../utils/walletChecker";
+import { getExplorerLink } from "../../../../config/networkConfig";
 import "./WalletStatus.css";
 
 export interface WalletStatusProps {
   status: WalletStatusType;
+  gTokenAddress?: string;
   onGetGToken?: () => void;
   onGetPNTs?: () => void;
   onGetETH?: () => void;
@@ -19,6 +21,7 @@ export interface WalletStatusProps {
  */
 export function WalletStatus({
   status,
+  gTokenAddress,
   onGetGToken,
   onGetPNTs,
   onGetETH,
@@ -113,6 +116,32 @@ export function WalletStatus({
               {formatBalance(status.gTokenBalance)} GToken
             </div>
           </div>
+          {gTokenAddress && (
+            <div className="contract-address-row" style={{
+              fontSize: '0.8rem',
+              color: '#666',
+              marginTop: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>Contract:</span>
+              <a
+                href={getExplorerLink(gTokenAddress, 'address')}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: 'Monaco, Courier New, monospace',
+                  color: '#667eea',
+                  textDecoration: 'none',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                {gTokenAddress.slice(0, 6)}...{gTokenAddress.slice(-4)} ↗
+              </a>
+            </div>
+          )}
           <div className="balance-details">
             <span className="balance-required">
               Required: {status.requiredGToken} GToken

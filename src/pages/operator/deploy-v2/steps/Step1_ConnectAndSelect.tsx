@@ -370,8 +370,8 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <div className="help-note">
               <strong>Resource Requirements:</strong>
               <ul>
-                <li><strong>AOA Flow:</strong> ETH + stGToken</li>
-                <li><strong>Super Mode:</strong> ETH + stGToken + aPNTs</li>
+                <li><strong>AOA Flow:</strong> ETH + GToken</li>
+                <li><strong>Super Mode:</strong> ETH + GToken + aPNTs</li>
               </ul>
             </div>
           </div>
@@ -629,6 +629,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           {!isLoading && walletStatus && (
             <WalletStatus
               status={walletStatus}
+              gTokenAddress={config.contracts.gToken}
               onGetGToken={handleGetGToken}
               onGetPNTs={handleGetPNTs}
               onGetETH={handleGetETH}
@@ -646,8 +647,8 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
                   : ' Super Mode only needs minimal ETH for gas.'}
               </div>
               <div className="help-item">
-                <strong>stGToken:</strong> Staked GToken credential obtained after staking GToken on Staking Contract.
-                Lock {config.requirements.minGTokenStake}+ stGToken to join SuperPaymaster (more locked = higher reputation).
+                <strong>GToken:</strong> Governance token required for staking. You need GToken in your wallet
+                to lock and receive stGToken credentials. Minimum {config.requirements.minGTokenStake} GToken recommended.
               </div>
               {selectedOption === 'super' && (
                 <div className="help-item">
