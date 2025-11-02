@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { WalletStatus } from "../components/WalletStatus";
 import { checkWalletStatus, getCurrentNetwork } from "../utils/walletChecker";
 import type { WalletStatus as WalletStatusType } from "../utils/walletChecker";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step1_ConnectWallet.css";
 
 export interface Step1Props {
@@ -62,13 +63,16 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
     setError(null);
 
     try {
-      // TODO: Get actual token addresses from config or environment
+      const networkConfig = getCurrentNetworkConfig();
+
       const status = await checkWalletStatus({
         requiredETH: "0.05",
         requiredGToken: "100",
         requiredPNTs: "1000",
-        // gTokenAddress: "0x...", // Add from environment
-        // pntAddress: "0x...",    // Add from environment
+        requiredAPNTs: "1000",
+        gTokenAddress: networkConfig.contracts.gToken,
+        pntAddress: networkConfig.contracts.aPNTs, // Using aPNTs as PNT token
+        aPNTAddress: networkConfig.contracts.aPNTs, // Same address for both checks
       });
 
       setWalletStatus(status);
