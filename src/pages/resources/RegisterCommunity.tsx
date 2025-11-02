@@ -343,7 +343,7 @@ export function RegisterCommunity() {
             </div>
 
             <div className="form-section">
-              <h2>{t('step2ResourceCheck.summary.title')}</h2>
+              <h2>{t('registerCommunity.form.basicInfo')}</h2>
 
               <div className="warning-box" style={{ marginBottom: '16px', padding: '12px', background: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '4px' }}>
                 <strong>ℹ️ Registry v2.1.4</strong>
@@ -375,7 +375,7 @@ export function RegisterCommunity() {
             </div>
 
             <div className="form-section">
-              <h2>Token</h2>
+              <h2>{t('registerCommunity.form.tokenSection')}</h2>
 
               <div className="form-group">
                 <label>xPNTs Token</label>
@@ -390,7 +390,7 @@ export function RegisterCommunity() {
             </div>
 
             <div className="form-section">
-              <h2>Paymaster</h2>
+              <h2>{t('registerCommunity.form.paymasterSection')}</h2>
 
               <div className="form-group">
                 <label>Paymaster</label>
@@ -444,7 +444,7 @@ export function RegisterCommunity() {
             </div>
 
             <div className="form-section">
-              <h2>MySBT</h2>
+              <h2>{t('registerCommunity.form.sbtSection')}</h2>
 
               <div className="form-group checkbox-group">
                 <label className="checkbox-label">

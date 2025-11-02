@@ -413,6 +413,10 @@
     "loading": "Loading...",
     "connectWallet": "Connect Wallet",
     "form": {
+      "basicInfo": "Basic Information",
+      "tokenSection": "Token",
+      "paymasterSection": "Paymaster",
+      "sbtSection": "MySBT",
       "communityName": "Community Name",
       "communityNamePlaceholder": "Enter community name",
       "stakeAmount": "Stake Amount (GToken)",
