@@ -3,16 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useSafeApp } from "../../hooks/useSafeApp";
 import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import "./MySBT.css";
 
-// Contract addresses from env
+// Get contract addresses from shared-config via networkConfig
+const networkConfig = getCurrentNetworkConfig();
 const MYSBT_V2_3_ADDRESS =
   import.meta.env.VITE_MYSBT_V2_3_ADDRESS ||
-  "0xc1085841307d85d4a8dC973321Df2dF7c01cE5C8";
+  networkConfig.contracts.mySBT;
 
 const GTOKEN_ADDRESS =
   import.meta.env.VITE_GTOKEN_ADDRESS ||
-  "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35";
+  networkConfig.contracts.gToken;
 
 const SEPOLIA_RPC_URL =
   import.meta.env.VITE_SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
