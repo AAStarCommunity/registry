@@ -180,31 +180,53 @@ export function RegisterCommunity() {
       if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
-          ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"],
+          ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)", "function balanceOf(address) external view returns (uint256)"],
           signer
         );
 
-        // Check current allowance for GToken -> GTokenStaking
-        const currentAllowance = await gToken.allowance(account, GTOKEN_STAKING_ADDRESS);
-        if (currentAllowance < gTokenAmount) {
-          const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, gTokenAmount);
-          await approveTx.wait();
-        }
-
-        // Step 2: Stake GToken to GTokenStaking
         const staking = new ethers.Contract(
           GTOKEN_STAKING_ADDRESS,
           ["function stake(uint256 amount) external returns (uint256)", "function availableBalance(address user) external view returns (uint256)"],
           signer
         );
 
+        // Check user's GToken balance first
+        const userGTokenBalance = await gToken.balanceOf(account);
+        console.log(`GToken 余额: ${ethers.formatEther(userGTokenBalance)}`);
+
         // Check if user has enough AVAILABLE (unlocked) staked balance
         const availableBalance = await staking.availableBalance(account);
         const needToStake = gTokenAmount > availableBalance ? gTokenAmount - availableBalance : 0n;
 
+        console.log(`质押状态 - 需要: ${ethers.formatEther(gTokenAmount)}, 可用: ${ethers.formatEther(availableBalance)}, 需补充: ${ethers.formatEther(needToStake)}`);
+
         if (needToStake > 0n) {
+          // Check if user has enough GToken to stake
+          if (userGTokenBalance < needToStake) {
+            throw new Error(`GToken 余额不足！需要质押 ${ethers.formatEther(needToStake)} GToken，但你只有 ${ethers.formatEther(userGTokenBalance)} GToken`);
+          }
+
+          // Check and approve GToken if needed
+          const currentAllowance = await gToken.allowance(account, GTOKEN_STAKING_ADDRESS);
+          if (currentAllowance < needToStake) {
+            console.log(`授权 ${ethers.formatEther(needToStake)} GToken...`);
+            const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, needToStake);
+            await approveTx.wait();
+            console.log("✅ 授权完成");
+          }
+
+          // Stake GToken
+          console.log(`质押 ${ethers.formatEther(needToStake)} GToken...`);
           const stakeTx = await staking.stake(needToStake);
           await stakeTx.wait();
+          console.log("✅ 质押完成");
+
+          // Verify available balance after staking
+          const newAvailableBalance = await staking.availableBalance(account);
+          console.log(`质押后可用余额: ${ethers.formatEther(newAvailableBalance)}`);
+          if (newAvailableBalance < gTokenAmount) {
+            throw new Error(`质押后可用余额不足！期望 ${ethers.formatEther(gTokenAmount)} GToken，实际只有 ${ethers.formatEther(newAvailableBalance)} GToken`);
+          }
         }
       }
 
