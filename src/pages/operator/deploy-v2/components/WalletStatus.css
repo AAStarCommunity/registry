@@ -29,10 +29,10 @@
   border-bottom: 2px solid #f0f0f0;
 }
 
-.section-title {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #555;
+.wallet-status .section-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #666;
   text-transform: none;
   letter-spacing: 0;
   margin-bottom: 0.75rem;
