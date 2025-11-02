@@ -122,6 +122,11 @@
   background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
 }
 
+.balance-item.optional {
+  border-color: #3498db;
+  background: linear-gradient(135deg, #f0f8ff 0%, #e3f2fd 100%);
+}
+
 .balance-header {
   display: flex;
   justify-content: space-between;

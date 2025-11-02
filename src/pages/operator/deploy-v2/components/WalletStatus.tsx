@@ -137,11 +137,21 @@ export function WalletStatus({
         </div>
 
         {/* aPNTs Balance */}
-        <div className={`balance-item ${status.hasEnoughPNTs ? "sufficient" : "insufficient"}`}>
+        <div className={`balance-item ${
+          parseFloat(status.requiredPNTs) === 0
+            ? "optional"
+            : status.hasEnoughPNTs ? "sufficient" : "insufficient"
+        }`}>
           <div className="balance-header">
             <div className="balance-name">
-              <span className={status.hasEnoughPNTs ? "icon-success" : "icon-error"}>
-                {status.hasEnoughPNTs ? "✅" : "❌"}
+              <span className={
+                parseFloat(status.requiredPNTs) === 0
+                  ? "icon-info"
+                  : status.hasEnoughPNTs ? "icon-success" : "icon-error"
+              }>
+                {parseFloat(status.requiredPNTs) === 0
+                  ? "ℹ️"
+                  : status.hasEnoughPNTs ? "✅" : "❌"}
               </span>
               <span>aPNTs Balance</span>
             </div>
@@ -151,9 +161,11 @@ export function WalletStatus({
           </div>
           <div className="balance-details">
             <span className="balance-required">
-              Required: {status.requiredPNTs} aPNT
+              {parseFloat(status.requiredPNTs) === 0
+                ? "Not required for AOA mode"
+                : `Required: ${status.requiredPNTs} aPNT`}
             </span>
-            {!status.hasEnoughPNTs && (
+            {!status.hasEnoughPNTs && parseFloat(status.requiredPNTs) > 0 && (
               <div className="balance-action">
                 <button
                   className="action-button"
@@ -165,9 +177,13 @@ export function WalletStatus({
               </div>
             )}
           </div>
-          {!status.hasEnoughPNTs && (
+          {parseFloat(status.requiredPNTs) === 0 ? (
             <div className="balance-help">
-              Advanced PNTs for SuperPaymaster. 1000+ aPNTs required (purchase from AAStar Community)
+              aPNTs only required for AOA+ (Super Mode). Not needed for AOA mode.
+            </div>
+          ) : !status.hasEnoughPNTs && (
+            <div className="balance-help">
+              Advanced PNTs for SuperPaymaster (1000+ aPNTs required)
             </div>
           )}
         </div>
