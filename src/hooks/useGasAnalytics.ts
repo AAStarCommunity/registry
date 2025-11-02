@@ -15,10 +15,10 @@ import { getProvider } from "../utils/rpc-provider";
   4. User queries filter from cache
 ==============================================================================*/
 
-// Contract Addresses
-const REGISTRY_ADDRESS =
-  import.meta.env.VITE_REGISTRY_ADDRESS ||
-  "0x838da93c815a6E45Aa50429529da9106C0621eF0";
+// Contract Addresses from shared-config
+import { getCurrentNetworkConfig } from "../config/networkConfig";
+const networkConfig = getCurrentNetworkConfig();
+const REGISTRY_ADDRESS = networkConfig.contracts.registry;
 
 // ABIs
 const REGISTRY_ABI = [

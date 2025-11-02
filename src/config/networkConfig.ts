@@ -130,65 +130,43 @@ const sepoliaConfig: NetworkConfig = (() => {
       // ========================================
       // Legacy Contracts (for backward compatibility)
       // Only kept for RegistryExplorer version switching
+      // All addresses are hardcoded - no env overrides
       // ========================================
-      registry:
-        import.meta.env.VITE_REGISTRY_ADDRESS ||
-        '0x838da93c815a6E45Aa50429529da9106C0621eF0', // v1.2 (ETH staking)
-      registryV2:
-        import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
-        '0x6806e4937038e783cA0D3961B7E258A3549A0043', // v2.0 (metadata only)
+      registry: '0x838da93c815a6E45Aa50429529da9106C0621eF0', // v1.2 (ETH staking)
+      registryV2: '0x6806e4937038e783cA0D3961B7E258A3549A0043', // v2.0 (metadata only)
 
       // ========================================
       // Deprecated Contracts (should migrate)
+      // All addresses are hardcoded - no env overrides
       // ========================================
-      pntToken:
-        import.meta.env.VITE_PNT_TOKEN_ADDRESS ||
-        '0xD14E87d8D8B69016Fcc08728c33799bD3F66F180', // Old PNT
-      gasTokenFactory:
-        import.meta.env.VITE_GASTOKEN_FACTORY_ADDRESS ||
-        '0x6720Dc8ce5021bC6F3F126054556b5d3C125101F', // Old factory
-      sbtContract:
-        import.meta.env.VITE_SBT_CONTRACT_ADDRESS ||
-        '0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f', // Old SBT
+      pntToken: '0xD14E87d8D8B69016Fcc08728c33799bD3F66F180', // Old PNT
+      gasTokenFactory: '0x6720Dc8ce5021bC6F3F126054556b5d3C125101F', // Old factory
+      sbtContract: '0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f', // Old SBT
 
       // ========================================
-      // Other Contracts
+      // Other Contracts (from shared-config)
       // ========================================
-      usdtContract:
-        import.meta.env.VITE_USDT_CONTRACT_ADDRESS ||
-        testTokens.mockUSDT,
-      aPNTs:
-        import.meta.env.VITE_APNTS_ADDRESS ||
-        testTokens.aPNTs,
-      bPNTs:
-        import.meta.env.VITE_BPNTS_ADDRESS ||
-        testTokens.bPNTs,
+      usdtContract: testTokens.mockUSDT,
+      aPNTs: testTokens.aPNTs,
+      bPNTs: testTokens.bPNTs,
     },
 
     resources: {
       ethFaucets: [
-        import.meta.env.VITE_SEPOLIA_ETH_FAUCET ||
-          'https://sepoliafaucet.com',
-        import.meta.env.VITE_SEPOLIA_ETH_FAUCET_2 ||
-          'https://www.alchemy.com/faucets/ethereum-sepolia',
+        'https://sepoliafaucet.com',
+        'https://www.alchemy.com/faucets/ethereum-sepolia',
       ],
-      gTokenFaucet:
-        import.meta.env.VITE_SEPOLIA_GTOKEN_FAUCET ||
-        'https://faucet.aastar.io/',
-      pntFaucet:
-        import.meta.env.VITE_SEPOLIA_PNT_FAUCET ||
-        'https://faucet.aastar.io/',
-      uniswapGToken:
-        import.meta.env.VITE_UNISWAP_GTOKEN || 'https://app.uniswap.org',
-      superPaymasterDex:
-        import.meta.env.VITE_SUPERPAYMASTER_DEX || 'https://dex.aastar.io/',
+      gTokenFaucet: 'https://faucet.aastar.io/',
+      pntFaucet: 'https://faucet.aastar.io/',
+      uniswapGToken: 'https://app.uniswap.org',
+      superPaymasterDex: 'https://dex.aastar.io/',
     },
 
     requirements: {
-      minEthDeploy: import.meta.env.VITE_MIN_ETH_DEPLOY || '0.02',
-      minEthStandardFlow: import.meta.env.VITE_MIN_ETH_STANDARD_FLOW || '0.1',
-      minGTokenStake: import.meta.env.VITE_MIN_GTOKEN_STAKE || '30',
-      minPntDeposit: import.meta.env.VITE_MIN_PNT_DEPOSIT || '1000',
+      minEthDeploy: '0.02',
+      minEthStandardFlow: '0.1',
+      minGTokenStake: '30',
+      minPntDeposit: '1000',
     },
   };
 })();

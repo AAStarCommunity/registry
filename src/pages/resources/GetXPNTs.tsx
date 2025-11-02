@@ -15,15 +15,11 @@ const XPNTS_FACTORY_ABI = [
 export function GetXPNTs() {
   const navigate = useNavigate();
 
-  // Get addresses from config with env overrides
+  // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const XPNTS_FACTORY_ADDRESS =
-    import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
-    networkConfig.contracts.xPNTsFactory;
+  const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
   const RPC_URL = getRpcUrl();
-  const SUPER_PAYMASTER_V2_ADDRESS =
-    import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
-    networkConfig.contracts.superPaymasterV2;
+  const SUPER_PAYMASTER_V2_ADDRESS = networkConfig.contracts.superPaymasterV2;
 
   // Wallet state
   const [account, setAccount] = useState<string>("");

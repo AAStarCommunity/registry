@@ -49,11 +49,9 @@ function Step5_StandardFlow({
   onBack,
 }: Step5Props) {
 
-// EntryPoint v0.7 address - from shared-config with env override
+// EntryPoint v0.7 address from shared-config
 const networkConfig = getCurrentNetworkConfig();
-const ENTRY_POINT_V07 =
-  import.meta.env.VITE_ENTRY_POINT_V07 ||
-  networkConfig.contracts.entryPointV07;
+const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
 
 // Simple EntryPoint ABI for depositTo
 const ENTRY_POINT_ABI = [

@@ -9,13 +9,8 @@ import "./MySBT.css";
 
 // Get contract addresses from shared-config via networkConfig
 const networkConfig = getCurrentNetworkConfig();
-const MYSBT_V2_3_ADDRESS =
-  import.meta.env.VITE_MYSBT_V2_3_ADDRESS ||
-  networkConfig.contracts.mySBT;
-
-const GTOKEN_ADDRESS =
-  import.meta.env.VITE_GTOKEN_ADDRESS ||
-  networkConfig.contracts.gToken;
+const MYSBT_V2_3_ADDRESS = networkConfig.contracts.mySBT;
+const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 
 // Use /api/rpc-proxy endpoint to hide RPC keys
 const RPC_URL = getRpcUrl();

@@ -97,20 +97,12 @@ export default function ManagePaymasterAOA() {
   const [searchParams] = useSearchParams();
   const paymasterAddress = searchParams.get('address') || '';
 
-  // Get addresses from config with env overrides
+  // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const ENTRY_POINT_V07 =
-    import.meta.env.VITE_ENTRY_POINT_V07 ||
-    networkConfig.contracts.entryPointV07;
-  const REGISTRY_V1_2 =
-    import.meta.env.VITE_REGISTRY_ADDRESS ||
-    networkConfig.contracts.registry; // v1.2 (legacy)
-  const REGISTRY_V2 =
-    import.meta.env.VITE_REGISTRY_V2_ADDRESS ||
-    networkConfig.contracts.registryV2;
-  const GTOKEN_STAKING =
-    import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-    networkConfig.contracts.gTokenStaking;
+  const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
+  const REGISTRY_V1_2 = networkConfig.contracts.registry; // v1.2 (legacy)
+  const REGISTRY_V2 = networkConfig.contracts.registryV2;
+  const GTOKEN_STAKING = networkConfig.contracts.gTokenStaking;
 
   const [config, setConfig] = useState<PaymasterConfig | null>(null);
   const [entryPointInfo, setEntryPointInfo] = useState<EntryPointInfo | null>(null);

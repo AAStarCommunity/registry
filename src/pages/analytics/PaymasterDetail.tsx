@@ -8,6 +8,7 @@ import {
 } from "../../utils/etherscan";
 import { formatCacheAge } from "../../utils/cache";
 import { getProvider } from "../../utils/rpc-provider";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 
 /**
  * Paymaster Detail Page
@@ -77,7 +78,8 @@ export function PaymasterDetail() {
       setLoadingRegistry(true);
       const provider = getProvider();
 
-      const registryAddress = import.meta.env.VITE_REGISTRY_ADDRESS;
+      const networkConfig = getCurrentNetworkConfig();
+      const registryAddress = networkConfig.contracts.registry;
       const registryAbi = [
         "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
         "function isPaymasterActive(address paymaster) view returns (bool)",

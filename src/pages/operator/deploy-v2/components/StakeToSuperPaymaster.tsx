@@ -24,19 +24,11 @@ export interface StakeToSuperPaymasterProps {
 // Get network configuration
 const networkConfig = getCurrentNetworkConfig();
 
-// Contract addresses - read from env with fallbacks to shared-config
-const SUPER_PAYMASTER_V2 =
-  import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
-  networkConfig.contracts.superPaymasterV2;
-const GTOKEN_ADDRESS =
-  import.meta.env.VITE_GTOKEN_ADDRESS ||
-  networkConfig.contracts.gToken;
-const GTOKEN_STAKING_ADDRESS =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  networkConfig.contracts.gTokenStaking;
-const APNTS_ADDRESS =
-  import.meta.env.VITE_APNTS_ADDRESS ||
-  networkConfig.contracts.aPNTs;
+// Contract addresses from shared-config
+const SUPER_PAYMASTER_V2 = networkConfig.contracts.superPaymasterV2;
+const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
+const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
+const APNTS_ADDRESS = networkConfig.contracts.aPNTs;
 
 // Simplified ABIs
 const GTOKEN_ABI = [

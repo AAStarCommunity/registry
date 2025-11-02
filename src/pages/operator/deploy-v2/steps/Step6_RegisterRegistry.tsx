@@ -33,14 +33,10 @@ export function Step6_RegisterRegistry({
   onNext,
   onBack,
 }: Step6Props) {
-  // Get addresses from config with env overrides
+  // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const REGISTRY_V1_2 =
-    import.meta.env.VITE_REGISTRY_ADDRESS ||
-    networkConfig.contracts.registry; // v1.2 (legacy)
-  const GTOKEN_ADDRESS =
-    import.meta.env.VITE_GTOKEN_ADDRESS ||
-    networkConfig.contracts.gToken;
+  const REGISTRY_V1_2 = networkConfig.contracts.registry; // v1.2 (legacy)
+  const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 
   const [gTokenAmount, setGTokenAmount] = useState<string>("30");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");

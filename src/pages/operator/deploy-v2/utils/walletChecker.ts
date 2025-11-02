@@ -242,7 +242,7 @@ export async function checkWalletStatus(
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const networkConfig = getCurrentNetworkConfig();
-      const xPNTsFactoryAddress = import.meta.env.VITE_XPNTS_FACTORY_ADDRESS || networkConfig.contracts.xPNTsFactory;
+      const xPNTsFactoryAddress = networkConfig.contracts.xPNTsFactory;
       const xPNTsFactoryABI = [
         "function hasToken(address community) view returns (bool)",
         "function getTokenAddress(address community) view returns (address)",

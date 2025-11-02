@@ -21,14 +21,10 @@ const GTOKEN_STAKING_ABI = [
 export function GetSBT() {
   const navigate = useNavigate();
 
-  // Get addresses from config with env overrides
+  // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const MYSBT_FACTORY_ADDRESS =
-    import.meta.env.VITE_MYSBT_FACTORY_ADDRESS ||
-    networkConfig.contracts.mySBT;
-  const GTOKEN_STAKING_ADDRESS =
-    import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-    networkConfig.contracts.gTokenStaking;
+  const MYSBT_FACTORY_ADDRESS = networkConfig.contracts.mySBT;
+  const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
   const RPC_URL = getRpcUrl();
 
   // Wallet state
