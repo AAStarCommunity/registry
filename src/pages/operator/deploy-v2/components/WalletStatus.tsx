@@ -160,7 +160,9 @@ export function WalletStatus({
           </div>
           {!status.hasEnoughGToken && (
             <div className="balance-help">
-              Governance token required for staking. You'll lock GToken to receive stGToken credentials in the next step.
+              {status.isCommunityRegistered
+                ? `Governance token required: 300 GToken to stake and lock for Paymaster registration.`
+                : `Governance token required: 30 GToken (register community) + 300 GToken (register Paymaster) = 330 GToken to stake and lock.`}
             </div>
           )}
         </div>

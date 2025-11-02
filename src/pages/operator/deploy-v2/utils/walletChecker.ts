@@ -23,6 +23,10 @@ export interface WalletStatus {
   hasGasTokenContract: boolean;
   gasTokenAddress?: string;
 
+  // Community registration status
+  isCommunityRegistered: boolean;
+  communityName?: string;
+
   // Resource sufficiency
   hasEnoughETH: boolean; // >= 0.05 ETH (deploy + gas)
   hasEnoughGToken: boolean; // >= minimum stake requirement
@@ -51,6 +55,11 @@ const ERC20_ABI = [
   "function balanceOf(address owner) view returns (uint256)",
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
+];
+
+// Registry ABI for checking community registration
+const REGISTRY_ABI = [
+  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint))",
 ];
 
 /**
@@ -137,6 +146,32 @@ export async function isContractDeployed(address: string): Promise<boolean> {
 }
 
 /**
+ * Check if community is already registered
+ */
+export async function checkCommunityRegistration(
+  address: string
+): Promise<{ isRegistered: boolean; communityName?: string }> {
+  try {
+    const networkConfig = getCurrentNetworkConfig();
+    const registryAddress = networkConfig.contracts.registryV2_1;
+
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, provider);
+
+    const community = await registry.communities(address);
+
+    // Check if registeredAt is not 0 (means community is registered)
+    const isRegistered = community.registeredAt !== 0n;
+    const communityName = isRegistered ? community.name : undefined;
+
+    return { isRegistered, communityName };
+  } catch (error) {
+    console.error("Failed to check community registration:", error);
+    return { isRegistered: false };
+  }
+}
+
+/**
  * Main function to check wallet status
  */
 export async function checkWalletStatus(
@@ -161,6 +196,7 @@ export async function checkWalletStatus(
     pntsBalance: "0",
     aPNTsBalance: "0",
     hasGasTokenContract: false,
+    isCommunityRegistered: false,
     hasEnoughETH: false,
     hasEnoughGToken: false,
     hasEnoughPNTs: false,
@@ -182,6 +218,17 @@ export async function checkWalletStatus(
     status.isConnected = true;
     status.address = address;
 
+    // Check community registration status
+    const { isRegistered, communityName } = await checkCommunityRegistration(address);
+    status.isCommunityRegistered = isRegistered;
+    status.communityName = communityName;
+
+    // Calculate required GToken based on registration status
+    // If not registered: 30 (register community) + 300 (register paymaster) = 330 GToken
+    // If registered: 300 (register paymaster only)
+    const calculatedRequiredGToken = isRegistered ? "300" : "330";
+    status.requiredGToken = requiredGToken || calculatedRequiredGToken;
+
     // Check ETH balance
     status.ethBalance = await checkETHBalance(address);
     status.hasEnoughETH =
@@ -191,7 +238,7 @@ export async function checkWalletStatus(
     if (gTokenAddress) {
       status.gTokenBalance = await checkTokenBalance(gTokenAddress, address);
       status.hasEnoughGToken =
-        parseFloat(status.gTokenBalance) >= parseFloat(requiredGToken);
+        parseFloat(status.gTokenBalance) >= parseFloat(status.requiredGToken);
     }
 
     // Check PNT balance (if address provided)
