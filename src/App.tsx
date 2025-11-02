@@ -14,6 +14,7 @@ import { MySBT } from "./pages/resources/MySBT";
 import { GetXPNTs } from "./pages/resources/GetXPNTs";
 import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
 import { LaunchPaymaster } from "./pages/resources/LaunchPaymaster";
+import { ConfigureSuperPaymaster } from "./pages/resources/ConfigureSuperPaymaster";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -61,6 +62,7 @@ function App() {
             <Route path="/get-xpnts" element={<GetXPNTs />} />
             <Route path="/register-community" element={<RegisterCommunity />} />
             <Route path="/launch-paymaster" element={<LaunchPaymaster />} />
+            <Route path="/configure-superpaymaster" element={<ConfigureSuperPaymaster />} />
 
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />

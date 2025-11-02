@@ -1,0 +1,467 @@
+/* ConfigureSuperPaymaster Page Styles - Purple/Blue gradient theme for SuperPaymaster */
+
+.configure-superpaymaster-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem 1rem;
+}
+
+.configure-superpaymaster-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+/* Header */
+.configure-superpaymaster-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  position: relative;
+}
+
+.configure-superpaymaster-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+/* Back button */
+.configure-superpaymaster-page .back-button {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.configure-superpaymaster-page .back-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateX(-2px);
+}
+
+.configure-superpaymaster-page .subtitle {
+  margin: 0.5rem 0 0;
+  font-size: 1.1rem;
+  opacity: 0.95;
+}
+
+/* Info Sections */
+.configure-superpaymaster-page .info-section {
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.configure-superpaymaster-page .info-section:last-child {
+  border-bottom: none;
+}
+
+.configure-superpaymaster-page .info-section h2 {
+  margin: 0 0 1rem;
+  font-size: 1.5rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.configure-superpaymaster-page .info-section p {
+  margin: 0 0 1rem;
+  line-height: 1.6;
+  color: #4b5563;
+}
+
+.configure-superpaymaster-page .feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0;
+}
+
+.configure-superpaymaster-page .feature-list li {
+  padding: 0.75rem 0;
+  padding-left: 1.5rem;
+  position: relative;
+  color: #374151;
+  line-height: 1.6;
+}
+
+.configure-superpaymaster-page .feature-list li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #667eea;
+  font-weight: bold;
+}
+
+.configure-superpaymaster-page .feature-list li strong {
+  color: #1f2937;
+}
+
+/* Contract Info */
+.configure-superpaymaster-page .contract-info {
+  background: #ede9fe;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1rem;
+}
+
+.configure-superpaymaster-page .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #ddd6fe;
+}
+
+.configure-superpaymaster-page .info-row:last-child {
+  border-bottom: none;
+}
+
+.configure-superpaymaster-page .info-row .label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.configure-superpaymaster-page .info-row .value {
+  color: #1f2937;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.configure-superpaymaster-page .info-row .value.mono {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+/* Deploy Section */
+.configure-superpaymaster-page .deploy-section {
+  background: #fef3c7;
+}
+
+/* Wallet Connect Prompt */
+.configure-superpaymaster-page .wallet-connect-prompt {
+  text-align: center;
+  padding: 2rem;
+  background: #ede9fe;
+  border-radius: 12px;
+}
+
+.configure-superpaymaster-page .wallet-connect-prompt p {
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+  color: #374151;
+}
+
+/* Loading Box */
+.configure-superpaymaster-page .loading-box {
+  padding: 1.5rem;
+  background: #f3f4f6;
+  border-radius: 12px;
+  text-align: center;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+/* Community Info Box */
+.configure-superpaymaster-page .community-info-box {
+  background: #d1fae5;
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.configure-superpaymaster-page .community-info-box h4 {
+  margin: 0 0 1rem;
+  color: #065f46;
+}
+
+.configure-superpaymaster-page .community-info-box .info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #a7f3d0;
+}
+
+.configure-superpaymaster-page .community-info-box .info-row:last-child {
+  border-bottom: none;
+}
+
+.configure-superpaymaster-page .community-info-box .label {
+  font-weight: 600;
+  color: #047857;
+}
+
+.configure-superpaymaster-page .community-info-box .value {
+  color: #065f46;
+}
+
+/* Error Box */
+.configure-superpaymaster-page .error-box {
+  background: #fee2e2;
+  border: 2px solid #dc2626;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.configure-superpaymaster-page .error-box h4 {
+  margin: 0 0 1rem;
+  color: #991b1b;
+}
+
+.configure-superpaymaster-page .error-box p {
+  margin: 0 0 1rem;
+  color: #991b1b;
+}
+
+/* Wallet Info */
+.configure-superpaymaster-page .wallet-info {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background: #ede9fe;
+  border-radius: 8px;
+}
+
+.configure-superpaymaster-page .connected-account {
+  margin: 0.5rem 0;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.configure-superpaymaster-page .connected-account .mono {
+  font-family: "Monaco", "Courier New", monospace;
+  color: #667eea;
+  font-weight: 600;
+}
+
+/* Deploy Form */
+.configure-superpaymaster-page .deploy-form {
+  margin-top: 1.5rem;
+}
+
+.configure-superpaymaster-page .form-group {
+  margin-bottom: 1.25rem;
+}
+
+.configure-superpaymaster-page .form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.95rem;
+}
+
+.configure-superpaymaster-page .form-group input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.configure-superpaymaster-page .form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.configure-superpaymaster-page .form-group input.mono-input {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+.configure-superpaymaster-page .form-group small {
+  display: block;
+  margin-top: 0.5rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+/* Deploy Button */
+.configure-superpaymaster-page .deploy-button {
+  width: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.configure-superpaymaster-page .deploy-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Transaction Success */
+.configure-superpaymaster-page .tx-success {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #dbeafe;
+  border: 2px solid #3b82f6;
+  border-radius: 8px;
+  color: #1e40af;
+}
+
+.configure-superpaymaster-page .tx-success p {
+  margin: 0 0 0.5rem;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.configure-superpaymaster-page .explorer-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+  display: inline-block;
+}
+
+.configure-superpaymaster-page .explorer-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Success Box */
+.configure-superpaymaster-page .success-box {
+  margin-top: 1rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+}
+
+.configure-superpaymaster-page .success-box h4 {
+  margin: 0 0 1rem;
+  color: #065f46;
+  font-size: 1.25rem;
+}
+
+.configure-superpaymaster-page .success-box p {
+  margin: 0;
+  color: #047857;
+}
+
+/* Action Buttons */
+.configure-superpaymaster-page .action-button {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  text-align: center;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.configure-superpaymaster-page .action-button.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.configure-superpaymaster-page .action-button.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.configure-superpaymaster-page .action-button.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.configure-superpaymaster-page .action-button.outline {
+  background: transparent;
+  border: 2px solid #667eea;
+  color: #667eea;
+}
+
+.configure-superpaymaster-page .action-button.outline:hover {
+  background: #667eea;
+  color: white;
+}
+
+/* Action Footer */
+.configure-superpaymaster-page .action-footer {
+  padding: 2rem;
+  background: #ede9fe;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.configure-superpaymaster-page .action-footer .action-button {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .configure-superpaymaster-page {
+    padding: 1rem 0.5rem;
+  }
+
+  .configure-superpaymaster-header {
+    padding: 1.5rem 1rem;
+  }
+
+  .configure-superpaymaster-header h1 {
+    font-size: 2rem;
+  }
+
+  .configure-superpaymaster-page .back-button {
+    top: 1rem;
+    left: 1rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .configure-superpaymaster-page .info-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .configure-superpaymaster-page .info-section h2 {
+    font-size: 1.25rem;
+  }
+
+  .configure-superpaymaster-page .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .configure-superpaymaster-page .info-row .value {
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .configure-superpaymaster-page .action-footer {
+    padding: 1.5rem 1rem;
+    flex-direction: column;
+  }
+
+  .configure-superpaymaster-page .action-footer .action-button {
+    width: 100%;
+  }
+}
