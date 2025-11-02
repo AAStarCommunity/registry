@@ -50,6 +50,7 @@ export function RegisterCommunity() {
   // UI state
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerTxHash, setRegisterTxHash] = useState<string>("");
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [error, setError] = useState<string>("");
   const [minStake, setMinStake] = useState<string>("0");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
@@ -273,9 +274,8 @@ export function RegisterCommunity() {
       const receipt = await tx.wait();
       console.log(t('registerCommunity.console.registered'), receipt.hash);
 
-      // Success - show confirmation
-      alert(t('registerCommunity.button.register') + ' ' + t('registerCommunity.success.title'));
-      navigate("/explorer");
+      // Success - show success UI with links
+      setRegistrationSuccess(true);
     } catch (err: any) {
       console.error(t('registerCommunity.errors.registrationFailed'), err);
       setError(err?.message || t('registerCommunity.errors.registrationFailed'));
@@ -304,12 +304,67 @@ export function RegisterCommunity() {
           </div>
         </div>
 
+        {/* Registry Info Banner */}
+        <div className="registry-info-banner">
+          <div className="info-icon">ℹ️</div>
+          <div className="info-content">
+            <strong>Registry Contract:</strong>{' '}
+            <a
+              href={`${networkConfig.explorerUrl}/address/${REGISTRY_ADDRESS}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="registry-link"
+            >
+              {REGISTRY_ADDRESS}
+            </a>
+            <span className="network-badge">{networkConfig.chainName}</span>
+          </div>
+        </div>
+
         <div className="form-container">
         {!account ? (
           <div className="connect-section">
             <button className="connect-btn" onClick={connectWallet}>
               {t('registerCommunity.connectWallet')}
             </button>
+          </div>
+        ) : registrationSuccess ? (
+          <div className="success-box">
+            <div className="success-header">
+              <h2>🎉 {t('registerCommunity.success.title')}</h2>
+              <p>{t('registerCommunity.success.message')}</p>
+              {registerTxHash && (
+                <p className="tx-hash">
+                  <strong>{t('registerCommunity.success.txHash')}:</strong>{' '}
+                  <a
+                    href={`${networkConfig.explorerUrl}/tx/${registerTxHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {registerTxHash.slice(0, 10)}...{registerTxHash.slice(-8)}
+                  </a>
+                </p>
+              )}
+            </div>
+
+            <div className="success-actions">
+              <button
+                className="primary-btn"
+                onClick={() => navigate(`/explorer?community=${account}&highlight=true`)}
+              >
+                🔍 {t('registerCommunity.success.viewInExplorer')}
+              </button>
+
+              <button
+                className="secondary-btn"
+                onClick={() => {
+                  const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
+                  navigate(returnUrl || '/operator/wizard');
+                }}
+              >
+                ← {t('registerCommunity.success.backToWizard')}
+              </button>
+            </div>
           </div>
         ) : existingCommunity ? (
           <div className="error-box">

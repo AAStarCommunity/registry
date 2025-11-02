@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
 import "./RegistryExplorer.css";
 
-type RegistryVersion = "v1.2" | "v2.1";
+type RegistryVersion = "v1.2" | "v2.1" | "v2.1.4";
 
 interface PaymasterInfo {
   address: string;
@@ -78,7 +79,11 @@ const mockPaymasters: PaymasterInfo[] = [
 ];
 
 export function RegistryExplorer() {
-  const [registryVersion, setRegistryVersion] = useState<RegistryVersion>("v1.2");
+  const [searchParams] = useSearchParams();
+  const highlightCommunity = searchParams.get("community");
+  const shouldHighlight = searchParams.get("highlight") === "true";
+
+  const [registryVersion, setRegistryVersion] = useState<RegistryVersion>("v2.1.4");
   const [paymasters, setPaymasters] = useState<PaymasterInfo[]>([]);
   const [filteredPaymasters, setFilteredPaymasters] = useState<PaymasterInfo[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -113,8 +118,10 @@ export function RegistryExplorer() {
       let registryAddress: string;
       if (registryVersion === "v1.2") {
         registryAddress = networkConfig.contracts.registry;
+      } else if (registryVersion === "v2.1") {
+        registryAddress = networkConfig.contracts.registryV2;
       } else {
-        // v2.1
+        // v2.1.4 (latest)
         registryAddress = networkConfig.contracts.registryV2_1;
       }
 
@@ -150,9 +157,11 @@ export function RegistryExplorer() {
 
       if (registryVersion === "v1.2") {
         result = await loadV1Paymasters(provider, registryAddress);
+      } else if (registryVersion === "v2.1") {
+        result = await loadV2Paymasters(provider, registryAddress);
       } else {
-        // v2.1
-        result = await loadV2_1Paymasters(provider, registryAddress);
+        // v2.1.4 (latest)
+        result = await loadV2_1_4Paymasters(provider, registryAddress);
       }
 
       // Save to cache
@@ -236,7 +245,7 @@ export function RegistryExplorer() {
     }
   };
 
-  const loadV2_1Paymasters = async (_provider: any, registryAddress: string) => {
+  const loadV2Paymasters = async (_provider: any, registryAddress: string) => {
     // Use independent RPC provider (not MetaMask) as per v1.2 pattern
     const provider = getProvider();
 
@@ -300,6 +309,77 @@ export function RegistryExplorer() {
       return paymasterList;
     } catch (err: any) {
       throw new Error(`Failed to query Registry v2.1: ${err.message}`);
+    }
+  };
+
+  const loadV2_1_4Paymasters = async (_provider: any, registryAddress: string) => {
+    // Use independent RPC provider (not MetaMask)
+    const provider = getProvider();
+
+    // Registry v2.1.4 uses simplified 11-field CommunityProfile (no metadata fields)
+    const REGISTRY_V2_1_4_ABI = [
+      "function getCommunityCount() view returns (uint256)",
+      "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
+      "function communities(address) view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
+    ];
+
+    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_4_ABI, provider);
+
+    try {
+      // Get total count first
+      const count = await registry.getCommunityCount();
+      console.log(`📋 Found ${count} communities in Registry v2.1.4`);
+
+      // If no communities, return empty array
+      if (count === 0n) {
+        setPaymasters([]);
+        setRegistryInfo({
+          address: registryAddress,
+          totalPaymasters: 0,
+        });
+        return [];
+      }
+
+      // Get all communities using paginated API
+      const communityAddresses = await registry.getCommunities(0, count);
+      const paymasterList: PaymasterInfo[] = [];
+
+      for (const communityAddr of communityAddresses) {
+        try {
+          const profile = await registry.communities(communityAddr);
+
+          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
+            paymasterList.push({
+              address: profile.paymasterAddress,
+              name: profile.name || "Unnamed",
+              description: profile.ensName || "", // Use ENS name as description fallback
+              category: profile.nodeType === 0 ? "AOA" : "Super", // nodeType instead of mode
+              verified: profile.isActive,
+              totalTransactions: 0, // TODO: Query from analytics
+              totalGasSponsored: "N/A",
+              supportedTokens: [], // TODO: Query from paymaster
+              serviceFee: "N/A",
+              owner: profile.community,
+              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
+              metadata: {
+                ...profile,
+                allowPermissionlessMint: profile.allowPermissionlessMint,
+              },
+            });
+          }
+        } catch (err) {
+          console.warn(`Failed to load profile for ${communityAddr}:`, err);
+        }
+      }
+
+      setPaymasters(paymasterList);
+      setRegistryInfo({
+        address: registryAddress,
+        totalPaymasters: paymasterList.length,
+      });
+      return paymasterList;
+    } catch (err: any) {
+      throw new Error(`Failed to query Registry v2.1.4: ${err.message}`);
     }
   };
 
@@ -376,10 +456,18 @@ export function RegistryExplorer() {
               <button
                 className={`version-btn ${registryVersion === "v2.1" ? "active" : ""}`}
                 onClick={() => setRegistryVersion("v2.1")}
-                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2_1}
-                title={!getCurrentNetworkConfig().contracts.registryV2_1 ? "v2.1 not deployed yet" : ""}
+                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2}
+                title={!getCurrentNetworkConfig().contracts.registryV2 ? "v2.1 not deployed yet" : ""}
               >
-                v2.1 (Latest)
+                v2.1
+              </button>
+              <button
+                className={`version-btn ${registryVersion === "v2.1.4" ? "active" : ""}`}
+                onClick={() => setRegistryVersion("v2.1.4")}
+                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2_1}
+                title={!getCurrentNetworkConfig().contracts.registryV2_1 ? "v2.1.4 not deployed yet" : ""}
+              >
+                v2.1.4 (Latest)
               </button>
             </div>
           </div>
@@ -471,12 +559,16 @@ export function RegistryExplorer() {
             <p>No paymasters found matching your search criteria.</p>
           </div>
         ) : (
-          filteredPaymasters.map((pm) => (
-            <div
-              key={pm.address}
-              className="paymaster-card"
-              onClick={() => setSelectedPaymaster(pm)}
-            >
+          filteredPaymasters.map((pm) => {
+            const isHighlighted = shouldHighlight && highlightCommunity &&
+              pm.owner.toLowerCase() === highlightCommunity.toLowerCase();
+
+            return (
+              <div
+                key={pm.address}
+                className={`paymaster-card ${isHighlighted ? "highlighted" : ""}`}
+                onClick={() => setSelectedPaymaster(pm)}
+              >
               <div className="card-header">
                 <div className="paymaster-name">
                   <h3>{pm.name}</h3>
@@ -524,7 +616,8 @@ export function RegistryExplorer() {
                 <button className="view-details-btn">View Details →</button>
               </div>
             </div>
-          ))
+            );
+          })
         )}
       </section>
 
