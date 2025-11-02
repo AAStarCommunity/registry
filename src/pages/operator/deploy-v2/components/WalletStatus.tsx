@@ -100,22 +100,22 @@ export function WalletStatus({
           )}
         </div>
 
-        {/* stGToken Balance */}
+        {/* GToken Balance */}
         <div className={`balance-item ${status.hasEnoughGToken ? "sufficient" : "insufficient"}`}>
           <div className="balance-header">
             <div className="balance-name">
               <span className={status.hasEnoughGToken ? "icon-success" : "icon-error"}>
                 {status.hasEnoughGToken ? "✅" : "❌"}
               </span>
-              <span>stGToken Balance</span>
+              <span>GToken Balance</span>
             </div>
             <div className="balance-value">
-              {formatBalance(status.gTokenBalance)} stGToken
+              {formatBalance(status.gTokenBalance)} GToken
             </div>
           </div>
           <div className="balance-details">
             <span className="balance-required">
-              Required: {status.requiredGToken} stGToken
+              Required: {status.requiredGToken} GToken
             </span>
             {!status.hasEnoughGToken && (
               <div className="balance-action">
@@ -124,14 +124,14 @@ export function WalletStatus({
                   onClick={onGetGToken}
                   disabled={!onGetGToken}
                 >
-                  Get stGToken →
+                  Get GToken →
                 </button>
               </div>
             )}
           </div>
           {!status.hasEnoughGToken && (
             <div className="balance-help">
-              Staked GToken credential. Lock 30+ stGToken to join SuperPaymaster (more = higher reputation)
+              Governance token required for staking. You'll lock GToken to receive stGToken credentials in the next step.
             </div>
           )}
         </div>

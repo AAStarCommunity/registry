@@ -182,8 +182,8 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
             fees. Get test ETH from faucets (Sepolia) or exchanges (Mainnet).
           </div>
           <div className="help-item">
-            <strong>stGToken:</strong> Staked GToken credential obtained after staking GToken on Staking Contract.
-            Lock 30+ stGToken to join SuperPaymaster (more locked = higher reputation).
+            <strong>GToken:</strong> Governance token required for staking. You need GToken in your wallet
+            to lock and receive stGToken credentials. Minimum 30 GToken recommended for joining SuperPaymaster.
           </div>
           <div className="help-item">
             <strong>aPNTs:</strong> Advanced PNTs required for SuperPaymaster (1000+ minimum).
@@ -200,7 +200,7 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
           disabled={!canProceed()}
           title={
             !canProceed()
-              ? "Please ensure you have enough ETH and sGToken"
+              ? "Please ensure you have enough ETH and GToken"
               : "Proceed to configuration"
           }
         >
