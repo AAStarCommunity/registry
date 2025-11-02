@@ -406,5 +406,68 @@
       "restart": "🔄 重新开始",
       "goHome": "返回首页 →"
     }
+  },
+  "registerCommunity": {
+    "title": "注册社区",
+    "subtitle": "在 AAstar 网络上创建并注册您的社区",
+    "loading": "加载中...",
+    "connectWallet": "连接钱包",
+    "form": {
+      "communityName": "社区名称",
+      "communityNamePlaceholder": "请输入社区名称",
+      "stakeAmount": "质押金额 (GToken)",
+      "stakeAmountPlaceholder": "最少 30 GToken",
+      "stakeAmountHint": "最小质押",
+      "allowPermissionlessMint": "允许无许可铸造",
+      "allowPermissionlessMintHint": "启用后，用户无需邀请即可铸造社区 MySBT",
+      "permissionlessMintWarning": "⚠️ 警告: 每个社区成员都需要你邀请、沟通并人工mint"
+    },
+    "balance": {
+      "title": "当前余额",
+      "gtoken": "GToken"
+    },
+    "insufficientBalance": {
+      "title": "❌ GToken 余额不足",
+      "required": "需要质押:",
+      "current": "当前余额:",
+      "message": "请先获取足够的 GToken 再注册社区。",
+      "linkText": "前往获取 GToken →"
+    },
+    "button": {
+      "registering": "注册中...",
+      "register": "注册社区"
+    },
+    "success": {
+      "title": "交易已提交!",
+      "viewTx": "查看交易"
+    },
+    "console": {
+      "currentBalance": "当前 GToken 余额:",
+      "checking": "检查注册状态...",
+      "alreadyRegistered": "❌ 地址已作为社区注册:",
+      "checkingStaking": "检查质押状态...",
+      "stakeStatus": "质押状态 - 需要:",
+      "available": "可用:",
+      "needToStake": "需补充:",
+      "approving": "授权",
+      "approved": "✅ 授权完成",
+      "staking": "质押",
+      "staked": "✅ 质押完成",
+      "availableAfterStake": "质押后可用余额:",
+      "insufficientAfterStake": "质押后可用余额不足！期望",
+      "actualOnly": "实际只有",
+      "registering": "正在注册社区...",
+      "registered": "✅ 社区注册成功！交易哈希:"
+    },
+    "errors": {
+      "walletNotConnected": "请先连接钱包",
+      "communityNameRequired": "请输入社区名称",
+      "stakeAmountRequired": "请输入质押金额",
+      "insufficientBalance": "GToken 余额不足！\n需要: {{required}} GToken\n当前余额: {{current}} GToken\n\n请先获取足够的 GToken 再注册社区。",
+      "insufficientToStake": "GToken 余额不足！需要质押 {{need}} GToken，但你只有 {{current}} GToken",
+      "insufficientAfterStake": "质押后可用余额不足！期望 {{expected}} GToken，实际只有 {{actual}} GToken",
+      "alreadyRegistered": "该地址已作为社区注册: {{name}}",
+      "registrationFailed": "社区注册失败"
+    }
   }
 }

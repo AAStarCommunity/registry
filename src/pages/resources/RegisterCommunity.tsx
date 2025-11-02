@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
@@ -20,6 +21,7 @@ const GTOKEN_STAKING_ABI = [
 
 export function RegisterCommunity() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Get addresses from config with env overrides
   const networkConfig = getCurrentNetworkConfig();
@@ -57,7 +59,7 @@ export function RegisterCommunity() {
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        setError("请安装 MetaMask 来使用此功能");
+        setError(t('registerCommunity.errors.walletNotConnected'));
         return;
       }
 
@@ -69,8 +71,8 @@ export function RegisterCommunity() {
       await loadMinStake();
       await loadGTokenBalance(accounts[0]);
     } catch (err: any) {
-      console.error("钱包连接失败:", err);
-      setError(err?.message || "连接钱包失败");
+      console.error(t('registerCommunity.errors.walletNotConnected'), err);
+      setError(err?.message || t('registerCommunity.errors.walletNotConnected'));
     }
   };
 
@@ -87,10 +89,10 @@ export function RegisterCommunity() {
       const community = await registry.communities(address);
       if (community.registeredAt !== 0n) {
         setExistingCommunity(true);
-        setError("该地址已注册社区");
+        setError(t('registerCommunity.errors.alreadyRegistered', { name: community.name }));
       }
     } catch (err) {
-      console.error("检查现有社区失败:", err);
+      console.error(t('registerCommunity.console.checking'), err);
     }
   };
 
@@ -108,7 +110,7 @@ export function RegisterCommunity() {
       const config = await registry.nodeTypeConfigs(0);
       setMinStake(ethers.formatEther(config.minStake));
     } catch (err) {
-      console.error("加载最小质押要求失败:", err);
+      console.error(t('registerCommunity.errors.stakeAmountRequired'), err);
     }
   };
 
@@ -129,7 +131,7 @@ export function RegisterCommunity() {
       const balance = await gToken.balanceOf(address);
       setGTokenBalance(ethers.formatEther(balance));
     } catch (err) {
-      console.error("加载 GToken 余额失败:", err);
+      console.error(t('common.loading'), err);
     }
   };
 
@@ -141,17 +143,17 @@ export function RegisterCommunity() {
 
     try {
       if (!window.ethereum) {
-        throw new Error("MetaMask 未安装");
+        throw new Error(t('registerCommunity.errors.walletNotConnected'));
       }
 
       if (!communityName) {
-        throw new Error("请输入社区名称");
+        throw new Error(t('registerCommunity.errors.communityNameRequired'));
       }
 
       // Validate stake amount (minimum 30 GToken for both modes)
       const stakeAmountNum = parseFloat(stakeAmount || "0");
       if (stakeAmountNum < 30) {
-        throw new Error("最低质押: 30 GToken");
+        throw new Error(t('registerCommunity.form.stakeAmountHint') + ': 30 GToken');
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -167,10 +169,10 @@ export function RegisterCommunity() {
         const userBalance = await gToken.balanceOf(account);
         const userBalanceNum = parseFloat(ethers.formatEther(userBalance));
 
-        console.log(`当前 GToken 余额: ${userBalanceNum}`);
+        console.log(t('registerCommunity.console.currentBalance'), userBalanceNum);
 
         if (userBalanceNum < stakeAmountNum) {
-          throw new Error(`GToken 余额不足！\n需要: ${stakeAmountNum} GToken\n当前余额: ${userBalanceNum.toFixed(2)} GToken\n\n请先获取足够的 GToken 再注册社区。`);
+          throw new Error(t('registerCommunity.errors.insufficientBalance', { required: stakeAmountNum, current: userBalanceNum.toFixed(2) }));
         }
       }
 
@@ -207,40 +209,43 @@ export function RegisterCommunity() {
 
         // Check user's GToken balance first
         const userGTokenBalance = await gToken.balanceOf(account);
-        console.log(`GToken 余额: ${ethers.formatEther(userGTokenBalance)}`);
+        console.log(t('registerCommunity.balance.gtoken') + ':', ethers.formatEther(userGTokenBalance));
 
         // Check if user has enough AVAILABLE (unlocked) staked balance
         const availableBalance = await staking.availableBalance(account);
         const needToStake = gTokenAmount > availableBalance ? gTokenAmount - availableBalance : 0n;
 
-        console.log(`质押状态 - 需要: ${ethers.formatEther(gTokenAmount)}, 可用: ${ethers.formatEther(availableBalance)}, 需补充: ${ethers.formatEther(needToStake)}`);
+        console.log(t('registerCommunity.console.checkingStaking'),
+          t('registerCommunity.console.stakeStatus'), ethers.formatEther(gTokenAmount),
+          t('registerCommunity.console.available'), ethers.formatEther(availableBalance),
+          t('registerCommunity.console.needToStake'), ethers.formatEther(needToStake));
 
         if (needToStake > 0n) {
           // Check if user has enough GToken to stake
           if (userGTokenBalance < needToStake) {
-            throw new Error(`GToken 余额不足！需要质押 ${ethers.formatEther(needToStake)} GToken，但你只有 ${ethers.formatEther(userGTokenBalance)} GToken`);
+            throw new Error(t('registerCommunity.errors.insufficientToStake', { need: ethers.formatEther(needToStake), current: ethers.formatEther(userGTokenBalance) }));
           }
 
           // Check and approve GToken if needed
           const currentAllowance = await gToken.allowance(account, GTOKEN_STAKING_ADDRESS);
           if (currentAllowance < needToStake) {
-            console.log(`授权 ${ethers.formatEther(needToStake)} GToken...`);
+            console.log(t('registerCommunity.console.approving'), ethers.formatEther(needToStake), 'GToken...');
             const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, needToStake);
             await approveTx.wait();
-            console.log("✅ 授权完成");
+            console.log(t('registerCommunity.console.approved'));
           }
 
           // Stake GToken
-          console.log(`质押 ${ethers.formatEther(needToStake)} GToken...`);
+          console.log(t('registerCommunity.console.staking'), ethers.formatEther(needToStake), 'GToken...');
           const stakeTx = await staking.stake(needToStake);
           await stakeTx.wait();
-          console.log("✅ 质押完成");
+          console.log(t('registerCommunity.console.staked'));
 
           // Verify available balance after staking
           const newAvailableBalance = await staking.availableBalance(account);
-          console.log(`质押后可用余额: ${ethers.formatEther(newAvailableBalance)}`);
+          console.log(t('registerCommunity.console.availableAfterStake'), ethers.formatEther(newAvailableBalance));
           if (newAvailableBalance < gTokenAmount) {
-            throw new Error(`质押后可用余额不足！期望 ${ethers.formatEther(gTokenAmount)} GToken，实际只有 ${ethers.formatEther(newAvailableBalance)} GToken`);
+            throw new Error(t('registerCommunity.errors.insufficientAfterStake', { expected: ethers.formatEther(gTokenAmount), actual: ethers.formatEther(newAvailableBalance) }));
           }
         }
       }
@@ -256,14 +261,14 @@ export function RegisterCommunity() {
       setRegisterTxHash(tx.hash);
 
       const receipt = await tx.wait();
-      console.log("社区注册成功:", receipt);
+      console.log(t('registerCommunity.console.registered'), receipt.hash);
 
       // Success - show confirmation
-      alert("社区注册成功！");
+      alert(t('registerCommunity.button.register') + ' ' + t('registerCommunity.success.title'));
       navigate("/explorer");
     } catch (err: any) {
-      console.error("社区注册失败:", err);
-      setError(err?.message || "注册失败");
+      console.error(t('registerCommunity.errors.registrationFailed'), err);
+      setError(err?.message || t('registerCommunity.errors.registrationFailed'));
     } finally {
       setIsRegistering(false);
     }
@@ -274,17 +279,17 @@ export function RegisterCommunity() {
       <div className="register-community-container">
         <div className="register-community-header">
           <button className="back-button" onClick={() => navigate(-1)}>
-            ← Back
+            ← {t('common.back')}
           </button>
           <div className="header-content">
             <div>
-              <h1>注册社区</h1>
+              <h1>{t('registerCommunity.title')}</h1>
               <p className="subtitle">
-                在 SuperPaymaster Registry 上注册您的社区，获得去中心化身份和服务
+                {t('registerCommunity.subtitle')}
               </p>
             </div>
             <a href="/operator/wizard" className="wizard-link">
-              🚀 Launch Wizard
+              {t('header.launchPaymaster')}
             </a>
           </div>
         </div>
@@ -293,41 +298,41 @@ export function RegisterCommunity() {
         {!account ? (
           <div className="connect-section">
             <button className="connect-btn" onClick={connectWallet}>
-              连接钱包
+              {t('registerCommunity.connectWallet')}
             </button>
           </div>
         ) : existingCommunity ? (
           <div className="error-box">
-            <p>该地址已注册社区，无法重复注册。</p>
-            <button onClick={() => navigate("/explorer")}>查看社区列表</button>
+            <p>{error}</p>
+            <button onClick={() => navigate("/explorer")}>{t('header.explorer')}</button>
           </div>
         ) : (
           <div className="registration-form">
             <div className="wallet-info">
               <p>
-                <strong>已连接:</strong> {account.slice(0, 6)}...{account.slice(-4)}
+                <strong>{t('step1.substep3.walletConnected')}:</strong> {account.slice(0, 6)}...{account.slice(-4)}
               </p>
               {GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && (
                 <p>
-                  <strong>GToken 余额:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
+                  <strong>{t('registerCommunity.balance.gtoken')}:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
                 </p>
               )}
             </div>
 
             <div className="form-section">
-              <h2>基本信息</h2>
+              <h2>{t('step2ResourceCheck.summary.title')}</h2>
 
               <div className="warning-box" style={{ marginBottom: '16px', padding: '12px', background: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '4px' }}>
-                <strong>ℹ️ Registry v2.1.4 优化说明:</strong> 为减小合约大小，description、website、logo、社交链接等字段已从链上移除，仅存储核心字段（name、ensName、xPNTs token）。
+                <strong>ℹ️ Registry v2.1.4</strong>
               </div>
 
               <div className="form-group">
                 <label>
-                  社区名称 <span className="required">*</span>
+                  {t('registerCommunity.form.communityName')} <span className="required">*</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="例如: AAStar"
+                  placeholder={t('registerCommunity.form.communityNamePlaceholder')}
                   value={communityName}
                   onChange={(e) => setCommunityName(e.target.value)}
                   maxLength={100}
@@ -335,10 +340,10 @@ export function RegisterCommunity() {
               </div>
 
               <div className="form-group">
-                <label>ENS 域名</label>
+                <label>ENS</label>
                 <input
                   type="text"
-                  placeholder="例如: aastar.eth"
+                  placeholder="aastar.eth"
                   value={ensName}
                   onChange={(e) => setEnsName(e.target.value)}
                   maxLength={500}
@@ -347,25 +352,25 @@ export function RegisterCommunity() {
             </div>
 
             <div className="form-section">
-              <h2>Token 配置</h2>
+              <h2>Token</h2>
 
               <div className="form-group">
-                <label>xPNTs Token 地址</label>
+                <label>xPNTs Token</label>
                 <input
                   type="text"
                   placeholder="0x..."
                   value={xPNTsToken}
                   onChange={(e) => setXPNTsToken(e.target.value)}
                 />
-                <small>可选，如果已部署社区 xPNTs token</small>
+                <small>{t('step2ResourceCheck.resources.xpnts.notDeployed')}</small>
               </div>
             </div>
 
             <div className="form-section">
-              <h2>节点配置</h2>
+              <h2>Paymaster</h2>
 
               <div className="form-group">
-                <label>Paymaster 模式</label>
+                <label>Paymaster</label>
                 <div className="radio-group">
                   <label className="radio-label">
                     <input
@@ -374,7 +379,7 @@ export function RegisterCommunity() {
                       checked={mode === "AOA"}
                       onChange={(e) => setMode(e.target.value as "AOA" | "SUPER")}
                     />
-                    <span>AOA (独立 Paymaster)</span>
+                    <span>AOA</span>
                   </label>
                   <label className="radio-label">
                     <input
@@ -383,7 +388,7 @@ export function RegisterCommunity() {
                       checked={mode === "SUPER"}
                       onChange={(e) => setMode(e.target.value as "AOA" | "SUPER")}
                     />
-                    <span>SUPER (共享 SuperPaymaster V2)</span>
+                    <span>SUPER (SuperPaymaster V2)</span>
                   </label>
                 </div>
               </div>
@@ -391,12 +396,12 @@ export function RegisterCommunity() {
 
               <div className="form-group">
                 <label>
-                  质押数量 (GToken)
+                  {t('registerCommunity.form.stakeAmount')}
                   {mode === "AOA" && <span className="required">*</span>}
                 </label>
                 <input
                   type="number"
-                  placeholder="30"
+                  placeholder={t('registerCommunity.form.stakeAmountPlaceholder')}
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
                   min="30"
@@ -404,19 +409,19 @@ export function RegisterCommunity() {
                 />
                 {mode === "AOA" && (
                   <small className="required">
-                    最低质押: 30 GToken（可增加，不可低于 30）
+                    {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
                   </small>
                 )}
                 {mode === "SUPER" && (
                   <small className="helper-text">
-                    最低质押: 30 GToken（可增加，不可低于 30）
+                    {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
                   </small>
                 )}
               </div>
             </div>
 
             <div className="form-section">
-              <h2>MySBT 配置</h2>
+              <h2>MySBT</h2>
 
               <div className="form-group checkbox-group">
                 <label className="checkbox-label">
@@ -425,12 +430,12 @@ export function RegisterCommunity() {
                     checked={allowPermissionlessMint}
                     onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
                   />
-                  <span>允许用户无许可铸造 MySBT</span>
+                  <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
                 </label>
-                <small>启用后，用户无需邀请即可铸造社区 MySBT</small>
+                <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
                 {!allowPermissionlessMint && (
                   <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                    <strong>⚠️ 警告:</strong> 每个社区成员都需要你邀请、沟通并人工mint
+                    {t('registerCommunity.form.permissionlessMintWarning')}
                   </div>
                 )}
               </div>
@@ -439,14 +444,14 @@ export function RegisterCommunity() {
             {/* Balance check warning */}
             {parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30") && (
               <div className="error-box" style={{ marginTop: '16px' }}>
-                <p><strong>❌ GToken 余额不足</strong></p>
-                <p>需要质押: {stakeAmount || "30"} GToken</p>
-                <p>当前余额: {parseFloat(gTokenBalance).toFixed(2)} GToken</p>
+                <p><strong>{t('registerCommunity.insufficientBalance.title')}</strong></p>
+                <p>{t('registerCommunity.insufficientBalance.required')} {stakeAmount || "30"} GToken</p>
+                <p>{t('registerCommunity.insufficientBalance.current')} {parseFloat(gTokenBalance).toFixed(2)} GToken</p>
                 <p style={{ marginTop: '8px' }}>
-                  请先获取足够的 GToken 再注册社区。
+                  {t('registerCommunity.insufficientBalance.message')}
                   <br />
                   <Link to="/get-gtoken" style={{ color: '#2196f3', textDecoration: 'underline' }}>
-                    前往获取 GToken →
+                    {t('registerCommunity.insufficientBalance.linkText')}
                   </Link>
                 </p>
               </div>
@@ -460,13 +465,13 @@ export function RegisterCommunity() {
 
             {registerTxHash && (
               <div className="success-box">
-                <p>交易已提交!</p>
+                <p>{t('registerCommunity.success.title')}</p>
                 <a
                   href={`https://sepolia.etherscan.io/tx/${registerTxHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  查看交易
+                  {t('registerCommunity.success.viewTx')}
                 </a>
               </div>
             )}
@@ -481,7 +486,7 @@ export function RegisterCommunity() {
                   parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30")
                 }
               >
-                {isRegistering ? "注册中..." : "注册社区"}
+                {isRegistering ? t('registerCommunity.button.registering') : t('registerCommunity.button.register')}
               </button>
             </div>
           </div>

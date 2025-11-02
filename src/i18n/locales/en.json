@@ -406,5 +406,68 @@
       "restart": "🔄 Restart",
       "goHome": "Back to Home →"
     }
+  },
+  "registerCommunity": {
+    "title": "Register Community",
+    "subtitle": "Create and register your community on the AAstar Network",
+    "loading": "Loading...",
+    "connectWallet": "Connect Wallet",
+    "form": {
+      "communityName": "Community Name",
+      "communityNamePlaceholder": "Enter community name",
+      "stakeAmount": "Stake Amount (GToken)",
+      "stakeAmountPlaceholder": "Minimum 30 GToken",
+      "stakeAmountHint": "Minimum stake",
+      "allowPermissionlessMint": "Allow Permissionless Mint",
+      "allowPermissionlessMintHint": "When enabled, users can mint community MySBT without invitation",
+      "permissionlessMintWarning": "⚠️ Warning: Each community member needs your invitation, communication, and manual mint"
+    },
+    "balance": {
+      "title": "Current Balance",
+      "gtoken": "GToken"
+    },
+    "insufficientBalance": {
+      "title": "❌ Insufficient GToken Balance",
+      "required": "Required stake:",
+      "current": "Current balance:",
+      "message": "Please get enough GToken before registering community.",
+      "linkText": "Get GToken →"
+    },
+    "button": {
+      "registering": "Registering...",
+      "register": "Register Community"
+    },
+    "success": {
+      "title": "Transaction Submitted!",
+      "viewTx": "View Transaction"
+    },
+    "console": {
+      "currentBalance": "Current GToken Balance:",
+      "checking": "Checking registration status...",
+      "alreadyRegistered": "❌ Address already registered as community:",
+      "checkingStaking": "Checking staking status...",
+      "stakeStatus": "Stake status - Required:",
+      "available": "Available:",
+      "needToStake": "Need to stake:",
+      "approving": "Approving",
+      "approved": "✅ Approval complete",
+      "staking": "Staking",
+      "staked": "✅ Staking complete",
+      "availableAfterStake": "Available balance after staking:",
+      "insufficientAfterStake": "Insufficient available balance after staking! Expected",
+      "actualOnly": "actually only",
+      "registering": "Registering community...",
+      "registered": "✅ Community registered! Tx hash:"
+    },
+    "errors": {
+      "walletNotConnected": "Please connect your wallet first",
+      "communityNameRequired": "Please enter community name",
+      "stakeAmountRequired": "Please enter stake amount",
+      "insufficientBalance": "Insufficient GToken balance!\nRequired: {{required}} GToken\nCurrent balance: {{current}} GToken\n\nPlease get enough GToken before registering community.",
+      "insufficientToStake": "Insufficient GToken balance! Need to stake {{need}} GToken, but you only have {{current}} GToken",
+      "insufficientAfterStake": "Insufficient available balance after staking! Expected {{expected}} GToken, actually only {{actual}} GToken",
+      "alreadyRegistered": "This address is already registered as community: {{name}}",
+      "registrationFailed": "Community registration failed"
+    }
   }
 }
