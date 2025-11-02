@@ -188,11 +188,11 @@
 }
 
 .section-title {
-    font-size: 5rem;
-    font-weight: 800;
+    font-size: 5rem !important;
+    font-weight: 800 !important;
     text-align: center;
     margin-bottom: 4rem;
-    line-height: 1.1;
+    line-height: 1.1 !important;
 }
 
 .features-grid {

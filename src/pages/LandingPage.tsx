@@ -105,7 +105,7 @@ export function LandingPage() {
 
       {/* Features Cards */}
       <section className="features-section">
-        <h2 className="section-title">Why SuperPaymaster?</h2>
+        <h1 className="section-title">Why SuperPaymaster?</h1>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">🎯</div>
