@@ -12,6 +12,7 @@
 import React, { useState } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./StakeToSuperPaymaster.css";
 
 export interface StakeToSuperPaymasterProps {
@@ -20,20 +21,22 @@ export interface StakeToSuperPaymasterProps {
   onBack: () => void;
 }
 
-// Contract addresses - read from env with fallbacks
+// Get network configuration
+const networkConfig = getCurrentNetworkConfig();
+
+// Contract addresses - read from env with fallbacks to shared-config
 const SUPER_PAYMASTER_V2 =
   import.meta.env.VITE_SUPER_PAYMASTER_V2_ADDRESS ||
-  "0xb96d8BC6d771AE5913C8656FAFf8721156AC8141";
+  networkConfig.contracts.superPaymasterV2;
 const GTOKEN_ADDRESS =
   import.meta.env.VITE_GTOKEN_ADDRESS ||
-  "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35";
+  networkConfig.contracts.gToken;
 const GTOKEN_STAKING_ADDRESS =
   import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0x199402b3F213A233e89585957F86A07ED1e1cD67";
-// TODO: 添加 aPNTs ERC20 token 地址到 .env
+  networkConfig.contracts.gTokenStaking;
 const APNTS_ADDRESS =
   import.meta.env.VITE_APNTS_ADDRESS ||
-  "0x0000000000000000000000000000000000000000"; // Placeholder
+  networkConfig.contracts.aPNTs;
 
 // Simplified ABIs
 const GTOKEN_ABI = [

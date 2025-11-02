@@ -8,6 +8,7 @@
 import {
   getCoreContracts,
   getTokenContracts,
+  getTestTokenContracts,
   getPaymasterV4_1,
   getSuperPaymasterV2,
   getEntryPoint,
@@ -67,6 +68,8 @@ export interface NetworkConfig {
     // ========================================
     /** Mock USDT for testing */
     usdtContract: string;
+    /** aPNTs - AAStar community gas token for testing */
+    aPNTs: string;
   };
 
   // Resource acquisition links
@@ -100,6 +103,7 @@ const sepoliaConfig: NetworkConfig = (() => {
   const network = 'sepolia';
   const core = getCoreContracts(network);
   const tokens = getTokenContracts(network);
+  const testTokens = getTestTokenContracts(network);
 
   return {
     chainId: getChainId(network),
@@ -150,7 +154,10 @@ const sepoliaConfig: NetworkConfig = (() => {
       // ========================================
       usdtContract:
         import.meta.env.VITE_USDT_CONTRACT_ADDRESS ||
-        '0x14EaC6C3D49AEDff3D59773A7d7bfb50182bCfDc', // Mock USDT
+        testTokens.mockUSDT,
+      aPNTs:
+        import.meta.env.VITE_APNTS_ADDRESS ||
+        testTokens.aPNTs,
     },
 
     resources: {
@@ -209,6 +216,7 @@ const mainnetConfig: NetworkConfig = {
 
     // Other
     usdtContract: '0xdac17f958d2ee523a2206206994597c13d831ec7', // Real USDT
+    aPNTs: '', // TBD
   },
 
   resources: {
