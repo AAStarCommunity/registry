@@ -160,7 +160,7 @@ export function GetSBT() {
           <button className="back-button" onClick={() => navigate(-1)}>
             ← Back
           </button>
-          <h1>Get MySBT</h1>
+          <h1>Bind MySBT</h1>
           <p className="subtitle">
             Deploy your Soul Bound Token with NFT binding support
           </p>

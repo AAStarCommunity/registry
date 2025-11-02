@@ -9,10 +9,11 @@ import { DeployWizard } from "./pages/operator/DeployWizard";
 import ManagePaymaster from "./pages/operator/ManagePaymaster";
 import GetGToken from "./pages/resources/GetGToken";
 import GetPNTs from "./pages/resources/GetPNTs";
-import { GetSBT } from "./pages/resources/GetSBT";
+import { GetSBT } from "./pages/resources/GetSBT"; // Bind MySBT page
 import { MySBT } from "./pages/resources/MySBT";
 import { GetXPNTs } from "./pages/resources/GetXPNTs";
 import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
+import { LaunchPaymaster } from "./pages/resources/LaunchPaymaster";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -54,10 +55,12 @@ function App() {
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-pnts" element={<GetPNTs />} />
-            <Route path="/get-sbt" element={<GetSBT />} />
+            <Route path="/bind-sbt" element={<GetSBT />} />
+            <Route path="/get-sbt" element={<GetSBT />} /> {/* Legacy redirect */}
             <Route path="/my-sbt" element={<MySBT />} />
             <Route path="/get-xpnts" element={<GetXPNTs />} />
             <Route path="/register-community" element={<RegisterCommunity />} />
+            <Route path="/launch-paymaster" element={<LaunchPaymaster />} />
 
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />
