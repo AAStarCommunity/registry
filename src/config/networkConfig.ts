@@ -45,6 +45,8 @@ export interface NetworkConfig {
     superPaymasterV2: string;
     /** EntryPoint v0.7 - ERC-4337 official EntryPoint */
     entryPointV07: string;
+    /** PaymasterFactory v1.0 - Permissionless Paymaster deployment using EIP-1167 */
+    paymasterFactory: string;
 
     // ========================================
     // Legacy Contracts (for backward compatibility)
@@ -117,6 +119,7 @@ const sepoliaConfig: NetworkConfig = (() => {
       mySBT: tokens.mySBT,
       superPaymasterV2: getSuperPaymasterV2(network),
       entryPointV07: getEntryPoint(network),
+      paymasterFactory: core.paymasterFactory,
 
       // ========================================
       // Legacy Contracts (for backward compatibility)
@@ -195,6 +198,7 @@ const mainnetConfig: NetworkConfig = {
     mySBT: '', // TBD
     superPaymasterV2: '', // TBD
     entryPointV07: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
+    paymasterFactory: '', // TBD
 
     // Legacy
     registry: '', // TBD
