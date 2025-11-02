@@ -70,6 +70,8 @@ export interface NetworkConfig {
     usdtContract: string;
     /** aPNTs - AAStar community gas token for testing */
     aPNTs: string;
+    /** bPNTs - BuilderDAO community gas token for testing */
+    bPNTs: string;
   };
 
   // Resource acquisition links
@@ -158,6 +160,9 @@ const sepoliaConfig: NetworkConfig = (() => {
       aPNTs:
         import.meta.env.VITE_APNTS_ADDRESS ||
         testTokens.aPNTs,
+      bPNTs:
+        import.meta.env.VITE_BPNTS_ADDRESS ||
+        testTokens.bPNTs,
     },
 
     resources: {
@@ -217,6 +222,7 @@ const mainnetConfig: NetworkConfig = {
     // Other
     usdtContract: '0xdac17f958d2ee523a2206206994597c13d831ec7', // Real USDT
     aPNTs: '', // TBD
+    bPNTs: '', // TBD
   },
 
   resources: {

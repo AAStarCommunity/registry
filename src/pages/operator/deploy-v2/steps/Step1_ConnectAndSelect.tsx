@@ -209,7 +209,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             requiredPNTs: "0", // AOA flow doesn't need PNTs
             requiredAPNTs: "0", // AOA flow doesn't need aPNTs
             gTokenAddress: config.contracts.gToken,
-            pntAddress: config.contracts.aPNTs,
+            pntAddress: config.contracts.bPNTs,
             aPNTAddress: config.contracts.aPNTs,
           }
         : {
@@ -218,7 +218,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             requiredPNTs: config.requirements.minPntDeposit, // 1000 PNTs
             requiredAPNTs: config.requirements.minPntDeposit, // Using same requirement for aPNTs
             gTokenAddress: config.contracts.gToken,
-            pntAddress: config.contracts.aPNTs,
+            pntAddress: config.contracts.bPNTs,
             aPNTAddress: config.contracts.aPNTs,
           };
 

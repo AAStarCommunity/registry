@@ -71,8 +71,8 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
         requiredPNTs: "1000",
         requiredAPNTs: "1000",
         gTokenAddress: networkConfig.contracts.gToken,
-        pntAddress: networkConfig.contracts.aPNTs, // Using aPNTs as PNT token
-        aPNTAddress: networkConfig.contracts.aPNTs, // Same address for both checks
+        pntAddress: networkConfig.contracts.bPNTs,
+        aPNTAddress: networkConfig.contracts.aPNTs,
       });
 
       setWalletStatus(status);
