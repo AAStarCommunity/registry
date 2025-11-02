@@ -149,6 +149,19 @@ export function LandingPage() {
               <li>✓ Comprehensive documentation</li>
             </ul>
           </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">🌱</div>
+            <h3 className="feature-title">Community Sustainability</h3>
+            <p className="feature-description">
+              Any community can provide their gasless service based on their own services or products, get liquidity and long term revenue from this.
+            </p>
+            <ul className="feature-list">
+              <li>✓ Community-owned services</li>
+              <li>✓ Sustainable revenue streams</li>
+              <li>✓ Long-term liquidity</li>
+            </ul>
+          </div>
         </div>
       </section>
 
