@@ -111,14 +111,26 @@ export function LandingPage() {
             <div className="feature-icon">🎯</div>
             <h3 className="feature-title">True Decentralization</h3>
             <p className="feature-description">
-              No single point of failure. Community-operated Paymasters
-              registered on-chain via smart contracts. Anyone can launch, anyone
-              can use.
+              No censorship. No single point of failure. Community-operated Paymasters
+              registered on-chain. Anyone can launch, anyone can use.
             </p>
             <ul className="feature-list">
-              <li>✓ Permissionless registration</li>
+              <li>✓ No tx censorship in gas payment</li>
               <li>✓ On-chain verification</li>
               <li>✓ Community governance</li>
+            </ul>
+          </div>
+
+          <div className="feature-card">
+            <div className="feature-icon">🌱</div>
+            <h3 className="feature-title">Community Sustainability</h3>
+            <p className="feature-description">
+              Any community can provide gasless services based on their own services or products, get liquidity and long term revenue.
+            </p>
+            <ul className="feature-list">
+              <li>✓ Community-owned services</li>
+              <li>✓ Sustainable revenue streams</li>
+              <li>✓ Long-term liquidity</li>
             </ul>
           </div>
 
@@ -147,19 +159,6 @@ export function LandingPage() {
               <li>✓ 5-minute integration</li>
               <li>✓ UserOp v0.7 compatible</li>
               <li>✓ Comprehensive documentation</li>
-            </ul>
-          </div>
-
-          <div className="feature-card">
-            <div className="feature-icon">🌱</div>
-            <h3 className="feature-title">Community Sustainability</h3>
-            <p className="feature-description">
-              Any community can provide their gasless service based on their own services or products, get liquidity and long term revenue from this.
-            </p>
-            <ul className="feature-list">
-              <li>✓ Community-owned services</li>
-              <li>✓ Sustainable revenue streams</li>
-              <li>✓ Long-term liquidity</li>
             </ul>
           </div>
         </div>
