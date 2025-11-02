@@ -53,10 +53,8 @@ export function LandingPage() {
             <p className="hero-subtitle">
               Decentralized Gasless Transaction Ethereum Infra
             </p>
-            <p className="hero-description">
-              Community-driven Paymaster network enabling seamless Web3 UX.
-              Deploy your own Paymaster, earn fees, and users do transact
-              without ETH.
+            <p className="hero-description gradient-text">
+              Community-driven Paymaster network enabling seamless gasless transaction with Web3 UX without ETH. Deploy Now!
             </p>
             <div className="hero-ctas">
               <a href="/operator" className="cta-button primary">
