@@ -291,7 +291,7 @@ export function RegisterCommunity() {
                   maxLength={500}
                 />
               </div>
-
+            </div>
 
             <div className="form-section">
               <h2>Token 配置</h2>
