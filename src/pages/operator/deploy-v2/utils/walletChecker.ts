@@ -52,9 +52,9 @@ const ERC20_ABI = [
   "function symbol() view returns (string)",
 ];
 
-// Registry ABI for checking community registration
+// Registry v2.1.4 ABI for checking community registration (11 fields)
 const REGISTRY_ABI = [
-  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint))",
+  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
 ];
 
 /**
