@@ -168,8 +168,13 @@ export function LandingPage() {
       <section className="launch-flow-section">
         <h1 className="section-title">How to Launch Paymaster</h1>
         <p className="section-subtitle">
-          Follow these steps to deploy your community Paymaster and start providing gasless transactions
+          Use Launch Wizard to organize these steps to deploy your community Paymaster
         </p>
+        <div className="wizard-cta">
+          <a href="/operator/wizard" className="wizard-launch-btn">
+            🚀 Launch Your Paymaster
+          </a>
+        </div>
 
         <div className="flow-container">
           <div className="flow-step">

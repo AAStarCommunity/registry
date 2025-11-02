@@ -224,24 +224,25 @@ export function RegisterCommunity() {
 
   return (
     <div className="register-community-page">
-      <div className="register-community-header">
-        <button className="back-button" onClick={() => navigate(-1)}>
-          ← Back
-        </button>
-        <div className="header-content">
-          <div>
-            <h1>注册社区</h1>
-            <p className="subtitle">
-              在 SuperPaymaster Registry 上注册您的社区，获得去中心化身份和服务
-            </p>
+      <div className="register-community-container">
+        <div className="register-community-header">
+          <button className="back-button" onClick={() => navigate(-1)}>
+            ← Back
+          </button>
+          <div className="header-content">
+            <div>
+              <h1>注册社区</h1>
+              <p className="subtitle">
+                在 SuperPaymaster Registry 上注册您的社区，获得去中心化身份和服务
+              </p>
+            </div>
+            <a href="/operator/wizard" className="wizard-link">
+              🚀 Launch Wizard
+            </a>
           </div>
-          <a href="/operator/wizard" className="wizard-link">
-            🚀 Launch Wizard
-          </a>
         </div>
-      </div>
 
-      <div className="form-container">
+        <div className="form-container">
         {!account ? (
           <div className="connect-section">
             <button className="connect-btn" onClick={connectWallet}>
@@ -484,6 +485,7 @@ export function RegisterCommunity() {
             </div>
           </div>
         )}
+        </div>
       </div>
     </div>
   );
