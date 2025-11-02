@@ -27,20 +27,12 @@ export interface DeployedResources {
   gTokenStakeTxHash: string;
 }
 
-// Contract addresses from env
-const MYSBT_V2_3_ADDRESS =
-  import.meta.env.VITE_MYSBT_V2_3_ADDRESS ||
-  "0xc1085841307d85d4a8dC973321Df2dF7c01cE5C8";
-const MYSBT_ADDRESS = MYSBT_V2_3_ADDRESS; // Use MySBT v2.3 by default
-const XPNTS_FACTORY_ADDRESS =
-  import.meta.env.VITE_XPNTS_FACTORY_ADDRESS ||
-  "0x356CF363E136b0880C8F48c9224A37171f375595";
-const GTOKEN_ADDRESS =
-  import.meta.env.VITE_GTOKEN_ADDRESS ||
-  "0x54Afca294BA9824E6858E9b2d0B9a19C440f6D35";
-const GTOKEN_STAKING_ADDRESS =
-  import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
-  "0x199402b3F213A233e89585957F86A07ED1e1cD67"; // Must match networkConfig.ts
+// Get contract addresses from shared-config via networkConfig
+const networkConfig = getCurrentNetworkConfig();
+const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
+const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
+const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
+const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
 
 // Helper function to get block explorer URL
 const getExplorerUrl = (address: string): string => {

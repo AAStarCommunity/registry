@@ -170,7 +170,7 @@ const createStepConfigs = (t: (key: string) => string) => {
  */
 function getSuperPaymasterAddress(): string {
   const networkConfig = getCurrentNetworkConfig();
-  return networkConfig.contracts.paymasterV4;
+  return networkConfig.contracts.superPaymasterV2; // Fixed: Use superPaymasterV2 for AOA+ mode
 }
 
 /**
