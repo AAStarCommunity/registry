@@ -103,6 +103,78 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* How to Launch Paymaster Flow */}
+      <section className="launch-flow-section">
+        <h1 className="section-title">How to Launch Paymaster</h1>
+        <p className="section-subtitle">
+          Follow these steps to deploy your community Paymaster and start providing gasless transactions
+        </p>
+
+        <div className="flow-container">
+          <div className="flow-step">
+            <div className="flow-card">
+              <div className="flow-icon">🏛️</div>
+              <h3 className="flow-title">Register Community</h3>
+              <p className="flow-description">
+                Register your community on-chain with metadata and governance token
+              </p>
+              <a href="/register-community" className="flow-link">
+                Register →
+              </a>
+            </div>
+            <div className="flow-arrow">→</div>
+          </div>
+
+          <div className="flow-step">
+            <div className="flow-card">
+              <div className="flow-icon">🔗</div>
+              <h3 className="flow-title">Bind MySBT</h3>
+              <p className="flow-description">
+                Deploy your Soul Bound Token for community identity verification
+              </p>
+              <a href="/bind-sbt" className="flow-link">
+                Deploy →
+              </a>
+            </div>
+            <div className="flow-arrow">→</div>
+          </div>
+
+          <div className="flow-step">
+            <div className="flow-card">
+              <div className="flow-icon">💎</div>
+              <h3 className="flow-title">Deploy xPNTs</h3>
+              <p className="flow-description">
+                Create your community gas token for payment abstraction
+              </p>
+              <a href="/get-xpnts" className="flow-link">
+                Deploy →
+              </a>
+            </div>
+            <div className="flow-arrow">→</div>
+          </div>
+
+          <div className="flow-step">
+            <div className="flow-card highlight">
+              <div className="flow-icon">🚀</div>
+              <h3 className="flow-title">Launch Paymaster</h3>
+              <p className="flow-description">
+                Deploy your Paymaster via factory with one-click configuration
+              </p>
+              <a href="/launch-paymaster" className="flow-link primary">
+                Launch →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="flow-note">
+          <p>
+            <strong>💡 Quick Start:</strong> Already have GToken and resources?
+            Use the <a href="/operator/wizard">Deployment Wizard</a> for guided setup.
+          </p>
+        </div>
+      </section>
+
       {/* Features Cards */}
       <section className="features-section">
         <h1 className="section-title">Why SuperPaymaster?</h1>
