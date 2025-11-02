@@ -5,7 +5,7 @@ import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
 import "./RegisterCommunity.css";
 
-// Registry ABI (CommunityProfile struct fields) - Registry v2.1
+// Registry ABI (CommunityProfile struct fields) - Registry v2.1 (18 fields, no allowPermissionlessMint)
 const REGISTRY_ABI = [
   "function registerCommunity(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount) profile, uint256 stGTokenAmount) external",
   "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
@@ -165,7 +165,8 @@ export function RegisterCommunity() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // Prepare CommunityProfile (Registry v2.1 format - 18 fields, no allowPermissionlessMint)
+      // Prepare CommunityProfile (Registry v2.1 format - 18 fields, no allowPermissionlessMint in contract)
+      // Note: allowPermissionlessMint is stored separately in MySBT contract, not in Registry profile
       const profile = {
         name: communityName,
         ensName: ensName || "",
@@ -189,15 +190,20 @@ export function RegisterCommunity() {
 
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
-      // Approve GToken if needed
-      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0") {
-        const gToken = new ethers.Contract(
-          GTOKEN_ADDRESS,
-          ["function approve(address spender, uint256 amount) external returns (bool)"],
+      // Approve stGToken (GTokenStaking) if needed
+      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
+        const staking = new ethers.Contract(
+          GTOKEN_STAKING_ADDRESS,
+          ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"],
           signer
         );
-        const approveTx = await gToken.approve(REGISTRY_ADDRESS, gTokenAmount);
-        await approveTx.wait();
+
+        // Check current allowance
+        const currentAllowance = await staking.allowance(account, REGISTRY_ADDRESS);
+        if (currentAllowance < gTokenAmount) {
+          const approveTx = await staking.approve(REGISTRY_ADDRESS, gTokenAmount);
+          await approveTx.wait();
+        }
       }
 
       // Register community
