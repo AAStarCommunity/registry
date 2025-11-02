@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
@@ -154,10 +154,25 @@ export function RegisterCommunity() {
         throw new Error("最低质押: 30 GToken");
       }
 
-      // Paymaster address is now optional for AOA mode
-
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
+
+      // Check user's GToken balance BEFORE starting any transactions
+      if (GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0") {
+        const gToken = new ethers.Contract(
+          GTOKEN_ADDRESS,
+          ["function balanceOf(address) external view returns (uint256)"],
+          provider
+        );
+        const userBalance = await gToken.balanceOf(account);
+        const userBalanceNum = parseFloat(ethers.formatEther(userBalance));
+
+        console.log(`当前 GToken 余额: ${userBalanceNum}`);
+
+        if (userBalanceNum < stakeAmountNum) {
+          throw new Error(`GToken 余额不足！\n需要: ${stakeAmountNum} GToken\n当前余额: ${userBalanceNum.toFixed(2)} GToken\n\n请先获取足够的 GToken 再注册社区。`);
+        }
+      }
 
       // Prepare CommunityProfile (Registry v2.1.4 format - 11 fields with allowPermissionlessMint)
       const profile = {
@@ -421,6 +436,22 @@ export function RegisterCommunity() {
               </div>
             </div>
 
+            {/* Balance check warning */}
+            {parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30") && (
+              <div className="error-box" style={{ marginTop: '16px' }}>
+                <p><strong>❌ GToken 余额不足</strong></p>
+                <p>需要质押: {stakeAmount || "30"} GToken</p>
+                <p>当前余额: {parseFloat(gTokenBalance).toFixed(2)} GToken</p>
+                <p style={{ marginTop: '8px' }}>
+                  请先获取足够的 GToken 再注册社区。
+                  <br />
+                  <Link to="/get-gtoken" style={{ color: '#2196f3', textDecoration: 'underline' }}>
+                    前往获取 GToken →
+                  </Link>
+                </p>
+              </div>
+            )}
+
             {error && (
               <div className="error-box">
                 <p>{error}</p>
@@ -444,7 +475,11 @@ export function RegisterCommunity() {
               <button
                 className="register-btn"
                 onClick={handleRegisterCommunity}
-                disabled={isRegistering || !communityName}
+                disabled={
+                  isRegistering ||
+                  !communityName ||
+                  parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30")
+                }
               >
                 {isRegistering ? "注册中..." : "注册社区"}
               </button>
