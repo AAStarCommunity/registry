@@ -176,23 +176,39 @@ export function RegisterCommunity() {
 
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
-      // Approve stGToken (GTokenStaking) if needed
-      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
-        const staking = new ethers.Contract(
-          GTOKEN_STAKING_ADDRESS,
+      // Step 1: Approve GToken to GTokenStaking and stake
+      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
+        const gToken = new ethers.Contract(
+          GTOKEN_ADDRESS,
           ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)"],
           signer
         );
 
-        // Check current allowance
-        const currentAllowance = await staking.allowance(account, REGISTRY_ADDRESS);
+        // Check current allowance for GToken -> GTokenStaking
+        const currentAllowance = await gToken.allowance(account, GTOKEN_STAKING_ADDRESS);
         if (currentAllowance < gTokenAmount) {
-          const approveTx = await staking.approve(REGISTRY_ADDRESS, gTokenAmount);
+          const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, gTokenAmount);
           await approveTx.wait();
+        }
+
+        // Step 2: Stake GToken to GTokenStaking
+        const staking = new ethers.Contract(
+          GTOKEN_STAKING_ADDRESS,
+          ["function stake(uint256 amount) external returns (uint256)", "function balanceOf(address account) external view returns (uint256)"],
+          signer
+        );
+
+        // Check if user has enough staked balance
+        const stakedBalance = await staking.balanceOf(account);
+        const needToStake = gTokenAmount > stakedBalance ? gTokenAmount - stakedBalance : 0n;
+
+        if (needToStake > 0n) {
+          const stakeTx = await staking.stake(needToStake);
+          await stakeTx.wait();
         }
       }
 
-      // Register community
+      // Step 3: Register community (Registry will call GTokenStaking.lockStake internally)
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
         REGISTRY_ABI,
