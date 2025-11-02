@@ -55,6 +55,16 @@ export function RegisterCommunity() {
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
 
+  // Log contract addresses on mount
+  useEffect(() => {
+    console.log('=== Contract Addresses ===');
+    console.log('Registry:', REGISTRY_ADDRESS);
+    console.log('GToken:', GTOKEN_ADDRESS);
+    console.log('GTokenStaking:', GTOKEN_STAKING_ADDRESS);
+    console.log('Network:', networkConfig.chainName);
+    console.log('========================');
+  }, []);
+
   // Connect wallet
   const connectWallet = async () => {
     try {
@@ -313,9 +323,22 @@ export function RegisterCommunity() {
                 <strong>{t('step1.substep3.walletConnected')}:</strong> {account.slice(0, 6)}...{account.slice(-4)}
               </p>
               {GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && (
-                <p>
-                  <strong>{t('registerCommunity.balance.gtoken')}:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
-                </p>
+                <>
+                  <p>
+                    <strong>GToken Contract:</strong>{' '}
+                    <a
+                      href={`${networkConfig.explorerUrl}/address/${GTOKEN_ADDRESS}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#2196f3', textDecoration: 'underline', fontFamily: 'monospace', fontSize: '0.9em' }}
+                    >
+                      {GTOKEN_ADDRESS}
+                    </a>
+                  </p>
+                  <p>
+                    <strong>{t('registerCommunity.balance.gtoken')}:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
+                  </p>
+                </>
               )}
             </div>
 
