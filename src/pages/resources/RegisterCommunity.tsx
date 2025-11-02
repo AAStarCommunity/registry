@@ -5,10 +5,10 @@ import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
 import "./RegisterCommunity.css";
 
-// Registry ABI (CommunityProfile struct fields) - Registry v2.1 (18 fields, no allowPermissionlessMint)
+// Registry ABI (CommunityProfile struct fields) - Registry v2.1.4 (11 fields with allowPermissionlessMint)
 const REGISTRY_ABI = [
-  "function registerCommunity(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount) profile, uint256 stGTokenAmount) external",
-  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+  "function registerCommunity(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint) profile, uint256 stGTokenAmount) external",
+  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
   "function nodeTypeConfigs(uint8) external view returns (uint256 minStake, uint256 slashThreshold, uint256 slashBase, uint256 slashIncrement, uint256 slashMax)",
 ];
 
@@ -37,15 +37,9 @@ export function RegisterCommunity() {
   // Wallet state
   const [account, setAccount] = useState<string>("");
 
-  // Registration form state
+  // Registration form state (Registry v2.1.4 - 11 fields only)
   const [communityName, setCommunityName] = useState<string>("");
   const [ensName, setEnsName] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [website, setWebsite] = useState<string>("");
-  const [logoURI, setLogoURI] = useState<string>("");
-  const [twitterHandle, setTwitterHandle] = useState<string>("");
-  const [githubOrg, setGithubOrg] = useState<string>("");
-  const [telegramGroup, setTelegramGroup] = useState<string>("");
   const [xPNTsToken, setXPNTsToken] = useState<string>("");
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("30");
@@ -165,27 +159,19 @@ export function RegisterCommunity() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // Prepare CommunityProfile (Registry v2.1 format - 18 fields, no allowPermissionlessMint in contract)
-      // Note: allowPermissionlessMint is stored separately in MySBT contract, not in Registry profile
+      // Prepare CommunityProfile (Registry v2.1.4 format - 11 fields with allowPermissionlessMint)
       const profile = {
         name: communityName,
         ensName: ensName || "",
-        description: description || "",
-        website: website || "",
-        logoURI: logoURI || "",
-        twitterHandle: twitterHandle || "",
-        githubOrg: githubOrg || "",
-        telegramGroup: telegramGroup || "",
         xPNTsToken: xPNTsToken || ethers.ZeroAddress,
         supportedSBTs: [], // Empty for now
-        mode: mode === "AOA" ? 0 : 1, // PaymasterMode: INDEPENDENT=0, SUPER=1
         nodeType: mode === "AOA" ? 0 : 1, // NodeType: PAYMASTER_AOA=0, PAYMASTER_SUPER=1
         paymasterAddress: ethers.ZeroAddress, // Paymaster address is optional, use ZeroAddress
         community: account,
         registeredAt: 0,
         lastUpdatedAt: 0,
         isActive: true,
-        memberCount: 0,
+        allowPermissionlessMint: allowPermissionlessMint, // User can set this
       };
 
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
@@ -278,6 +264,10 @@ export function RegisterCommunity() {
             <div className="form-section">
               <h2>基本信息</h2>
 
+              <div className="warning-box" style={{ marginBottom: '16px', padding: '12px', background: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '4px' }}>
+                <strong>ℹ️ Registry v2.1.4 优化说明:</strong> 为减小合约大小，description、website、logo、社交链接等字段已从链上移除，仅存储核心字段（name、ensName、xPNTs token）。
+              </div>
+
               <div className="form-group">
                 <label>
                   社区名称 <span className="required">*</span>
@@ -302,76 +292,6 @@ export function RegisterCommunity() {
                 />
               </div>
 
-              <div className="form-group">
-                <label>社区描述</label>
-                <textarea
-                  placeholder="简要描述您的社区..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={4}
-                  maxLength={500}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>官网</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com"
-                  value={website}
-                  onChange={(e) => setWebsite(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Logo URI</label>
-                <input
-                  type="url"
-                  placeholder="https://example.com/logo.png"
-                  value={logoURI}
-                  onChange={(e) => setLogoURI(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h2>社交链接</h2>
-
-              <div className="form-group">
-                <label>Twitter</label>
-                <input
-                  type="text"
-                  placeholder="@handle"
-                  value={twitterHandle}
-                  onChange={(e) => setTwitterHandle(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>GitHub 组织</label>
-                <input
-                  type="text"
-                  placeholder="organization-name"
-                  value={githubOrg}
-                  onChange={(e) => setGithubOrg(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Telegram 群组</label>
-                <input
-                  type="text"
-                  placeholder="https://t.me/group"
-                  value={telegramGroup}
-                  onChange={(e) => setTelegramGroup(e.target.value)}
-                  maxLength={500}
-                />
-              </div>
-            </div>
 
             <div className="form-section">
               <h2>Token 配置</h2>
