@@ -28,12 +28,17 @@
     "deploymentGuide": "📚 阅读部署指南",
     "steps": {
       "connectAndSelect": "连接并选择模式",
+      "registerCommunity": "注册社区",
       "resources": "部署资源",
       "config": "配置",
       "deploy": "部署 Paymaster",
       "stake": "质押",
-      "register": "注册到 Registry",
+      "updateRegistry": "更新 Registry",
       "complete": "完成"
+    },
+    "step2": {
+      "title": "注册您的社区",
+      "subtitle": "锁定 GToken 并注册社区，然后绑定 MySBT 合约"
     }
   },
   "step1": {

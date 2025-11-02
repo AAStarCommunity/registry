@@ -63,10 +63,9 @@ const GTOKEN_STAKING_ABI = [
 
 // Sub-steps
 const ResourceStep = {
-  SelectSBT: 1,
-  DeployXPNTs: 2,
-  StakeGToken: 3,
-  Complete: 4,
+  DeployXPNTs: 1,
+  StakeGToken: 2,
+  Complete: 3,
 } as const;
 
 type ResourceStepType = typeof ResourceStep[keyof typeof ResourceStep];
@@ -77,7 +76,7 @@ export function Step4_DeployResources({
   onNext,
   onBack,
 }: Step4Props) {
-  const [currentStep, setCurrentStep] = useState<ResourceStepType>(ResourceStep.SelectSBT);
+  const [currentStep, setCurrentStep] = useState<ResourceStepType>(ResourceStep.DeployXPNTs);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,11 +173,6 @@ export function Step4_DeployResources({
     }
   }, [currentStep]);
 
-  const handleSelectSBT = () => {
-    // For now, use existing MySBT
-    console.log("Using existing MySBT:", sbtAddress);
-    setCurrentStep(ResourceStep.DeployXPNTs);
-  };
 
   const handleDeployXPNTs = async () => {
     setIsLoading(true);
@@ -377,67 +371,10 @@ export function Step4_DeployResources({
 
   const renderStepContent = () => {
     switch (currentStep) {
-      case ResourceStep.SelectSBT:
-        return (
-          <div className="step-content">
-            <h3>Step 1: Config SBT Contract</h3>
-            <p>
-              SBTs (Soul-Bound Tokens) act as the credentials for protocol membership and for permissioned access to its applications.
-              <br />
-              We use the default protocol MySBT 2.3 contract.
-            </p>
-
-            <div className="form-group">
-              <label>SBT Contract Address</label>
-              <input
-                type="text"
-                value={sbtAddress}
-                onChange={(e) => setSbtAddress(e.target.value)}
-                placeholder="0x..."
-                disabled={true}
-                style={{
-                  backgroundColor: "#f5f5f5",
-                  color: "#666",
-                  cursor: "not-allowed"
-                }}
-              />
-              <div className="form-hint">
-                Default: {MYSBT_ADDRESS} (
-                <a
-                  href={getExplorerUrl(MYSBT_ADDRESS)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "#667eea", textDecoration: "underline" }}
-                >
-                  View on Etherscan
-                </a>
-                ) (recommended)
-              </div>
-              <div className="form-hint" style={{ marginTop: "0.5rem" }}>
-                <a
-                  href="/my-sbt"
-                  target="_blank"
-                  style={{ color: "#667eea", textDecoration: "underline" }}
-                >
-                  Config Community SBT (only Protocol Operator or Community Multisig Safe Contract) or Get your own SBT →
-                </a>
-              </div>
-            </div>
-
-            <button
-              className="btn-primary"
-              onClick={handleSelectSBT}
-              disabled={isLoading || !ethers.isAddress(sbtAddress)}
-            >
-              Use Default SBT Config
-            </button>
-          </div>
-        );
-
       case ResourceStep.DeployXPNTs:
         return (
           <div className="step-content">
-            <h3>Step 2: Deploy xPNTs Token</h3>
+            <h3>Step 1: Deploy xPNTs Token</h3>
             <p>
               xPNTs (Community Points) is your community's gas token.
               <br />
@@ -502,7 +439,7 @@ export function Step4_DeployResources({
       case ResourceStep.StakeGToken:
         return (
           <div className="step-content">
-            <h3>Step 3: Stake GToken</h3>
+            <h3>Step 2: Stake GToken</h3>
             <p>
               Stake GToken to receive sGToken (staked governance token).
               <br />
@@ -612,7 +549,6 @@ export function Step4_DeployResources({
       {/* Progress Indicator */}
       <div className="progress-steps">
         {[
-          { step: ResourceStep.SelectSBT, label: "Select SBT" },
           { step: ResourceStep.DeployXPNTs, label: "Deploy xPNTs" },
           { step: ResourceStep.StakeGToken, label: "Stake GToken" },
           { step: ResourceStep.Complete, label: "Complete" },

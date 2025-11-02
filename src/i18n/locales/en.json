@@ -28,12 +28,17 @@
     "deploymentGuide": "📚 Read the Deployment Guide",
     "steps": {
       "connectAndSelect": "Connect & Select Mode",
+      "registerCommunity": "Register Community",
       "resources": "Deploy Resources",
       "config": "Configuration",
       "deploy": "Deploy Paymaster",
       "stake": "Stake",
-      "register": "Register to Registry",
+      "updateRegistry": "Update Registry",
       "complete": "Complete"
+    },
+    "step2": {
+      "title": "Register Your Community",
+      "subtitle": "Lock GToken and register your community, then bind MySBT contract"
     }
   },
   "step1": {

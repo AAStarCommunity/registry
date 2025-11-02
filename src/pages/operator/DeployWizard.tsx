@@ -4,6 +4,7 @@ import './DeployWizard.css';
 
 // Import step components
 import { Step1_ConnectAndSelect } from './deploy-v2/steps/Step1_ConnectAndSelect';
+import { Step2_RegisterCommunity, type RegisteredCommunity } from './deploy-v2/steps/Step2_RegisterCommunity';
 import { Step2_ConfigForm } from './deploy-v2/steps/Step2_ConfigForm';
 import { Step3_DeployPaymaster } from './deploy-v2/steps/Step3_DeployPaymaster';
 import { Step4_DeployResources, type DeployedResources } from './deploy-v2/steps/Step4_DeployResources';
@@ -116,6 +117,9 @@ export interface DeployConfig {
   // Resource requirements
   resourcesReady?: boolean;
 
+  // Registered community (Step 2)
+  registeredCommunity?: RegisteredCommunity;
+
   // Deployed resources (SBT + xPNTs + staked GToken)
   deployedResources?: DeployedResources;
 
@@ -143,23 +147,25 @@ const createStepConfigs = (t: (key: string) => string) => {
     { id: 1, title: t('wizard.steps.connectAndSelect'), icon: '🔌', stepKey: 'connectAndSelect' },
   ];
 
-  // AOA flow specific steps (7 total)
+  // AOA flow specific steps (8 total)
   const STANDARD_FLOW_STEPS: StepConfig[] = [
-    { id: 2, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
-    { id: 3, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
-    { id: 4, title: t('wizard.steps.deploy'), icon: '🚀', stepKey: 'deploy' },
-    { id: 5, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
-    { id: 6, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
-    { id: 7, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
+    { id: 2, title: t('wizard.steps.registerCommunity'), icon: '📝', stepKey: 'registerCommunity' },
+    { id: 3, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
+    { id: 4, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
+    { id: 5, title: t('wizard.steps.deploy'), icon: '🚀', stepKey: 'deploy' },
+    { id: 6, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
+    { id: 7, title: t('wizard.steps.updateRegistry'), icon: '🔄', stepKey: 'updateRegistry' },
+    { id: 8, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
   ];
 
-  // Super mode specific steps (6 total - no deployment)
+  // Super mode specific steps (7 total - no paymaster deployment)
   const SUPER_MODE_STEPS: StepConfig[] = [
-    { id: 2, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
-    { id: 3, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
-    { id: 4, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
-    { id: 5, title: t('wizard.steps.register'), icon: '📝', stepKey: 'register' },
-    { id: 6, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
+    { id: 2, title: t('wizard.steps.registerCommunity'), icon: '📝', stepKey: 'registerCommunity' },
+    { id: 3, title: t('wizard.steps.resources'), icon: '📦', stepKey: 'resources' },
+    { id: 4, title: t('wizard.steps.config'), icon: '⚙️', stepKey: 'config' },
+    { id: 5, title: t('wizard.steps.stake'), icon: '🔒', stepKey: 'stake' },
+    { id: 6, title: t('wizard.steps.updateRegistry'), icon: '🔄', stepKey: 'updateRegistry' },
+    { id: 7, title: t('wizard.steps.complete'), icon: '✅', stepKey: 'complete' },
   ];
 
   return { COMMON_STEPS, STANDARD_FLOW_STEPS, SUPER_MODE_STEPS };
@@ -292,6 +298,12 @@ export function DeployWizard() {
     setCurrentStep(2);
   };
 
+  const handleRegisterCommunityComplete = (registeredCommunity: RegisteredCommunity) => {
+    console.log(`✅ Community registered:`, registeredCommunity);
+    setConfig((prev) => ({ ...prev, registeredCommunity }));
+    handleNext();
+  };
+
   const handleResourcesComplete = (resources: DeployedResources) => {
     console.log(`✅ Resources deployed:`, resources);
     setConfig((prev) => ({ ...prev, deployedResources: resources }));
@@ -313,7 +325,7 @@ export function DeployWizard() {
     handleNext();
   };
 
-  const handleRegisterComplete = (txHash: string) => {
+  const handleUpdateRegistryComplete = (txHash: string) => {
     setConfig((prev) => ({ ...prev, registryTxHash: txHash }));
     handleNext();
   };
@@ -400,6 +412,18 @@ export function DeployWizard() {
           />
         );
 
+      case 'registerCommunity':
+        return (
+          config.walletStatus && (
+            <Step2_RegisterCommunity
+              walletStatus={config.walletStatus}
+              communityName={config.communityName}
+              onNext={handleRegisterCommunityComplete}
+              onBack={handleBack}
+            />
+          )
+        );
+
       case 'resources':
         return (
           config.walletStatus && (
@@ -458,31 +482,31 @@ export function DeployWizard() {
           )
         );
 
-      case 'register':
-        // Similar to stake - use appropriate paymaster address
-        const paymasterForRegister =
+      case 'updateRegistry':
+        // Update Registry with deployed resources (xPNTs and paymaster addresses)
+        const paymasterForUpdate =
           config.stakeOption === 'aoa'
             ? config.paymasterAddress
             : getSuperPaymasterAddress();
 
-        // Registry v2.1 requires xPNTs and SBT addresses from deployed resources
+        // Registry v2.1 update requires xPNTs and SBT addresses from deployed resources
         const xPNTsAddress = config.deployedResources?.xPNTsAddress;
         const sbtAddress = config.deployedResources?.sbtAddress;
 
         return (
           config.walletStatus &&
-          paymasterForRegister &&
+          paymasterForUpdate &&
           xPNTsAddress &&
           sbtAddress && (
             <Step6_RegisterRegistry_v2
-              paymasterAddress={paymasterForRegister}
+              paymasterAddress={paymasterForUpdate}
               xPNTsAddress={xPNTsAddress}
               sbtAddress={sbtAddress}
               walletStatus={config.walletStatus}
               communityName={config.communityName}
               serviceFeeRate={config.serviceFeeRate}
               sGTokenAmount={config.deployedResources?.sGTokenAmount || "0"}
-              onNext={handleRegisterComplete}
+              onNext={handleUpdateRegistryComplete}
               onBack={handleBack}
             />
           )
