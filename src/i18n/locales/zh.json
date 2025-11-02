@@ -326,7 +326,7 @@
       "allReady": "所有资源已就绪！",
       "allReadyDescription": "您可以继续下一步完成部署流程。",
       "notReady": "还有资源未准备好",
-      "notReadyDescription": "请完成上述缺失的资源部署，然后点击"重新检测"。"
+      "notReadyDescription": "请完成上述缺失的资源部署，然后点击\"重新检测\"。"
     },
     "actions": {
       "recheck": "🔄 重新检测",
