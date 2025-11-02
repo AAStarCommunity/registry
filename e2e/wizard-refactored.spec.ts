@@ -7,7 +7,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Refactored Deploy Wizard', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3002/operator/wizard');
+    await page.goto('http://localhost:5173/operator/wizard-new');
   });
 
   test('should render the wizard with progress bar', async ({ page }) => {
@@ -87,7 +87,7 @@ test.describe('Refactored Deploy Wizard', () => {
 
 test.describe('Wizard Navigation Flow (Simulated)', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3002/operator/wizard');
+    await page.goto('http://localhost:5173/operator/wizard-new');
   });
 
   test('should show Step 1 subtitle initially', async ({ page }) => {
@@ -107,7 +107,7 @@ test.describe('Wizard Navigation Flow (Simulated)', () => {
 
 test.describe('Wizard Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3002/operator/wizard');
+    await page.goto('http://localhost:5173/operator/wizard-new');
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {
@@ -128,7 +128,7 @@ test.describe('Wizard Accessibility', () => {
 
 test.describe('Wizard CSS Styling', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3002/operator/wizard');
+    await page.goto('http://localhost:5173/operator/wizard-new');
   });
 
   test('active step should have active styling', async ({ page }) => {
