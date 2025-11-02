@@ -138,7 +138,7 @@ export function DeployWizardNew() {
       <div className="wizard-container">
         {/* Wizard Header */}
         <div className="wizard-header">
-          <h1>🧙 部署向导</h1>
+          <h1 className="wizard-title">🧙 部署向导</h1>
           <p className="wizard-subtitle">
             {currentStep === 1 && '连接钱包并选择部署模式'}
             {currentStep === 2 && '检测资源并完成缺失项'}
@@ -148,29 +148,23 @@ export function DeployWizardNew() {
 
         {/* Progress Bar */}
         <div className="wizard-progress">
-          <div className="progress-steps">
-            <div className={`progress-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
-              <div className="step-circle">
-                {currentStep > 1 ? '✓' : '1'}
-              </div>
-              <div className="step-label">连接 & 选择</div>
+          <div className={`progress-step ${currentStep >= 1 ? 'active' : ''} ${currentStep > 1 ? 'completed' : ''}`}>
+            <div className="progress-step-circle">
+              {currentStep > 1 ? '✓' : '1'}
             </div>
+            <div className="progress-step-label">连接 & 选择</div>
+          </div>
 
-            <div className="progress-line"></div>
-
-            <div className={`progress-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
-              <div className="step-circle">
-                {currentStep > 2 ? '✓' : '2'}
-              </div>
-              <div className="step-label">资源检测</div>
+          <div className={`progress-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
+            <div className="progress-step-circle">
+              {currentStep > 2 ? '✓' : '2'}
             </div>
+            <div className="progress-step-label">资源检测</div>
+          </div>
 
-            <div className="progress-line"></div>
-
-            <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
-              <div className="step-circle">3</div>
-              <div className="step-label">完成</div>
-            </div>
+          <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
+            <div className="progress-step-circle">3</div>
+            <div className="progress-step-label">完成</div>
           </div>
         </div>
 

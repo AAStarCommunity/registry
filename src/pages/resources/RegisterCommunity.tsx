@@ -47,14 +47,14 @@ export function RegisterCommunity() {
   const [paymasterAddress, setPaymasterAddress] = useState<string>("");
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("0");
-  const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(false);
+  const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
 
   // UI state
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerTxHash, setRegisterTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [minStake, setMinStake] = useState<string>("0");
-  const [stGTokenBalance, setStGTokenBalance] = useState<string>("0");
+  const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
 
   // Connect wallet
@@ -71,7 +71,7 @@ export function RegisterCommunity() {
       setAccount(accounts[0]);
       await checkExistingCommunity(accounts[0]);
       await loadMinStake();
-      await loadStGTokenBalance(accounts[0]);
+      await loadGTokenBalance(accounts[0]);
     } catch (err: any) {
       console.error("钱包连接失败:", err);
       setError(err?.message || "连接钱包失败");
@@ -116,8 +116,8 @@ export function RegisterCommunity() {
     }
   };
 
-  // Load user's stGToken balance
-  const loadStGTokenBalance = async (address: string) => {
+  // Load user's GToken balance
+  const loadGTokenBalance = async (address: string) => {
     try {
       if (!GTOKEN_STAKING_ADDRESS || GTOKEN_STAKING_ADDRESS === "0x0") {
         return;
@@ -131,9 +131,9 @@ export function RegisterCommunity() {
       );
 
       const balance = await staking.balanceOf(address);
-      setStGTokenBalance(ethers.formatEther(balance));
+      setGTokenBalance(ethers.formatEther(balance));
     } catch (err) {
-      console.error("加载 stGToken 余额失败:", err);
+      console.error("加载 GToken 余额失败:", err);
     }
   };
 
@@ -152,9 +152,7 @@ export function RegisterCommunity() {
         throw new Error("请输入社区名称");
       }
 
-      if (mode === "AOA" && !paymasterAddress) {
-        throw new Error("AOA 模式需要提供 Paymaster 地址");
-      }
+      // Paymaster address is now optional for AOA mode
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -182,16 +180,16 @@ export function RegisterCommunity() {
         allowPermissionlessMint: allowPermissionlessMint,
       };
 
-      const stGTokenAmount = ethers.parseEther(stakeAmount || "0");
+      const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
-      // Approve stGToken if needed
-      if (stGTokenAmount > 0n && GTOKEN_STAKING_ADDRESS !== "0x0") {
+      // Approve GToken if needed
+      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS !== "0x0") {
         const staking = new ethers.Contract(
           GTOKEN_STAKING_ADDRESS,
           GTOKEN_STAKING_ABI,
           signer
         );
-        const approveTx = await staking.approve(REGISTRY_ADDRESS, stGTokenAmount);
+        const approveTx = await staking.approve(REGISTRY_ADDRESS, gTokenAmount);
         await approveTx.wait();
       }
 
@@ -202,7 +200,7 @@ export function RegisterCommunity() {
         signer
       );
 
-      const tx = await registry.registerCommunity(profile, stGTokenAmount);
+      const tx = await registry.registerCommunity(profile, gTokenAmount);
       setRegisterTxHash(tx.hash);
 
       const receipt = await tx.wait();
@@ -248,7 +246,7 @@ export function RegisterCommunity() {
               </p>
               {GTOKEN_STAKING_ADDRESS !== "0x0" && (
                 <p>
-                  <strong>stGToken 余额:</strong> {parseFloat(stGTokenBalance).toFixed(2)} stGToken
+                  <strong>GToken 余额:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
                 </p>
               )}
             </div>
@@ -395,21 +393,19 @@ export function RegisterCommunity() {
 
               {mode === "AOA" && (
                 <div className="form-group">
-                  <label>
-                    Paymaster 地址 <span className="required">*</span>
-                  </label>
+                  <label>Paymaster 地址</label>
                   <input
                     type="text"
                     placeholder="0x..."
                     value={paymasterAddress}
                     onChange={(e) => setPaymasterAddress(e.target.value)}
                   />
-                  <small>您的独立 Paymaster 合约地址</small>
+                  <small>可选，您的独立 Paymaster 合约地址</small>
                 </div>
               )}
 
               <div className="form-group">
-                <label>质押数量 (stGToken)</label>
+                <label>质押数量 (GToken)</label>
                 <input
                   type="number"
                   placeholder="0"
@@ -420,7 +416,7 @@ export function RegisterCommunity() {
                 />
                 {mode === "AOA" && (
                   <small className="required">
-                    AOA 模式最低质押: {minStake} stGToken
+                    AOA 模式最低质押: {minStake} GToken
                   </small>
                 )}
               </div>
@@ -439,6 +435,11 @@ export function RegisterCommunity() {
                   <span>允许用户无许可铸造 MySBT</span>
                 </label>
                 <small>启用后，用户无需邀请即可铸造社区 MySBT</small>
+                {!allowPermissionlessMint && (
+                  <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
+                    <strong>⚠️ 警告:</strong> 每个社区成员都需要你沟通成员并人工mint
+                  </div>
+                )}
               </div>
             </div>
 
@@ -465,7 +466,7 @@ export function RegisterCommunity() {
               <button
                 className="register-btn"
                 onClick={handleRegisterCommunity}
-                disabled={isRegistering || !communityName || (mode === "AOA" && !paymasterAddress)}
+                disabled={isRegistering || !communityName}
               >
                 {isRegistering ? "注册中..." : "注册社区"}
               </button>
