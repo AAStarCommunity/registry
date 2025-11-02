@@ -8,7 +8,7 @@
 import {
   getCoreContracts,
   getTokenContracts,
-  getPaymasterV4,
+  getPaymasterV4_1,
   getSuperPaymasterV2,
   getEntryPoint,
   getChainId,
@@ -109,7 +109,7 @@ const sepoliaConfig: NetworkConfig = (() => {
       // ========================================
       // Current Contracts (from shared-config)
       // ========================================
-      paymasterV4: getPaymasterV4(network),
+      paymasterV4: getPaymasterV4_1(network),
       registryV2_1: core.registry,
       gToken: core.gToken,
       gTokenStaking: core.gTokenStaking,
