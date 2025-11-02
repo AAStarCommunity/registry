@@ -38,6 +38,10 @@ const XPNTS_FACTORY_ABI = [
   "function getTokenAddress(address community) view returns (address)",
 ];
 
+const XPNTS_TOKEN_ABI = [
+  "function exchangeRate() view returns (uint256)",
+];
+
 const MYSBT_FACTORY_ABI = [
   "function hasSBT(address community) external view returns (bool)",
   "function getSBTAddress(address community) external view returns (address)",
@@ -56,6 +60,7 @@ interface CommunityInfo {
   name: string;
   ensName: string;
   xPNTsToken: string;
+  xPNTsExchangeRate: string; // Exchange rate between aPNTs and xPNTs
   isRegistered: boolean;
 }
 
@@ -124,17 +129,42 @@ export function LaunchPaymaster() {
       const community = await registry.communities(address);
 
       if (community.registeredAt !== 0n) {
+        let exchangeRate = "1"; // Default 1:1 if no xPNTs token
+
+        // Auto-load xPNTs token if exists and get exchange rate
+        if (community.xPNTsToken !== ethers.ZeroAddress) {
+          setInitialGasToken(community.xPNTsToken);
+
+          try {
+            const xPNTsToken = new ethers.Contract(
+              community.xPNTsToken,
+              XPNTS_TOKEN_ABI,
+              provider
+            );
+            const rate = await xPNTsToken.exchangeRate();
+            exchangeRate = ethers.formatEther(rate); // Convert from wei to decimal
+            console.log("xPNTs Exchange Rate:", exchangeRate);
+          } catch (err) {
+            console.warn("Failed to get xPNTs exchange rate, using default 1:1");
+          }
+        }
+
         setCommunityInfo({
           name: community.name,
           ensName: community.ensName,
           xPNTsToken: community.xPNTsToken,
+          xPNTsExchangeRate: exchangeRate,
           isRegistered: true,
         });
 
-        // Auto-load xPNTs token if exists
-        if (community.xPNTsToken !== ethers.ZeroAddress) {
-          setInitialGasToken(community.xPNTsToken);
-        }
+        // Calculate minTokenBalance based on exchange rate
+        // exchangeRate represents: 1 xPNT = exchangeRate aPNTs
+        // So to get 100 aPNTs equivalent: minTokenBalance = 100 / exchangeRate (in xPNTs)
+        const rate = parseFloat(exchangeRate);
+        const calculatedMinBalance = rate > 0 ? (100 / rate).toFixed(2) : "100";
+        setMinTokenBalance(calculatedMinBalance);
+        console.log("xPNTs Exchange Rate:", exchangeRate, "→ 1 xPNT =", exchangeRate, "aPNTs");
+        console.log("Calculated minTokenBalance:", calculatedMinBalance, "xPNTs (= 100 aPNTs equivalent)");
 
         // Check for SBT
         const mySBTFactory = networkConfig.contracts.mySBT;
@@ -413,17 +443,31 @@ export function LaunchPaymaster() {
                     </div>
                   )}
                   {initialGasToken && (
-                    <div className="info-row">
-                      <span className="label">xPNTs Token:</span>
-                      <a
-                        href={getExplorerLink(initialGasToken)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="value mono"
-                      >
-                        {initialGasToken.slice(0, 6)}...{initialGasToken.slice(-4)} ↗
-                      </a>
-                    </div>
+                    <>
+                      <div className="info-row">
+                        <span className="label">xPNTs Token:</span>
+                        <a
+                          href={getExplorerLink(initialGasToken)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="value mono"
+                        >
+                          {initialGasToken.slice(0, 6)}...{initialGasToken.slice(-4)} ↗
+                        </a>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Exchange Rate:</span>
+                        <span className="value">
+                          1 xPNT = {communityInfo.xPNTsExchangeRate} aPNTs
+                        </span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Min Balance Required:</span>
+                        <span className="value">
+                          {minTokenBalance} xPNTs (≈ 100 aPNTs)
+                        </span>
+                      </div>
+                    </>
                   )}
                   {initialSBT && (
                     <div className="info-row">
