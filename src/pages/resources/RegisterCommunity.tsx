@@ -5,10 +5,10 @@ import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
 import "./RegisterCommunity.css";
 
-// Registry ABI (CommunityProfile struct fields)
+// Registry ABI (CommunityProfile struct fields) - Registry v2.1
 const REGISTRY_ABI = [
-  "function registerCommunity(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint) profile, uint256 stGTokenAmount) external",
-  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint))",
+  "function registerCommunity(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount) profile, uint256 stGTokenAmount) external",
+  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
   "function nodeTypeConfigs(uint8) external view returns (uint256 minStake, uint256 slashThreshold, uint256 slashBase, uint256 slashIncrement, uint256 slashMax)",
 ];
 
@@ -165,7 +165,7 @@ export function RegisterCommunity() {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
 
-      // Prepare CommunityProfile
+      // Prepare CommunityProfile (Registry v2.1 format - 18 fields, no allowPermissionlessMint)
       const profile = {
         name: communityName,
         ensName: ensName || "",
@@ -185,7 +185,6 @@ export function RegisterCommunity() {
         lastUpdatedAt: 0,
         isActive: true,
         memberCount: 0,
-        allowPermissionlessMint: allowPermissionlessMint,
       };
 
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
