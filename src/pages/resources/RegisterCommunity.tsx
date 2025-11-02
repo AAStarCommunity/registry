@@ -26,6 +26,9 @@ export function RegisterCommunity() {
   const REGISTRY_ADDRESS =
     import.meta.env.VITE_REGISTRY_ADDRESS ||
     networkConfig.contracts.registryV2_1; // Registry v2.1
+  const GTOKEN_ADDRESS =
+    import.meta.env.VITE_GTOKEN_ADDRESS ||
+    networkConfig.contracts.gToken;
   const GTOKEN_STAKING_ADDRESS =
     import.meta.env.VITE_GTOKEN_STAKING_ADDRESS ||
     networkConfig.contracts.gTokenStaking;
@@ -118,18 +121,18 @@ export function RegisterCommunity() {
   // Load user's GToken balance
   const loadGTokenBalance = async (address: string) => {
     try {
-      if (!GTOKEN_STAKING_ADDRESS || GTOKEN_STAKING_ADDRESS === "0x0") {
+      if (!GTOKEN_ADDRESS || GTOKEN_ADDRESS === "0x0") {
         return;
       }
 
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
-      const staking = new ethers.Contract(
-        GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+      const gToken = new ethers.Contract(
+        GTOKEN_ADDRESS,
+        ["function balanceOf(address account) external view returns (uint256)"],
         rpcProvider
       );
 
-      const balance = await staking.balanceOf(address);
+      const balance = await gToken.balanceOf(address);
       setGTokenBalance(ethers.formatEther(balance));
     } catch (err) {
       console.error("加载 GToken 余额失败:", err);
@@ -188,13 +191,13 @@ export function RegisterCommunity() {
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
       // Approve GToken if needed
-      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS !== "0x0") {
-        const staking = new ethers.Contract(
-          GTOKEN_STAKING_ADDRESS,
-          GTOKEN_STAKING_ABI,
+      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0") {
+        const gToken = new ethers.Contract(
+          GTOKEN_ADDRESS,
+          ["function approve(address spender, uint256 amount) external returns (bool)"],
           signer
         );
-        const approveTx = await staking.approve(REGISTRY_ADDRESS, gTokenAmount);
+        const approveTx = await gToken.approve(REGISTRY_ADDRESS, gTokenAmount);
         await approveTx.wait();
       }
 
@@ -260,7 +263,7 @@ export function RegisterCommunity() {
               <p>
                 <strong>已连接:</strong> {account.slice(0, 6)}...{account.slice(-4)}
               </p>
-              {GTOKEN_STAKING_ADDRESS !== "0x0" && (
+              {GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && (
                 <p>
                   <strong>GToken 余额:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
                 </p>
