@@ -287,7 +287,9 @@ export function DeployWizard() {
     console.log(`✅ User selected: ${stakeOption} mode with wallet ${walletStatus.address}`);
     setConfig((prev) => ({ ...prev, walletStatus, stakeOption }));
     setSteps(getStepsForOption(stakeOption, t));
-    handleNext();
+    // Directly set next step instead of using handleNext() to avoid race condition
+    // with async setSteps() update
+    setCurrentStep(2);
   };
 
   const handleResourcesComplete = (resources: DeployedResources) => {

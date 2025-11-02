@@ -270,7 +270,14 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
   const handleNext = () => {
     if (walletStatus && selectedOption && canProceed()) {
+      console.log(`✅ User selected: ${selectedOption} mode with wallet ${walletStatus.address}`);
       onNext(walletStatus, selectedOption);
+    } else {
+      console.warn('❌ Cannot proceed:', {
+        hasWalletStatus: !!walletStatus,
+        hasSelectedOption: !!selectedOption,
+        canProceed: canProceed()
+      });
     }
   };
 
