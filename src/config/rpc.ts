@@ -31,10 +31,18 @@ export const RPC_CONFIG = {
 
 /**
  * Get primary RPC URL (always returns proxy endpoint)
+ * In browser context, converts relative path to full URL
  */
 export function getRpcUrl(): string {
   const env = import.meta.env.MODE;
-  return env === "development" ? RPC_CONFIG.development : RPC_CONFIG.production;
+  const relativeUrl = env === "development" ? RPC_CONFIG.development : RPC_CONFIG.production;
+
+  // In browser context, convert relative path to full URL
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}${relativeUrl}`;
+  }
+
+  return relativeUrl;
 }
 
 /**
