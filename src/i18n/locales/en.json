@@ -239,5 +239,18 @@
       "step4": "Deploy xPNTs",
       "step5": "Complete"
     }
+  },
+  "wizardNew": {
+    "title": "🧙 Deploy Wizard",
+    "steps": {
+      "step1": "Connect Wallet & Select Mode",
+      "step2": "Resource Check & Prepare",
+      "step3": "Launch"
+    },
+    "progressLabels": {
+      "connectSelect": "Connect & Select",
+      "resourceCheck": "Resource Check & Prepare",
+      "launch": "Launch"
+    }
   }
 }

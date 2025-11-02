@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './DeployWizard.css';
 
 // Import step components
@@ -22,6 +23,8 @@ import { checkResources } from './deploy-v2/utils/resourceChecker';
 import type { StakeOptionType } from './deploy-v2/components/StakeOptionCard';
 
 export function DeployWizardNew() {
+  const { t } = useTranslation();
+
   // Wizard state
   const [currentStep, setCurrentStep] = useState(1);
   const [walletAddress, setWalletAddress] = useState<string>('');
@@ -138,11 +141,11 @@ export function DeployWizardNew() {
       <div className="wizard-container">
         {/* Wizard Header */}
         <div className="wizard-header">
-          <h1 className="wizard-title">🧙 部署向导</h1>
+          <h1 className="wizard-title">{t('wizardNew.title')}</h1>
           <p className="wizard-subtitle">
-            {currentStep === 1 && '连接钱包并选择部署模式'}
-            {currentStep === 2 && '资源检测&准备'}
-            {currentStep === 3 && '发射'}
+            {currentStep === 1 && t('wizardNew.steps.step1')}
+            {currentStep === 2 && t('wizardNew.steps.step2')}
+            {currentStep === 3 && t('wizardNew.steps.step3')}
           </p>
         </div>
 
@@ -152,19 +155,19 @@ export function DeployWizardNew() {
             <div className="progress-step-circle">
               {currentStep > 1 ? '✓' : '1'}
             </div>
-            <div className="progress-step-label">连接 & 选择</div>
+            <div className="progress-step-label">{t('wizardNew.progressLabels.connectSelect')}</div>
           </div>
 
           <div className={`progress-step ${currentStep >= 2 ? 'active' : ''} ${currentStep > 2 ? 'completed' : ''}`}>
             <div className="progress-step-circle">
               {currentStep > 2 ? '✓' : '2'}
             </div>
-            <div className="progress-step-label">资源检测&准备</div>
+            <div className="progress-step-label">{t('wizardNew.progressLabels.resourceCheck')}</div>
           </div>
 
           <div className={`progress-step ${currentStep >= 3 ? 'active' : ''}`}>
             <div className="progress-step-circle">3</div>
-            <div className="progress-step-label">发射</div>
+            <div className="progress-step-label">{t('wizardNew.progressLabels.launch')}</div>
           </div>
         </div>
 
