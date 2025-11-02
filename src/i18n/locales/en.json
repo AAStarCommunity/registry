@@ -366,23 +366,45 @@
       }
     },
     "nextSteps": {
-      "title": "🎯 Next Steps",
+      "title": "📝 Next Steps",
       "aoa": {
-        "step1": "Deposit ETH to EntryPoint for gas sponsorship",
-        "step2": "Test your Paymaster with sample transactions",
-        "step3": "Monitor Paymaster performance and gas usage"
+        "step1": {
+          "title": "Fund Paymaster",
+          "description": "Deposit ETH to Paymaster to cover gas fees",
+          "action": "Go to Management →"
+        },
+        "step2": {
+          "title": "Test Gasless Transactions",
+          "description": "Use Demo app to test your Paymaster",
+          "action": "Open Demo ↗"
+        },
+        "step3": {
+          "title": "Integrate into Your dApp",
+          "description": "View developer docs to integrate Paymaster into your application",
+          "action": "View Docs →"
+        }
       },
       "aoaPlus": {
-        "step1": "Deposit aPNTs to SuperPaymaster dashboard",
-        "step2": "Monitor your community's usage stats",
-        "step3": "Earn rewards through service quality"
+        "step1": {
+          "title": "Deposit aPNTs",
+          "description": "Ensure sufficient aPNTs balance to cover gas fees",
+          "action": "Get aPNTs →"
+        },
+        "step2": {
+          "title": "Test Gasless Transactions",
+          "description": "Use Demo app to test SuperPaymaster",
+          "action": "Open Demo ↗"
+        },
+        "step3": {
+          "title": "Monitor Your Operations",
+          "description": "View transaction statistics and operational data",
+          "action": "Go to Explorer →"
+        }
       }
     },
     "actions": {
-      "viewDocs": "📚 View Documentation",
-      "explorer": "🔍 View on Explorer",
-      "restart": "🔄 Deploy Another",
-      "goHome": "🏠 Back to Home"
+      "restart": "🔄 Restart",
+      "goHome": "Back to Home →"
     }
   }
 }

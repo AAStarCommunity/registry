@@ -30,7 +30,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         <div className="success-icon">🎉</div>
         <h2>{t('step3Complete.header.title')}</h2>
         <p className="subtitle">
-          {t('step3Complete.header.subtitle')}{mode === "aoa" ? t('step3Complete.header.aoaMode') : t('step3Complete.header.aoaPlusMode')}的资源部署
+          {t('step3Complete.header.subtitle')} {mode === "aoa" ? t('step3Complete.header.aoaMode') : t('step3Complete.header.aoaPlusMode')}
         </p>
       </div>
 
@@ -59,7 +59,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <p className="card-value mono">{resources.xPNTsAddress?.slice(0, 10)}...</p>
               {resources.xPNTsExchangeRate && (
                 <p className="card-detail">
-                  汇率: 1 xPNT = {resources.xPNTsExchangeRate} aPNTs
+                  {t('step3Complete.summary.xpnts.rate')} {resources.xPNTsExchangeRate} {t('step3Complete.summary.xpnts.rateSuffix')}
                 </p>
               )}
               <a
@@ -68,7 +68,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 rel="noopener noreferrer"
                 className="explorer-link"
               >
-                在 Etherscan 查看 ↗
+                {t('step3Complete.summary.xpnts.viewExplorer')}
               </a>
             </div>
           </div>
@@ -81,7 +81,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <h4>Paymaster</h4>
                 <p className="card-value mono">{resources.paymasterAddress.slice(0, 10)}...</p>
                 <p className="card-detail">
-                  MySBT 已绑定: {resources.hasSBTBinding ? "✅" : "❌"}
+                  {t('step3Complete.summary.paymaster.sbtBound')} {resources.hasSBTBinding ? "✅" : "❌"}
                 </p>
                 <a
                   href={getExplorerLink(resources.paymasterAddress)}
@@ -89,7 +89,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                   rel="noopener noreferrer"
                   className="explorer-link"
                 >
-                  在 Etherscan 查看 ↗
+                  {t('step3Complete.summary.paymaster.viewExplorer')}
                 </a>
               </div>
             </div>
@@ -99,12 +99,12 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
           <div className="summary-card">
             <div className="card-icon">💰</div>
             <div className="card-content">
-              <h4>余额状态</h4>
-              <p className="card-detail">GToken: {resources.gTokenBalance} GT</p>
+              <h4>{t('step3Complete.summary.balances.title')}</h4>
+              <p className="card-detail">{t('step3Complete.summary.balances.gtoken')} {resources.gTokenBalance} GT</p>
               {mode === "aoa+" && (
-                <p className="card-detail">aPNTs: {resources.aPNTsBalance} aPNTs</p>
+                <p className="card-detail">{t('step3Complete.summary.balances.apnts')} {resources.aPNTsBalance} aPNTs</p>
               )}
-              <p className="card-detail">ETH: {resources.ethBalance} ETH</p>
+              <p className="card-detail">{t('step3Complete.summary.balances.eth')} {resources.ethBalance} ETH</p>
             </div>
           </div>
         </div>
@@ -112,20 +112,20 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       {/* Next Steps */}
       <div className="next-steps">
-        <h3>📝 下一步操作</h3>
+        <h3>{t('step3Complete.nextSteps.title')}</h3>
         <div className="steps-list">
           {mode === "aoa" ? (
             <>
               <div className="step-item">
                 <div className="step-number">1</div>
                 <div className="step-content">
-                  <h4>充值 Paymaster</h4>
-                  <p>为 Paymaster 充值 ETH 以支付 gas 费用</p>
+                  <h4>{t('step3Complete.nextSteps.aoa.step1.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoa.step1.description')}</p>
                   <button
                     className="step-action"
                     onClick={() => navigate(`/operator/manage?address=${resources.paymasterAddress}`)}
                   >
-                    前往管理 →
+                    {t('step3Complete.nextSteps.aoa.step1.action')}
                   </button>
                 </div>
               </div>
@@ -133,15 +133,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <h4>测试 Gasless 交易</h4>
-                  <p>使用 Demo 应用测试您的 Paymaster</p>
+                  <h4>{t('step3Complete.nextSteps.aoa.step2.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoa.step2.description')}</p>
                   <a
                     href="https://demo.aastar.io"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    打开 Demo ↗
+                    {t('step3Complete.nextSteps.aoa.step2.action')}
                   </a>
                 </div>
               </div>
@@ -149,13 +149,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <h4>集成到您的 dApp</h4>
-                  <p>查看开发者文档，将 Paymaster 集成到您的应用中</p>
+                  <h4>{t('step3Complete.nextSteps.aoa.step3.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoa.step3.description')}</p>
                   <button
                     className="step-action"
                     onClick={() => navigate("/developer")}
                   >
-                    查看文档 →
+                    {t('step3Complete.nextSteps.aoa.step3.action')}
                   </button>
                 </div>
               </div>
@@ -165,13 +165,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">1</div>
                 <div className="step-content">
-                  <h4>充值 aPNTs</h4>
-                  <p>确保 aPNTs 余额充足以支付 gas 费用</p>
+                  <h4>{t('step3Complete.nextSteps.aoaPlus.step1.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoaPlus.step1.description')}</p>
                   <button
                     className="step-action"
                     onClick={() => navigate("/get-pnts")}
                   >
-                    获取 aPNTs →
+                    {t('step3Complete.nextSteps.aoaPlus.step1.action')}
                   </button>
                 </div>
               </div>
@@ -179,15 +179,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <h4>测试 Gasless 交易</h4>
-                  <p>使用 Demo 应用测试 SuperPaymaster</p>
+                  <h4>{t('step3Complete.nextSteps.aoaPlus.step2.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoaPlus.step2.description')}</p>
                   <a
                     href="https://demo.aastar.io"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    打开 Demo ↗
+                    {t('step3Complete.nextSteps.aoaPlus.step2.action')}
                   </a>
                 </div>
               </div>
@@ -195,13 +195,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <h4>监控您的运营</h4>
-                  <p>查看交易统计和运营数据</p>
+                  <h4>{t('step3Complete.nextSteps.aoaPlus.step3.title')}</h4>
+                  <p>{t('step3Complete.nextSteps.aoaPlus.step3.description')}</p>
                   <button
                     className="step-action"
                     onClick={() => navigate("/explorer")}
                   >
-                    前往 Explorer →
+                    {t('step3Complete.nextSteps.aoaPlus.step3.action')}
                   </button>
                 </div>
               </div>
@@ -213,13 +213,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       {/* Actions */}
       <div className="completion-actions">
         <button className="btn-secondary" onClick={onRestart}>
-          🔄 重新开始
+          {t('step3Complete.actions.restart')}
         </button>
         <button
           className="btn-primary"
           onClick={() => navigate("/")}
         >
-          返回首页 →
+          {t('step3Complete.actions.goHome')}
         </button>
       </div>
     </div>

@@ -366,23 +366,45 @@
       }
     },
     "nextSteps": {
-      "title": "🎯 下一步操作",
+      "title": "📝 下一步操作",
       "aoa": {
-        "step1": "向 EntryPoint 存入 ETH 以支持 gas 赞助",
-        "step2": "使用样例交易测试您的 Paymaster",
-        "step3": "监控 Paymaster 性能和 gas 使用情况"
+        "step1": {
+          "title": "充值 Paymaster",
+          "description": "为 Paymaster 充值 ETH 以支付 gas 费用",
+          "action": "前往管理 →"
+        },
+        "step2": {
+          "title": "测试 Gasless 交易",
+          "description": "使用 Demo 应用测试您的 Paymaster",
+          "action": "打开 Demo ↗"
+        },
+        "step3": {
+          "title": "集成到您的 dApp",
+          "description": "查看开发者文档，将 Paymaster 集成到您的应用中",
+          "action": "查看文档 →"
+        }
       },
       "aoaPlus": {
-        "step1": "向 SuperPaymaster 仪表板存入 aPNTs",
-        "step2": "监控您社区的使用统计",
-        "step3": "通过服务质量赚取奖励"
+        "step1": {
+          "title": "充值 aPNTs",
+          "description": "确保 aPNTs 余额充足以支付 gas 费用",
+          "action": "获取 aPNTs →"
+        },
+        "step2": {
+          "title": "测试 Gasless 交易",
+          "description": "使用 Demo 应用测试 SuperPaymaster",
+          "action": "打开 Demo ↗"
+        },
+        "step3": {
+          "title": "监控您的运营",
+          "description": "查看交易统计和运营数据",
+          "action": "前往 Explorer →"
+        }
       }
     },
     "actions": {
-      "viewDocs": "📚 查看文档",
-      "explorer": "🔍 在浏览器查看",
-      "restart": "🔄 部署另一个",
-      "goHome": "🏠 返回首页"
+      "restart": "🔄 重新开始",
+      "goHome": "返回首页 →"
     }
   }
 }
