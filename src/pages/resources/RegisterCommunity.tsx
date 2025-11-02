@@ -45,7 +45,7 @@ export function RegisterCommunity() {
   const [telegramGroup, setTelegramGroup] = useState<string>("");
   const [xPNTsToken, setXPNTsToken] = useState<string>("");
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
-  const [stakeAmount, setStakeAmount] = useState<string>("0");
+  const [stakeAmount, setStakeAmount] = useState<string>("30");
   const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
 
   // UI state
@@ -151,13 +151,10 @@ export function RegisterCommunity() {
         throw new Error("请输入社区名称");
       }
 
-      // Validate stake amount for AOA mode
-      if (mode === "AOA") {
-        const stakeAmountNum = parseFloat(stakeAmount || "0");
-        const minStakeNum = parseFloat(minStake || "0");
-        if (stakeAmountNum < minStakeNum) {
-          throw new Error(`AOA 模式最低质押: ${minStake} GToken`);
-        }
+      // Validate stake amount (minimum 30 GToken for both modes)
+      const stakeAmountNum = parseFloat(stakeAmount || "0");
+      if (stakeAmountNum < 30) {
+        throw new Error("最低质押: 30 GToken");
       }
 
       // Paymaster address is now optional for AOA mode
@@ -413,24 +410,24 @@ export function RegisterCommunity() {
               <div className="form-group">
                 <label>
                   质押数量 (GToken)
-                  {mode === "AOA" && minStake !== "0" && <span className="required">*</span>}
+                  {mode === "AOA" && <span className="required">*</span>}
                 </label>
                 <input
                   type="number"
-                  placeholder={mode === "AOA" ? minStake : "0"}
+                  placeholder="30"
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
-                  min={mode === "AOA" ? minStake : "0"}
+                  min="30"
                   step="0.01"
                 />
                 {mode === "AOA" && (
                   <small className="required">
-                    AOA 模式最低质押: {minStake} GToken
+                    最低质押: 30 GToken（可增加，不可低于 30）
                   </small>
                 )}
                 {mode === "SUPER" && (
                   <small className="helper-text">
-                    SUPER 模式可选质押，质押越多权重越高
+                    最低质押: 30 GToken（可增加，不可低于 30）
                   </small>
                 )}
               </div>
