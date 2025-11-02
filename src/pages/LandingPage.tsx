@@ -164,7 +164,7 @@ export function LandingPage() {
             solution for your dApp.
           </p>
           <div className="cta-buttons">
-            <a href="/launch-guide" className="cta-button large primary">
+            <a href="http://localhost:5173/operator/wizard" className="cta-button large primary">
               🚀 Launch Your Paymaster
             </a>
             <a
