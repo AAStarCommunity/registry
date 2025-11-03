@@ -479,6 +479,228 @@
   min-width: 200px;
 }
 
+/* Success Modal */
+.success-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.success-modal {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  transition: color 0.2s ease;
+  z-index: 1001;
+}
+
+.modal-close-button:hover {
+  color: #1f2937;
+}
+
+.modal-header {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #065f46;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.modal-footer {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.modal-footer .action-button {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Deployment Details */
+.deployment-details {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.address-value {
+  word-break: break-all;
+  color: #065f46;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+  flex: 1;
+  text-align: right;
+}
+
+.detail-row .mono {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+  color: #374151;
+}
+
+.detail-row .link {
+  color: #f97316;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.detail-row .link:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.detail-row .highlight {
+  color: #dc2626;
+  font-weight: 600;
+  background: #fee2e2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Success Actions */
+.success-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.success-actions .action-button {
+  flex: 1;
+  min-width: 140px;
+}
+
+/* Existing Paymaster Banner */
+.existing-paymaster-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  border: 2px solid #10b981;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 0 2rem 1.5rem;
+}
+
+.existing-paymaster-banner .banner-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.existing-paymaster-banner .banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.banner-title {
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.banner-address {
+  color: #047857;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.existing-paymaster-banner .banner-actions {
+  flex-shrink: 0;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.banner-actions .action-button {
+  white-space: nowrap;
+}
+
+/* Ready to Deploy Banner */
+.ready-to-deploy-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #fbbf24;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 0 2rem 1.5rem;
+}
+
+.ready-to-deploy-banner .banner-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.ready-to-deploy-banner .banner-content {
+  flex: 1;
+}
+
+.ready-to-deploy-banner .banner-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+}
+
+.ready-to-deploy-banner .banner-message {
+  color: #78350f;
+  font-size: 0.9rem;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .launch-paymaster-page {
@@ -526,5 +748,39 @@
 
   .launch-paymaster-page .action-footer .action-button {
     width: 100%;
+  }
+
+  .existing-paymaster-banner,
+  .ready-to-deploy-banner {
+    margin: 0 1rem 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .existing-paymaster-banner .banner-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .banner-actions .action-button {
+    width: 100%;
+  }
+
+  .modal-footer {
+    flex-direction: column;
+  }
+
+  .modal-footer .action-button {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .detail-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .address-value {
+    text-align: left;
   }
 }

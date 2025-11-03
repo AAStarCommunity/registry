@@ -45,6 +45,17 @@ interface CommunityInfo {
   isRegistered: boolean;
 }
 
+interface DeployedPaymasterInfo {
+  address: string;
+  owner: string;
+  treasury: string;
+  serviceFeeRate: string;
+  xPNTsToken?: string;
+  xPNTsSymbol?: string;
+  xPNTsName?: string;
+  mySBT?: string;
+}
+
 export function LaunchPaymaster() {
   const navigate = useNavigate();
 
@@ -70,8 +81,10 @@ export function LaunchPaymaster() {
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployTxHash, setDeployTxHash] = useState<string>("");
   const [deployedAddress, setDeployedAddress] = useState<string>("");
+  const [deployedPaymasterInfo, setDeployedPaymasterInfo] = useState<DeployedPaymasterInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingPaymaster, setExistingPaymaster] = useState<string>("");
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Connect wallet
   const connectWallet = async () => {
@@ -98,6 +111,7 @@ export function LaunchPaymaster() {
   // Load community info from Registry
   const loadCommunityInfo = async (address: string) => {
     setLoadingCommunity(true);
+    setError(null);
     try {
       const rpcUrl = getRpcUrl();
       const provider = new ethers.JsonRpcProvider(rpcUrl);
@@ -160,12 +174,17 @@ export function LaunchPaymaster() {
           setInitialSBT(sbtAddress);
         }
       } else {
-        setError("Community not registered. Please register your community first at /register-community");
+        // Community not registered - this is normal, don't show as error
         setCommunityInfo(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Failed to load community info:", err);
-      setError("Failed to load community info");
+      // Only show error if it's a network/RPC issue, not a "not registered" issue
+      if (err?.message?.includes("network") || err?.message?.includes("RPC")) {
+        setError("Unable to connect to blockchain. Please check your RPC provider and try again.");
+      }
+      // If it's just a "not registered" case, don't show error - let the UI handle it
+      setCommunityInfo(null);
     } finally {
       setLoadingCommunity(false);
     }
@@ -186,7 +205,7 @@ export function LaunchPaymaster() {
       if (hasPaymaster) {
         const paymasterAddr = await factory.paymasterByOperator(address);
         setExistingPaymaster(paymasterAddr);
-        setError(`You already deployed a Paymaster at ${paymasterAddr}`);
+        // Don't show as error - this is normal state
       }
     } catch (err) {
       console.error("Failed to check existing paymaster:", err);
@@ -269,7 +288,18 @@ export function LaunchPaymaster() {
       setDeployedAddress(deployedAddr);
       setExistingPaymaster(deployedAddr);
 
-      alert(`Paymaster deployed successfully at ${deployedAddr}!`);
+      // Fetch detailed info about deployed paymaster
+      setDeployedPaymasterInfo({
+        address: deployedAddr,
+        owner: account,
+        treasury,
+        serviceFeeRate: `${serviceFeeRate} bp (${(Number(serviceFeeRate) / 100).toFixed(2)}%)`,
+        xPNTsToken: initialGasToken || undefined,
+        mySBT: initialSBT || undefined,
+      });
+
+      // Show success modal instead of alert
+      setShowSuccessModal(true);
     } catch (err: any) {
       console.error("❌ Deployment failed:", err);
       setError(err?.message || "Failed to deploy paymaster");
@@ -295,6 +325,85 @@ export function LaunchPaymaster() {
 
   return (
     <div className="launch-paymaster-page">
+      {/* Success Modal */}
+      {showSuccessModal && deployedPaymasterInfo && (
+        <div className="success-modal-overlay" onClick={() => setShowSuccessModal(false)}>
+          <div className="success-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="modal-close-button" onClick={() => setShowSuccessModal(false)}>
+              ✕
+            </button>
+            <div className="modal-header">
+              <h2>🎉 Paymaster Deployed Successfully!</h2>
+            </div>
+            <div className="modal-body">
+              <div className="deployment-details">
+                <div className="detail-row">
+                  <span className="detail-label">Address:</span>
+                  <span className="mono address-value">{deployedPaymasterInfo.address}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Owner:</span>
+                  <span className="mono">{deployedPaymasterInfo.owner.slice(0, 6)}...{deployedPaymasterInfo.owner.slice(-4)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Treasury:</span>
+                  <span className="mono">{deployedPaymasterInfo.treasury.slice(0, 6)}...{deployedPaymasterInfo.treasury.slice(-4)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="detail-label">Service Fee Rate:</span>
+                  <span className="highlight">{deployedPaymasterInfo.serviceFeeRate}</span>
+                </div>
+                {deployedPaymasterInfo.xPNTsToken && (
+                  <div className="detail-row">
+                    <span className="detail-label">xPNTs Token:</span>
+                    <a
+                      href={getExplorerLink(deployedPaymasterInfo.xPNTsToken)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mono link"
+                    >
+                      {deployedPaymasterInfo.xPNTsToken.slice(0, 6)}...{deployedPaymasterInfo.xPNTsToken.slice(-4)} ↗
+                    </a>
+                  </div>
+                )}
+                {deployedPaymasterInfo.mySBT && (
+                  <div className="detail-row">
+                    <span className="detail-label">MySBT:</span>
+                    <a
+                      href={getExplorerLink(deployedPaymasterInfo.mySBT)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mono link"
+                    >
+                      {deployedPaymasterInfo.mySBT.slice(0, 6)}...{deployedPaymasterInfo.mySBT.slice(-4)} ↗
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <a
+                href={getExplorerLink(deployedPaymasterInfo.address)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-button outline"
+              >
+                View on Etherscan ↗
+              </a>
+              <a
+                href={`/operator/explore?address=${deployedPaymasterInfo.address}`}
+                className="action-button primary"
+              >
+                View in Explorer →
+              </a>
+              <button className="action-button outline" onClick={() => setShowSuccessModal(false)}>
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="launch-paymaster-container">
         {/* Header */}
         <div className="launch-paymaster-header">
@@ -306,6 +415,37 @@ export function LaunchPaymaster() {
             Deploy your Paymaster using PaymasterFactory
           </p>
         </div>
+
+        {/* Existing Paymaster Banner */}
+        {isConnected && (
+          <>
+            {existingPaymaster ? (
+              <div className="existing-paymaster-banner">
+                <div className="banner-icon">✅</div>
+                <div className="banner-content">
+                  <div className="banner-title">You have a Paymaster deployed</div>
+                  <div className="banner-address mono">{existingPaymaster.slice(0, 10)}...{existingPaymaster.slice(-8)}</div>
+                </div>
+                <div className="banner-actions">
+                  <a
+                    href={`/operator/explore?address=${existingPaymaster}`}
+                    className="action-button primary"
+                  >
+                    View Paymaster Details →
+                  </a>
+                </div>
+              </div>
+            ) : loadingCommunity ? null : (
+              <div className="ready-to-deploy-banner">
+                <div className="banner-icon">🚀</div>
+                <div className="banner-content">
+                  <div className="banner-title">Ready to deploy your Paymaster</div>
+                  <div className="banner-message">Connect your wallet and follow the steps below to deploy</div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
 
         {/* What is PaymasterFactory */}
         <div className="info-section">
@@ -348,7 +488,12 @@ export function LaunchPaymaster() {
               </a>
             </div>
             <div className="info-row">
-              <span className="label">Implementation</span>
+              <span className="label">
+                Implementation
+                <span title="This is the PaymasterV4.1i implementation contract used by the factory to deploy new instances via EIP-1167 minimal proxy (saves ~95% gas)" style={{marginLeft: '4px', cursor: 'help'}}>
+                  ℹ️
+                </span>
+              </span>
               <a
                 href={getExplorerLink(PAYMASTER_V4_1I_IMPLEMENTATION)}
                 target="_blank"
@@ -474,22 +619,6 @@ export function LaunchPaymaster() {
                 </div>
               )}
 
-              {/* Existing Paymaster */}
-              {existingPaymaster && (
-                <div className="existing-paymaster-box">
-                  <h4>Your Deployed Paymaster</h4>
-                  <p className="mono">{existingPaymaster}</p>
-                  <a
-                    href={getExplorerLink(existingPaymaster)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="explorer-link"
-                  >
-                    View on Etherscan →
-                  </a>
-                </div>
-              )}
-
               {/* Deploy Form */}
               {!existingPaymaster && communityInfo && communityInfo.isRegistered && (
                 <div className="deploy-form">
@@ -570,22 +699,59 @@ export function LaunchPaymaster() {
                     </div>
                   )}
 
-                  {deployedAddress && (
+                  {deployedAddress && deployedPaymasterInfo && (
                     <div className="success-box">
                       <h4>🎉 Deployment Successful!</h4>
-                      <p className="deployed-address">
-                        <strong>Paymaster Address:</strong>
-                        <br />
-                        <span className="mono">{deployedAddress}</span>
-                      </p>
-                      <a
-                        href={getExplorerLink(deployedAddress)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="explorer-link"
-                      >
-                        View on Etherscan →
-                      </a>
+                      <div className="deployment-details">
+                        <div className="detail-row">
+                          <span className="detail-label">Paymaster Address:</span>
+                          <span className="mono">{deployedAddress}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Owner:</span>
+                          <span className="mono">{deployedPaymasterInfo.owner.slice(0, 6)}...{deployedPaymasterInfo.owner.slice(-4)}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Treasury:</span>
+                          <span className="mono">{deployedPaymasterInfo.treasury.slice(0, 6)}...{deployedPaymasterInfo.treasury.slice(-4)}</span>
+                        </div>
+                        <div className="detail-row">
+                          <span className="detail-label">Service Fee Rate:</span>
+                          <span>{deployedPaymasterInfo.serviceFeeRate}</span>
+                        </div>
+                        {deployedPaymasterInfo.xPNTsToken && (
+                          <div className="detail-row">
+                            <span className="detail-label">xPNTs Token:</span>
+                            <a href={getExplorerLink(deployedPaymasterInfo.xPNTsToken)} target="_blank" rel="noopener noreferrer" className="mono link">
+                              {deployedPaymasterInfo.xPNTsToken.slice(0, 6)}...{deployedPaymasterInfo.xPNTsToken.slice(-4)} ↗
+                            </a>
+                          </div>
+                        )}
+                        {deployedPaymasterInfo.mySBT && (
+                          <div className="detail-row">
+                            <span className="detail-label">MySBT:</span>
+                            <a href={getExplorerLink(deployedPaymasterInfo.mySBT)} target="_blank" rel="noopener noreferrer" className="mono link">
+                              {deployedPaymasterInfo.mySBT.slice(0, 6)}...{deployedPaymasterInfo.mySBT.slice(-4)} ↗
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                      <div className="success-actions">
+                        <a
+                          href={getExplorerLink(deployedAddress)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-button outline"
+                        >
+                          View on Etherscan →
+                        </a>
+                        <a
+                          href={`/operator/explore?address=${deployedAddress}`}
+                          className="action-button primary"
+                        >
+                          View in Explorer →
+                        </a>
+                      </div>
                     </div>
                   )}
                 </div>
