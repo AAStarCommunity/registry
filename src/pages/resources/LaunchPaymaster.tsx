@@ -85,6 +85,7 @@ export function LaunchPaymaster() {
   const [error, setError] = useState<string | null>(null);
   const [existingPaymaster, setExistingPaymaster] = useState<string>("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeployForm, setShowDeployForm] = useState(false);
 
   // Connect wallet
   const connectWallet = async () => {
@@ -300,6 +301,12 @@ export function LaunchPaymaster() {
 
       // Show success modal instead of alert
       setShowSuccessModal(true);
+
+      // Refresh existing paymaster info and close deploy form after a delay
+      setTimeout(() => {
+        checkExistingPaymaster(account);
+        setShowDeployForm(false);
+      }, 3000);
     } catch (err: any) {
       console.error("❌ Deployment failed:", err);
       setError(err?.message || "Failed to deploy paymaster");
@@ -740,9 +747,40 @@ export function LaunchPaymaster() {
               )}
 
               {/* Deploy Form */}
-              {!existingPaymaster && communityInfo && communityInfo.isRegistered && (
-                <div className="deploy-form">
-                  <h4>Configuration</h4>
+              {communityInfo && communityInfo.isRegistered && (
+                <>
+                  {existingPaymaster && !showDeployForm && (
+                    <div className="deploy-another-prompt">
+                      <p>Want to deploy a new Paymaster with different configuration?</p>
+                      <button
+                        className="action-button primary"
+                        onClick={() => {
+                          setShowDeployForm(true);
+                          setError(null);
+                          setDeployTxHash("");
+                          setDeployedAddress("");
+                        }}
+                      >
+                        🚀 Deploy Another Paymaster
+                      </button>
+                    </div>
+                  )}
+
+                  {(!existingPaymaster || showDeployForm) && (
+                    <div className="deploy-form">
+                      {showDeployForm && existingPaymaster && (
+                        <div className="warning-banner">
+                          <span className="warning-icon">⚠️</span>
+                          <div className="warning-content">
+                            <div className="warning-title">Deploying New Paymaster</div>
+                            <div className="warning-message">
+                              You already have a Paymaster deployed. Deploying a new one will replace the existing one in your operator profile.
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <h4>Configuration</h4>
 
                   <div className="form-group">
                     <label>Treasury Address *</label>
@@ -874,7 +912,9 @@ export function LaunchPaymaster() {
                       </div>
                     </div>
                   )}
-                </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

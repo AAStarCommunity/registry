@@ -701,6 +701,64 @@
   font-size: 0.9rem;
 }
 
+/* Deploy Another Paymaster Prompt */
+.deploy-another-prompt {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border: 2px solid #3b82f6;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.deploy-another-prompt p {
+  margin: 0;
+  color: #1e40af;
+  font-size: 1rem;
+  flex: 1;
+}
+
+.deploy-another-prompt .action-button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Warning Banner for Deploy */
+.warning-banner {
+  display: flex;
+  gap: 1rem;
+  background: #fef3c7;
+  border: 2px solid #fbbf24;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.warning-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.warning-title {
+  font-weight: 600;
+  color: #92400e;
+  margin-bottom: 0.25rem;
+}
+
+.warning-message {
+  color: #78350f;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 /* Existing Paymaster Details */
 .existing-paymaster-details {
   background: #f9fafb;
@@ -910,5 +968,24 @@
   .paymaster-actions .action-button {
     width: 100%;
     min-width: auto;
+  }
+
+  .deploy-another-prompt {
+    margin: 0 1rem 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .deploy-another-prompt p {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .deploy-another-prompt .action-button {
+    width: 100%;
+  }
+
+  .warning-banner {
+    flex-direction: column;
   }
 }
