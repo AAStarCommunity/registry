@@ -40,6 +40,18 @@ export function GetSBT() {
   const [isMinting, setIsMinting] = useState(false);
   const [mintTxHash, setMintTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [copied, setCopied] = useState(false);
+
+  // Copy address to clipboard
+  const copyAddress = async () => {
+    try {
+      await navigator.clipboard.writeText(account);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   // Connect wallet
   const connectWallet = async () => {
@@ -214,10 +226,47 @@ export function GetSBT() {
 
         {/* What is MySBT */}
         <div className="info-section">
-          <h2>{t("getSBT.whatIs.title")}</h2>
-          <p>
-            {t("getSBT.whatIs.description")}
-          </p>
+          <div className="mysbt-header">
+            <svg className="mysbt-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+              {/* Whiteboard background */}
+              <rect x="20" y="20" width="160" height="120" rx="8" fill="url(#whiteboardGradient)" stroke="#667eea" strokeWidth="3"/>
+              <defs>
+                <linearGradient id="whiteboardGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style={{stopColor: "#faf5ff", stopOpacity: 1}} />
+                  <stop offset="100%" style={{stopColor: "#f3e8ff", stopOpacity: 1}} />
+                </linearGradient>
+              </defs>
+
+              {/* Writing marks - colorful strokes */}
+              <path d="M 40 50 Q 60 45, 80 50" stroke="#10b981" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <path d="M 90 50 L 130 50" stroke="#f59e0b" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <circle cx="150" cy="50" r="8" fill="#ef4444" opacity="0.7"/>
+
+              <path d="M 40 75 L 160 75" stroke="#667eea" strokeWidth="2" fill="none" strokeLinecap="round" strokeDasharray="5,5"/>
+
+              <path d="M 40 100 Q 70 95, 100 100" stroke="#8b5cf6" strokeWidth="3" fill="none" strokeLinecap="round"/>
+              <path d="M 110 100 L 160 100" stroke="#ec4899" strokeWidth="3" fill="none" strokeLinecap="round"/>
+
+              {/* Lock icon - privacy */}
+              <rect x="145" y="150" width="30" height="25" rx="3" fill="#7c3aed"/>
+              <path d="M 153 150 v -8 a 7 7 0 0 1 14 0 v 8" stroke="#7c3aed" strokeWidth="3" fill="none"/>
+              <circle cx="160" cy="162" r="3" fill="white"/>
+
+              {/* Chain links - on-chain */}
+              <circle cx="35" cy="165" r="12" stroke="#10b981" strokeWidth="3" fill="none"/>
+              <circle cx="55" cy="165" r="12" stroke="#10b981" strokeWidth="3" fill="none"/>
+              <line x1="41" y1="165" x2="49" y2="165" stroke="#10b981" strokeWidth="3"/>
+            </svg>
+            <div>
+              <h2>{t("getSBT.whatIs.title")}</h2>
+              <p className="mysbt-description">
+                {t("getSBT.whatIs.description")}
+              </p>
+              <p className="mysbt-concept">
+                {t("getSBT.whatIs.concept")}
+              </p>
+            </div>
+          </div>
           <ul className="feature-list">
             <li>
               <strong>{t("getSBT.whatIs.feature1.title")}</strong>: {t("getSBT.whatIs.feature1.desc")}
@@ -272,7 +321,25 @@ export function GetSBT() {
               <div className="account-info-card">
                 <div className="account-row">
                   <span className="label">{t("getSBT.flow.connectedAccount")}:</span>
-                  <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                  <div className="account-address-group">
+                    <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                    <button
+                      className="copy-button"
+                      onClick={copyAddress}
+                      title={copied ? "Copied!" : "Copy address"}
+                    >
+                      {copied ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                      ) : (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 

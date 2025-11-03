@@ -479,7 +479,8 @@
     "subtitle": "Create a Soul Bound Token for your community identity and record reputation",
     "whatIs": {
       "title": "What is MySBT?",
-      "description": "MySBT (Soul Bound Token) is a non-transferable NFT that represents your community identity. It includes:",
+      "description": "MySBT is a public whiteboard on-chain where all communities can freely record and write. It's a non-transferable Soul Bound Token that represents your community identity and activities.",
+      "concept": "Think of MySBT as a shared canvas: communities freely record your activities, you can bind NFTs to enhance reputation, freely join or exit communities, with privacy protection built-in as a public good.",
       "feature1": {
         "title": "Community Reputation Record",
         "desc": "Record your community reputation based on public contracts"
@@ -522,7 +523,7 @@
     "minimum": {
       "title": "Minimum GToken",
       "lock": "Lock (refundable)",
-      "burn": "Burn (service fee)",
+      "burn": "Burn (mint fee)",
       "total": "Total Required"
     },
     "requirements": {
