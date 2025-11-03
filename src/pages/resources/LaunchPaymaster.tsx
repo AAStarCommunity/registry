@@ -703,23 +703,27 @@ export function LaunchPaymaster() {
                       <div className="card-content">
                         <div className="info-item">
                           <span className="item-label">Name:</span>
-                          <span className="item-value">{communityInfo.name}</span>
+                          <span className="item-value">{communityInfo.name || "—"}</span>
                         </div>
-                        {communityInfo.ensName && (
-                          <div className="info-item">
-                            <span className="item-label">ENS:</span>
+                        <div className="info-item">
+                          <span className="item-label">ENS:</span>
+                          {communityInfo.ensName ? (
                             <span className="item-value mono">{communityInfo.ensName}</span>
-                          </div>
-                        )}
-                        {communityInfo.description && (
-                          <div className="info-item">
-                            <span className="item-label">Description:</span>
+                          ) : (
+                            <span className="item-value empty">Not set</span>
+                          )}
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Description:</span>
+                          {communityInfo.description ? (
                             <span className="item-value">{communityInfo.description}</span>
-                          </div>
-                        )}
-                        {communityInfo.website && (
-                          <div className="info-item">
-                            <span className="item-label">Website:</span>
+                          ) : (
+                            <span className="item-value empty">Not provided</span>
+                          )}
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Website:</span>
+                          {communityInfo.website ? (
                             <a
                               href={communityInfo.website}
                               target="_blank"
@@ -728,11 +732,13 @@ export function LaunchPaymaster() {
                             >
                               Visit ↗
                             </a>
-                          </div>
-                        )}
-                        {communityInfo.twitterHandle && (
-                          <div className="info-item">
-                            <span className="item-label">Twitter:</span>
+                          ) : (
+                            <span className="item-value empty">Not set</span>
+                          )}
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Twitter:</span>
+                          {communityInfo.twitterHandle ? (
                             <a
                               href={`https://twitter.com/${communityInfo.twitterHandle}`}
                               target="_blank"
@@ -741,36 +747,42 @@ export function LaunchPaymaster() {
                             >
                               @{communityInfo.twitterHandle} ↗
                             </a>
-                          </div>
-                        )}
-                        {communityInfo.memberCount !== undefined && (
-                          <div className="info-item">
-                            <span className="item-label">Members:</span>
-                            <span className="item-value">{communityInfo.memberCount.toLocaleString()}</span>
-                          </div>
-                        )}
+                          ) : (
+                            <span className="item-value empty">Not set</span>
+                          )}
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Members:</span>
+                          <span className="item-value">
+                            {communityInfo.memberCount !== undefined && communityInfo.memberCount > 0
+                              ? communityInfo.memberCount.toLocaleString()
+                              : "—"}
+                          </span>
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">xPNTs Token:</span>
+                          {initialGasToken ? (
+                            <a
+                              href={getExplorerLink(initialGasToken)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="item-value mono link"
+                            >
+                              {initialGasToken.slice(0, 6)}...{initialGasToken.slice(-4)} ↗
+                            </a>
+                          ) : (
+                            <span className="item-value empty">Not configured</span>
+                          )}
+                        </div>
                         {initialGasToken && (
-                          <>
-                            <div className="info-item">
-                              <span className="item-label">xPNTs Token:</span>
-                              <a
-                                href={getExplorerLink(initialGasToken)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="item-value mono link"
-                              >
-                                {initialGasToken.slice(0, 6)}...{initialGasToken.slice(-4)} ↗
-                              </a>
-                            </div>
-                            <div className="info-item">
-                              <span className="item-label">Exchange Rate:</span>
-                              <span className="item-value">1 xPNT = {communityInfo.xPNTsExchangeRate} aPNTs</span>
-                            </div>
-                          </>
-                        )}
-                        {initialSBT && (
                           <div className="info-item">
-                            <span className="item-label">MySBT:</span>
+                            <span className="item-label">Exchange Rate:</span>
+                            <span className="item-value">1 xPNT = {communityInfo.xPNTsExchangeRate} aPNTs</span>
+                          </div>
+                        )}
+                        <div className="info-item">
+                          <span className="item-label">MySBT:</span>
+                          {initialSBT ? (
                             <a
                               href={getExplorerLink(initialSBT)}
                               target="_blank"
@@ -779,8 +791,10 @@ export function LaunchPaymaster() {
                             >
                               {initialSBT.slice(0, 6)}...{initialSBT.slice(-4)} ↗
                             </a>
-                          </div>
-                        )}
+                          ) : (
+                            <span className="item-value empty">Not configured</span>
+                          )}
+                        </div>
                       </div>
                     </div>
 

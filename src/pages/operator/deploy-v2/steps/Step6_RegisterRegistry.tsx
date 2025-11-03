@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
-import { RegistryV1ABI, ERC20_ABI } from "../../../../config/abis";
+import { RegistryV2_1ABI, ERC20_ABI } from "../../../../config/abis";
 import "./Step6_RegisterRegistry.css";
 
 export interface Step6Props {
@@ -25,7 +25,7 @@ export function Step6_RegisterRegistry({
 }: Step6Props) {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const REGISTRY_V1_2 = networkConfig.contracts.registry; // v1.2 (legacy)
+  const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 
   const [gTokenAmount, setGTokenAmount] = useState<string>("30");
@@ -50,7 +50,7 @@ export function Step6_RegisterRegistry({
 
       const [balance, currentAllowance] = await Promise.all([
         gToken.balanceOf(walletStatus.address),
-        gToken.allowance(walletStatus.address, REGISTRY_V1_2),
+        gToken.allowance(walletStatus.address, REGISTRY_ADDRESS),
       ]);
 
       const balanceFormatted = ethers.formatEther(balance);
@@ -93,7 +93,7 @@ export function Step6_RegisterRegistry({
 
       // Approve Registry to spend GToken
       const tx = await gToken.approve(
-        REGISTRY_V1_2,
+        REGISTRY_ADDRESS,
         ethers.parseEther(gTokenAmount)
       );
 
@@ -127,7 +127,7 @@ export function Step6_RegisterRegistry({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const registry = new ethers.Contract(REGISTRY_V1_2, RegistryV1ABI, signer);
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1ABI, signer);
 
       // Create metadata JSON
       const metadata = JSON.stringify({

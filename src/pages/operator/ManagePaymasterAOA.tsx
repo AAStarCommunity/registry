@@ -57,8 +57,7 @@ export default function ManagePaymasterAOA() {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
   const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
-  const REGISTRY_V1_2 = networkConfig.contracts.registry; // v1.2 (legacy)
-  const REGISTRY_V2 = networkConfig.contracts.registryV2;
+  const REGISTRY = networkConfig.contracts.registryV2_1;
   const GTOKEN_STAKING = networkConfig.contracts.gTokenStaking;
 
   const [config, setConfig] = useState<PaymasterConfig | null>(null);
@@ -201,7 +200,7 @@ export default function ManagePaymasterAOA() {
       });
 
       setRegistryInfo({
-        registryAddress: REGISTRY_V2,
+        registryAddress: REGISTRY,
         stakedGToken: ethers.formatEther(stakeInfo.amount),
         availableToLock: ethers.formatEther(availableBalance),
       });

@@ -19,7 +19,7 @@ import { RegistryABI } from "../config/abis";
 // Contract Addresses from shared-config
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 const networkConfig = getCurrentNetworkConfig();
-const REGISTRY_ADDRESS = networkConfig.contracts.registry;
+const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
 
 // Event ABI (keep local as it's not in config)
 const PAYMASTER_ABI = [
