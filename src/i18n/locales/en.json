@@ -473,5 +473,122 @@
       "alreadyRegistered": "This address is already registered as community: {{name}}",
       "registrationFailed": "Community registration failed"
     }
+  },
+  "getSBT": {
+    "title": "Mint My MySBT",
+    "subtitle": "Create a Soul Bound Token for your community identity and record reputation",
+    "whatIs": {
+      "title": "What is MySBT?",
+      "description": "MySBT (Soul Bound Token) is a non-transferable NFT that represents your community identity. It includes:",
+      "feature1": {
+        "title": "Community Reputation Record",
+        "desc": "Record your community reputation based on public contracts"
+      },
+      "feature2": {
+        "title": "NFT Binding Support",
+        "desc": "Bind external NFTs to your SBT"
+      },
+      "feature3": {
+        "title": "stGToken Lock",
+        "desc": "Minting requires at least 0.3 stGT lock"
+      },
+      "feature4": {
+        "title": "Binding Limits",
+        "desc": "First 10 NFT bindings free, then 1 stGT per additional binding"
+      },
+      "feature5": {
+        "title": "7-Day Cooldown",
+        "desc": "Unbinding protection period"
+      }
+    },
+    "startMint": {
+      "title": "Start Minting MySBT",
+      "description": "Connect your wallet to start minting MySBT"
+    },
+    "existing": {
+      "title": "✅ You Already Own MySBT",
+      "tokenId": "Token ID"
+    },
+    "flow": {
+      "title": "Mint Process: Stake → Lock → Select Community → Mint MySBT",
+      "connectedAccount": "Connected Wallet",
+      "gTokenBalance": "GToken Balance",
+      "stGTokenBalance": "stGToken Balance"
+    },
+    "steps": {
+      "completed": "Completed",
+      "step1": {
+        "title": "Step 1: Stake GToken",
+        "description": "Stake GToken to get stGToken. Minimum 30 GT required.",
+        "amountLabel": "Stake Amount (GT)",
+        "stakeButton": "Stake GToken",
+        "staking": "Staking...",
+        "success": "GToken staked successfully"
+      },
+      "step2": {
+        "title": "Step 2: Lock stGToken",
+        "description": "Confirm locking {{amount}} stGToken. This amount will be locked as collateral for minting MySBT.",
+        "required": "Lock Required",
+        "current": "Current Available",
+        "success": "stGToken locked"
+      },
+      "step3": {
+        "title": "Step 3: Select Community and Mint MySBT",
+        "description": "Select a registered community and mint your MySBT.",
+        "selectLabel": "Select Community",
+        "selectPlaceholder": "-- Select a community --",
+        "minting": "Minting...",
+        "pending": "Complete previous steps to mint MySBT"
+      }
+    },
+    "errors": {
+      "metamaskNotInstalled": "Please install MetaMask",
+      "walletConnectionFailed": "Failed to connect wallet",
+      "stakeFailed": "Failed to stake GToken",
+      "lockFailed": "Failed to lock stGToken",
+      "mintFailed": "Failed to mint MySBT",
+      "communityNotSelected": "Please select a community",
+      "insufficientLockBalance": "Need at least {{required}} stGT, but only have {{current}} stGT"
+    },
+    "warnings": {
+      "insufficientGToken": "⚠️ Insufficient GToken balance. Need at least 30 GT.",
+      "insufficientStGToken": "⚠️ Insufficient stGToken balance. Need at least {{required}} stGT."
+    },
+    "buttons": {
+      "connectWallet": "Connect Wallet",
+      "confirmLock": "Confirm Lock",
+      "mintMySBT": "Mint MySBT",
+      "getGToken": "Get GToken",
+      "backHome": "Back to Home"
+    },
+    "success": {
+      "txSubmitted": "Transaction submitted!"
+    },
+    "contractInfo": {
+      "title": "Contract Address Info",
+      "mySBTAddress": "MySBT Address",
+      "network": "Network",
+      "sepolia": "Sepolia Testnet",
+      "minLock": "Minimum Lock"
+    },
+    "links": {
+      "viewEtherscan": "View on Etherscan",
+      "viewTx": "View Transaction"
+    },
+    "console": {
+      "walletConnectionFailed": "Wallet connection failed",
+      "failedToLoadBalances": "Failed to load balances",
+      "failedToLoadCommunities": "Failed to load communities",
+      "failedToCheckExistingSBT": "Failed to check existing MySBT",
+      "approvingGToken": "Approving GToken...",
+      "stakingGToken": "Staking GToken...",
+      "stakeSuccess": "Stake successful!",
+      "stakeFailed": "Stake failed",
+      "stGTokenLocked": "stGToken locked",
+      "mintingMySBT": "Minting MySBT for community {{community}}...",
+      "waitingForConfirmation": "Waiting for confirmation...",
+      "mintSuccess": "Mint successful!",
+      "mintFailed": "Mint failed"
+    }
   }
 }
