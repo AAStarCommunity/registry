@@ -243,19 +243,18 @@ export function PaymasterDetail() {
     );
   }
 
-  // Check if Paymaster has any analytics data (even if not registered)
+  // Check if Paymaster has any analytics data
   const hasAnalyticsData = paymasterStats && paymasterStats.operations > 0;
 
-  // Allow display if either registered in Registry OR has analytics data
-  if (!hasAnalyticsData && (!registryInfo || !registryInfo.paymasterAddress)) {
+  // Show error only if completely not found anywhere
+  if (!hasAnalyticsData && !registryInfo) {
     return (
       <div className="paymaster-detail-page">
         <div className="error-state">
           <h2>❌ Paymaster Not Found</h2>
           <p>Address: {address}</p>
           <p>
-            This Paymaster is not registered in the SuperPaymaster Registry and
-            has no transaction history.
+            This Paymaster has no data on the network yet.
           </p>
           <Link to="/analytics" className="back-link">
             ← Back to Analytics
@@ -290,8 +289,12 @@ export function PaymasterDetail() {
         </div>
         {!isRegistered && (
           <div className="warning-banner">
-            ⚠️ This Paymaster is not registered in the SuperPaymaster Registry.
-            Only analytics data is available.
+            <div style={{ marginBottom: '0.75rem' }}>
+              ⚠️ This Paymaster is not registered in the SuperPaymaster Registry.
+            </div>
+            <Link to="/launch-paymaster" className="action-link">
+              ✅ Register This Paymaster →
+            </Link>
           </div>
         )}
         {analytics?.lastUpdated && (
@@ -580,6 +583,23 @@ export function PaymasterDetail() {
           margin: 1rem 0;
           color: #856404;
           font-weight: 500;
+        }
+
+        .action-link {
+          display: inline-block;
+          background: #667eea;
+          color: white;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          text-decoration: none;
+          font-weight: 600;
+          transition: all 0.3s;
+        }
+
+        .action-link:hover {
+          background: #764ba2;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
         .cache-age {

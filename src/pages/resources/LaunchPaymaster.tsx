@@ -22,7 +22,8 @@ import "./LaunchPaymaster.css";
 // Get contract addresses from config
 const networkConfig = getCurrentNetworkConfig();
 const PAYMASTER_FACTORY_ADDRESS = networkConfig.contracts.paymasterFactory;
-const PAYMASTER_V4_1I_IMPLEMENTATION = "0x3E1C6a741f4b3f8bE24f324342539982324a6f8a"; // From shared-config
+// PaymasterV4 is the implementation used by factory (EIP-1167 minimal proxy)
+const PAYMASTER_V4_1I_IMPLEMENTATION = networkConfig.contracts.paymasterV4;
 const ENTRY_POINT_ADDRESS = networkConfig.contracts.entryPointV07;
 const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
 const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
@@ -40,9 +41,14 @@ const getExplorerLink = (address: string, type: 'address' | 'tx' = 'address'): s
 interface CommunityInfo {
   name: string;
   ensName: string;
+  description?: string;
+  website?: string;
+  twitterHandle?: string;
   xPNTsToken: string;
   xPNTsExchangeRate: string; // Exchange rate between aPNTs and xPNTs
   isRegistered: boolean;
+  registeredAt?: number;
+  memberCount?: number;
 }
 
 interface DeployedPaymasterInfo {
@@ -148,9 +154,14 @@ export function LaunchPaymaster() {
         setCommunityInfo({
           name: community.name,
           ensName: community.ensName,
+          description: community.description || undefined,
+          website: community.website || undefined,
+          twitterHandle: community.twitterHandle || undefined,
           xPNTsToken: community.xPNTsToken,
           xPNTsExchangeRate: exchangeRate,
           isRegistered: true,
+          registeredAt: community.registeredAt ? Number(community.registeredAt) : undefined,
+          memberCount: community.memberCount ? Number(community.memberCount) : undefined,
         });
 
         // Calculate minTokenBalance based on exchange rate
@@ -584,6 +595,52 @@ export function LaunchPaymaster() {
                       <span className="value mono">{communityInfo.ensName}</span>
                     </div>
                   )}
+                  {communityInfo.description && (
+                    <div className="info-row">
+                      <span className="label">Description:</span>
+                      <span className="value">{communityInfo.description}</span>
+                    </div>
+                  )}
+                  {communityInfo.website && (
+                    <div className="info-row">
+                      <span className="label">Website:</span>
+                      <a
+                        href={communityInfo.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="value"
+                      >
+                        {communityInfo.website} ↗
+                      </a>
+                    </div>
+                  )}
+                  {communityInfo.twitterHandle && (
+                    <div className="info-row">
+                      <span className="label">Twitter:</span>
+                      <a
+                        href={`https://twitter.com/${communityInfo.twitterHandle}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="value"
+                      >
+                        @{communityInfo.twitterHandle} ↗
+                      </a>
+                    </div>
+                  )}
+                  {communityInfo.memberCount !== undefined && (
+                    <div className="info-row">
+                      <span className="label">Members:</span>
+                      <span className="value">{communityInfo.memberCount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {communityInfo.registeredAt !== undefined && (
+                    <div className="info-row">
+                      <span className="label">Registered:</span>
+                      <span className="value">
+                        {new Date(communityInfo.registeredAt * 1000).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                   {initialGasToken && (
                     <>
                       <div className="info-row">
@@ -652,6 +709,44 @@ export function LaunchPaymaster() {
                           <div className="info-item">
                             <span className="item-label">ENS:</span>
                             <span className="item-value mono">{communityInfo.ensName}</span>
+                          </div>
+                        )}
+                        {communityInfo.description && (
+                          <div className="info-item">
+                            <span className="item-label">Description:</span>
+                            <span className="item-value">{communityInfo.description}</span>
+                          </div>
+                        )}
+                        {communityInfo.website && (
+                          <div className="info-item">
+                            <span className="item-label">Website:</span>
+                            <a
+                              href={communityInfo.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="item-value link"
+                            >
+                              Visit ↗
+                            </a>
+                          </div>
+                        )}
+                        {communityInfo.twitterHandle && (
+                          <div className="info-item">
+                            <span className="item-label">Twitter:</span>
+                            <a
+                              href={`https://twitter.com/${communityInfo.twitterHandle}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="item-value link"
+                            >
+                              @{communityInfo.twitterHandle} ↗
+                            </a>
+                          </div>
+                        )}
+                        {communityInfo.memberCount !== undefined && (
+                          <div className="info-item">
+                            <span className="item-label">Members:</span>
+                            <span className="item-value">{communityInfo.memberCount.toLocaleString()}</span>
                           </div>
                         )}
                         {initialGasToken && (
