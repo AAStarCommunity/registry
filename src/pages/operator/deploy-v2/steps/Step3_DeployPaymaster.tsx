@@ -5,6 +5,7 @@ import { ethers } from "ethers";
 import PaymasterV4_1 from "../../../../contracts/PaymasterV4_1.json";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
+import { RegistryV2_1ABI, PaymasterFactoryABI } from "../../../../config/abis";
 import "./Step3_DeployPaymaster.css";
 
 // EntryPoint v0.7 addresses - from shared-config
@@ -21,10 +22,6 @@ const CHAINLINK_ETH_USD_FEED: Record<number, string> = {
   1: "0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419",        // Ethereum Mainnet
 };
 
-// Registry v2.0/v2.1 ABI for checking existing registration
-const REGISTRY_V2_ABI = [
-  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
-];
 
 export interface DeployConfig {
   communityName: string;
@@ -101,7 +98,7 @@ export function Step3_DeployPaymaster({
 
         const registry = new ethers.Contract(
           networkConfig.contracts.registryV2_1,
-          REGISTRY_V2_ABI,
+          RegistryV2_1ABI,
           rpcProvider // Use independent provider, not MetaMask
         );
 
@@ -203,14 +200,9 @@ export function Step3_DeployPaymaster({
         throw new Error("PaymasterFactory address not configured");
       }
 
-      const factoryABI = [
-        "function deployPaymaster(string version, bytes initData) external returns (address)",
-        "function implementations(string) external view returns (address)"
-      ];
-
       const factoryContract = new ethers.Contract(
         paymasterFactoryAddress,
-        factoryABI,
+        PaymasterFactoryABI,
         signer
       );
 
@@ -274,8 +266,7 @@ export function Step3_DeployPaymaster({
         paymasterAddress = parsed?.args[1]; // Second indexed parameter is paymaster address
       } else {
         // Fallback: query factory for operator's paymaster
-        const paymasterByOperatorABI = ["function paymasterByOperator(address) external view returns (address)"];
-        const factoryQuery = new ethers.Contract(paymasterFactoryAddress, paymasterByOperatorABI, provider);
+        const factoryQuery = new ethers.Contract(paymasterFactoryAddress, PaymasterFactoryABI, provider);
         paymasterAddress = await factoryQuery.paymasterByOperator(ownerAddress);
       }
 

@@ -13,6 +13,11 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import {
+  SuperPaymasterV2ABI,
+  RegistryABI,
+  GTokenStakingABI,
+} from "../../config/abis";
 import "./ConfigureSuperPaymaster.css";
 
 // Get contract addresses from config
@@ -20,21 +25,6 @@ const networkConfig = getCurrentNetworkConfig();
 const SUPERPAYMASTER_ADDRESS = networkConfig.contracts.superPaymasterV2;
 const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
 const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
-
-// ABIs
-const SUPERPAYMASTER_ABI = [
-  "function registerOperator(uint256 stGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
-  "function accounts(address) external view returns (tuple(uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))",
-];
-
-const REGISTRY_ABI = [
-  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-];
-
-const GTOKEN_STAKING_ABI = [
-  "function userStakes(address) external view returns (uint256 staked, uint256 locked, uint256 lastStakeTime)",
-  "function approve(address spender, uint256 amount) external",
-];
 
 // Helper function to get explorer link
 const getExplorerLink = (address: string, type: 'address' | 'tx' = 'address'): string => {
@@ -111,7 +101,7 @@ export function ConfigureSuperPaymaster() {
     try {
       const rpcUrl = getRpcUrl();
       const provider = new ethers.JsonRpcProvider(rpcUrl);
-      const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, provider);
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, provider);
 
       const community = await registry.communities(address);
 
@@ -140,7 +130,7 @@ export function ConfigureSuperPaymaster() {
     try {
       const rpcUrl = getRpcUrl();
       const provider = new ethers.JsonRpcProvider(rpcUrl);
-      const staking = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTOKEN_STAKING_ABI, provider);
+      const staking = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTokenStakingABI, provider);
 
       const userStake = await staking.userStakes(address);
       setGTokenStaked(ethers.formatEther(userStake.staked));
@@ -157,7 +147,7 @@ export function ConfigureSuperPaymaster() {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const superPaymaster = new ethers.Contract(
         SUPERPAYMASTER_ADDRESS,
-        SUPERPAYMASTER_ABI,
+        SuperPaymasterV2ABI,
         provider
       );
 
@@ -219,7 +209,7 @@ export function ConfigureSuperPaymaster() {
 
       const superPaymaster = new ethers.Contract(
         SUPERPAYMASTER_ADDRESS,
-        SUPERPAYMASTER_ABI,
+        SuperPaymasterV2ABI,
         signer
       );
 

@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { useSearchParams } from 'react-router-dom';
 import { getCurrentNetworkConfig } from '../../config/networkConfig';
 import { getProvider } from '../../utils/rpc-provider';
+import { PaymasterV4ABI, ENTRY_POINT_ABI, RegistryV1ABI, GTokenStakingABI } from '../../config/abis';
 import './ManagePaymasterFull.css';
 
 /**
@@ -15,53 +16,9 @@ import './ManagePaymasterFull.css';
  * - Provide UI to modify all parameters
  * - Support SBT and GasToken management
  * - Pause/unpause functionality
+ *
+ * ABIs imported from config/abis.ts
  */
-
-// ABIs
-// PaymasterV4 ABI - Removed gasToUSDRate/pntPriceUSD (not in V4, uses Chainlink)
-const PAYMASTER_V4_ABI = [
-  "function owner() view returns (address)",
-  "function treasury() view returns (address)",
-  "function serviceFeeRate() view returns (uint256)",
-  "function maxGasCostCap() view returns (uint256)",
-  "function paused() view returns (bool)",
-  "function entryPoint() view returns (address)",
-  "function registry() view returns (address)",
-  "function isRegistrySet() view returns (bool)",
-  "function supportedSBTs(uint256) view returns (address)",
-  "function supportedGasTokens(uint256) view returns (address)",
-  "function getSupportedSBTs() view returns (address[])",
-  "function getSupportedGasTokens() view returns (address[])",
-  "function isSBTSupported(address) view returns (bool)",
-  "function isGasTokenSupported(address) view returns (bool)",
-  "function transferOwnership(address newOwner)",
-  "function setTreasury(address newTreasury)",
-  "function setServiceFeeRate(uint256 rate)",
-  "function setMaxGasCostCap(uint256 cap)",
-  "function setRegistry(address registry)",
-  "function addSBT(address sbtToken)",
-  "function removeSBT(address sbtToken)",
-  "function addGasToken(address gasToken)",
-  "function removeGasToken(address gasToken)",
-  "function pause()",
-  "function unpause()",
-];
-
-const ENTRY_POINT_ABI = [
-  "function balanceOf(address account) view returns (uint256)",
-  "function getDepositInfo(address account) view returns (tuple(uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime))",
-  "function addDeposit(address account) payable",
-];
-
-const REGISTRY_ABI = [
-  "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
-];
-
-const GTOKEN_STAKING_ABI = [
-  "function getStakeInfo(address user) view returns (tuple(uint256 amount, uint256 sGTokenShares, uint256 stakedAt, uint256 unstakeRequestedAt))",
-  "function availableBalance(address user) view returns (uint256)",
-  "function stake(uint256 amount) returns (uint256 shares)",
-];
 
 // PaymasterV4 uses Chainlink for price feeds (no manual gasToUSDRate/pntPriceUSD)
 interface PaymasterConfig {
@@ -171,7 +128,7 @@ export default function ManagePaymasterAOA() {
       const provider = getProvider();
 
       // Load Paymaster config
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
 
       // Fetch basic config (PaymasterV4 uses Chainlink, no manual rates)
       const [
@@ -234,7 +191,7 @@ export default function ManagePaymasterAOA() {
       });
 
       // Load GTokenStaking info
-      const gtokenStaking = new ethers.Contract(GTOKEN_STAKING, GTOKEN_STAKING_ABI, provider);
+      const gtokenStaking = new ethers.Contract(GTOKEN_STAKING, GTokenStakingABI, provider);
       const stakeInfo = await gtokenStaking.getStakeInfo(userAddr);
       const availableBalance = await gtokenStaking.availableBalance(userAddr);
 
@@ -294,7 +251,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       let tx;
 
@@ -353,7 +310,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       const tx = config?.paused ? await paymaster.unpause() : await paymaster.pause();
       await tx.wait();
@@ -374,7 +331,7 @@ export default function ManagePaymasterAOA() {
     setCheckingSBT(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
       const isSupported = await paymaster.supportedSBTs(sbtAddress);
       setSbtStatus(isSupported);
     } catch (err) {
@@ -391,7 +348,7 @@ export default function ManagePaymasterAOA() {
     setCheckingGasToken(true);
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, provider);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
       const isSupported = await paymaster.supportedGasTokens(gasTokenAddress);
       setGasTokenStatus(isSupported);
     } catch (err) {
@@ -411,7 +368,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       const tx = await paymaster.addSBT(sbtAddress);
       await tx.wait();
@@ -436,7 +393,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       const tx = await paymaster.removeSBT(sbtAddress);
       await tx.wait();
@@ -461,7 +418,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       const tx = await paymaster.addGasToken(gasTokenAddress);
       await tx.wait();
@@ -486,7 +443,7 @@ export default function ManagePaymasterAOA() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_V4_ABI, signer);
+      const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       const tx = await paymaster.removeGasToken(gasTokenAddress);
       await tx.wait();

@@ -3,20 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import { MySBTABI, GTokenStakingABI } from "../../config/abis";
 import "./GetSBT.css";
-
-// ABIs
-const MYSBT_FACTORY_ABI = [
-  "function deployMySBT() external returns (address sbtAddress, uint256 sbtId)",
-  "function hasSBT(address community) external view returns (bool)",
-  "function getSBTAddress(address community) external view returns (address)",
-  "function isProtocolDerived(address sbt) external view returns (bool)",
-  "function sbtToId(address sbt) external view returns (uint256)",
-];
-
-const GTOKEN_STAKING_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-];
 
 export function GetSBT() {
   const navigate = useNavigate();
@@ -64,7 +52,7 @@ export function GetSBT() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const stakingContract = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+        GTokenStakingABI,
         rpcProvider
       );
 
@@ -81,7 +69,7 @@ export function GetSBT() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const factory = new ethers.Contract(
         MYSBT_FACTORY_ADDRESS,
-        MYSBT_FACTORY_ABI,
+        MySBTABI,
         rpcProvider
       );
 
@@ -112,7 +100,7 @@ export function GetSBT() {
       const signer = await provider.getSigner();
       const factory = new ethers.Contract(
         MYSBT_FACTORY_ADDRESS,
-        MYSBT_FACTORY_ABI,
+        MySBTABI,
         signer
       );
 

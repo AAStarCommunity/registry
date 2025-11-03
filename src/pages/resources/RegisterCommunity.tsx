@@ -4,20 +4,8 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import { RegistryABI, GTokenStakingABI } from "../../config/abis";
 import "./RegisterCommunity.css";
-
-// Registry ABI (CommunityProfile struct fields) - Registry v2.1.4 (11 fields with allowPermissionlessMint)
-const REGISTRY_ABI = [
-  "function registerCommunity(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint) profile, uint256 stGTokenAmount) external",
-  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-  "function nodeTypeConfigs(uint8) external view returns (uint256 minStake, uint256 slashThreshold, uint256 slashBase, uint256 slashIncrement, uint256 slashMax)",
-];
-
-// GTokenStaking ABI
-const GTOKEN_STAKING_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)",
-];
 
 export function RegisterCommunity() {
   const navigate = useNavigate();
@@ -87,7 +75,7 @@ export function RegisterCommunity() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        REGISTRY_ABI,
+        RegistryABI,
         rpcProvider
       );
 
@@ -107,7 +95,7 @@ export function RegisterCommunity() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        REGISTRY_ABI,
+        RegistryABI,
         rpcProvider
       );
 
@@ -258,7 +246,7 @@ export function RegisterCommunity() {
       // Step 3: Register community (Registry will call GTokenStaking.lockStake internally)
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        REGISTRY_ABI,
+        RegistryABI,
         signer
       );
 

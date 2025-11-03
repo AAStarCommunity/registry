@@ -3,14 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import { xPNTsFactoryABI } from "../../config/abis";
 import "./GetXPNTs.css";
-
-// ABIs
-const XPNTS_FACTORY_ABI = [
-  "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS, uint256 exchangeRate, address paymasterAOA) external returns (address)",
-  "function hasToken(address community) external view returns (bool)",
-  "function getTokenAddress(address community) external view returns (address)",
-];
 
 export function GetXPNTs() {
   const navigate = useNavigate();
@@ -62,7 +56,7 @@ export function GetXPNTs() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
-        XPNTS_FACTORY_ABI,
+        xPNTsFactoryABI,
         rpcProvider
       );
 
@@ -103,7 +97,7 @@ export function GetXPNTs() {
       const signer = await provider.getSigner();
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
-        XPNTS_FACTORY_ABI,
+        xPNTsFactoryABI,
         signer
       );
 

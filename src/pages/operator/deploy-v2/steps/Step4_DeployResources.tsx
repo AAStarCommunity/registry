@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { xPNTsFactoryABI, ERC20_ABI, GTokenStakingABI } from "../../../../config/abis";
 import "./Step4_DeployResources.css";
 
 export interface Step4Props {
@@ -43,23 +44,6 @@ const getExplorerUrl = (address: string): string => {
   return `${baseUrl}/address/${address}`;
 };
 
-// ABIs
-const XPNTS_FACTORY_ABI = [
-  "function deployxPNTsToken(string memory name, string memory symbol, string memory communityName, string memory communityENS, uint256 exchangeRate, address paymasterAOA) external returns (address)",
-  "function hasToken(address community) external view returns (bool)",
-  "function getTokenAddress(address community) external view returns (address)",
-];
-
-const GTOKEN_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)",
-];
-
-const GTOKEN_STAKING_ABI = [
-  "function stake(uint256 amount) external returns (uint256 shares)",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function getStakeInfo(address user) external view returns (tuple(uint256 amount, uint256 sGTokenShares, uint256 stakedAt, uint256 unstakeRequestedAt))",
-];
 
 // Sub-steps
 const ResourceStep = {
@@ -110,7 +94,7 @@ export function Step4_DeployResources({
 
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
-        XPNTS_FACTORY_ABI,
+        xPNTsFactoryABI,
         provider
       );
 
@@ -142,7 +126,7 @@ export function Step4_DeployResources({
 
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+        GTokenStakingABI,
         provider
       );
 
@@ -185,7 +169,7 @@ export function Step4_DeployResources({
 
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
-        XPNTS_FACTORY_ABI,
+        xPNTsFactoryABI,
         signer
       );
 
@@ -259,10 +243,10 @@ export function Step4_DeployResources({
       console.log("User address:", userAddress);
       console.log("Amount to stake:", gTokenStakeAmount, "GT");
 
-      const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTOKEN_ABI, signer);
+      const gToken = new ethers.Contract(GTOKEN_ADDRESS, ERC20_ABI, signer);
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+        GTokenStakingABI,
         signer
       );
 

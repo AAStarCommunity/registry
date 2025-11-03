@@ -34,6 +34,26 @@ export const ENTRY_POINT_ABI = [
   "function getDepositInfo(address account) external view returns (uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime)",
 ];
 
+// Legacy Registry ABIs for backward compatibility in RegistryExplorer
+export const RegistryV1ABI = [
+  "function getActivePaymasters() external view returns (address[])",
+  "function getPaymasterCount() external view returns (uint256)",
+  "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
+  "function isPaymasterActive(address paymaster) view returns (bool)",
+];
+
+export const RegistryV2_1ABI = [
+  "function getCommunityCount() view returns (uint256)",
+  "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
+  "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
+];
+
+export const RegistryV2_1_4ABI = [
+  "function getCommunityCount() view returns (uint256)",
+  "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
+  "function communities(address) view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
+];
+
 // Export ABIs from shared-config
 export {
   RegistryABI,

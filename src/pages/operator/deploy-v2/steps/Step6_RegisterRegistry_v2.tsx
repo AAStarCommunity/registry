@@ -9,6 +9,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { RegistryV2_1ABI, GTokenStakingABI } from "../../../../config/abis";
 import "./Step6_RegisterRegistry.css";
 
 export interface Step6Props {
@@ -23,39 +24,6 @@ export interface Step6Props {
   onBack: () => void;
 }
 
-// Registry v2.1 ABI - registerCommunity with stGTokenAmount parameter (backward compatible with v2.0)
-const REGISTRY_V2_1_ABI = [
-  `function registerCommunity(
-    tuple(
-      string name,
-      string ensName,
-      string description,
-      string website,
-      string logoURI,
-      string twitterHandle,
-      string githubOrg,
-      string telegramGroup,
-      address xPNTsToken,
-      address[] supportedSBTs,
-      uint8 mode,
-      uint8 nodeType,
-      address paymasterAddress,
-      address community,
-      uint256 registeredAt,
-      uint256 lastUpdatedAt,
-      bool isActive,
-      uint256 memberCount
-    ) profile,
-    uint256 stGTokenAmount
-  ) external`,
-  "function getCommunityProfile(address communityAddress) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
-];
-
-// GTokenStaking ABI - share-based staking (non-transferable)
-// NOTE: stGToken does NOT support approve/allowance/transfer
-const GTOKEN_STAKING_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-];
 
 enum PaymasterMode {
   INDEPENDENT = 0, // AOA mode
@@ -129,7 +97,7 @@ export function Step6_RegisterRegistry_v2({
 
         const gTokenStaking = new ethers.Contract(
           config.contracts.gTokenStaking,
-          GTOKEN_STAKING_ABI,
+          GTokenStakingABI,
           provider
         );
 
@@ -164,7 +132,7 @@ Solutions:
 
       const registry = new ethers.Contract(
         config.contracts.registryV2_1,
-        REGISTRY_V2_1_ABI,
+        RegistryV2_1ABI,
         signer
       );
 

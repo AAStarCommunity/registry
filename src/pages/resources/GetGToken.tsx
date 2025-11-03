@@ -8,15 +8,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
-import GTokenStakingABI from "../../contracts/GTokenStaking.json";
+import { ERC20_ABI, GTokenStakingABI } from "../../config/abis";
 import "./GetGToken.css";
-
-// ERC20 ABI (只包含需要的函数)
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function approve(address spender, uint256 amount) returns (bool)",
-  "function allowance(address owner, address spender) view returns (uint256)",
-];
 
 const GetGToken: React.FC = () => {
   const navigate = useNavigate();
@@ -71,7 +64,7 @@ const GetGToken: React.FC = () => {
       // Load stGToken balance
       const stakingContract = new ethers.Contract(
         config.contracts.gTokenStaking,
-        GTokenStakingABI.abi,
+        GTokenStakingABI,
         provider
       );
       const stGtBalance = await stakingContract.balanceOf(userAddress);
@@ -132,7 +125,7 @@ const GetGToken: React.FC = () => {
       // Pre-flight Check 2: Check existing stake
       const stakingContract = new ethers.Contract(
         config.contracts.gTokenStaking,
-        GTokenStakingABI.abi,
+        GTokenStakingABI,
         provider
       );
 
@@ -186,7 +179,7 @@ const GetGToken: React.FC = () => {
       // Step 2: Stake
       const stakingContractSigner = new ethers.Contract(
         config.contracts.gTokenStaking,
-        GTokenStakingABI.abi,
+        GTokenStakingABI,
         signer
       );
 
