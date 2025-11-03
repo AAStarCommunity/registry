@@ -21,9 +21,9 @@ export function GetSBT() {
   const RPC_URL = getRpcUrl();
 
   // Constants
-  const REQUIRED_GTOKEN = "0.3"; // Minimum 0.3 GT required
+  const REQUIRED_GTOKEN = "0.4"; // Minimum 0.4 GT required
   const MINT_COST = "0.1"; // 0.1 GT will be burned/transferred
-  const REFUND_AMOUNT = "0.2"; // 0.2 GT will be refunded if user quits
+  const REFUND_AMOUNT = "0.3"; // 0.3 GT will be refunded if user quits
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -284,6 +284,11 @@ export function GetSBT() {
                   <div className={`card-status ${parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
                     {parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ " + t("getSBT.balance.sufficient") : "⚠️ " + t("getSBT.balance.insufficient")}
                   </div>
+                  {parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
+                    <a href="/get-gtoken" className="get-gtoken-link">
+                      {t("getSBT.buttons.getGToken")} →
+                    </a>
+                  )}
                 </div>
 
                 <div className="balance-card minimum-card">

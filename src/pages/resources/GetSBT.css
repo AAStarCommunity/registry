@@ -598,6 +598,25 @@
   color: #92400e;
 }
 
+.get-gtoken-link {
+  display: block;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  margin-top: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.get-gtoken-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
 /* Community Selection */
 .community-selection-section {
   background: white;

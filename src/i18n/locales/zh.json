@@ -490,7 +490,7 @@
       },
       "feature3": {
         "title": "GToken 质押",
-        "desc": "铸造需要至少 0.3 GT 质押"
+        "desc": "铸造需要至少 0.4 GT 质押"
       },
       "feature4": {
         "title": "绑定限制",
@@ -511,7 +511,7 @@
     },
     "flow": {
       "title": "为你的社区铸造 MySBT",
-      "description": "此 SBT 将作为白板，基于 MySBT 公共合约记录你的所有社区声誉。你需要至少锁定 0.3 GT。首次铸造需要选择一个初始社区。",
+      "description": "此 SBT 将作为白板，基于 MySBT 公共合约记录你的所有社区声誉。你需要至少锁定 0.4 GT。首次铸造需要选择一个初始社区。",
       "connectedAccount": "已连接的钱包",
       "gTokenBalance": "GToken 余额"
     },

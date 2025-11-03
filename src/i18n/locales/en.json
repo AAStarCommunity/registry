@@ -490,7 +490,7 @@
       },
       "feature3": {
         "title": "GToken Stake",
-        "desc": "Minting requires at least 0.3 GT stake"
+        "desc": "Minting requires at least 0.4 GT stake"
       },
       "feature4": {
         "title": "Binding Limits",
@@ -511,7 +511,7 @@
     },
     "flow": {
       "title": "Mint MySBT for Your Community",
-      "description": "This SBT will act as a White Board to record all your Community Reputation, based on a MySBT public contract. You need at least 0.3 GT locked. The first time mint should choose an initial Community.",
+      "description": "This SBT will act as a White Board to record all your Community Reputation, based on a MySBT public contract. You need at least 0.4 GT locked. The first time mint should choose an initial Community.",
       "connectedAccount": "Connected Wallet",
       "gTokenBalance": "GToken Balance"
     },
