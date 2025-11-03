@@ -489,12 +489,12 @@
         "desc": "将外部 NFT 绑定到你的 SBT"
       },
       "feature3": {
-        "title": "stGToken 锁定",
-        "desc": "铸造需要至少 0.3 stGT 锁定"
+        "title": "GToken 质押",
+        "desc": "铸造需要至少 0.3 GT 质押"
       },
       "feature4": {
         "title": "绑定限制",
-        "desc": "前 10 个 NFT 绑定免费，之后每个绑定需要 1 stGT"
+        "desc": "前 10 个 NFT 绑定免费，之后每个绑定需要 1 GT"
       },
       "feature5": {
         "title": "7 天冷却期",
@@ -510,54 +510,41 @@
       "tokenId": "Token ID"
     },
     "flow": {
-      "title": "铸造流程：质押 → 锁定 → 选择社区 → 铸造 MySBT",
+      "title": "为你的社区铸造 MySBT",
       "connectedAccount": "已连接的钱包",
-      "gTokenBalance": "GToken 余额",
-      "stGTokenBalance": "stGToken 余额"
+      "gTokenBalance": "GToken 余额"
     },
-    "steps": {
-      "completed": "已完成",
-      "step1": {
-        "title": "步骤 1：质押 GToken",
-        "description": "质押 GToken 以获得 stGToken。最少需要 30 GT。",
-        "amountLabel": "质押金额（GT）",
-        "stakeButton": "质押 GToken",
-        "staking": "质押中...",
-        "success": "GToken 质押成功"
-      },
-      "step2": {
-        "title": "步骤 2：锁定 stGToken",
-        "description": "确认锁定 {{amount}} stGToken。此金额将作为铸造 MySBT 的抵押品。",
-        "required": "需要锁定",
-        "current": "当前可用",
-        "success": "stGToken 锁定成功"
-      },
-      "step3": {
-        "title": "步骤 3：选择社区并铸造 MySBT",
-        "description": "选择一个注册的社区并铸造你的 MySBT。",
-        "selectLabel": "选择社区",
-        "selectPlaceholder": "-- 选择一个社区 --",
-        "minting": "铸造中...",
-        "pending": "完成前面的步骤以铸造 MySBT"
-      }
+    "requirements": {
+      "title": "铸造要求",
+      "minBalance": "最少 {{amount}} GT 余额",
+      "selectCommunity": "选择要加入的社区"
+    },
+    "costBreakdown": {
+      "title": "成本明细",
+      "stakingRequired": "需要质押",
+      "mintCost": "铸造成本（燃烧）",
+      "refundOnQuit": "退出时返还",
+      "explanation": "铸造时将燃烧 0.1 GT。如果你之后退出，0.1 GT 将转给 treasury 作为服务费，你会获得 0.2 GT 返还。"
+    },
+    "communitySelect": {
+      "label": "选择社区",
+      "placeholder": "-- 选择一个社区 --",
+      "selected": "已选择"
     },
     "errors": {
       "metamaskNotInstalled": "请安装 MetaMask",
       "walletConnectionFailed": "钱包连接失败",
-      "stakeFailed": "GToken 质押失败",
-      "lockFailed": "stGToken 锁定失败",
       "mintFailed": "MySBT 铸造失败",
       "communityNotSelected": "请选择一个社区",
-      "insufficientLockBalance": "需要至少 {{required}} stGT，但你只有 {{current}} stGT"
+      "insufficientGToken": "需要至少 {{required}} GT，但你只有 {{current}} GT"
     },
     "warnings": {
-      "insufficientGToken": "⚠️ GToken 余额不足。需要至少 30 GT。",
-      "insufficientStGToken": "⚠️ stGToken 余额不足。需要至少 {{required}} stGT。"
+      "insufficientGToken": "GToken 余额不足。需要至少 {{required}} GT，当前余额：{{current}} GT"
     },
     "buttons": {
       "connectWallet": "连接钱包",
-      "confirmLock": "确认锁定",
       "mintMySBT": "铸造 MySBT",
+      "minting": "铸造中...",
       "getGToken": "获取 GToken",
       "backHome": "返回首页"
     },
@@ -567,9 +554,10 @@
     "contractInfo": {
       "title": "合约地址信息",
       "mySBTAddress": "MySBT 地址",
+      "gTokenAddress": "GToken 地址",
       "network": "网络",
       "sepolia": "Sepolia 测试网",
-      "minLock": "最小锁定"
+      "minStake": "最小质押"
     },
     "links": {
       "viewEtherscan": "在 Etherscan 查看",
@@ -581,10 +569,6 @@
       "failedToLoadCommunities": "加载社区失败",
       "failedToCheckExistingSBT": "检查现有 MySBT 失败",
       "approvingGToken": "授权 GToken 中...",
-      "stakingGToken": "质押 GToken 中...",
-      "stakeSuccess": "质押成功！",
-      "stakeFailed": "质押失败",
-      "stGTokenLocked": "stGToken 已锁定",
       "mintingMySBT": "为社区 {{community}} 铸造 MySBT 中...",
       "waitingForConfirmation": "等待确认中...",
       "mintSuccess": "铸造成功！",

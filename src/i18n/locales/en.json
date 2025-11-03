@@ -489,12 +489,12 @@
         "desc": "Bind external NFTs to your SBT"
       },
       "feature3": {
-        "title": "stGToken Lock",
-        "desc": "Minting requires at least 0.3 stGT lock"
+        "title": "GToken Stake",
+        "desc": "Minting requires at least 0.3 GT stake"
       },
       "feature4": {
         "title": "Binding Limits",
-        "desc": "First 10 NFT bindings free, then 1 stGT per additional binding"
+        "desc": "First 10 NFT bindings free, then 1 GT per additional binding"
       },
       "feature5": {
         "title": "7-Day Cooldown",
@@ -510,54 +510,41 @@
       "tokenId": "Token ID"
     },
     "flow": {
-      "title": "Mint Process: Stake → Lock → Select Community → Mint MySBT",
+      "title": "Mint MySBT for Your Community",
       "connectedAccount": "Connected Wallet",
-      "gTokenBalance": "GToken Balance",
-      "stGTokenBalance": "stGToken Balance"
+      "gTokenBalance": "GToken Balance"
     },
-    "steps": {
-      "completed": "Completed",
-      "step1": {
-        "title": "Step 1: Stake GToken",
-        "description": "Stake GToken to get stGToken. Minimum 30 GT required.",
-        "amountLabel": "Stake Amount (GT)",
-        "stakeButton": "Stake GToken",
-        "staking": "Staking...",
-        "success": "GToken staked successfully"
-      },
-      "step2": {
-        "title": "Step 2: Lock stGToken",
-        "description": "Confirm locking {{amount}} stGToken. This amount will be locked as collateral for minting MySBT.",
-        "required": "Lock Required",
-        "current": "Current Available",
-        "success": "stGToken locked"
-      },
-      "step3": {
-        "title": "Step 3: Select Community and Mint MySBT",
-        "description": "Select a registered community and mint your MySBT.",
-        "selectLabel": "Select Community",
-        "selectPlaceholder": "-- Select a community --",
-        "minting": "Minting...",
-        "pending": "Complete previous steps to mint MySBT"
-      }
+    "requirements": {
+      "title": "Minting Requirements",
+      "minBalance": "Minimum {{amount}} GT balance",
+      "selectCommunity": "Select a community to join"
+    },
+    "costBreakdown": {
+      "title": "Cost Breakdown",
+      "stakingRequired": "Staking Required",
+      "mintCost": "Mint Cost (burned)",
+      "refundOnQuit": "Refund if you quit",
+      "explanation": "When you mint, 0.1 GT will be burned. If you quit later, 0.1 GT goes to treasury for service, and you get 0.2 GT back."
+    },
+    "communitySelect": {
+      "label": "Choose Community",
+      "placeholder": "-- Select a community --",
+      "selected": "Selected"
     },
     "errors": {
       "metamaskNotInstalled": "Please install MetaMask",
       "walletConnectionFailed": "Failed to connect wallet",
-      "stakeFailed": "Failed to stake GToken",
-      "lockFailed": "Failed to lock stGToken",
       "mintFailed": "Failed to mint MySBT",
       "communityNotSelected": "Please select a community",
-      "insufficientLockBalance": "Need at least {{required}} stGT, but only have {{current}} stGT"
+      "insufficientGToken": "Need at least {{required}} GT, but only have {{current}} GT"
     },
     "warnings": {
-      "insufficientGToken": "⚠️ Insufficient GToken balance. Need at least 30 GT.",
-      "insufficientStGToken": "⚠️ Insufficient stGToken balance. Need at least {{required}} stGT."
+      "insufficientGToken": "Insufficient GToken. Need at least {{required}} GT, current balance: {{current}} GT"
     },
     "buttons": {
       "connectWallet": "Connect Wallet",
-      "confirmLock": "Confirm Lock",
       "mintMySBT": "Mint MySBT",
+      "minting": "Minting...",
       "getGToken": "Get GToken",
       "backHome": "Back to Home"
     },
@@ -567,9 +554,10 @@
     "contractInfo": {
       "title": "Contract Address Info",
       "mySBTAddress": "MySBT Address",
+      "gTokenAddress": "GToken Address",
       "network": "Network",
       "sepolia": "Sepolia Testnet",
-      "minLock": "Minimum Lock"
+      "minStake": "Minimum Stake"
     },
     "links": {
       "viewEtherscan": "View on Etherscan",
@@ -581,10 +569,6 @@
       "failedToLoadCommunities": "Failed to load communities",
       "failedToCheckExistingSBT": "Failed to check existing MySBT",
       "approvingGToken": "Approving GToken...",
-      "stakingGToken": "Staking GToken...",
-      "stakeSuccess": "Stake successful!",
-      "stakeFailed": "Stake failed",
-      "stGTokenLocked": "stGToken locked",
       "mintingMySBT": "Minting MySBT for community {{community}}...",
       "waitingForConfirmation": "Waiting for confirmation...",
       "mintSuccess": "Mint successful!",
