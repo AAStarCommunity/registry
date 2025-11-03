@@ -737,6 +737,7 @@
 .deploy-another-prompt .action-button {
   flex-shrink: 0;
   white-space: nowrap;
+  min-width: fit-content;
 }
 
 /* Warning Banner for Deploy */

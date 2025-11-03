@@ -70,7 +70,7 @@ export function PaymasterDetail() {
     }
   }, [address]);
 
-  // Fetch Paymaster info from Registry contract
+  // Fetch Paymaster info from PaymasterFactory and Registry
   const fetchRegistryInfo = async () => {
     if (!address) return;
 
@@ -79,58 +79,40 @@ export function PaymasterDetail() {
       const provider = getProvider();
 
       const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
-      const registryAbi = [
-        "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
-        "function isPaymasterActive(address paymaster) view returns (bool)",
+      // Use PaymasterFactory to check if paymaster was deployed
+      const factoryAddress = networkConfig.contracts.paymasterFactory;
+      const factoryAbi = [
+        "function getPaymasterInfo(address paymaster) view returns (address operator, bool isValid)",
       ];
 
-      const registry = new ethers.Contract(
-        registryAddress,
-        registryAbi,
+      const factory = new ethers.Contract(
+        factoryAddress,
+        factoryAbi,
         provider,
       );
 
-      // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
-      const info = await registry.getPaymasterInfo(address);
-      const isActive = await registry.isPaymasterActive(address);
+      // Check if paymaster exists in factory
+      const factoryInfo = await factory.getPaymasterInfo(address);
+      const isDeployed = factoryInfo.isValid;
 
       let registryData = null;
-      // Check if actually registered (name not empty)
-      if (info.name && info.name.length > 0) {
-        // Try to parse info.name as JSON (it may contain metadata)
-        let parsedName = info.name;
-        let description = "";
-        let version = "";
-        let timestamp = "";
-
-        try {
-          const metadata = JSON.parse(info.name);
-          if (metadata.name) {
-            parsedName = metadata.name;
-            description = metadata.description || "";
-            version = metadata.version || "";
-            timestamp = metadata.timestamp ? new Date(metadata.timestamp * 1000).toLocaleString() : "";
-          }
-        } catch (e) {
-          // If parsing fails, use the raw string as name
-          parsedName = info.name;
-        }
-
+      // Check if actually registered (deployed and has operator)
+      if (isDeployed && factoryInfo.operator && factoryInfo.operator !== ethers.ZeroAddress) {
+        // Paymaster was deployed via factory - this means it's registered
         registryData = {
           paymasterAddress: address,
-          name: parsedName,
-          description: description,
-          version: version,
-          timestamp: timestamp,
-          feeRate: Number(info.feeRate), // Convert BigInt to Number for caching
-          stakedAmount: "0", // Store as string to avoid BigInt serialization
-          reputation: "0", // Store as string to avoid BigInt serialization
-          isActive: isActive,
-          successCount: Number(info.successCount), // Convert BigInt to Number
-          totalAttempts: Number(info.totalAttempts), // Convert BigInt to Number
-          registeredAt: "0", // Store as string
-          lastActiveAt: "0", // Store as string
+          name: `Paymaster (${address.slice(0, 6)}...${address.slice(-4)})`,
+          description: "",
+          version: "v4.1",
+          timestamp: new Date().toLocaleString(),
+          feeRate: 0,
+          stakedAmount: "0",
+          reputation: "0",
+          isActive: true,
+          successCount: 0,
+          totalAttempts: 0,
+          registeredAt: "0",
+          lastActiveAt: "0",
         };
       }
 
@@ -774,6 +756,11 @@ export function PaymasterDetail() {
         .error-state {
           text-align: center;
           padding: 4rem 2rem;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 60vh;
         }
 
         .spinner {
