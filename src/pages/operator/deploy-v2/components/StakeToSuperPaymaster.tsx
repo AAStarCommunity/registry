@@ -13,6 +13,7 @@ import React, { useState } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { GTokenABI, GTokenStakingABI, SuperPaymasterV2ABI } from "../../../../config/abis";
 import "./StakeToSuperPaymaster.css";
 
 export interface StakeToSuperPaymasterProps {
@@ -30,24 +31,7 @@ const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
 const APNTS_ADDRESS = networkConfig.contracts.aPNTs;
 
-// Simplified ABIs
-const GTOKEN_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)",
-];
-
-const GTOKEN_STAKING_ABI = [
-  "function stake(uint256 amount) external",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-];
-
-const SUPER_PAYMASTER_ABI = [
-  // ✅ 正确的函数签名 - 与 SuperPaymasterV2.sol:277 一致
-  "function registerOperator(uint256 sGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
-  "function depositAPNTs(uint256 amount) external",
-  "function getOperatorAccount(address operator) external view returns (tuple(uint256 sGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))",
-];
+// ABIs imported from shared-config via config/abis.ts
 
 // Registration steps
 const RegistrationStep = {
@@ -86,10 +70,10 @@ export function StakeToSuperPaymaster({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTOKEN_ABI, signer);
+      const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTokenABI, signer);
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+        GTokenStakingABI,
         signer
       );
 
@@ -133,12 +117,12 @@ export function StakeToSuperPaymaster({
       const signer = await provider.getSigner();
       const gtokenStaking = new ethers.Contract(
         GTOKEN_STAKING_ADDRESS,
-        GTOKEN_STAKING_ABI,
+        GTokenStakingABI,
         signer
       );
       const superPaymaster = new ethers.Contract(
         SUPER_PAYMASTER_V2,
-        SUPER_PAYMASTER_ABI,
+        SuperPaymasterV2ABI,
         signer
       );
 
@@ -188,7 +172,7 @@ export function StakeToSuperPaymaster({
       const signer = await provider.getSigner();
 
       // 1. Approve aPNTs
-      const aPNTsContract = new ethers.Contract(APNTS_ADDRESS, GTOKEN_ABI, signer);
+      const aPNTsContract = new ethers.Contract(APNTS_ADDRESS, GTokenABI, signer);
       const approvalAmount = ethers.parseUnits(aPNTsAmount, 18);
 
       console.log("Approving aPNTs...");
@@ -198,7 +182,7 @@ export function StakeToSuperPaymaster({
       // 2. Deposit aPNTs
       const superPaymaster = new ethers.Contract(
         SUPER_PAYMASTER_V2,
-        SUPER_PAYMASTER_ABI,
+        SuperPaymasterV2ABI,
         signer
       );
 

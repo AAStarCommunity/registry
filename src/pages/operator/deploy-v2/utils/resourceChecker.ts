@@ -11,6 +11,14 @@
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import {
+  ERC20_ABI,
+  RegistryABI,
+  xPNTsFactoryABI,
+  xPNTsTokenABI,
+  PaymasterFactoryABI,
+  PaymasterV4ABI,
+} from "../../../../config/abis";
 
 // ====================================
 // Types
@@ -53,36 +61,7 @@ export interface ResourceStatus {
 
 export type StakeMode = "aoa" | "aoa+";
 
-// ====================================
-// ABIs
-// ====================================
-
-const REGISTRY_ABI = [
-  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-];
-
-const XPNTS_FACTORY_ABI = [
-  "function hasToken(address community) view returns (bool)",
-  "function getTokenAddress(address community) view returns (address)",
-];
-
-const XPNTS_TOKEN_ABI = [
-  "function exchangeRate() view returns (uint256)",
-];
-
-const PAYMASTER_FACTORY_ABI = [
-  "function hasPaymaster(address operator) external view returns (bool)",
-  "function paymasterByOperator(address operator) external view returns (address)",
-];
-
-const PAYMASTER_ABI = [
-  "function getSupportedSBTs() external view returns (address[] memory)",
-];
-
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-];
+// ABIs imported from shared-config via config/abis.ts
 
 // ====================================
 // Helper Functions
@@ -103,7 +82,7 @@ async function checkCommunityRegistration(
     const networkConfig = getCurrentNetworkConfig();
     const registryAddress = networkConfig.contracts.registryV2_1;
 
-    const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, provider);
+    const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
     const community = await registry.communities(address);
 
     // Check if registeredAt is not 0 (means community is registered)
@@ -135,7 +114,7 @@ async function checkXPNTsDeployment(
     const networkConfig = getCurrentNetworkConfig();
     const factoryAddress = networkConfig.contracts.xPNTsFactory;
 
-    const factory = new ethers.Contract(factoryAddress, XPNTS_FACTORY_ABI, provider);
+    const factory = new ethers.Contract(factoryAddress, xPNTsFactoryABI, provider);
 
     const hasToken = await factory.hasToken(address);
     if (!hasToken) {
@@ -145,7 +124,7 @@ async function checkXPNTsDeployment(
     const tokenAddress = await factory.getTokenAddress(address);
 
     // Get exchange rate
-    const token = new ethers.Contract(tokenAddress, XPNTS_TOKEN_ABI, provider);
+    const token = new ethers.Contract(tokenAddress, xPNTsTokenABI, provider);
     const rate = await token.exchangeRate();
     const exchangeRate = ethers.formatEther(rate);
 
@@ -174,7 +153,7 @@ async function checkPaymasterDeployment(
     const networkConfig = getCurrentNetworkConfig();
     const factoryAddress = networkConfig.contracts.paymasterFactory;
 
-    const factory = new ethers.Contract(factoryAddress, PAYMASTER_FACTORY_ABI, provider);
+    const factory = new ethers.Contract(factoryAddress, PaymasterFactoryABI, provider);
 
     const hasPaymaster = await factory.hasPaymaster(address);
     if (!hasPaymaster) {
@@ -207,7 +186,7 @@ async function checkSBTBinding(
     const networkConfig = getCurrentNetworkConfig();
     const globalMySBT = networkConfig.contracts.mySBT;
 
-    const paymaster = new ethers.Contract(paymasterAddress, PAYMASTER_ABI, provider);
+    const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
     const supportedSBTs = await paymaster.getSupportedSBTs();
 
     // Check if global MySBT is in supported list

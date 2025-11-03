@@ -3,6 +3,7 @@ import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { StakeToSuperPaymaster } from "../components/StakeToSuperPaymaster";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { ENTRY_POINT_ABI } from "../../../../config/abis";
 import "./Step5_Stake.css";
 
 export interface Step5Props {
@@ -52,13 +53,6 @@ function Step5_StandardFlow({
 // EntryPoint v0.7 address from shared-config
 const networkConfig = getCurrentNetworkConfig();
 const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
-
-// Simple EntryPoint ABI for depositTo
-const ENTRY_POINT_ABI = [
-  "function depositTo(address account) external payable",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function getDepositInfo(address account) external view returns (uint112 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime)",
-];
 
   const [depositAmount, setDepositAmount] = useState<string>("0.1");
   const [currentBalance, setCurrentBalance] = useState<string>("0");

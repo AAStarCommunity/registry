@@ -7,6 +7,7 @@
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { ERC20_ABI, RegistryABI, xPNTsFactoryABI } from "../../../../config/abis";
 
 export interface WalletStatus {
   // Connection status
@@ -45,17 +46,7 @@ export interface CheckOptions {
   aPNTAddress?: string; // aPNT token contract address (AOA+ mode only)
 }
 
-// Standard ERC-20 ABI for balance checking
-const ERC20_ABI = [
-  "function balanceOf(address owner) view returns (uint256)",
-  "function decimals() view returns (uint8)",
-  "function symbol() view returns (string)",
-];
-
-// Registry v2.1.4 ABI for checking community registration (11 fields)
-const REGISTRY_ABI = [
-  "function communities(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-];
+// ABIs imported from shared-config via config/abis.ts
 
 /**
  * Connect to MetaMask and get user address
@@ -151,7 +142,7 @@ export async function checkCommunityRegistration(
     const registryAddress = networkConfig.contracts.registryV2_1;
 
     const provider = new ethers.BrowserProvider(window.ethereum);
-    const registry = new ethers.Contract(registryAddress, REGISTRY_ABI, provider);
+    const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
 
     const community = await registry.communities(address);
 
@@ -243,10 +234,6 @@ export async function checkWalletStatus(
       const provider = new ethers.BrowserProvider(window.ethereum);
       const networkConfig = getCurrentNetworkConfig();
       const xPNTsFactoryAddress = networkConfig.contracts.xPNTsFactory;
-      const xPNTsFactoryABI = [
-        "function hasToken(address community) view returns (bool)",
-        "function getTokenAddress(address community) view returns (address)",
-      ];
 
       const factory = new ethers.Contract(xPNTsFactoryAddress, xPNTsFactoryABI, provider);
       const hasToken = await factory.hasToken(address);
