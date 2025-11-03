@@ -5,6 +5,7 @@ import { useSafeApp } from "../../hooks/useSafeApp";
 import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import { MySBTABI, GTokenABI } from "../../config/abis";
 import "./MySBT.css";
 
 // Get contract addresses from shared-config via networkConfig
@@ -14,32 +15,6 @@ const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 
 // Use /api/rpc-proxy endpoint to hide RPC keys
 const RPC_URL = getRpcUrl();
-
-// MySBT v2.3 ABI (essential functions)
-const MYSBT_ABI = [
-  // ERC721 basics
-  "function balanceOf(address owner) external view returns (uint256)",
-  "function ownerOf(uint256 tokenId) external view returns (address)",
-
-  // Core functions
-  "function mintOrAddMembership(address user, string metadata) external returns (uint256 tokenId, bool isNewMint)",
-  "function getCommunityReputation(address user, address community) external view returns (uint256 score)",
-  "function getCommunityMembership(uint256 tokenId, address community) external view returns (tuple(bool isActive, string metadata, uint256 joinedAt, address nftContract, uint256 nftTokenId) membership)",
-  "function bindCommunityNFT(address community, address nftContract, uint256 nftTokenId) external",
-  "function recordActivity(address user) external",
-
-  // View functions
-  "function VERSION() external view returns (string)",
-  "function VERSION_CODE() external view returns (uint256)",
-  "function mintFee() external view returns (uint256)",
-  "function paused() external view returns (bool)",
-];
-
-const GTOKEN_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-];
 
 export function MySBT() {
   const navigate = useNavigate();
@@ -104,7 +79,7 @@ export function MySBT() {
       // Load MySBT contract info
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
-        MYSBT_ABI,
+        MySBTABI,
         rpcProvider,
       );
 
@@ -127,7 +102,7 @@ export function MySBT() {
       // Load GToken balance
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
-        GTOKEN_ABI,
+        GTokenABI,
         rpcProvider,
       );
       const gtBalance = await gtokenContract.balanceOf(address);
@@ -145,7 +120,7 @@ export function MySBT() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
-        MYSBT_ABI,
+        MySBTABI,
         rpcProvider,
       );
 
@@ -181,7 +156,7 @@ export function MySBT() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
-        GTOKEN_ABI,
+        GTokenABI,
         rpcProvider,
       );
 
@@ -196,7 +171,7 @@ export function MySBT() {
 
       // Add approve transaction if needed
       if (allowance < feeAmount) {
-        const gtokenInterface = new ethers.Interface(GTOKEN_ABI);
+        const gtokenInterface = new ethers.Interface(GTokenABI);
         const approveData = gtokenInterface.encodeFunctionData("approve", [
           MYSBT_V2_3_ADDRESS,
           ethers.parseEther("1000"), // Approve more for multiple mints
@@ -210,7 +185,7 @@ export function MySBT() {
       }
 
       // Add mint transaction
-      const sbtInterface = new ethers.Interface(MYSBT_ABI);
+      const sbtInterface = new ethers.Interface(MySBTABI);
       const mintData = sbtInterface.encodeFunctionData("mintOrAddMembership", [
         account,
         metadata,
@@ -250,7 +225,7 @@ export function MySBT() {
           console.log("Approving GToken...");
           const gtokenContractWithSigner = new ethers.Contract(
             GTOKEN_ADDRESS,
-            GTOKEN_ABI,
+            GTokenABI,
             signer,
           );
           const approveTx = await gtokenContractWithSigner.approve(
@@ -268,7 +243,7 @@ export function MySBT() {
 
         const sbtContract = new ethers.Contract(
           MYSBT_V2_3_ADDRESS,
-          MYSBT_ABI,
+          MySBTABI,
           signer,
         );
 

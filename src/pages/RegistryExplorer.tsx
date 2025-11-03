@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
+import { RegistryV1ABI, RegistryV2_1ABI, RegistryV2_1_4ABI } from "../config/abis";
 import "./RegistryExplorer.css";
 
 type RegistryVersion = "v1.2" | "v2.1" | "v2.1.4";
@@ -183,15 +184,7 @@ export function RegistryExplorer() {
     // Use independent RPC provider (not MetaMask) as per CLAUDE.md best practices
     const provider = getProvider();
 
-    const REGISTRY_V1_ABI = [
-      "function getActivePaymasters() external view returns (address[])",
-      "function getPaymasterCount() external view returns (uint256)",
-      // Use getPaymasterInfo instead of getPaymasterFullInfo (which has a bug in v1.2)
-      "function getPaymasterInfo(address paymaster) view returns (uint256 feeRate, bool isActive, uint256 successCount, uint256 totalAttempts, string memory name)",
-      "function isPaymasterActive(address paymaster) view returns (bool)",
-    ];
-
-    const registry = new ethers.Contract(registryAddress, REGISTRY_V1_ABI, provider);
+    const registry = new ethers.Contract(registryAddress, RegistryV1ABI, provider);
 
     try {
       const paymasterAddresses = await registry.getActivePaymasters();
@@ -249,13 +242,7 @@ export function RegistryExplorer() {
     // Use independent RPC provider (not MetaMask) as per v1.2 pattern
     const provider = getProvider();
 
-    const REGISTRY_V2_1_ABI = [
-      "function getCommunityCount() view returns (uint256)",
-      "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
-      "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))",
-    ];
-
-    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_ABI, provider);
+    const registry = new ethers.Contract(registryAddress, RegistryV2_1ABI, provider);
 
     try {
       // Get total count first
@@ -317,13 +304,7 @@ export function RegistryExplorer() {
     const provider = getProvider();
 
     // Registry v2.1.4 uses simplified 11-field CommunityProfile (no metadata fields)
-    const REGISTRY_V2_1_4_ABI = [
-      "function getCommunityCount() view returns (uint256)",
-      "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
-      "function communities(address) view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-    ];
-
-    const registry = new ethers.Contract(registryAddress, REGISTRY_V2_1_4_ABI, provider);
+    const registry = new ethers.Contract(registryAddress, RegistryV2_1_4ABI, provider);
 
     try {
       // Get total count first

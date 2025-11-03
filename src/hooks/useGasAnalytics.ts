@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { ethers } from "ethers";
 import { getProvider } from "../utils/rpc-provider";
+import { RegistryABI } from "../config/abis";
 
 /*==============================================================================
   CORRECT ANALYTICS ARCHITECTURE
@@ -20,12 +21,7 @@ import { getCurrentNetworkConfig } from "../config/networkConfig";
 const networkConfig = getCurrentNetworkConfig();
 const REGISTRY_ADDRESS = networkConfig.contracts.registry;
 
-// ABIs
-const REGISTRY_ABI = [
-  "function getActivePaymasters() external view returns (address[])",
-  "function getPaymasterCount() external view returns (uint256)",
-];
-
+// Event ABI (keep local as it's not in config)
 const PAYMASTER_ABI = [
   "event GasPaymentProcessed(address indexed user, address indexed gasToken, uint256 pntAmount, uint256 gasCostWei, uint256 actualGasCost)",
 ];
@@ -415,7 +411,7 @@ export async function fetchAllPaymastersAnalytics(
   console.log("\n📡 Step 1: Query Registry for Paymasters...");
   const registry = new ethers.Contract(
     REGISTRY_ADDRESS,
-    REGISTRY_ABI,
+    RegistryABI,
     provider,
   );
 

@@ -1,4 +1,5 @@
 import { ethers } from "ethers";
+import { SuperPaymasterV2ABI, PaymasterV4ABI } from "../config/abis";
 
 export const PaymasterType = {
   AOA: "AOA", // PaymasterV4 - 独立合约，单个operator
@@ -18,18 +19,6 @@ interface PaymasterInfo {
 const KNOWN_SUPER_PAYMASTERS: Set<string> = new Set([
   "0xe25b068d4239c6dac484b8c51d62cc86f44859a7", // SuperPaymasterV2 Sepolia
 ]);
-
-// 合约 ABI 片段
-const SUPER_PAYMASTER_ABI = [
-  "function accounts(address) view returns (tuple(uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))",
-];
-
-const PAYMASTER_V4_ABI = [
-  "function owner() view returns (address)",
-  "function treasury() view returns (address)",
-  "function serviceFeeRate() view returns (uint256)",
-  "function maxGasCostCap() view returns (uint256)",
-];
 
 /**
  * 检测 Paymaster 类型
@@ -74,7 +63,7 @@ export async function detectPaymasterType(
   try {
     const superPaymasterContract = new ethers.Contract(
       address,
-      SUPER_PAYMASTER_ABI,
+      SuperPaymasterV2ABI,
       provider
     );
 
@@ -99,7 +88,7 @@ export async function detectPaymasterType(
   try {
     const paymasterV4Contract = new ethers.Contract(
       address,
-      PAYMASTER_V4_ABI,
+      PaymasterV4ABI,
       provider
     );
 

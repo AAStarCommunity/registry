@@ -18,6 +18,7 @@ import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
+import { RegistryV2_1ABI, ERC20_ABI } from "../../../../config/abis";
 import "./Step2_RegisterCommunity.css";
 
 export interface Step2Props {
@@ -41,20 +42,7 @@ const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
 const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
 
-// Registry ABI
-const REGISTRY_ABI = [
-  "function registerCommunity(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint) profile, uint256 stGTokenAmount) external",
-  "function communities(address) external view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint))",
-  "function updateCommunityProfile(tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount, bool allowPermissionlessMint) profile) external",
-  "function bindSBTToCommunity(address sbtContract) external",
-];
-
-// GToken Staking ABI
-const GTOKEN_STAKING_ABI = [
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function balanceOf(address account) external view returns (uint256)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-];
+// ABIs imported from config/abis.ts
 
 // Sub-steps
 enum RegistrationStep {
@@ -102,7 +90,7 @@ export function Step2_RegisterCommunity({
     try {
       const rpcUrl = getRpcUrl();
       const provider = new ethers.JsonRpcProvider(rpcUrl);
-      const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, provider);
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1ABI, provider);
 
       const community = await registry.communities(walletStatus.address);
 
@@ -146,7 +134,7 @@ export function Step2_RegisterCommunity({
 
       // Step 1: Approve stGToken spending
       console.log("📝 Approving stGToken spending...");
-      const staking = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTOKEN_STAKING_ABI, signer);
+      const staking = new ethers.Contract(GTOKEN_STAKING_ADDRESS, ERC20_ABI, signer);
 
       const currentAllowance = await staking.allowance(walletStatus.address, REGISTRY_ADDRESS);
       if (currentAllowance < lockAmountWei) {
@@ -158,7 +146,7 @@ export function Step2_RegisterCommunity({
 
       // Step 2: Register community
       console.log("📝 Registering community...");
-      const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1ABI, signer);
 
       const profile = {
         name: communityName.trim(),
@@ -218,7 +206,7 @@ export function Step2_RegisterCommunity({
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const registry = new ethers.Contract(REGISTRY_ADDRESS, REGISTRY_ABI, signer);
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1ABI, signer);
 
       console.log("📝 Binding MySBT contract...");
       const tx = await registry.bindSBTToCommunity(MYSBT_ADDRESS);

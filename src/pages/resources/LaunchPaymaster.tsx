@@ -10,6 +10,13 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
+import {
+  PaymasterFactoryABI,
+  RegistryABI,
+  xPNTsFactoryABI,
+  xPNTsTokenABI,
+  MySBTABI,
+} from "../../config/abis";
 import "./LaunchPaymaster.css";
 
 // Get contract addresses from config
@@ -20,32 +27,6 @@ const ENTRY_POINT_ADDRESS = networkConfig.contracts.entryPointV07;
 const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
 const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
 const ETH_USD_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306"; // Chainlink Sepolia ETH/USD
-
-// ABIs
-const PAYMASTER_FACTORY_ABI = [
-  "function deployPaymaster(string memory version, bytes memory initData) external returns (address paymaster)",
-  "function paymasterByOperator(address operator) external view returns (address)",
-  "function hasPaymaster(address operator) external view returns (bool)",
-];
-
-const REGISTRY_ABI = [
-  "function communities(address) external view returns (string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint)",
-  "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
-];
-
-const XPNTS_FACTORY_ABI = [
-  "function hasToken(address community) view returns (bool)",
-  "function getTokenAddress(address community) view returns (address)",
-];
-
-const XPNTS_TOKEN_ABI = [
-  "function exchangeRate() view returns (uint256)",
-];
-
-const MYSBT_FACTORY_ABI = [
-  "function hasSBT(address community) external view returns (bool)",
-  "function getSBTAddress(address community) external view returns (address)",
-];
 
 // Helper function to get explorer link
 const getExplorerLink = (address: string, type: 'address' | 'tx' = 'address'): string => {
@@ -122,7 +103,7 @@ export function LaunchPaymaster() {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        REGISTRY_ABI,
+        RegistryABI,
         provider
       );
 
@@ -138,7 +119,7 @@ export function LaunchPaymaster() {
           try {
             const xPNTsToken = new ethers.Contract(
               community.xPNTsToken,
-              XPNTS_TOKEN_ABI,
+              xPNTsTokenABI,
               provider
             );
             const rate = await xPNTsToken.exchangeRate();
@@ -170,7 +151,7 @@ export function LaunchPaymaster() {
         const mySBTFactory = networkConfig.contracts.mySBT;
         const sbtFactory = new ethers.Contract(
           mySBTFactory,
-          MYSBT_FACTORY_ABI,
+          MySBTABI,
           provider
         );
         const hasSBT = await sbtFactory.hasSBT(address);
@@ -197,7 +178,7 @@ export function LaunchPaymaster() {
       const provider = new ethers.JsonRpcProvider(rpcUrl);
       const factory = new ethers.Contract(
         PAYMASTER_FACTORY_ADDRESS,
-        PAYMASTER_FACTORY_ABI,
+        PaymasterFactoryABI,
         provider
       );
 
@@ -236,7 +217,7 @@ export function LaunchPaymaster() {
       const signer = await provider.getSigner();
       const factory = new ethers.Contract(
         PAYMASTER_FACTORY_ADDRESS,
-        PAYMASTER_FACTORY_ABI,
+        PaymasterFactoryABI,
         signer
       );
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
 import type { WalletStatus } from "../utils/walletChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { RegistryV1ABI, ERC20_ABI } from "../../../../config/abis";
 import "./Step6_RegisterRegistry.css";
 
 export interface Step6Props {
@@ -13,17 +14,6 @@ export interface Step6Props {
   onBack: () => void;
 }
 
-// Simple ABI
-const REGISTRY_ABI = [
-  "function registerPaymaster(address paymasterAddress, uint256 gTokenAmount, string memory metadata) external",
-  "function getPaymasterInfo(address paymasterAddress) external view returns (tuple(address owner, uint256 gTokenStake, uint256 reputation, uint256 totalOperations, bool isActive, string metadata))",
-];
-
-const ERC20_ABI = [
-  "function balanceOf(address account) external view returns (uint256)",
-  "function approve(address spender, uint256 amount) external returns (bool)",
-  "function allowance(address owner, address spender) external view returns (uint256)",
-];
 
 export function Step6_RegisterRegistry({
   paymasterAddress,
@@ -137,7 +127,7 @@ export function Step6_RegisterRegistry({
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const registry = new ethers.Contract(REGISTRY_V1_2, REGISTRY_ABI, signer);
+      const registry = new ethers.Contract(REGISTRY_V1_2, RegistryV1ABI, signer);
 
       // Create metadata JSON
       const metadata = JSON.stringify({
