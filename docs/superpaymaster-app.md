@@ -1,5 +1,6 @@
 # SuperPaymaster DApp
-因为从功能核心来看，SuperPaymaster是一个registry，所以dapp简称registry-app。
+SuperPaymaster是一个去中心的Gas Payment解决方案，包含了AOA模式：Paymaster v4.1合约（无需部署链下server），AOA+模式：Superpaymaster合约（在AOA基础上无需部署独立的paymaster合约）；两个共用Registry合约（注册中心，提供智能路由和reputatin计算），GTokenStaking合约（处理所有stake，lock和slash）；以及白板MySBT合约，xPNTs合约工厂（为每个社区提供gas token mint 服务）。
+
 此应用目标是对运营者、开发者展示核心能力和流程，所有说明性页面提供中英文，默认英文，在开头提供中文页面链接；功能页面仅英文。
 ## 页面和概述
 入口：SuperPaymaster.aastar.io
