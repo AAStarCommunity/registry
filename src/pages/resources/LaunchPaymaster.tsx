@@ -162,17 +162,26 @@ export function LaunchPaymaster() {
         console.log("xPNTs Exchange Rate:", exchangeRate, "→ 1 xPNT =", exchangeRate, "aPNTs");
         console.log("Calculated minTokenBalance:", calculatedMinBalance, "xPNTs (= 100 aPNTs equivalent)");
 
-        // Check for SBT
-        const mySBTFactory = networkConfig.contracts.mySBT;
-        const sbtFactory = new ethers.Contract(
-          mySBTFactory,
-          MySBTABI,
-          provider
-        );
-        const hasSBT = await sbtFactory.hasSBT(address);
-        if (hasSBT) {
-          const sbtAddress = await sbtFactory.getSBTAddress(address);
-          setInitialSBT(sbtAddress);
+        // Check for SBT (optional - may not be available for all communities)
+        try {
+          const mySBTFactory = networkConfig.contracts.mySBT;
+          if (mySBTFactory && mySBTFactory !== ethers.ZeroAddress) {
+            const sbtFactory = new ethers.Contract(
+              mySBTFactory,
+              MySBTABI,
+              provider
+            );
+            if (typeof sbtFactory.hasSBT === 'function') {
+              const hasSBT = await sbtFactory.hasSBT(address);
+              if (hasSBT) {
+                const sbtAddress = await sbtFactory.getSBTAddress(address);
+                setInitialSBT(sbtAddress);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not check MySBT:", err);
+          // Continue - MySBT is optional
         }
       } else {
         // Community not registered - this is normal, don't show as error
@@ -398,10 +407,10 @@ export function LaunchPaymaster() {
                 View on Etherscan ↗
               </a>
               <a
-                href={`/operator/explore?address=${deployedPaymasterInfo.address}`}
+                href={`/paymaster/${deployedPaymasterInfo.address}`}
                 className="action-button primary"
               >
-                View in Explorer →
+                View Details →
               </a>
               <button className="action-button outline" onClick={() => setShowSuccessModal(false)}>
                 Close
@@ -435,10 +444,10 @@ export function LaunchPaymaster() {
                 </div>
                 <div className="banner-actions">
                   <a
-                    href={`/operator/explore?address=${existingPaymaster}`}
+                    href={`/paymaster/${existingPaymaster}`}
                     className="action-button primary"
                   >
-                    View Paymaster Details →
+                    View Details →
                   </a>
                 </div>
               </div>
@@ -723,10 +732,10 @@ export function LaunchPaymaster() {
 
                   <div className="paymaster-actions">
                     <a
-                      href={`/operator/explore?address=${existingPaymaster}`}
+                      href={`/paymaster/${existingPaymaster}`}
                       className="action-button primary"
                     >
-                      View Details in Explorer →
+                      View Details →
                     </a>
                     <a
                       href={getExplorerLink(existingPaymaster)}
@@ -904,10 +913,10 @@ export function LaunchPaymaster() {
                           View on Etherscan →
                         </a>
                         <a
-                          href={`/operator/explore?address=${deployedAddress}`}
+                          href={`/paymaster/${deployedAddress}`}
                           className="action-button primary"
                         >
-                          View in Explorer →
+                          View Details →
                         </a>
                       </div>
                     </div>
