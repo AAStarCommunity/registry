@@ -619,6 +619,126 @@ export function LaunchPaymaster() {
                 </div>
               )}
 
+              {/* Existing Paymaster Details */}
+              {existingPaymaster && communityInfo && (
+                <div className="existing-paymaster-details">
+                  <h4>📊 Community & Paymaster Information</h4>
+
+                  <div className="info-cards">
+                    <div className="info-card community-card">
+                      <div className="card-title">Community</div>
+                      <div className="card-content">
+                        <div className="info-item">
+                          <span className="item-label">Name:</span>
+                          <span className="item-value">{communityInfo.name}</span>
+                        </div>
+                        {communityInfo.ensName && (
+                          <div className="info-item">
+                            <span className="item-label">ENS:</span>
+                            <span className="item-value mono">{communityInfo.ensName}</span>
+                          </div>
+                        )}
+                        {initialGasToken && (
+                          <>
+                            <div className="info-item">
+                              <span className="item-label">xPNTs Token:</span>
+                              <a
+                                href={getExplorerLink(initialGasToken)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="item-value mono link"
+                              >
+                                {initialGasToken.slice(0, 6)}...{initialGasToken.slice(-4)} ↗
+                              </a>
+                            </div>
+                            <div className="info-item">
+                              <span className="item-label">Exchange Rate:</span>
+                              <span className="item-value">1 xPNT = {communityInfo.xPNTsExchangeRate} aPNTs</span>
+                            </div>
+                          </>
+                        )}
+                        {initialSBT && (
+                          <div className="info-item">
+                            <span className="item-label">MySBT:</span>
+                            <a
+                              href={getExplorerLink(initialSBT)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="item-value mono link"
+                            >
+                              {initialSBT.slice(0, 6)}...{initialSBT.slice(-4)} ↗
+                            </a>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="info-card paymaster-card">
+                      <div className="card-title">Paymaster</div>
+                      <div className="card-content">
+                        <div className="info-item">
+                          <span className="item-label">Address:</span>
+                          <a
+                            href={getExplorerLink(existingPaymaster)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="item-value mono link"
+                          >
+                            {existingPaymaster.slice(0, 6)}...{existingPaymaster.slice(-4)} ↗
+                          </a>
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Owner:</span>
+                          <span className="item-value mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                        </div>
+                        {treasury && (
+                          <div className="info-item">
+                            <span className="item-label">Treasury:</span>
+                            <a
+                              href={getExplorerLink(treasury)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="item-value mono link"
+                            >
+                              {treasury.slice(0, 6)}...{treasury.slice(-4)} ↗
+                            </a>
+                          </div>
+                        )}
+                        {serviceFeeRate && (
+                          <div className="info-item">
+                            <span className="item-label">Service Fee:</span>
+                            <span className="item-value">{serviceFeeRate} bp ({(Number(serviceFeeRate) / 100).toFixed(2)}%)</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="paymaster-actions">
+                    <a
+                      href={`/operator/explore?address=${existingPaymaster}`}
+                      className="action-button primary"
+                    >
+                      View Details in Explorer →
+                    </a>
+                    <a
+                      href={getExplorerLink(existingPaymaster)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="action-button outline"
+                    >
+                      View on Etherscan ↗
+                    </a>
+                    <a
+                      href={`/operator/manage?address=${existingPaymaster}`}
+                      className="action-button outline"
+                    >
+                      Manage Paymaster →
+                    </a>
+                  </div>
+                </div>
+              )}
+
               {/* Deploy Form */}
               {!existingPaymaster && communityInfo && communityInfo.isRegistered && (
                 <div className="deploy-form">

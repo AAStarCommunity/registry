@@ -701,6 +701,112 @@
   font-size: 0.9rem;
 }
 
+/* Existing Paymaster Details */
+.existing-paymaster-details {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.existing-paymaster-details h4 {
+  margin: 0 0 1.5rem;
+  font-size: 1.25rem;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.info-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.info-card {
+  background: white;
+  border-radius: 10px;
+  border: 2px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.info-card.community-card {
+  border-top: 4px solid #10b981;
+}
+
+.info-card.paymaster-card {
+  border-top: 4px solid #f97316;
+}
+
+.card-title {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.card-content {
+  padding: 1rem;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.item-label {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.item-value {
+  color: #374151;
+  text-align: right;
+  flex: 1;
+  word-break: break-all;
+}
+
+.item-value.mono {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+.item-value.link {
+  color: #f97316;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.item-value.link:hover {
+  color: #ea580c;
+  text-decoration: underline;
+}
+
+.paymaster-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.paymaster-actions .action-button {
+  flex: 1;
+  min-width: 150px;
+  text-align: center;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .launch-paymaster-page {
@@ -782,5 +888,27 @@
 
   .address-value {
     text-align: left;
+  }
+
+  .info-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item-value {
+    text-align: left;
+  }
+
+  .paymaster-actions {
+    flex-direction: column;
+  }
+
+  .paymaster-actions .action-button {
+    width: 100%;
+    min-width: auto;
   }
 }
