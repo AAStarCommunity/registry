@@ -266,58 +266,51 @@ export function GetSBT() {
           ) : (
             <div className="mint-flow">
               <h2>{t("getSBT.flow.title")}</h2>
+              <p className="mint-description">{t("getSBT.flow.description")}</p>
 
               {/* Account Info */}
-              <div className="account-info">
-                <p className="account-display">
-                  {t("getSBT.flow.connectedAccount")}: <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
-                </p>
-              </div>
-
-              {/* Balance */}
-              <div className="balance-display">
-                <div className="balance-item">
-                  <span className="label">{t("getSBT.flow.gTokenBalance")}</span>
-                  <span className="value">{parseFloat(gTokenBalance).toFixed(2)} GT</span>
+              <div className="account-info-card">
+                <div className="account-row">
+                  <span className="label">{t("getSBT.flow.connectedAccount")}:</span>
+                  <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
                 </div>
               </div>
 
-              {/* Mint Requirements */}
-              <div className="mint-requirements">
-                <h3>{t("getSBT.requirements.title")}</h3>
-                <ul className="requirements-list">
-                  <li className={parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "met" : "unmet"}>
-                    {parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓" : "○"} {t("getSBT.requirements.minBalance", { amount: REQUIRED_GTOKEN })}
-                  </li>
-                  <li className={selectedCommunity ? "met" : "unmet"}>
-                    {selectedCommunity ? "✓" : "○"} {t("getSBT.requirements.selectCommunity")}
-                  </li>
-                </ul>
+              {/* Balance Cards */}
+              <div className="balance-cards">
+                <div className="balance-card">
+                  <div className="card-label">{t("getSBT.flow.gTokenBalance")}</div>
+                  <div className="card-value">{parseFloat(gTokenBalance).toFixed(2)} GT</div>
+                  <div className={`card-status ${parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
+                    {parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ " + t("getSBT.balance.sufficient") : "⚠️ " + t("getSBT.balance.insufficient")}
+                  </div>
+                </div>
 
-                <div className="cost-breakdown">
-                  <h4>{t("getSBT.costBreakdown.title")}</h4>
-                  <div className="cost-item">
-                    <span>{t("getSBT.costBreakdown.stakingRequired")}</span>
-                    <strong>{REQUIRED_GTOKEN} GT</strong>
-                  </div>
-                  <div className="cost-item">
-                    <span>{t("getSBT.costBreakdown.mintCost")}</span>
-                    <strong>{MINT_COST} GT</strong>
-                  </div>
-                  <div className="cost-item refund">
-                    <span>{t("getSBT.costBreakdown.refundOnQuit")}</span>
-                    <strong>{REFUND_AMOUNT} GT</strong>
-                  </div>
-                  <div className="cost-explanation">
-                    <p>{t("getSBT.costBreakdown.explanation")}</p>
+                <div className="balance-card minimum-card">
+                  <div className="card-label">{t("getSBT.minimum.title")}</div>
+                  <div className="card-value-small">
+                    <div className="requirement-row">
+                      <span>{t("getSBT.minimum.lock")}</span>
+                      <strong>{REFUND_AMOUNT} GT</strong>
+                    </div>
+                    <div className="requirement-row">
+                      <span>{t("getSBT.minimum.burn")}</span>
+                      <strong>{MINT_COST} GT</strong>
+                    </div>
+                    <div className="total-row">
+                      <span>{t("getSBT.minimum.total")}</span>
+                      <strong>{REQUIRED_GTOKEN} GT</strong>
+                    </div>
                   </div>
                 </div>
               </div>
 
               {/* Community Selection */}
-              <div className="community-selection">
-                <label>{t("getSBT.communitySelect.label")}</label>
+              <div className="community-selection-section">
+                <h3>{t("getSBT.communitySelect.title")}</h3>
+                <p className="section-hint">{t("getSBT.communitySelect.hint")}</p>
                 <select
+                  className="community-select"
                   value={selectedCommunity}
                   onChange={(e) => {
                     const selected = communities.find(c => c.address === e.target.value);
@@ -334,22 +327,26 @@ export function GetSBT() {
                   ))}
                 </select>
                 {selectedCommunity && (
-                  <p className="selected-community-info">
-                    {t("getSBT.communitySelect.selected")}: <strong>{communityName}</strong>
-                  </p>
+                  <div className="selected-community-badge">
+                    ✓ {t("getSBT.communitySelect.selected")}: <strong>{communityName}</strong>
+                  </div>
                 )}
               </div>
 
               {/* Warnings */}
               {parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
-                <div className="warning-box">
-                  <p>⚠️ {t("getSBT.warnings.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance })}</p>
+                <div className="warning-banner">
+                  <span className="warning-icon">⚠️</span>
+                  <div className="warning-content">
+                    <strong>{t("getSBT.warnings.title")}</strong>
+                    <p>{t("getSBT.warnings.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance })}</p>
+                  </div>
                 </div>
               )}
 
               {/* Mint Button */}
               <button
-                className="action-button primary mint-button"
+                className="mint-button-large"
                 onClick={handleMintMySBT}
                 disabled={
                   isMinting ||
@@ -357,21 +354,35 @@ export function GetSBT() {
                   parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN)
                 }
               >
-                {isMinting ? t("getSBT.buttons.minting") : t("getSBT.buttons.mintMySBT")}
+                {isMinting ? (
+                  <>
+                    <span className="spinner"></span>
+                    {t("getSBT.buttons.minting")}
+                  </>
+                ) : (
+                  <>
+                    <span className="button-icon">🎫</span>
+                    {t("getSBT.buttons.mintMySBT")}
+                  </>
+                )}
               </button>
 
               {/* Transaction Success */}
               {mintTxHash && (
-                <div className="tx-success">
-                  <p>✓ {t("getSBT.success.txSubmitted")}</p>
-                  <a
-                    href={`https://sepolia.etherscan.io/tx/${mintTxHash}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="explorer-link"
-                  >
-                    {t("getSBT.links.viewTx")} →
-                  </a>
+                <div className="success-banner">
+                  <div className="success-icon">✓</div>
+                  <div className="success-content">
+                    <strong>{t("getSBT.success.title")}</strong>
+                    <p>{t("getSBT.success.message")}</p>
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${mintTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tx-link"
+                    >
+                      {t("getSBT.links.viewTx")} →
+                    </a>
+                  </div>
                 </div>
               )}
             </div>

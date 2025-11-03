@@ -511,8 +511,19 @@
     },
     "flow": {
       "title": "为你的社区铸造 MySBT",
+      "description": "此 SBT 将作为白板，基于 MySBT 公共合约记录你的所有社区声誉。你需要至少锁定 0.3 GT。首次铸造需要选择一个初始社区。",
       "connectedAccount": "已连接的钱包",
       "gTokenBalance": "GToken 余额"
+    },
+    "balance": {
+      "sufficient": "充足",
+      "insufficient": "不足"
+    },
+    "minimum": {
+      "title": "最低 GToken 要求",
+      "lock": "锁定（可退还）",
+      "burn": "燃烧（服务费）",
+      "total": "总计要求"
     },
     "requirements": {
       "title": "铸造要求",
@@ -527,6 +538,8 @@
       "explanation": "铸造时将燃烧 0.1 GT。如果你之后退出，0.1 GT 将转给 treasury 作为服务费，你会获得 0.2 GT 返还。"
     },
     "communitySelect": {
+      "title": "选择初始社区",
+      "hint": "选择你想加入的社区。你稍后可以切换社区。",
       "label": "选择社区",
       "placeholder": "-- 选择一个社区 --",
       "selected": "已选择"
@@ -539,6 +552,7 @@
       "insufficientGToken": "需要至少 {{required}} GT，但你只有 {{current}} GT"
     },
     "warnings": {
+      "title": "余额不足",
       "insufficientGToken": "GToken 余额不足。需要至少 {{required}} GT，当前余额：{{current}} GT"
     },
     "buttons": {
@@ -549,6 +563,8 @@
       "backHome": "返回首页"
     },
     "success": {
+      "title": "成功！",
+      "message": "你的 MySBT 已成功铸造！",
       "txSubmitted": "交易已提交！"
     },
     "contractInfo": {

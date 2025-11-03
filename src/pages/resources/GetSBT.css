@@ -455,3 +455,355 @@
     width: 100%;
   }
 }
+
+/* New UI - Card-based Balance Display */
+.mint-section {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+}
+
+.mint-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.mint-description {
+  font-size: 1rem;
+  color: #6b7280;
+  line-height: 1.6;
+  margin: -0.5rem 0 0.5rem;
+}
+
+.account-info-card {
+  background: white;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  border: 2px solid #7c3aed;
+}
+
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.account-row .label {
+  font-size: 0.9rem;
+  color: #374151;
+  font-weight: 600;
+}
+
+.account-row .mono {
+  color: #7c3aed;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.9rem;
+}
+
+/* Balance Cards Grid */
+.balance-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.balance-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.balance-card:hover {
+  border-color: #7c3aed;
+  box-shadow: 0 4px 12px rgba(124, 58, 237, 0.1);
+}
+
+.minimum-card {
+  border-color: #f3e8ff;
+  background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+}
+
+.card-label {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.card-value-small {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.requirement-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.requirement-row span {
+  color: #6b7280;
+}
+
+.requirement-row strong {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 0 0.25rem;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.total-row strong {
+  color: #7c3aed;
+  font-size: 1.1rem;
+}
+
+.card-status {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.card-status.sufficient {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.card-status.insufficient {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* Community Selection */
+.community-selection-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e5e7eb;
+}
+
+.community-selection-section h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.section-hint {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0 0 1rem;
+}
+
+.community-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.community-select:hover {
+  border-color: #7c3aed;
+}
+
+.community-select:focus {
+  outline: none;
+  border-color: #7c3aed;
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+}
+
+.selected-community-badge {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+  border-radius: 8px;
+  color: #5b21b6;
+  font-size: 0.9rem;
+}
+
+.selected-community-badge strong {
+  font-weight: 700;
+}
+
+/* Enhanced Warning Banner */
+.warning-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #fef3c7;
+  border: 2px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
+  border-radius: 8px;
+}
+
+.warning-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.warning-content {
+  flex: 1;
+}
+
+.warning-content strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #92400e;
+  font-size: 1rem;
+}
+
+.warning-content p {
+  margin: 0;
+  color: #92400e;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+/* Large Mint Button */
+.mint-button-large {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.mint-button-large:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+.mint-button-large:disabled {
+  background: #d1d5db;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button-icon {
+  font-size: 1.5rem;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Enhanced Success Banner */
+.success-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #d1fae5;
+  border: 2px solid #10b981;
+  border-left: 4px solid #10b981;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.success-icon {
+  width: 32px;
+  height: 32px;
+  background: #10b981;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.success-content {
+  flex: 1;
+}
+
+.success-content strong {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #065f46;
+  font-size: 1rem;
+}
+
+.success-content p {
+  margin: 0 0 0.75rem;
+  color: #065f46;
+  font-size: 0.9rem;
+}
+
+.tx-link {
+  color: #10b981;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+}
+
+.tx-link:hover {
+  color: #059669;
+  text-decoration: underline;
+}
+
+/* Responsive adjustments for new components */
+@media (max-width: 768px) {
+  .balance-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .card-value {
+    font-size: 1.75rem;
+  }
+
+  .mint-button-large {
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+}

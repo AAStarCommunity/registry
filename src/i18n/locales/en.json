@@ -511,8 +511,19 @@
     },
     "flow": {
       "title": "Mint MySBT for Your Community",
+      "description": "This SBT will act as a White Board to record all your Community Reputation, based on a MySBT public contract. You need at least 0.3 GT locked. The first time mint should choose an initial Community.",
       "connectedAccount": "Connected Wallet",
       "gTokenBalance": "GToken Balance"
+    },
+    "balance": {
+      "sufficient": "Sufficient",
+      "insufficient": "Insufficient"
+    },
+    "minimum": {
+      "title": "Minimum GToken",
+      "lock": "Lock (refundable)",
+      "burn": "Burn (service fee)",
+      "total": "Total Required"
     },
     "requirements": {
       "title": "Minting Requirements",
@@ -527,6 +538,8 @@
       "explanation": "When you mint, 0.1 GT will be burned. If you quit later, 0.1 GT goes to treasury for service, and you get 0.2 GT back."
     },
     "communitySelect": {
+      "title": "Select Initial Community",
+      "hint": "Choose which community you want to join. You can switch communities later.",
       "label": "Choose Community",
       "placeholder": "-- Select a community --",
       "selected": "Selected"
@@ -539,6 +552,7 @@
       "insufficientGToken": "Need at least {{required}} GT, but only have {{current}} GT"
     },
     "warnings": {
+      "title": "Insufficient Balance",
       "insufficientGToken": "Insufficient GToken. Need at least {{required}} GT, current balance: {{current}} GT"
     },
     "buttons": {
@@ -549,6 +563,8 @@
       "backHome": "Back to Home"
     },
     "success": {
+      "title": "Success!",
+      "message": "Your MySBT has been minted successfully!",
       "txSubmitted": "Transaction submitted!"
     },
     "contractInfo": {
