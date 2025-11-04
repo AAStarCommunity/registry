@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { MySBTABI, RegistryABI, GTokenABI } from "../../config/abis";
+import { MySBTABI, RegistryABI, GTokenABI, GTokenStakingABI } from "../../config/abis";
 import "./GetSBT.css";
 
 export function GetSBT() {
@@ -17,6 +17,7 @@ export function GetSBT() {
   const networkConfig = getCurrentNetworkConfig();
   const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
+  const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
   const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
   const RPC_URL = getRpcUrl();
 
@@ -30,7 +31,7 @@ export function GetSBT() {
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
 
   // Community selection state
-  const [communities, setCommunities] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<{address: string; name: string}[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [communityName, setCommunityName] = useState<string>("");
 
@@ -68,9 +69,9 @@ export function GetSBT() {
       await loadBalance(accounts[0]);
       await loadCommunities();
       await checkExistingSBT(accounts[0]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(t("getSBT.console.walletConnectionFailed"), err);
-      setError(err?.message || t("getSBT.errors.walletConnectionFailed"));
+      setError((err as {message?: string})?.message || t("getSBT.errors.walletConnectionFailed"));
     }
   };
 
@@ -160,6 +161,43 @@ export function GetSBT() {
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Check for pending unstake that might block minting
+      const stakingContract = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTokenStakingABI, provider);
+      try {
+        const stakeInfo = await stakingContract.getStakeInfo(account);
+        // stakeInfo returns: [amount, sGTokenShares, stakedAt, unstakeRequestedAt]
+        let unstakeRequestedAt;
+        if (stakeInfo.unstakeRequestedAt !== undefined) {
+          unstakeRequestedAt = stakeInfo.unstakeRequestedAt;
+        } else if (stakeInfo[3] !== undefined) {
+          unstakeRequestedAt = stakeInfo[3];
+        }
+
+        if (unstakeRequestedAt && unstakeRequestedAt > 0n) {
+          const stakedAt = stakeInfo.stakedAt || stakeInfo[2] || 0n;
+          const now = Math.floor(Date.now() / 1000);
+          const isValidUnstakeRequest = unstakeRequestedAt > 0n && 
+                                     unstakeRequestedAt > stakedAt && 
+                                     Number(unstakeRequestedAt) <= now;
+          
+          if (isValidUnstakeRequest) {
+            const unstakeTime = Number(unstakeRequestedAt);
+            const unstakeDelay = 7 * 24 * 60 * 60; // 7 days
+            const canComplete = now >= (unstakeTime + unstakeDelay);
+            
+            if (!canComplete) {
+              const remainingDays = Math.ceil((unstakeTime + unstakeDelay - now) / (24 * 60 * 60));
+              throw new Error(`❌ Cannot mint SBT while unstake is pending\n\nYou have a pending unstake request that must be completed first.\n\nRemaining time: ${remainingDays} days\n\nPlease complete the unstake process on the Get GToken page, then return here to mint your SBT.`);
+            } else {
+              throw new Error(`❌ Cannot mint SBT while unstake is pending\n\nYou have a pending unstake request that is ready to complete.\n\nPlease complete the unstake process on the Get GToken page first, then return here to mint your SBT.\n\nGo to: Get GToken → Complete Unstake → Return here`);
+            }
+          }
+        }
+      } catch (stakeCheckError) {
+        console.warn("Could not check unstake status:", stakeCheckError);
+        // Don't block minting if we can't check unstake status
+      }
       const signer = await provider.getSigner();
 
       // Approve GToken spending
@@ -188,9 +226,9 @@ export function GetSBT() {
       if (returnUrl) {
         setTimeout(() => navigate(returnUrl), 2000);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(t("getSBT.console.mintFailed"), err);
-      setError(err?.message || t("getSBT.errors.mintFailed"));
+      setError((err as {message?: string})?.message || t("getSBT.errors.mintFailed"));
     } finally {
       setIsMinting(false);
     }
@@ -208,7 +246,7 @@ export function GetSBT() {
         }
       });
     }
-  }, []);
+  }, [checkExistingSBT, loadBalance, loadCommunities]);
 
   return (
     <div className="get-sbt-page">
