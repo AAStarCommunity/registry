@@ -298,7 +298,35 @@ export function GetSBT() {
         console.log("🔍 Could not get community info from MySBT:", (err as Error).message);
       }
       
-      const tx = await mySBT.userMint(checksummedCommunity, "{}");
+      // Try the mint call
+      let tx;
+      try {
+        tx = await mySBT.userMint(checksummedCommunity, "{}");
+        setMintTxHash(tx.hash);
+        console.log(t("getSBT.console.waitingForConfirmation"));
+        await tx.wait();
+        console.log(t("getSBT.console.mintSuccess"));
+      } catch (mintError) {
+        // If it still fails with community not registered, try a different approach
+        if ((mintError as Error).message?.includes("community not registered")) {
+          console.log("🔍 Community registration failed, trying alternative approach...");
+          
+          // Try using lowercase address (some contracts are case-sensitive)
+          try {
+            const txLower = await mySBT.userMint(selectedCommunity.toLowerCase(), "{}");
+            tx = txLower;
+            setMintTxHash(tx.hash);
+            console.log(t("getSBT.console.waitingForConfirmation"));
+            await tx.wait();
+            console.log(t("getSBT.console.mintSuccess"));
+          } catch (lowerError) {
+            console.log("🔍 Lowercase address also failed:", (lowerError as Error).message);
+            throw mintError; // Re-throw original error
+          }
+        } else {
+          throw mintError;
+        }
+      }
       setMintTxHash(tx.hash);
 
       console.log(t("getSBT.console.waitingForConfirmation"));
