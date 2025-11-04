@@ -232,20 +232,26 @@ export function GetSBT() {
 
       const signer = await provider.getSigner();
 
-      // Approve GToken spending
-      const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTokenABI, signer);
-      console.log(t("getSBT.console.approvingGToken"));
-      const approveAmount = ethers.parseEther(REQUIRED_GTOKEN);
-      const approveTx = await gToken.approve(MYSBT_ADDRESS, approveAmount);
-      await approveTx.wait();
-
-      // Mint MySBT
+      // Mint MySBT (no approval needed if contract pulls from staked GToken)
       const mySBT = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, signer);
       console.log(t("getSBT.console.mintingMySBT", { community: selectedCommunity }));
       console.log("🔍 Debug - Community address:", selectedCommunity);
       console.log("🔍 Debug - Community address checksummed:", ethers.getAddress(selectedCommunity));
       console.log("🔍 Debug - MySBT contract:", MYSBT_ADDRESS);
       console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
+      
+      // Check MySBT's Registry configuration
+      try {
+        const mysbtRegistry = await mySBT.registry();
+        console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
+        if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
+          console.warn("⚠️ Registry address mismatch!");
+          console.warn("MySBT uses:", mysbtRegistry);
+          console.warn("Frontend uses:", REGISTRY_ADDRESS);
+        }
+      } catch (err) {
+        console.warn("Could not check MySBT's Registry address:", err);
+      }
       
       // Ensure address is properly checksummed
       const checksummedCommunity = ethers.getAddress(selectedCommunity);
