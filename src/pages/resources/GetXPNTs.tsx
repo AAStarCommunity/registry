@@ -466,7 +466,7 @@ export function GetXPNTs() {
 
         {/* Action Footer */}
         <div className="action-footer">
-          <a href="/bind-sbt" className="action-button outline">
+          <a href="/get-sbt" className="action-button outline">
             Bind MySBT Token
           </a>
           <button className="action-button secondary" onClick={() => navigate(-1)}>

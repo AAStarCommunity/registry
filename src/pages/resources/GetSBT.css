@@ -65,6 +65,11 @@
   border-bottom: none;
 }
 
+/* MySBT Intro Section with light blue background */
+.mysbt-intro-section {
+  background: linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%);
+}
+
 .info-section h2 {
   margin: 0 0 1rem;
   font-size: 1.5rem;
@@ -115,8 +120,8 @@
 }
 
 .mysbt-icon {
-  width: 120px;
-  height: 120px;
+  width: 240px;
+  height: 240px;
   flex-shrink: 0;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
 }

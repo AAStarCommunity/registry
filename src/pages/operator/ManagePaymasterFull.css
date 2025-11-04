@@ -882,6 +882,18 @@ h3 {
     background: #333;
   }
 
+  .config-table code,
+  .info-value code,
+  .supported-tokens-list code {
+    background: #444;
+    color: #a5b4fc;
+  }
+
+  .paymaster-address code,
+  .user-address code {
+    color: #e0e0e0;
+  }
+
   .info-card,
   .token-management-card {
     background: #2a2a2a;

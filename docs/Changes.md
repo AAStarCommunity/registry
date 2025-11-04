@@ -8,6 +8,27 @@
 
 ---
 
+## 2025-11-04 - UI优化与数据集成
+
+### 路由与样式改进 ✅
+- bind-sbt改为get-sbt
+- MySBT区域浅蓝背景
+- Wizard ETH获取链接
+- Operator深色文字修复
+
+### GToken页面重构 ✅
+- 钱包连接文案优化
+- 质押需求按用途分类
+- MySBT退款FAQ
+- 完整深色模式支持
+
+### Paymaster详情增强 ✅
+- GToken/Anti-sybil说明
+- User Requirements区域
+- 合约数据实时读取
+
+---
+
 ## 2025-10-29 (深夜) - Paymaster AOA/AOA+ 架构改进
 
 ### SuperPaymaster Chainlink 集成 ✅

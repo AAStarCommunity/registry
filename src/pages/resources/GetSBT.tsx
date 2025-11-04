@@ -225,7 +225,7 @@ export function GetSBT() {
         </div>
 
         {/* What is MySBT */}
-        <div className="info-section">
+        <div className="info-section mysbt-intro-section">
           <div className="mysbt-header">
             <svg className="mysbt-icon" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
               {/* Whiteboard background */}

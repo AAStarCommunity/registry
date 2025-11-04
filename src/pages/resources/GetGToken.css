@@ -667,3 +667,88 @@
     width: 100%;
   }
 }
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .get-gtoken-container {
+    background: #1f2937;
+    color: #e5e7eb;
+  }
+
+  h2, h3 {
+    color: #f3f4f6 !important;
+  }
+
+  .info-section p,
+  .method-card p,
+  .wallet-connect-prompt p {
+    color: #d1d5db;
+  }
+
+  .info-row .label,
+  .balance-item .label,
+  .faq-item summary {
+    color: #9ca3af;
+  }
+
+  .info-row .value,
+  .connected-account,
+  .balance-item .value {
+    color: #f3f4f6;
+  }
+
+  .config-table code,
+  .info-row .value.mono {
+    background: #374151;
+    color: #a5b4fc;
+  }
+
+  .contract-info {
+    background: #374151;
+  }
+
+  .method-card {
+    background: #374151;
+    border-color: #4b5563;
+  }
+
+  .method-card.recommended {
+    background: linear-gradient(135deg, #312e81 0%, #4c1d95 100%);
+    border-color: #7c3aed;
+  }
+
+  .method-card h3,
+  .method-card ul li {
+    color: #e5e7eb;
+  }
+
+  .manual-add-content,
+  .entrypoint-note,
+  .registry-note,
+  .stake-info-box {
+    background: #374151;
+  }
+
+  .manual-add-content p,
+  .manual-add-content li,
+  .stake-info-box li {
+    color: #d1d5db;
+  }
+
+  .stake-interface,
+  .wallet-info {
+    background: #374151;
+  }
+
+  .balance-item {
+    background: #4b5563;
+    border-color: #6b7280;
+  }
+
+  .edit-input,
+  .input-with-max input {
+    background: #4b5563;
+    color: #f3f4f6;
+    border-color: #6b7280;
+  }
+}

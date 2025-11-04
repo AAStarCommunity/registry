@@ -14,6 +14,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { checkResources, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
+import { getCurrentNetworkConfig, isTestnet } from "../../../../config/networkConfig";
 import "./Step2_ResourceCheck.css";
 
 export interface Step2Props {
@@ -26,6 +27,8 @@ export interface Step2Props {
 export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Step2Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const networkConfig = getCurrentNetworkConfig();
+  const isTest = isTestnet();
   const [isLoading, setIsLoading] = useState(true);
   const [resources, setResources] = useState<ResourceStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -246,7 +249,7 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                     <p className="status-text error">{t('step2ResourceCheck.resources.sbt.notBound')}</p>
                     <button
                       className="action-btn"
-                      onClick={() => handleNavigate("/bind-sbt")}
+                      onClick={() => handleNavigate("/get-sbt")}
                     >
                       {t('step2ResourceCheck.resources.sbt.action')}
                     </button>
@@ -321,9 +324,43 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
               {t('step2ResourceCheck.resources.eth.required')} {resources?.requiredETH} {t('step2ResourceCheck.resources.eth.requiredSuffix')}
             </p>
             {!resources?.hasEnoughETH && (
-              <p className="detail-text error">
-                {t('step2ResourceCheck.resources.eth.faucetNote')}
-              </p>
+              <div style={{ marginTop: "0.75rem" }}>
+                {isTest ? (
+                  // Testnet: Show faucet links
+                  <>
+                    <p className="detail-text" style={{ marginBottom: "0.5rem" }}>
+                      Get free testnet ETH from faucets:
+                    </p>
+                    {networkConfig.resources.ethFaucets.map((faucetUrl, index) => (
+                      <a
+                        key={index}
+                        href={faucetUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="action-btn"
+                        style={{
+                          display: "inline-block",
+                          marginRight: "0.5rem",
+                          marginTop: "0.5rem",
+                          padding: "0.5rem 1rem",
+                          background: "#7c3aed",
+                          color: "white",
+                          textDecoration: "none",
+                          borderRadius: "6px",
+                          fontSize: "0.85rem"
+                        }}
+                      >
+                        Faucet #{index + 1} →
+                      </a>
+                    ))}
+                  </>
+                ) : (
+                  // Mainnet: Show CEX/DEX options
+                  <p className="detail-text error">
+                    Get ETH from exchanges (CEX) like Binance, Coinbase or decentralized exchanges (DEX) like Uniswap
+                  </p>
+                )}
+              </div>
             )}
           </div>
         </div>

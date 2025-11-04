@@ -29,6 +29,16 @@ export function PaymasterDetail() {
   const [registryInfo, setRegistryInfo] = useState<any>(null);
   const [loadingRegistry, setLoadingRegistry] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string>("");
+  const [userRequirements, setUserRequirements] = useState<{
+    hasMySBT: boolean;
+    ethBalance: string;
+    isLoading: boolean;
+  }>({
+    hasMySBT: false,
+    ethBalance: "0",
+    isLoading: false,
+  });
 
   // LocalStorage cache key for this Paymaster
   const CACHE_KEY = `paymaster_registry_${address?.toLowerCase()}`;
@@ -98,6 +108,44 @@ export function PaymasterDetail() {
       let registryData = null;
       // Check if actually registered (deployed and has operator)
       if (isDeployed && factoryInfo.operator && factoryInfo.operator !== ethers.ZeroAddress) {
+        const operatorAddress = factoryInfo.operator;
+
+        // Fetch stake amount from GTokenStaking contract
+        let stakedAmount = "0";
+        try {
+          const gTokenStakingAddress = networkConfig.contracts.gTokenStaking;
+          const gTokenStakingAbi = [
+            "function balanceOf(address account) view returns (uint256)",
+            "function stakes(address account) view returns (uint256 amount, uint256 timestamp)"
+          ];
+          const gTokenStaking = new ethers.Contract(
+            gTokenStakingAddress,
+            gTokenStakingAbi,
+            provider
+          );
+
+          // Try to get staked balance
+          try {
+            const balance = await gTokenStaking.balanceOf(operatorAddress);
+            stakedAmount = balance.toString();
+          } catch (e) {
+            // If balanceOf fails, try stakes mapping
+            try {
+              const stake = await gTokenStaking.stakes(operatorAddress);
+              stakedAmount = stake.amount ? stake.amount.toString() : stake[0] ? stake[0].toString() : "0";
+            } catch (err) {
+              console.log("Could not read stake from GTokenStaking:", err);
+            }
+          }
+        } catch (err) {
+          console.error("Failed to fetch stake amount:", err);
+        }
+
+        // Calculate reputation based on success rate
+        // For now, use a simplified reputation calculation
+        // In a real implementation, this would come from the Registry contract
+        let reputation = 100; // Default reputation
+
         // Paymaster was deployed via factory - this means it's registered
         registryData = {
           paymasterAddress: address,
@@ -106,8 +154,8 @@ export function PaymasterDetail() {
           version: "v4.1",
           timestamp: new Date().toLocaleString(),
           feeRate: 0,
-          stakedAmount: "0",
-          reputation: "0",
+          stakedAmount: stakedAmount,
+          reputation: reputation.toString(),
           isActive: true,
           successCount: 0,
           totalAttempts: 0,
@@ -138,12 +186,73 @@ export function PaymasterDetail() {
     }
   };
 
+  // Connect wallet
+  const connectWallet = async () => {
+    try {
+      if (!window.ethereum) {
+        alert("Please install MetaMask!");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.send("eth_requestAccounts", []);
+      setWalletAddress(accounts[0]);
+    } catch (error) {
+      console.error("Failed to connect wallet:", error);
+      alert("Failed to connect wallet. Please try again.");
+    }
+  };
+
+  // Check user requirements (MySBT and ETH balance)
+  const checkUserRequirements = async () => {
+    if (!walletAddress) {
+      return;
+    }
+
+    try {
+      setUserRequirements(prev => ({ ...prev, isLoading: true }));
+      const provider = getProvider();
+      const networkConfig = getCurrentNetworkConfig();
+
+      // Check MySBT balance
+      const mySBTAddress = networkConfig.contracts.mySBT;
+      const mySBTAbi = ["function balanceOf(address owner) view returns (uint256)"];
+      const mySBT = new ethers.Contract(mySBTAddress, mySBTAbi, provider);
+      const balance = await mySBT.balanceOf(walletAddress);
+      const hasMySBT = balance > 0n;
+
+      // Check ETH balance
+      const ethBalanceWei = await provider.getBalance(walletAddress);
+      const ethBalance = ethers.formatEther(ethBalanceWei);
+
+      setUserRequirements({
+        hasMySBT,
+        ethBalance,
+        isLoading: false,
+      });
+    } catch (err) {
+      console.error("Failed to check user requirements:", err);
+      setUserRequirements(prev => ({ ...prev, isLoading: false }));
+    }
+  };
+
+  // Check user requirements when wallet connects
+  useEffect(() => {
+    if (walletAddress) {
+      checkUserRequirements();
+    }
+  }, [walletAddress]);
+
   // Handle manual refresh
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
       // Refresh both registry info and analytics
-      await Promise.all([fetchRegistryInfo(), refresh()]);
+      await Promise.all([
+        fetchRegistryInfo(),
+        refresh(),
+        walletAddress ? checkUserRequirements() : Promise.resolve()
+      ]);
     } finally {
       setIsRefreshing(false);
     }
@@ -382,6 +491,118 @@ export function PaymasterDetail() {
           </div>
         </div>
       )}
+
+      {/* What is GToken? Why Stake? */}
+      <div className="info-card gtoken-info">
+        <h2>🪙 What is GToken? Why Stake?</h2>
+        <div style={{ lineHeight: '1.8', color: '#4a5568' }}>
+          <p style={{ marginBottom: '1rem' }}>
+            <strong>GToken</strong> is the governance and utility token of the SuperPaymaster ecosystem.
+            Staking GToken serves multiple critical purposes:
+          </p>
+          <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
+            <li><strong>Anti-Sybil Protection:</strong> Required GToken stake prevents spam accounts and ensures only legitimate operators can participate in the network.</li>
+            <li><strong>Economic Security:</strong> Staked tokens act as collateral, incentivizing honest behavior and discouraging malicious actions.</li>
+            <li><strong>Community Governance:</strong> GToken holders gain voting rights and influence over protocol upgrades and parameters.</li>
+            <li><strong>Service Access:</strong> Staking unlocks access to premium features like MySBT minting, community registration, and paymaster deployment.</li>
+          </ul>
+          <p style={{
+            padding: '1rem',
+            background: 'linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%)',
+            borderRadius: '8px',
+            marginTop: '1rem'
+          }}>
+            <strong>Requirements:</strong> MySBT for community member registration and paymaster operator services.
+            Different operations require different stake amounts (0.4 GT for MySBT, 10 GT for community, 100 GT for AOA paymaster).
+          </p>
+        </div>
+      </div>
+
+      {/* User Requirements */}
+      <div className="info-card user-requirements">
+        <h2>👤 User Requirements</h2>
+        {!walletAddress ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <p style={{ color: '#718096', marginBottom: '1rem' }}>
+              Connect your wallet to check if you meet the requirements
+            </p>
+            <button
+              onClick={connectWallet}
+              className="connect-wallet-btn"
+              style={{
+                padding: '0.75rem 1.5rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                fontSize: '1rem',
+              }}
+            >
+              Connect Wallet
+            </button>
+          </div>
+        ) : userRequirements.isLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div className="spinner" style={{ margin: '0 auto 1rem' }}></div>
+            <p style={{ color: '#718096' }}>Checking requirements...</p>
+          </div>
+        ) : (
+          <div className="requirements-grid">
+            <div className={`requirement-item ${userRequirements.hasMySBT ? 'met' : 'unmet'}`}>
+              <div className="requirement-icon">
+                {userRequirements.hasMySBT ? '✅' : '❌'}
+              </div>
+              <div className="requirement-details">
+                <h3>MySBT (Soul Bound Token)</h3>
+                <p className={userRequirements.hasMySBT ? 'status-success' : 'status-error'}>
+                  {userRequirements.hasMySBT
+                    ? 'You have MySBT - eligible for paymaster services'
+                    : 'MySBT required - mint one to access paymaster features'}
+                </p>
+                {!userRequirements.hasMySBT && (
+                  <Link to="/get-sbt" className="action-link-small">
+                    Get MySBT →
+                  </Link>
+                )}
+              </div>
+            </div>
+
+            <div className={`requirement-item ${parseFloat(userRequirements.ethBalance) > 0.001 ? 'met' : 'unmet'}`}>
+              <div className="requirement-icon">
+                {parseFloat(userRequirements.ethBalance) > 0.001 ? '✅' : '⚠️'}
+              </div>
+              <div className="requirement-details">
+                <h3>Gas Token Balance</h3>
+                <p style={{ fontSize: '1.125rem', fontWeight: '600', color: '#667eea' }}>
+                  {parseFloat(userRequirements.ethBalance).toFixed(4)} ETH
+                </p>
+                <p className={parseFloat(userRequirements.ethBalance) > 0.001 ? 'status-success' : 'status-warning'}>
+                  {parseFloat(userRequirements.ethBalance) > 0.001
+                    ? 'Sufficient balance for transactions'
+                    : 'Low balance - add more ETH for gas fees'}
+                </p>
+              </div>
+            </div>
+
+            <div className="requirement-item info">
+              <div className="requirement-icon">ℹ️</div>
+              <div className="requirement-details">
+                <h3>Connected Wallet</h3>
+                <p style={{
+                  fontFamily: 'monospace',
+                  fontSize: '0.875rem',
+                  color: '#667eea',
+                  wordBreak: 'break-all'
+                }}>
+                  {walletAddress}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Performance Metrics Card */}
       {paymasterStats && (
@@ -799,13 +1020,125 @@ export function PaymasterDetail() {
           background: #764ba2;
         }
 
+        .gtoken-info ul {
+          list-style-type: none;
+          padding-left: 0;
+        }
+
+        .gtoken-info li {
+          margin-bottom: 0.75rem;
+          padding-left: 1.5rem;
+          position: relative;
+        }
+
+        .gtoken-info li::before {
+          content: '▸';
+          position: absolute;
+          left: 0;
+          color: #667eea;
+          font-weight: bold;
+        }
+
+        .requirements-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          gap: 1.5rem;
+          margin-top: 1rem;
+        }
+
+        .requirement-item {
+          padding: 1.25rem;
+          border-radius: 8px;
+          border: 2px solid #e2e8f0;
+          display: flex;
+          gap: 1rem;
+          align-items: flex-start;
+          transition: all 0.3s;
+        }
+
+        .requirement-item.met {
+          background: #f0fdf4;
+          border-color: #86efac;
+        }
+
+        .requirement-item.unmet {
+          background: #fef2f2;
+          border-color: #fca5a5;
+        }
+
+        .requirement-item.info {
+          background: #f0f9ff;
+          border-color: #bae6fd;
+        }
+
+        .requirement-icon {
+          font-size: 2rem;
+          flex-shrink: 0;
+        }
+
+        .requirement-details {
+          flex: 1;
+        }
+
+        .requirement-details h3 {
+          font-size: 1rem;
+          color: #2d3748;
+          margin: 0 0 0.5rem 0;
+          font-weight: 600;
+        }
+
+        .requirement-details p {
+          margin: 0.25rem 0;
+          font-size: 0.875rem;
+        }
+
+        .status-success {
+          color: #15803d;
+          font-weight: 500;
+        }
+
+        .status-error {
+          color: #dc2626;
+          font-weight: 500;
+        }
+
+        .status-warning {
+          color: #ea580c;
+          font-weight: 500;
+        }
+
+        .action-link-small {
+          display: inline-block;
+          margin-top: 0.5rem;
+          padding: 0.375rem 0.75rem;
+          background: #667eea;
+          color: white;
+          text-decoration: none;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          font-weight: 600;
+          transition: all 0.3s;
+        }
+
+        .action-link-small:hover {
+          background: #764ba2;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+        }
+
+        .connect-wallet-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
         @media (max-width: 768px) {
           .paymaster-detail-page {
             padding: 1rem;
           }
 
           .info-grid,
-          .metrics-grid {
+          .metrics-grid,
+          .requirements-grid {
             grid-template-columns: 1fr;
           }
 

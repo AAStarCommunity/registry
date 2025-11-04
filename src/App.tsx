@@ -58,7 +58,7 @@ function App() {
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-pnts" element={<GetPNTs />} />
-            <Route path="/bind-sbt" element={<GetSBT />} />
+            <Route path="/get-sbt" element={<GetSBT />} />
             <Route path="/get-sbt" element={<GetSBT />} /> {/* Legacy redirect */}
             <Route path="/my-sbt" element={<MySBT />} />
             <Route path="/get-xpnts" element={<GetXPNTs />} />

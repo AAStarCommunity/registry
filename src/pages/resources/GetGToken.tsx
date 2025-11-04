@@ -276,7 +276,7 @@ const GetGToken: React.FC = () => {
 
           {!account ? (
             <div className="wallet-connect-prompt">
-              <p>Connect your wallet to stake GToken and receive stGToken</p>
+              <p>Connect wallet to stake GToken for various operations</p>
               <button onClick={connectWallet} className="action-button primary">
                 Connect Wallet
               </button>
@@ -434,10 +434,32 @@ const GetGToken: React.FC = () => {
                 </a>
               </span>
             </div>
+          </div>
+
+          <h3 style={{marginTop: '2rem', marginBottom: '1rem', color: '#374151'}}>GToken Stake Requirements by Use Case</h3>
+          <div className="contract-info">
             <div className="info-row">
-              <span className="label">Minimum Stake:</span>
+              <span className="label">Mint MySBT:</span>
               <span className="value highlight">
-                {config.requirements.minGTokenStake} GToken
+                0.4 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(0.3 lock + 0.1 burn)</span>
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="label">Register Community:</span>
+              <span className="value highlight">
+                10 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock)</span>
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="label">Deploy Paymaster (AOA):</span>
+              <span className="value highlight">
+                100 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock for reputation)</span>
+              </span>
+            </div>
+            <div className="info-row">
+              <span className="label">Use SuperPaymaster (AOA+):</span>
+              <span className="value highlight">
+                No lock required <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(pay per tx)</span>
               </span>
             </div>
           </div>
@@ -651,6 +673,28 @@ const GetGToken: React.FC = () => {
               No, testnet GToken has no real value and is only for testing purposes.
               Mainnet GToken is the real token with actual value. Never transfer
               testnet tokens to mainnet or vice versa.
+            </p>
+          </details>
+
+          <details className="faq-item">
+            <summary>What happens to my staked GToken when I burn MySBT?</summary>
+            <p>
+              When you burn (destroy) your MySBT, the locked portion of your staked GToken (0.3 GT) is automatically refunded back to your wallet. The burned portion (0.1 GT) is permanently destroyed and cannot be recovered. This allows you to reclaim most of your stake if you no longer need the MySBT.
+            </p>
+          </details>
+
+          <details className="faq-item">
+            <summary>Can I get a refund for my staked GToken?</summary>
+            <p>
+              Yes! You can get a refund through these methods:
+            </p>
+            <ul style={{marginTop: '0.5rem', paddingLeft: '1.5rem'}}>
+              <li><strong>Burn MySBT:</strong> Returns 0.3 GT (locked portion). The 0.1 GT burn fee is non-refundable.</li>
+              <li><strong>Unstake from other services:</strong> Most protocol operations allow unstaking with a 7-day cooldown period.</li>
+              <li><strong>Community deregistration:</strong> Returns locked GToken after cooldown (varies by service).</li>
+            </ul>
+            <p style={{marginTop: '0.5rem'}}>
+              Note: Refund mechanisms and cooldown periods are enforced by the GTokenStaking smart contract to prevent system abuse.
             </p>
           </details>
         </section>

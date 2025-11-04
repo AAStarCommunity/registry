@@ -198,7 +198,7 @@ export function LandingPage() {
               <p className="flow-description">
                 Deploy your Soul Bound Token for community identity verification
               </p>
-              <a href="/bind-sbt" className="flow-link">
+              <a href="/get-sbt" className="flow-link">
                 Bind
               </a>
             </div>
