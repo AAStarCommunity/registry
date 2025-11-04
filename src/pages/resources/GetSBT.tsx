@@ -256,44 +256,41 @@ export function GetSBT() {
       console.log("🔍 Debug - MySBT contract:", MYSBT_ADDRESS);
       console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
       
-      // Check MySBT's Registry configuration (try different function names)
+      // Check MySBT's Registry configuration using correct function name
       try {
-        let mysbtRegistry;
-        try {
-          mysbtRegistry = await mySBT.registry();
-        } catch {
-          try {
-            mysbtRegistry = await mySBT.getRegistry();
-          } catch {
-            try {
-              mysbtRegistry = await mySBT.REGISTRY();
-            } catch {
-              console.warn("Could not determine MySBT's Registry address - no standard getter function found");
-            }
-          }
-        }
-        
-        if (mysbtRegistry) {
-          console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
-          if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
-            console.warn("⚠️ Registry address mismatch!");
-            console.warn("MySBT uses:", mysbtRegistry);
-            console.warn("Frontend uses:", REGISTRY_ADDRESS);
-          }
+        const mysbtRegistry = await mySBT.REGISTRY();
+        console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
+        if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
+          console.warn("⚠️ Registry address mismatch!");
+          console.warn("MySBT uses:", mysbtRegistry);
+          console.warn("Frontend uses:", REGISTRY_ADDRESS);
         }
       } catch (err) {
-        console.warn("Could not check MySBT's Registry address:", err);
+        console.warn("Could not check MySBT's Registry address:", (err as Error).message);
       }
       
       // Ensure address is properly checksummed
       const checksummedCommunity = ethers.getAddress(selectedCommunity);
       
-      // Try to get more info about why community might not be registered
+      // Check if MySBT can see the community using Registry functions
       try {
         console.log("🔍 Checking if MySBT can see the community...");
-        // Try calling some common functions to understand MySBT's view of the community
-        const communityInfo = await mySBT.getCommunityProfile(checksummedCommunity);
-        console.log("🔍 MySBT community info:", communityInfo);
+        
+        // Try the exact functions MySBT uses internally
+        try {
+          const isRegistered = await mySBT.isRegisteredCommunity(checksummedCommunity);
+          console.log("🔍 MySBT isRegisteredCommunity result:", isRegistered);
+        } catch {
+          console.log("🔍 MySBT doesn't have isRegisteredCommunity function");
+        }
+        
+        try {
+          const communityStatus = await mySBT.getCommunityStatus(checksummedCommunity);
+          console.log("🔍 MySBT getCommunityStatus result:", communityStatus);
+        } catch {
+          console.log("🔍 MySBT doesn't have getCommunityStatus function");
+        }
+        
       } catch (err) {
         console.log("🔍 Could not get community info from MySBT:", (err as Error).message);
       }
