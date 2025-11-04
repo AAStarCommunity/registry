@@ -204,7 +204,24 @@ const GetGToken: React.FC = () => {
       // Check for pending unstake
       try {
         const stakeInfo = await stakingContract.getStakeInfo(userAddress);
-        const unstakeRequestedAt = stakeInfo[3];
+        // stakeInfo returns: [amount, sGTokenShares, stakedAt, unstakeRequestedAt]
+        console.log("🔍 DEBUG: Raw stakeInfo:", stakeInfo);
+        console.log("🔍 DEBUG: stakeInfo.unstakeRequestedAt:", stakeInfo.unstakeRequestedAt);
+        console.log("🔍 DEBUG: Type of unstakeRequestedAt:", typeof stakeInfo.unstakeRequestedAt);
+        console.log("🔍 DEBUG: stakeInfo keys:", Object.keys(stakeInfo));
+        
+        // Try different ways to access unstakeRequestedAt
+        let unstakeRequestedAt;
+        if (stakeInfo.unstakeRequestedAt !== undefined) {
+          unstakeRequestedAt = stakeInfo.unstakeRequestedAt;
+        } else if (stakeInfo[3] !== undefined) {
+          unstakeRequestedAt = stakeInfo[3];
+        } else {
+          console.error("❌ Cannot find unstakeRequestedAt in stakeInfo");
+          unstakeRequestedAt = 0n;
+        }
+        
+        console.log("🔍 DEBUG: Final unstakeRequestedAt:", unstakeRequestedAt);
         
         if (unstakeRequestedAt > 0n) {
           const unstakeTime = Number(unstakeRequestedAt);
@@ -251,53 +268,7 @@ const GetGToken: React.FC = () => {
     }
   };
 
-  // Handle cancel unstake
-  const handleCancelUnstake = async () => {
-    if (!account) {
-      setError("Please connect your wallet first!");
-      return;
-    }
 
-    try {
-      setIsStaking(true);
-      setError("");
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      const stakingContract = new ethers.Contract(
-        config.contracts.gTokenStaking,
-        GTokenStakingABI,
-        signer
-      );
-
-      console.log("🚫 Cancelling unstake request...");
-      const cancelTx = await stakingContract.cancelUnstake();
-      console.log("Transaction sent:", cancelTx.hash);
-
-      const receipt = await cancelTx.wait();
-      console.log("✅ Unstake cancelled successfully!");
-
-      setTxHash(receipt.hash);
-      setError("");
-
-      // Reload balances
-      await loadBalances(account);
-    } catch (error: any) {
-      console.error("❌ Cancel unstake failed:", error);
-      
-      let errorMsg = "Failed to cancel unstake!\n\n";
-      if (error.code === "ACTION_REJECTED") {
-        errorMsg = "Transaction cancelled by user.";
-      } else {
-        errorMsg += error.message || "Unknown error";
-      }
-      
-      setError(errorMsg);
-    } finally {
-      setIsStaking(false);
-    }
-  };
 
   // Handle complete unstake
   const handleCompleteUnstake = async () => {
@@ -319,6 +290,27 @@ const GetGToken: React.FC = () => {
         signer
       );
 
+      // Pre-flight check: Verify unstake has been requested and cooldown period passed
+      const stakeInfo = await stakingContract.getStakeInfo(account);
+      const unstakeRequestedAt = stakeInfo.unstakeRequestedAt;
+      
+      if (unstakeRequestedAt === 0n) {
+        setError("No unstake request found. Please request unstake first.");
+        return;
+      }
+
+      const unstakeTime = Number(unstakeRequestedAt);
+      const now = Math.floor(Date.now() / 1000);
+      const unstakeDelay = 7 * 24 * 60 * 60; // 7 days in seconds
+      
+      if (now < (unstakeTime + unstakeDelay)) {
+        const remainingTime = (unstakeTime + unstakeDelay - now);
+        const days = Math.floor(remainingTime / (24 * 60 * 60));
+        const hours = Math.floor((remainingTime % (24 * 60 * 60)) / (60 * 60));
+        setError(`Unstake cooldown period not yet passed.\n\nTime remaining: ${days} days ${hours} hours`);
+        return;
+      }
+
       console.log("✅ Completing unstake...");
       const unstakeTx = await stakingContract.unstake();
       console.log("Transaction sent:", unstakeTx.hash);
@@ -337,6 +329,10 @@ const GetGToken: React.FC = () => {
       let errorMsg = "Failed to complete unstake!\n\n";
       if (error.code === "ACTION_REJECTED") {
         errorMsg = "Transaction cancelled by user.";
+      } else if (error.message && error.message.includes("StakeIsLocked")) {
+        errorMsg = "Cannot unstake: Some tokens are still locked.\n\nPlease wait for all locks to expire or use the appropriate unlock functions.";
+      } else if (error.message && error.message.includes("UnstakeNotRequested")) {
+        errorMsg = "No unstake request found.\n\nPlease request unstake first and wait for the cooldown period.";
       } else {
         errorMsg += error.message || "Unknown error";
       }
@@ -415,8 +411,9 @@ const GetGToken: React.FC = () => {
       );
 
       const stakeInfo = await stakingContract.getStakeInfo(account);
-      const stakedAmount = stakeInfo[0];
-      const unstakeRequestedAt = stakeInfo[3];
+      // stakeInfo returns: [amount, sGTokenShares, stakedAt, unstakeRequestedAt]
+      const stakedAmount = stakeInfo.amount;
+      const unstakeRequestedAt = stakeInfo.unstakeRequestedAt;
 
       if (stakedAmount > 0n) {
         console.log(
@@ -708,23 +705,6 @@ const GetGToken: React.FC = () => {
                     <strong>Status:</strong> {pendingUnstakeInfo.canComplete ? '✅ Ready to complete' : '⏳ 7-day cooldown in progress'}
                   </p>
                   <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <button
-                      onClick={handleCancelUnstake}
-                      disabled={isStaking}
-                      style={{
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '0.85rem',
-                        fontWeight: '500',
-                        cursor: isStaking ? 'not-allowed' : 'pointer',
-                        opacity: isStaking ? 0.6 : 1
-                      }}
-                    >
-                      {isStaking ? 'Cancelling...' : '🚫 Cancel Unstake'}
-                    </button>
                     {pendingUnstakeInfo.canComplete && (
                       <button
                         onClick={handleCompleteUnstake}
@@ -746,7 +726,7 @@ const GetGToken: React.FC = () => {
                     )}
                   </div>
                   <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.8rem', color: '#92400e' }}>
-                    💡 You must cancel or complete the pending unstake before staking more GToken.
+                    💡 Unstake requests cannot be cancelled. {pendingUnstakeInfo.canComplete ? 'You can complete the unstake now.' : 'You must wait the full 7-day cooldown period before completing.'}
                   </p>
                 </div>
               )}
