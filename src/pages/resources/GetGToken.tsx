@@ -276,7 +276,7 @@ const GetGToken: React.FC = () => {
 
           {!account ? (
             <div className="wallet-connect-prompt">
-              <p>Connect your wallet to stake and lock GToken, get more service.</p>
+              <p>Connect wallet to stake GToken for various operations</p>
               <button onClick={connectWallet} className="action-button primary">
                 Connect Wallet
               </button>
