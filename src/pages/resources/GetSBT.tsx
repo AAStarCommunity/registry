@@ -242,7 +242,14 @@ export function GetSBT() {
       // Mint MySBT
       const mySBT = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, signer);
       console.log(t("getSBT.console.mintingMySBT", { community: selectedCommunity }));
-      const tx = await mySBT.userMint(selectedCommunity, "{}");
+      console.log("🔍 Debug - Community address:", selectedCommunity);
+      console.log("🔍 Debug - Community address checksummed:", ethers.getAddress(selectedCommunity));
+      console.log("🔍 Debug - MySBT contract:", MYSBT_ADDRESS);
+      console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
+      
+      // Ensure address is properly checksummed
+      const checksummedCommunity = ethers.getAddress(selectedCommunity);
+      const tx = await mySBT.userMint(checksummedCommunity, "{}");
       setMintTxHash(tx.hash);
 
       console.log(t("getSBT.console.waitingForConfirmation"));

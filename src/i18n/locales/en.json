@@ -540,7 +540,7 @@
     },
     "communitySelect": {
       "title": "Select Initial Community",
-      "hint": "Choose which community you want to join. You can switch communities later.",
+      "hint": "Choose which community you want to join. You can join more or quit any community later.",
       "label": "Choose Community",
       "placeholder": "-- Select a community --",
       "selected": "Selected"
