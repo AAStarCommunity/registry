@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GToken Balance Test</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js"></script>
+</head>
+<body>
+    <h1>GToken Balance Test</h1>
+    <div>
+        <label>Address: <input type="text" id="address" value="0x2E9A5648F9dd7E8d70e3CBdA0C8b6Ada71Da4Ec9" style="width: 400px;"></label>
+        <button onclick="checkBalance()">Check Balance</button>
+    </div>
+    <div id="result"></div>
+
+    <script>
+        const ERC20_ABI = [
+            "function balanceOf(address owner) view returns (uint256)",
+            "function decimals() view returns (uint8)",
+            "function symbol() view returns (string)",
+        ];
+
+        async function checkBalance() {
+            const address = document.getElementById('address').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Using Sepolia testnet
+                const provider = new ethers.providers.JsonRpcProvider('https://ethereum-sepolia.blockpi.network/v1/rpc/public');
+                const gTokenAddress = '0x99cCb70646Be7A5aeE7aF98cE853a1EA1A676DCc';
+                
+                const contract = new ethers.Contract(gTokenAddress, ERC20_ABI, provider);
+                
+                resultDiv.innerHTML = 'Checking...';
+                
+                const balance = await contract.balanceOf(address);
+                const symbol = await contract.symbol();
+                const decimals = await contract.decimals();
+                
+                const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+                
+                resultDiv.innerHTML = `
+                    <h3>Results:</h3>
+                    <p><strong>Token:</strong> ${symbol}</p>
+                    <p><strong>Decimals:</strong> ${decimals}</p>
+                    <p><strong>Raw Balance:</strong> ${balance.toString()}</p>
+                    <p><strong>Formatted Balance:</strong> ${formattedBalance}</p>
+                `;
+                
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;"><strong>Error:</strong> ${error.message}</p>`;
+            }
+        }
+        
+        // Auto-check on page load
+        window.onload = checkBalance;
+    </script>
+</body>
+</html>

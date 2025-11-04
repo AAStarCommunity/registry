@@ -16,33 +16,109 @@ const GetGToken: React.FC = () => {
   const config = getCurrentNetworkConfig();
   const isTest = isTestnet();
 
+  // Debug: Log configuration on component mount
+  console.log("🚀 === DEBUG: GetGToken Component Mounted ===");
+  console.log("📋 Network Config:", {
+    chainName: config.chainName,
+    chainId: config.chainId,
+    isTestnet: isTest,
+    gToken: config.contracts.gToken,
+    gTokenStaking: config.contracts.gTokenStaking
+  });
+
   // Wallet & Contract state
   const [account, setAccount] = useState<string>("");
   const [gtokenBalance, setGtokenBalance] = useState<string>("0");
   const [stGtokenBalance, setStGtokenBalance] = useState<string>("0");
+  const [ethBalance, setEthBalance] = useState<string>("0");
   const [stakeAmount, setStakeAmount] = useState<string>("");
   const [isStaking, setIsStaking] = useState(false);
   const [txHash, setTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [currentNetwork, setCurrentNetwork] = useState<{chainId: number, name: string} | null>(null);
 
   const handleGoBack = () => {
     navigate(-1);
   };
 
+  // Check current network
+  const checkCurrentNetwork = async () => {
+    try {
+      if (window.ethereum) {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const network = await provider.getNetwork();
+        const networkInfo = {
+          chainId: Number(network.chainId),
+          name: network.name || `Chain ${Number(network.chainId)}`
+        };
+        setCurrentNetwork(networkInfo);
+        console.log("🌐 Current network detected:", networkInfo);
+        return networkInfo;
+      }
+    } catch (error) {
+      console.error("Failed to check network:", error);
+      return null;
+    }
+  };
+
   // Connect wallet
   const connectWallet = async () => {
     try {
+      console.log("🔗 === DEBUG: Connecting Wallet ===");
+      
       if (!window.ethereum) {
+        console.error("❌ MetaMask not found");
         alert("Please install MetaMask!");
         return;
       }
 
+      console.log("✅ MetaMask found");
       const provider = new ethers.BrowserProvider(window.ethereum);
+      
+      // Check current network
+      const network = await provider.getNetwork();
+      const networkInfo = {
+        chainId: Number(network.chainId),
+        name: network.name || `Chain ${Number(network.chainId)}`
+      };
+      setCurrentNetwork(networkInfo);
+      
+      console.log("🌐 Current Network:", networkInfo);
+      console.log("📍 Expected Network:", {
+        chainId: config.chainId,
+        name: config.chainName
+      });
+      
+      if (Number(network.chainId) !== config.chainId) {
+        console.warn("⚠️ Network mismatch!");
+        console.warn(`Expected: ${config.chainName} (${config.chainId})`);
+        console.warn(`Connected: ${networkInfo.name} (${networkInfo.chainId})`);
+        alert(`Wrong network! Please switch to ${config.chainName}`);
+        return;
+      }
+      
+      console.log("✅ Network correct, requesting accounts...");
       const accounts = await provider.send("eth_requestAccounts", []);
-      setAccount(accounts[0]);
-      await loadBalances(accounts[0]);
+      console.log("👛 Connected accounts:", accounts);
+      
+      const connectedAccount = accounts[0];
+      console.log("🎯 Using account:", connectedAccount);
+      
+      setAccount(connectedAccount);
+      await loadBalances(connectedAccount);
+      
+      console.log("✅ === Wallet Connection Complete ===");
     } catch (error) {
-      console.error("Failed to connect wallet:", error);
+      console.error("❌ === Wallet Connection Failed ===");
+      console.error("Error:", error);
+      
+      if (error.code) {
+        console.error("Error code:", error.code);
+      }
+      if (error.message) {
+        console.error("Error message:", error.message);
+      }
+      
       alert("Failed to connect wallet. Please try again.");
     }
   };
@@ -50,27 +126,98 @@ const GetGToken: React.FC = () => {
   // Load balances
   const loadBalances = async (userAddress: string) => {
     try {
+      console.log("🔍 === DEBUG: Loading Balances ===");
+      console.log("📍 User Address:", userAddress);
+      console.log("🌐 Network:", config.chainName);
+      console.log("🔗 Chain ID:", config.chainId);
+      console.log("💰 GToken Contract:", config.contracts.gToken);
+      console.log("🔒 GTokenStaking Contract:", config.contracts.gTokenStaking);
+      
       const provider = new ethers.BrowserProvider(window.ethereum);
+      
+      // Get network info
+      const network = await provider.getNetwork();
+      console.log("📡 Provider Network:", {
+        chainId: Number(network.chainId),
+        name: network.name
+      });
+
+      // Load ETH balance first
+      console.log("💎 Loading ETH balance...");
+      const ethBalanceWei = await provider.getBalance(userAddress);
+      const formattedEthBalance = ethers.formatEther(ethBalanceWei);
+      console.log("💎 ETH Balance Results:");
+      console.log("   Raw:", ethBalanceWei.toString());
+      console.log("   Formatted:", formattedEthBalance);
+      setEthBalance(formattedEthBalance);
 
       // Load GToken balance
+      console.log("🪙 Loading GToken balance...");
       const gtokenContract = new ethers.Contract(
         config.contracts.gToken,
         ERC20_ABI,
         provider
       );
+      
+      // Test contract connection
+      try {
+        const symbol = await gtokenContract.symbol();
+        const decimals = await gtokenContract.decimals();
+        console.log("✅ GToken Contract Connected:", { symbol, decimals });
+      } catch (contractError) {
+        console.error("❌ GToken Contract Connection Failed:", contractError);
+        throw contractError;
+      }
+      
       const gtBalance = await gtokenContract.balanceOf(userAddress);
-      setGtokenBalance(ethers.formatEther(gtBalance));
+      const formattedGtBalance = ethers.formatEther(gtBalance);
+      console.log("💰 GToken Balance Results:");
+      console.log("   Raw:", gtBalance.toString());
+      console.log("   Formatted:", formattedGtBalance);
+      setGtokenBalance(formattedGtBalance);
 
       // Load stGToken balance
+      console.log("🔒 Loading stGToken balance...");
       const stakingContract = new ethers.Contract(
         config.contracts.gTokenStaking,
         GTokenStakingABI,
         provider
       );
+      
+      // Test staking contract connection
+      try {
+        const name = await stakingContract.name();
+        console.log("✅ GTokenStaking Contract Connected:", name);
+      } catch (contractError) {
+        console.error("❌ GTokenStaking Contract Connection Failed:", contractError);
+        // Don't throw here, continue with GToken balance
+      }
+      
       const stGtBalance = await stakingContract.balanceOf(userAddress);
-      setStGtokenBalance(ethers.formatEther(stGtBalance));
+      const formattedStGtBalance = ethers.formatEther(stGtBalance);
+      console.log("🔒 stGToken Balance Results:");
+      console.log("   Raw:", stGtBalance.toString());
+      console.log("   Formatted:", formattedStGtBalance);
+      setStGtokenBalance(formattedStGtBalance);
+      
+      console.log("✅ === Balance Loading Complete ===");
     } catch (error) {
-      console.error("Failed to load balances:", error);
+      console.error("❌ === Balance Loading Failed ===");
+      console.error("Error details:", error);
+      console.error("User address:", userAddress);
+      console.error("GToken contract:", config.contracts.gToken);
+      console.error("Network:", config.chainName);
+      
+      // Try to get more specific error info
+      if (error.code) {
+        console.error("Error code:", error.code);
+      }
+      if (error.message) {
+        console.error("Error message:", error.message);
+      }
+      if (error.data) {
+        console.error("Error data:", error.data);
+      }
     }
   };
 
@@ -234,20 +381,55 @@ const GetGToken: React.FC = () => {
     }
   }, [account]);
 
+  // Check network on component mount
+  useEffect(() => {
+    checkCurrentNetwork();
+  }, []);
+
   // Listen for account changes
   useEffect(() => {
     if (window.ethereum) {
+      // Listen for account changes
       window.ethereum.on("accountsChanged", (accounts: string[]) => {
+        console.log("🔄 === DEBUG: Accounts Changed ===");
+        console.log("New accounts:", accounts);
+        
         if (accounts.length > 0) {
-          setAccount(accounts[0]);
+          const newAccount = accounts[0];
+          console.log("🎯 New active account:", newAccount);
+          setAccount(newAccount);
+          
+          // Load balances for new account
+          console.log("📊 Loading balances for new account...");
+          loadBalances(newAccount);
         } else {
+          console.log("🚫 No accounts connected");
           setAccount("");
           setGtokenBalance("0");
           setStGtokenBalance("0");
+          setEthBalance("0");
+        }
+      });
+
+      // Listen for network changes
+      window.ethereum.on("chainChanged", (chainId: string) => {
+        console.log("🌐 === DEBUG: Network Changed ===");
+        console.log("New chain ID:", chainId);
+        console.log("Expected chain ID:", `0x${config.chainId.toString(16)}`);
+        
+        // Update network state
+        setTimeout(() => {
+          checkCurrentNetwork();
+        }, 1000); // Delay to ensure MetaMask has updated
+        
+        // Reload balances if account is connected
+        if (account) {
+          console.log("📊 Reloading balances after network change...");
+          loadBalances(account);
         }
       });
     }
-  }, []);
+  }, [account]);
 
   return (
     <div className="get-gtoken-page">
@@ -287,9 +469,32 @@ const GetGToken: React.FC = () => {
                 <p className="connected-account">
                   Connected: <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
                 </p>
+                <div className="debug-info" style={{ marginTop: '0.5rem', fontSize: '0.85rem', color: '#666' }}>
+                  <p>
+                    <strong>Network:</strong> 
+                    <span style={{ 
+                      color: currentNetwork?.chainId === config.chainId ? '#10b981' : '#ef4444',
+                      fontWeight: 'bold'
+                    }}>
+                      {currentNetwork ? `${currentNetwork.name} (${currentNetwork.chainId})` : 'Unknown'}
+                    </span>
+                    {currentNetwork?.chainId !== config.chainId && (
+                      <span style={{ color: '#ef4444', marginLeft: '0.5rem' }}>
+                        ⚠️ Expected: {config.chainName} ({config.chainId})
+                      </span>
+                    )}
+                  </p>
+                  <p><strong>ETH Balance:</strong> <span style={{ color: '#3b82f6', fontWeight: 'bold' }}>{parseFloat(ethBalance).toFixed(4)} ETH</span></p>
+                  <p><strong>GToken:</strong> <span className="mono" style={{ fontSize: '0.75rem' }}>{config.contracts.gToken}</span></p>
+                  <p><strong>GTokenStaking:</strong> <span className="mono" style={{ fontSize: '0.75rem' }}>{config.contracts.gTokenStaking}</span></p>
+                </div>
               </div>
 
               <div className="balance-display">
+                <div className="balance-item">
+                  <span className="label">ETH Balance:</span>
+                  <span className="value" style={{ color: '#3b82f6' }}>{parseFloat(ethBalance).toFixed(4)} ETH</span>
+                </div>
                 <div className="balance-item">
                   <span className="label">GToken Balance:</span>
                   <span className="value highlight">{parseFloat(gtokenBalance).toFixed(2)} GT</span>
@@ -322,9 +527,46 @@ const GetGToken: React.FC = () => {
                       MAX
                     </button>
                   </div>
-                  <small className="hint">
-                    Minimum stake: {config.requirements.minGTokenStake} GT
-                  </small>
+
+                  {/* GToken Stake Requirements by Use Case */}
+                  <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+                    <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '0.9rem', color: '#374151', fontWeight: '600' }}>
+                      GToken Stake Requirements by Use Case
+                    </h4>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6b7280' }}>Mint MySBT:</span>
+                        <span style={{ fontWeight: '500', color: '#111827' }}>
+                          0.4 GT <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 'normal' }}>(0.3 lock + 0.1 burn)</span>
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6b7280' }}>Register Community:</span>
+                        <span style={{ fontWeight: '500', color: '#111827' }}>
+                          30 GT <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 'normal' }}>(lock)</span>
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6b7280' }}>Deploy Paymaster (AOA):</span>
+                        <span style={{ fontWeight: '500', color: '#111827' }}>
+                          30 GT <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontWeight: 'normal' }}>(lock for reputation)</span>
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6b7280' }}>Use SuperPaymaster (AOA+):</span>
+                        <span style={{ fontWeight: '500', color: '#111827' }}>
+                          50 GT
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85rem' }}>
+                        <span style={{ color: '#6b7280' }}>More service:</span>
+                        <span style={{ fontWeight: '500', color: '#111827' }}>
+                          on building
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
 
                 <button
@@ -439,39 +681,7 @@ const GetGToken: React.FC = () => {
             </div>
           </div>
 
-          <h3 style={{marginTop: '2rem', marginBottom: '1rem', color: '#374151'}}>GToken Stake Requirements by Use Case</h3>
-          <div className="contract-info">
-            <div className="info-row">
-              <span className="label">Mint MySBT:</span>
-              <span className="value highlight">
-                0.4 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(0.3 lock + 0.1 burn)</span>
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="label">Register Community:</span>
-              <span className="value highlight">
-                30 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock)</span>
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="label">Deploy Paymaster (AOA):</span>
-              <span className="value highlight">
-                30 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock for reputation)</span>
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="label">Use SuperPaymaster (AOA+):</span>
-              <span className="value highlight">
-                50 GT
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="label">More service:</span>
-              <span className="value highlight">
-                on building
-              </span>
-            </div>
-          </div>
+
         </section>
 
         {/* How to Get GToken */}
