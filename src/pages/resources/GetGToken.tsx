@@ -450,19 +450,19 @@ const GetGToken: React.FC = () => {
             <div className="info-row">
               <span className="label">Register Community:</span>
               <span className="value highlight">
-                10 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock)</span>
+                30 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock)</span>
               </span>
             </div>
             <div className="info-row">
               <span className="label">Deploy Paymaster (AOA):</span>
               <span className="value highlight">
-                100 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock for reputation)</span>
+                30 GT <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(lock for reputation)</span>
               </span>
             </div>
             <div className="info-row">
               <span className="label">Use SuperPaymaster (AOA+):</span>
               <span className="value highlight">
-                No lock required <span style={{fontSize: '0.85rem', color: '#6b7280', fontWeight: 'normal'}}>(pay per tx)</span>
+                50 GT
               </span>
             </div>
           </div>
