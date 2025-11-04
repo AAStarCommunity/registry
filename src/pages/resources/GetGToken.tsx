@@ -371,7 +371,7 @@ const GetGToken: React.FC = () => {
 
         {/* What is GToken Section */}
         <section className="info-section">
-          <h2>💎 What is GToken?</h2>
+          <h2>💎 What is GToken? Why Stake?</h2>
           <p>
             GToken is the governance token of the SuperPaymaster ecosystem, used for:
           </p>
@@ -390,6 +390,9 @@ const GetGToken: React.FC = () => {
             </li>
             <li>
               <strong>Fee Discounts</strong>: Get lower protocol fees with higher stake
+            </li>
+            <li>
+              <strong>Anti-sybil</strong>: Stake is a way to anti-sybil attack to the protocol
             </li>
             <li>
               <a
