@@ -29,22 +29,8 @@ export function PaymasterDetail() {
   const [registryInfo, setRegistryInfo] = useState<any>(null);
   const [loadingRegistry, setLoadingRegistry] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string>("");
-  const [userRequirements, setUserRequirements] = useState<{
-    hasMySBT: boolean;
-    ethBalance: string;
-    communityInfo: {
-      name: string;
-      xPNTsToken: string;
-      xPNTsBalance: string;
-    } | null;
-    isLoading: boolean;
-  }>({
-    hasMySBT: false,
-    ethBalance: "0",
-    communityInfo: null,
-    isLoading: false,
-  });
+
+
 
   // LocalStorage cache key for this Paymaster
   const CACHE_KEY = `paymaster_registry_${address?.toLowerCase()}`;
@@ -192,107 +178,7 @@ export function PaymasterDetail() {
     }
   };
 
-  // Connect wallet
-  const connectWallet = async () => {
-    try {
-      if (!window.ethereum) {
-        alert("Please install MetaMask!");
-        return;
-      }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const accounts = await provider.send("eth_requestAccounts", []);
-      setWalletAddress(accounts[0]);
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-      alert("Failed to connect wallet. Please try again.");
-    }
-  };
-
-  // Check user requirements (MySBT, ETH balance, and community info)
-  const checkUserRequirements = async () => {
-    if (!walletAddress) {
-      return;
-    }
-
-    try {
-      setUserRequirements(prev => ({ ...prev, isLoading: true }));
-      const provider = getProvider();
-      const networkConfig = getCurrentNetworkConfig();
-
-      // Check MySBT balance
-      const mySBTAddress = networkConfig.contracts.mySBT;
-      const mySBTAbi = ["function balanceOf(address owner) view returns (uint256)"];
-      const mySBT = new ethers.Contract(mySBTAddress, mySBTAbi, provider);
-      const balance = await mySBT.balanceOf(walletAddress);
-      const hasMySBT = balance > 0n;
-
-      // Check ETH balance
-      const ethBalanceWei = await provider.getBalance(walletAddress);
-      const ethBalance = ethers.formatEther(ethBalanceWei);
-
-      // Get community info for this paymaster
-      let communityInfo = null;
-      try {
-        const registryAddress = networkConfig.contracts.registryV2_1;
-        const registryAbi = [
-          "function getCommunityCount() view returns (uint256)",
-          "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
-          "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))"
-        ];
-        const registry = new ethers.Contract(registryAddress, registryAbi, provider);
-
-        const communityCount = await registry.getCommunityCount();
-        const searchLimit = communityCount > 10 ? 10 : communityCount;
-        const communities = await registry.getCommunities(0, searchLimit);
-
-        // Search for this paymaster in communities
-        for (let i = 0; i < communities.length; i++) {
-          try {
-            const profile = await registry.getCommunityProfile(communities[i]);
-            if (profile.paymasterAddress && profile.paymasterAddress.toLowerCase() === address?.toLowerCase()) {
-              // Get xPNTs token balance
-              let xPNTsBalance = "0";
-              if (profile.xPNTsToken && profile.xPNTsToken !== ethers.ZeroAddress) {
-                const xPNTsAbi = ["function balanceOf(address owner) view returns (uint256)", "function symbol() view returns (string)"];
-                const xPNTsToken = new ethers.Contract(profile.xPNTsToken, xPNTsAbi, provider);
-                const balanceWei = await xPNTsToken.balanceOf(walletAddress);
-                xPNTsBalance = ethers.formatEther(balanceWei);
-              }
-
-              communityInfo = {
-                name: profile.name,
-                xPNTsToken: profile.xPNTsToken,
-                xPNTsBalance: xPNTsBalance,
-              };
-              break;
-            }
-          } catch (e) {
-            // Skip if can't get profile
-          }
-        }
-      } catch (err) {
-        console.log("Failed to get community info:", err);
-      }
-
-      setUserRequirements({
-        hasMySBT,
-        ethBalance,
-        communityInfo,
-        isLoading: false,
-      });
-    } catch (err) {
-      console.error("Failed to check user requirements:", err);
-      setUserRequirements(prev => ({ ...prev, isLoading: false }));
-    }
-  };
-
-  // Check user requirements when wallet connects
-  useEffect(() => {
-    if (walletAddress) {
-      checkUserRequirements();
-    }
-  }, [walletAddress]);
 
   // Handle manual refresh
   const handleRefresh = async () => {
@@ -301,8 +187,7 @@ export function PaymasterDetail() {
       // Refresh both registry info and analytics
       await Promise.all([
         fetchRegistryInfo(),
-        refresh(),
-        walletAddress ? checkUserRequirements() : Promise.resolve()
+        refresh()
       ]);
     } finally {
       setIsRefreshing(false);
@@ -543,30 +428,7 @@ export function PaymasterDetail() {
         </div>
       )}
 
-      {/* What is GToken? Why Stake? */}
-      <div className="info-card gtoken-info">
-        <h2>🪙 What is GToken? Why Stake?</h2>
-        <div style={{ lineHeight: '1.8', color: '#4a5568' }}>
-          <p style={{ marginBottom: '1rem' }}>
-            <strong>GToken</strong> is the governance and utility token of the SuperPaymaster ecosystem.
-            Staking GToken serves multiple critical purposes:
-          </p>
-          <ul style={{ paddingLeft: '1.5rem', marginBottom: '1rem' }}>
-            <li><strong>Anti-Sybil Protection:</strong> Required GToken stake prevents spam accounts and ensures only legitimate operators can participate in the network.</li>
-            <li><strong>Economic Security:</strong> Staked tokens act as collateral, incentivizing honest behavior and discouraging malicious actions.</li>
-            <li><strong>Community Governance:</strong> GToken holders gain voting rights and influence over protocol upgrades and parameters.</li>
-            <li><strong>Service Access:</strong> Stake GToken to get MySBT and register Community member, or become a qualified Paymaster operator and more service.</li>
-          </ul>
-          <p style={{
-            padding: '1rem',
-            background: 'linear-gradient(135deg, #dbeafe 0%, #e0f2fe 100%)',
-            borderRadius: '8px',
-            marginTop: '1rem'
-          }}>
-            <strong>Requirements:</strong> MySBT for community member registration and paymaster operator services.
-            Different operations require different stake amounts (0.4 GT for MySBT, 30 GT for community, 30 GT for AOA paymaster, 50 GT for AOA+).
-          </p>
-        </div>
+
       </div>
 
       {/* User Requirements */}
