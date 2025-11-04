@@ -153,7 +153,7 @@ const sepoliaConfig: NetworkConfig = (() => {
 
     resources: {
       ethFaucets: [
-        'https://sepoliafaucet.com',
+        'https://cloud.google.com/application/web3/faucet/ethereum/sepolia',
         'https://www.alchemy.com/faucets/ethereum-sepolia',
       ],
       gTokenFaucet: 'https://faucet.aastar.io/',

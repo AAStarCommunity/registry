@@ -36,6 +36,7 @@ const GetGToken: React.FC = () => {
   const [txHash, setTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [currentNetwork, setCurrentNetwork] = useState<{chainId: number, name: string} | null>(null);
+  const [pendingUnstakeInfo, setPendingUnstakeInfo] = useState<{timestamp: number, canComplete: boolean} | null>(null);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -199,6 +200,35 @@ const GetGToken: React.FC = () => {
       console.log("   Raw:", stGtBalance.toString());
       console.log("   Formatted:", formattedStGtBalance);
       setStGtokenBalance(formattedStGtBalance);
+
+      // Check for pending unstake
+      try {
+        const stakeInfo = await stakingContract.getStakeInfo(userAddress);
+        const unstakeRequestedAt = stakeInfo[3];
+        
+        if (unstakeRequestedAt > 0n) {
+          const unstakeTime = Number(unstakeRequestedAt);
+          const now = Math.floor(Date.now() / 1000);
+          const unstakeDelay = 7 * 24 * 60 * 60; // 7 days in seconds
+          const canComplete = now >= (unstakeTime + unstakeDelay);
+          
+          setPendingUnstakeInfo({
+            timestamp: unstakeTime,
+            canComplete
+          });
+          
+          console.log("⏰ Pending unstake detected:", {
+            requestedAt: new Date(unstakeTime * 1000).toLocaleString(),
+            canComplete,
+            remainingTime: canComplete ? 0 : (unstakeTime + unstakeDelay - now)
+          });
+        } else {
+          setPendingUnstakeInfo(null);
+        }
+      } catch (unstakeError) {
+        console.warn("Failed to check pending unstake:", unstakeError);
+        setPendingUnstakeInfo(null);
+      }
       
       console.log("✅ === Balance Loading Complete ===");
     } catch (error) {
@@ -218,6 +248,102 @@ const GetGToken: React.FC = () => {
       if ((error as any).data) {
         console.error("Error data:", (error as any).data);
       }
+    }
+  };
+
+  // Handle cancel unstake
+  const handleCancelUnstake = async () => {
+    if (!account) {
+      setError("Please connect your wallet first!");
+      return;
+    }
+
+    try {
+      setIsStaking(true);
+      setError("");
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const stakingContract = new ethers.Contract(
+        config.contracts.gTokenStaking,
+        GTokenStakingABI,
+        signer
+      );
+
+      console.log("🚫 Cancelling unstake request...");
+      const cancelTx = await stakingContract.cancelUnstake();
+      console.log("Transaction sent:", cancelTx.hash);
+
+      const receipt = await cancelTx.wait();
+      console.log("✅ Unstake cancelled successfully!");
+
+      setTxHash(receipt.hash);
+      setError("");
+
+      // Reload balances
+      await loadBalances(account);
+    } catch (error: any) {
+      console.error("❌ Cancel unstake failed:", error);
+      
+      let errorMsg = "Failed to cancel unstake!\n\n";
+      if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction cancelled by user.";
+      } else {
+        errorMsg += error.message || "Unknown error";
+      }
+      
+      setError(errorMsg);
+    } finally {
+      setIsStaking(false);
+    }
+  };
+
+  // Handle complete unstake
+  const handleCompleteUnstake = async () => {
+    if (!account) {
+      setError("Please connect your wallet first!");
+      return;
+    }
+
+    try {
+      setIsStaking(true);
+      setError("");
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const stakingContract = new ethers.Contract(
+        config.contracts.gTokenStaking,
+        GTokenStakingABI,
+        signer
+      );
+
+      console.log("✅ Completing unstake...");
+      const unstakeTx = await stakingContract.unstake();
+      console.log("Transaction sent:", unstakeTx.hash);
+
+      const receipt = await unstakeTx.wait();
+      console.log("✅ Unstake completed successfully!");
+
+      setTxHash(receipt.hash);
+      setError("");
+
+      // Reload balances
+      await loadBalances(account);
+    } catch (error: any) {
+      console.error("❌ Complete unstake failed:", error);
+      
+      let errorMsg = "Failed to complete unstake!\n\n";
+      if (error.code === "ACTION_REJECTED") {
+        errorMsg = "Transaction cancelled by user.";
+      } else {
+        errorMsg += error.message || "Unknown error";
+      }
+      
+      setError(errorMsg);
+    } finally {
+      setIsStaking(false);
     }
   };
 
@@ -562,6 +688,69 @@ const GetGToken: React.FC = () => {
                 </div>
               </div>
 
+              {/* Pending Unstake Information */}
+              {pendingUnstakeInfo && (
+                <div className="pending-unstake-info" style={{
+                  marginTop: '1rem',
+                  padding: '1rem',
+                  backgroundColor: '#fef3c7',
+                  border: '1px solid #fbbf24',
+                  borderRadius: '8px',
+                  fontSize: '0.9rem'
+                }}>
+                  <h4 style={{ margin: '0 0 0.75rem 0', color: '#92400e', fontWeight: '600' }}>
+                    ⏰ Pending Unstake Request
+                  </h4>
+                  <p style={{ margin: '0 0 0.5rem 0', color: '#78350f' }}>
+                    <strong>Requested at:</strong> {new Date(pendingUnstakeInfo.timestamp * 1000).toLocaleString()}
+                  </p>
+                  <p style={{ margin: '0 0 1rem 0', color: '#78350f' }}>
+                    <strong>Status:</strong> {pendingUnstakeInfo.canComplete ? '✅ Ready to complete' : '⏳ 7-day cooldown in progress'}
+                  </p>
+                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={handleCancelUnstake}
+                      disabled={isStaking}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.85rem',
+                        fontWeight: '500',
+                        cursor: isStaking ? 'not-allowed' : 'pointer',
+                        opacity: isStaking ? 0.6 : 1
+                      }}
+                    >
+                      {isStaking ? 'Cancelling...' : '🚫 Cancel Unstake'}
+                    </button>
+                    {pendingUnstakeInfo.canComplete && (
+                      <button
+                        onClick={handleCompleteUnstake}
+                        disabled={isStaking}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#059669',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          fontSize: '0.85rem',
+                          fontWeight: '500',
+                          cursor: isStaking ? 'not-allowed' : 'pointer',
+                          opacity: isStaking ? 0.6 : 1
+                        }}
+                      >
+                        {isStaking ? 'Completing...' : '✅ Complete Unstake'}
+                      </button>
+                    )}
+                  </div>
+                  <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.8rem', color: '#92400e' }}>
+                    💡 You must cancel or complete the pending unstake before staking more GToken.
+                  </p>
+                </div>
+              )}
+
               <div className="stake-form">
                 <div className="form-group">
                   <label htmlFor="stake-amount">Amount to Stake:</label>
@@ -628,10 +817,16 @@ const GetGToken: React.FC = () => {
 
                 <button
                   onClick={handleStake}
-                  disabled={isStaking || !stakeAmount || parseFloat(stakeAmount) <= 0}
+                  disabled={isStaking || !stakeAmount || parseFloat(stakeAmount) <= 0 || pendingUnstakeInfo !== null}
                   className="action-button primary stake-button"
+                  title={pendingUnstakeInfo ? "Please resolve pending unstake first" : ""}
                 >
-                  {isStaking ? "Staking..." : `Stake ${stakeAmount || "0"} GToken`}
+                  {pendingUnstakeInfo 
+                    ? "⏳ Pending Unstake - Cannot Stake"
+                    : isStaking 
+                      ? "Staking..." 
+                      : `Stake ${stakeAmount || "0"} GToken`
+                  }
                 </button>
 
                 {error && (
