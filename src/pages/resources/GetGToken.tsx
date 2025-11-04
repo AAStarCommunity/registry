@@ -260,7 +260,7 @@ const GetGToken: React.FC = () => {
           <div className="header-content">
             <div>
               <h1>Get Governance Token</h1>
-              <p className="subtitle">
+              <p className="subtitle" style={{ color: '#e5e7eb', fontWeight: '500' }}>
                 GToken is required for staking in the SuperPaymaster ecosystem
               </p>
             </div>
@@ -276,7 +276,7 @@ const GetGToken: React.FC = () => {
 
           {!account ? (
             <div className="wallet-connect-prompt">
-              <p>Connect wallet to stake GToken for various operations</p>
+              <p>Connect your wallet to stake and lock GToken, get more service.</p>
               <button onClick={connectWallet} className="action-button primary">
                 Connect Wallet
               </button>
