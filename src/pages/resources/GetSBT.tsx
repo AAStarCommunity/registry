@@ -195,9 +195,28 @@ export function GetSBT() {
           }
         }
       } catch (stakeCheckError) {
+        // Re-throw our unstake errors, but catch other system errors
+        if ((stakeCheckError as Error).message?.includes("Cannot mint SBT while unstake is pending")) {
+          throw stakeCheckError;
+        }
         console.warn("Could not check unstake status:", stakeCheckError);
         // Don't block minting if we can't check unstake status
       }
+
+      // Check if selected community is registered in Registry
+      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, provider);
+      try {
+        const communityProfile = await registryContract.getCommunityProfile(selectedCommunity);
+        // If this call fails, it means community is not registered
+        if (!communityProfile || communityProfile[0] === "") {
+          throw new Error(`❌ Community not registered\n\nThe selected community address is not registered in the Registry.\n\nCommunity: ${selectedCommunity}\n\nPlease select a valid registered community from the list above.\n\nIf you believe this is an error, please contact support.`);
+        }
+        console.log("✅ Community is registered:", communityProfile[0]); // community name
+      } catch (registryError) {
+        console.error("Registry check failed:", registryError);
+        throw new Error(`❌ Community not registered\n\nThe selected community address is not registered in the Registry.\n\nCommunity: ${selectedCommunity}\n\nPlease select a valid registered community from the list above.\n\nIf you believe this is an error, please contact support.`);
+      }
+
       const signer = await provider.getSigner();
 
       // Approve GToken spending
