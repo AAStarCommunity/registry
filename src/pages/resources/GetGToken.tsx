@@ -486,7 +486,7 @@ const GetGToken: React.FC = () => {
                   <h3>Method 1: Faucet (Recommended)</h3>
                   <span className="badge">FREE</span>
                 </div>
-                <p>Get free testnet GToken from our faucet</p>
+                <p>For test purpose, get free testnet GToken from our faucet</p>
                 <ul>
                   <li>Instant delivery to your wallet</li>
                   <li>100 GToken per request</li>
@@ -508,9 +508,9 @@ const GetGToken: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 2: Test DEX</h3>
+                  <h3>Method 2: Buy from DEX</h3>
                 </div>
-                <p>Swap testnet ETH for GToken on our test DEX</p>
+                <p>accept any swapable token. Swap GToken in our DEX on Uniswap V4(On building).</p>
                 <ul>
                   <li>Practice trading before mainnet</li>
                   <li>Fixed exchange rate: 1 ETH = 1000 GToken</li>
@@ -527,6 +527,25 @@ const GetGToken: React.FC = () => {
                 ) : (
                   <p className="coming-soon">DEX coming soon</p>
                 )}
+              </div>
+
+              <div className="method-card">
+                <div className="method-header">
+                  <h3>Method 3: Buy from Shops</h3>
+                </div>
+                <p>accept xPNTs(On building).</p>
+                <ul>
+                  <li>Direct purchase with community tokens</li>
+                  <li>Support community ecosystem</li>
+                </ul>
+                <a
+                  href="https://shops.aastar.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button secondary"
+                >
+                  Go to Shops →
+                </a>
               </div>
             </>
           ) : (
@@ -555,9 +574,9 @@ const GetGToken: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 2: SuperPaymaster DEX</h3>
+                  <h3>Method 2: Buy from DEX</h3>
                 </div>
-                <p>Swap ETH for GToken on our native DEX</p>
+                <p>accept any swapable token. Swap GToken in our DEX on Uniswap V4(On building).</p>
                 <ul>
                   <li>Lower fees</li>
                   <li>Direct protocol integration</li>
@@ -570,6 +589,25 @@ const GetGToken: React.FC = () => {
                   className="action-button secondary"
                 >
                   Go to DEX →
+                </a>
+              </div>
+
+              <div className="method-card">
+                <div className="method-header">
+                  <h3>Method 3: Buy from Shops</h3>
+                </div>
+                <p>accept xPNTs(On building).</p>
+                <ul>
+                  <li>Direct purchase with community tokens</li>
+                  <li>Support community ecosystem</li>
+                </ul>
+                <a
+                  href="https://shops.aastar.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button secondary"
+                >
+                  Go to Shops →
                 </a>
               </div>
 
