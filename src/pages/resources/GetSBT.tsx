@@ -256,14 +256,30 @@ export function GetSBT() {
       console.log("🔍 Debug - MySBT contract:", MYSBT_ADDRESS);
       console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
       
-      // Check MySBT's Registry configuration
+      // Check MySBT's Registry configuration (try different function names)
       try {
-        const mysbtRegistry = await mySBT.registry();
-        console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
-        if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
-          console.warn("⚠️ Registry address mismatch!");
-          console.warn("MySBT uses:", mysbtRegistry);
-          console.warn("Frontend uses:", REGISTRY_ADDRESS);
+        let mysbtRegistry;
+        try {
+          mysbtRegistry = await mySBT.registry();
+        } catch {
+          try {
+            mysbtRegistry = await mySBT.getRegistry();
+          } catch {
+            try {
+              mysbtRegistry = await mySBT.REGISTRY();
+            } catch {
+              console.warn("Could not determine MySBT's Registry address - no standard getter function found");
+            }
+          }
+        }
+        
+        if (mysbtRegistry) {
+          console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
+          if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
+            console.warn("⚠️ Registry address mismatch!");
+            console.warn("MySBT uses:", mysbtRegistry);
+            console.warn("Frontend uses:", REGISTRY_ADDRESS);
+          }
         }
       } catch (err) {
         console.warn("Could not check MySBT's Registry address:", err);
@@ -271,6 +287,17 @@ export function GetSBT() {
       
       // Ensure address is properly checksummed
       const checksummedCommunity = ethers.getAddress(selectedCommunity);
+      
+      // Try to get more info about why community might not be registered
+      try {
+        console.log("🔍 Checking if MySBT can see the community...");
+        // Try calling some common functions to understand MySBT's view of the community
+        const communityInfo = await mySBT.getCommunityProfile(checksummedCommunity);
+        console.log("🔍 MySBT community info:", communityInfo);
+      } catch (err) {
+        console.log("🔍 Could not get community info from MySBT:", (err as Error).message);
+      }
+      
       const tx = await mySBT.userMint(checksummedCommunity, "{}");
       setMintTxHash(tx.hash);
 
