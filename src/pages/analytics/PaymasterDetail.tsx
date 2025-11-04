@@ -33,10 +33,16 @@ export function PaymasterDetail() {
   const [userRequirements, setUserRequirements] = useState<{
     hasMySBT: boolean;
     ethBalance: string;
+    communityInfo: {
+      name: string;
+      xPNTsToken: string;
+      xPNTsBalance: string;
+    } | null;
     isLoading: boolean;
   }>({
     hasMySBT: false,
     ethBalance: "0",
+    communityInfo: null,
     isLoading: false,
   });
 
@@ -203,7 +209,7 @@ export function PaymasterDetail() {
     }
   };
 
-  // Check user requirements (MySBT and ETH balance)
+  // Check user requirements (MySBT, ETH balance, and community info)
   const checkUserRequirements = async () => {
     if (!walletAddress) {
       return;
@@ -225,9 +231,54 @@ export function PaymasterDetail() {
       const ethBalanceWei = await provider.getBalance(walletAddress);
       const ethBalance = ethers.formatEther(ethBalanceWei);
 
+      // Get community info for this paymaster
+      let communityInfo = null;
+      try {
+        const registryAddress = networkConfig.contracts.registryV2_1;
+        const registryAbi = [
+          "function getCommunityCount() view returns (uint256)",
+          "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
+          "function getCommunityProfile(address communityAddress) view returns (tuple(string name, string ensName, string description, string website, string logoURI, string twitterHandle, string githubOrg, string telegramGroup, address xPNTsToken, address[] supportedSBTs, uint8 mode, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, uint256 memberCount))"
+        ];
+        const registry = new ethers.Contract(registryAddress, registryAbi, provider);
+
+        const communityCount = await registry.getCommunityCount();
+        const searchLimit = communityCount > 10 ? 10 : communityCount;
+        const communities = await registry.getCommunities(0, searchLimit);
+
+        // Search for this paymaster in communities
+        for (let i = 0; i < communities.length; i++) {
+          try {
+            const profile = await registry.getCommunityProfile(communities[i]);
+            if (profile.paymasterAddress && profile.paymasterAddress.toLowerCase() === address?.toLowerCase()) {
+              // Get xPNTs token balance
+              let xPNTsBalance = "0";
+              if (profile.xPNTsToken && profile.xPNTsToken !== ethers.ZeroAddress) {
+                const xPNTsAbi = ["function balanceOf(address owner) view returns (uint256)", "function symbol() view returns (string)"];
+                const xPNTsToken = new ethers.Contract(profile.xPNTsToken, xPNTsAbi, provider);
+                const balanceWei = await xPNTsToken.balanceOf(walletAddress);
+                xPNTsBalance = ethers.formatEther(balanceWei);
+              }
+
+              communityInfo = {
+                name: profile.name,
+                xPNTsToken: profile.xPNTsToken,
+                xPNTsBalance: xPNTsBalance,
+              };
+              break;
+            }
+          } catch (e) {
+            // Skip if can't get profile
+          }
+        }
+      } catch (err) {
+        console.log("Failed to get community info:", err);
+      }
+
       setUserRequirements({
         hasMySBT,
         ethBalance,
+        communityInfo,
         isLoading: false,
       });
     } catch (err) {
@@ -504,7 +555,7 @@ export function PaymasterDetail() {
             <li><strong>Anti-Sybil Protection:</strong> Required GToken stake prevents spam accounts and ensures only legitimate operators can participate in the network.</li>
             <li><strong>Economic Security:</strong> Staked tokens act as collateral, incentivizing honest behavior and discouraging malicious actions.</li>
             <li><strong>Community Governance:</strong> GToken holders gain voting rights and influence over protocol upgrades and parameters.</li>
-            <li><strong>Service Access:</strong> Staking unlocks access to premium features like MySBT minting, community registration, and paymaster deployment.</li>
+            <li><strong>Service Access:</strong> Stake GToken to get MySBT and register Community member, or become a qualified Paymaster operator and more service.</li>
           </ul>
           <p style={{
             padding: '1rem',
@@ -513,7 +564,7 @@ export function PaymasterDetail() {
             marginTop: '1rem'
           }}>
             <strong>Requirements:</strong> MySBT for community member registration and paymaster operator services.
-            Different operations require different stake amounts (0.4 GT for MySBT, 10 GT for community, 100 GT for AOA paymaster).
+            Different operations require different stake amounts (0.4 GT for MySBT, 30 GT for community, 30 GT for AOA paymaster, 50 GT for AOA+).
           </p>
         </div>
       </div>
@@ -569,22 +620,73 @@ export function PaymasterDetail() {
               </div>
             </div>
 
-            <div className={`requirement-item ${parseFloat(userRequirements.ethBalance) > 0.001 ? 'met' : 'unmet'}`}>
-              <div className="requirement-icon">
-                {parseFloat(userRequirements.ethBalance) > 0.001 ? '✅' : '⚠️'}
+            {userRequirements.communityInfo ? (
+              <div className="requirement-item met">
+                <div className="requirement-icon">✅</div>
+                <div className="requirement-details">
+                  <h3>Community Registration</h3>
+                  <p className="status-success">
+                    You must hold MySBT and register to Community <strong>{userRequirements.communityInfo.name}</strong>
+                  </p>
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <Link to="/get-sbt" className="action-link-small" style={{ marginRight: '0.5rem' }}>
+                      Get SBT →
+                    </Link>
+                    <Link to="/register-community" className="action-link-small">
+                      Register Community →
+                    </Link>
+                  </div>
+                </div>
               </div>
-              <div className="requirement-details">
-                <h3>Gas Token Balance</h3>
-                <p style={{ fontSize: '1.125rem', fontWeight: '600', color: '#667eea' }}>
-                  {parseFloat(userRequirements.ethBalance).toFixed(4)} ETH
-                </p>
-                <p className={parseFloat(userRequirements.ethBalance) > 0.001 ? 'status-success' : 'status-warning'}>
-                  {parseFloat(userRequirements.ethBalance) > 0.001
-                    ? 'Sufficient balance for transactions'
-                    : 'Low balance - add more ETH for gas fees'}
-                </p>
+            ) : (
+              <div className="requirement-item unmet">
+                <div className="requirement-icon">❌</div>
+                <div className="requirement-details">
+                  <h3>Community Registration</h3>
+                  <p className="status-error">
+                    Community information not found for this paymaster
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {userRequirements.communityInfo?.xPNTsToken && userRequirements.communityInfo.xPNTsToken !== ethers.ZeroAddress ? (
+              <div className={`requirement-item ${parseFloat(userRequirements.communityInfo.xPNTsBalance) > 0 ? 'met' : 'unmet'}`}>
+                <div className="requirement-icon">
+                  {parseFloat(userRequirements.communityInfo.xPNTsBalance) > 0 ? '✅' : '⚠️'}
+                </div>
+                <div className="requirement-details">
+                  <h3>Community Gas Token Balance</h3>
+                  <p style={{ fontSize: '1.125rem', fontWeight: '600', color: '#667eea' }}>
+                    {parseFloat(userRequirements.communityInfo.xPNTsBalance).toFixed(4)} xPNTs
+                  </p>
+                  <p className={parseFloat(userRequirements.communityInfo.xPNTsBalance) > 0 ? 'status-success' : 'status-warning'}>
+                    {parseFloat(userRequirements.communityInfo.xPNTsBalance) > 0
+                      ? 'Sufficient gas token balance'
+                      : 'Low balance - get more gas tokens'}
+                  </p>
+                  <a
+                    href={`${getCurrentNetworkConfig().explorerUrl}/address/${userRequirements.communityInfo.xPNTsToken}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="action-link-small"
+                    style={{ marginTop: '0.5rem', display: 'inline-block' }}
+                  >
+                    View on Etherscan →
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="requirement-item info">
+                <div className="requirement-icon">ℹ️</div>
+                <div className="requirement-details">
+                  <h3>Gas Token</h3>
+                  <p className="status-warning">
+                    No gas token configured for this community
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="requirement-item info">
               <div className="requirement-icon">ℹ️</div>
