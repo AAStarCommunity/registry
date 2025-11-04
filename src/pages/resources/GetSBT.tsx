@@ -168,12 +168,19 @@ export function GetSBT() {
         throw new Error(t("getSBT.errors.communityNotSelected"));
       }
 
-      // Check staked GToken balance (not wallet balance)
-      if (parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN)) {
-        throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: stakedBalance }));
-      }
-
       const provider = new ethers.BrowserProvider(window.ethereum);
+
+      // Check if user has enough staked GToken
+      const hasStakedBalance = parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN);
+      
+      // If not enough staked balance, check wallet balance
+      let needsApproval = false;
+      if (!hasStakedBalance) {
+        if (parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN)) {
+          throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance }));
+        }
+        needsApproval = true;
+      }
 
       // Check for pending unstake that might block minting
       const stakingContract = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTokenStakingABI, provider);
@@ -232,7 +239,16 @@ export function GetSBT() {
 
       const signer = await provider.getSigner();
 
-      // Mint MySBT (no approval needed if contract pulls from staked GToken)
+      // Approve GToken spending only if user doesn't have enough staked balance
+      if (needsApproval) {
+        const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTokenABI, signer);
+        console.log(t("getSBT.console.approvingGToken"));
+        const approveAmount = ethers.parseEther(REQUIRED_GTOKEN);
+        const approveTx = await gToken.approve(MYSBT_ADDRESS, approveAmount);
+        await approveTx.wait();
+      }
+
+      // Mint MySBT
       const mySBT = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, signer);
       console.log(t("getSBT.console.mintingMySBT", { community: selectedCommunity }));
       console.log("🔍 Debug - Community address:", selectedCommunity);
@@ -438,9 +454,12 @@ export function GetSBT() {
                   <div className="card-label">Staked GToken</div>
                   <div className="card-value">{parseFloat(stakedBalance).toFixed(2)} GT</div>
                   <div className={`card-status ${parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
-                    {parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ " + t("getSBT.balance.sufficient") : "⚠️ " + t("getSBT.balance.insufficient")}
+                    {parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ Will use staked funds" : "⚠️ Insufficient staked funds"}
                   </div>
-                  {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && (
+                  {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) && (
+                    <div className="card-sublabel">Will use wallet funds instead</div>
+                  )}
+                  {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
                     <a href="/get-gtoken" className="get-gtoken-link">
                       {t("getSBT.buttons.getGToken")} →
                     </a>
