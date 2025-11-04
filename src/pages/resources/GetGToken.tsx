@@ -112,11 +112,11 @@ const GetGToken: React.FC = () => {
       console.error("❌ === Wallet Connection Failed ===");
       console.error("Error:", error);
       
-      if (error.code) {
-        console.error("Error code:", error.code);
+      if ((error as any).code) {
+        console.error("Error code:", (error as any).code);
       }
-      if (error.message) {
-        console.error("Error message:", error.message);
+      if ((error as any).message) {
+        console.error("Error message:", (error as any).message);
       }
       
       alert("Failed to connect wallet. Please try again.");
@@ -209,14 +209,14 @@ const GetGToken: React.FC = () => {
       console.error("Network:", config.chainName);
       
       // Try to get more specific error info
-      if (error.code) {
-        console.error("Error code:", error.code);
+      if ((error as any).code) {
+        console.error("Error code:", (error as any).code);
       }
-      if (error.message) {
-        console.error("Error message:", error.message);
+      if ((error as any).message) {
+        console.error("Error message:", (error as any).message);
       }
-      if (error.data) {
-        console.error("Error data:", error.data);
+      if ((error as any).data) {
+        console.error("Error data:", (error as any).data);
       }
     }
   };
@@ -230,6 +230,18 @@ const GetGToken: React.FC = () => {
 
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
       setError("Please enter a valid stake amount!");
+      return;
+    }
+
+    // Check ETH balance for gas fees
+    if (parseFloat(ethBalance) === 0) {
+      setError(
+        `⚠️ INSUFFICIENT ETH FOR GAS FEES\n\n` +
+        `Your ETH balance is 0. You need ETH to pay for gas fees when staking GToken.\n\n` +
+        `Please get free testnet ETH from these faucets:\n` +
+        config.resources.ethFaucets.map((faucet, index) => `• Faucet ${index + 1}: ${faucet}`).join('\n') +
+        `\n\nAfter getting ETH, your balance will update automatically.`
+      );
       return;
     }
 
@@ -493,8 +505,53 @@ const GetGToken: React.FC = () => {
               <div className="balance-display">
                 <div className="balance-item">
                   <span className="label">ETH Balance:</span>
-                  <span className="value" style={{ color: '#3b82f6' }}>{parseFloat(ethBalance).toFixed(4)} ETH</span>
+                  <span className="value" style={{ 
+                    color: parseFloat(ethBalance) === 0 ? '#ef4444' : '#3b82f6',
+                    fontWeight: parseFloat(ethBalance) === 0 ? 'bold' : 'normal'
+                  }}>
+                    {parseFloat(ethBalance).toFixed(4)} ETH
+                    {parseFloat(ethBalance) === 0 && ' ⚠️'}
+                  </span>
                 </div>
+                {parseFloat(ethBalance) === 0 && (
+                  <div className="eth-warning" style={{
+                    marginTop: '0.5rem',
+                    padding: '0.75rem',
+                    backgroundColor: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    fontSize: '0.85rem'
+                  }}>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#dc2626', fontWeight: '600' }}>
+                      ⚠️ Your ETH balance is 0
+                    </p>
+                    <p style={{ margin: '0 0 0.5rem 0', color: '#7f1d1d' }}>
+                      You need ETH for gas fees to stake GToken. Get free testnet ETH:
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {config.resources.ethFaucets.map((faucet, index) => (
+                        <a
+                          key={index}
+                          href={faucet}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-block',
+                            padding: '0.25rem 0.75rem',
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                            textDecoration: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.8rem',
+                            fontWeight: '500'
+                          }}
+                        >
+                          🚰 Faucet {index + 1}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div className="balance-item">
                   <span className="label">GToken Balance:</span>
                   <span className="value highlight">{parseFloat(gtokenBalance).toFixed(2)} GT</span>
