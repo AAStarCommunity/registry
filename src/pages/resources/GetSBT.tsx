@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
@@ -29,6 +29,7 @@ export function GetSBT() {
   // Wallet state
   const [account, setAccount] = useState<string>("");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
+  const [stakedBalance, setStakedBalance] = useState<string>("0");
 
   // Community selection state
   const [communities, setCommunities] = useState<{address: string; name: string}[]>([]);
@@ -75,10 +76,12 @@ export function GetSBT() {
     }
   };
 
-  // Load GToken balance
-  const loadBalance = async (address: string) => {
+  // Load GToken balance and staked balance
+  const loadBalance = useCallback(async (address: string) => {
     try {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      
+      // Load wallet balance
       const gTokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTokenABI,
@@ -86,13 +89,23 @@ export function GetSBT() {
       );
       const gTBalance = await gTokenContract.balanceOf(address);
       setGTokenBalance(ethers.formatEther(gTBalance));
+      
+      // Load staked balance
+      const stakingContract = new ethers.Contract(
+        GTOKEN_STAKING_ADDRESS,
+        GTokenStakingABI,
+        rpcProvider
+      );
+      const stakeInfo = await stakingContract.getStakeInfo(address);
+      const stakedAmount = stakeInfo.amount || stakeInfo[0] || 0n;
+      setStakedBalance(ethers.formatEther(stakedAmount));
     } catch (err) {
       console.error(t("getSBT.console.failedToLoadBalances"), err);
     }
-  };
+  }, [RPC_URL, GTOKEN_ADDRESS, GTokenABI, GTOKEN_STAKING_ADDRESS, GTokenStakingABI, t]);
 
   // Load list of registered communities
-  const loadCommunities = async () => {
+  const loadCommunities = useCallback(async () => {
     try {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
@@ -118,10 +131,10 @@ export function GetSBT() {
     } catch (err) {
       console.error(t("getSBT.console.failedToLoadCommunities"), err);
     }
-  };
+  }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, t]);
 
   // Check if user already has a MySBT
-  const checkExistingSBT = async (address: string) => {
+  const checkExistingSBT = useCallback(async (address: string) => {
     try {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const mySBT = new ethers.Contract(
@@ -138,7 +151,7 @@ export function GetSBT() {
     } catch (err) {
       console.error(t("getSBT.console.failedToCheckExistingSBT"), err);
     }
-  };
+  }, [RPC_URL, MYSBT_ADDRESS, MySBTABI, t]);
 
   // Mint MySBT
   const handleMintMySBT = async () => {
@@ -155,9 +168,9 @@ export function GetSBT() {
         throw new Error(t("getSBT.errors.communityNotSelected"));
       }
 
-      // Check GToken balance
-      if (parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN)) {
-        throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance }));
+      // Check staked GToken balance (not wallet balance)
+      if (parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN)) {
+        throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: stakedBalance }));
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -405,10 +418,16 @@ export function GetSBT() {
                 <div className="balance-card">
                   <div className="card-label">{t("getSBT.flow.gTokenBalance")}</div>
                   <div className="card-value">{parseFloat(gTokenBalance).toFixed(2)} GT</div>
-                  <div className={`card-status ${parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
-                    {parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ " + t("getSBT.balance.sufficient") : "⚠️ " + t("getSBT.balance.insufficient")}
+                  <div className="card-sublabel">Wallet Balance</div>
+                </div>
+                
+                <div className="balance-card">
+                  <div className="card-label">Staked GToken</div>
+                  <div className="card-value">{parseFloat(stakedBalance).toFixed(2)} GT</div>
+                  <div className={`card-status ${parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
+                    {parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ " + t("getSBT.balance.sufficient") : "⚠️ " + t("getSBT.balance.insufficient")}
                   </div>
-                  {parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
+                  {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && (
                     <a href="/get-gtoken" className="get-gtoken-link">
                       {t("getSBT.buttons.getGToken")} →
                     </a>
@@ -463,12 +482,12 @@ export function GetSBT() {
               </div>
 
               {/* Warnings */}
-              {parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
+              {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && (
                 <div className="warning-banner">
                   <span className="warning-icon">⚠️</span>
                   <div className="warning-content">
                     <strong>{t("getSBT.warnings.title")}</strong>
-                    <p>{t("getSBT.warnings.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance })}</p>
+                    <p>{t("getSBT.warnings.insufficientGToken", { required: REQUIRED_GTOKEN, current: stakedBalance })}</p>
                   </div>
                 </div>
               )}
@@ -480,7 +499,7 @@ export function GetSBT() {
                 disabled={
                   isMinting ||
                   !selectedCommunity ||
-                  parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN)
+                  parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN)
                 }
               >
                 {isMinting ? (
