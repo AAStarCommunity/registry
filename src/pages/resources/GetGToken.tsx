@@ -507,14 +507,14 @@ const GetGToken: React.FC = () => {
               </div>
 
               <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 2: Buy from DEX</h3>
-                </div>
-                <p>accept any swapable token. Swap GToken in our DEX on Uniswap V4(On building).</p>
-                <ul>
-                  <li>Practice trading before mainnet</li>
-                  <li>Fixed exchange rate: 1 ETH = 1000 GToken</li>
-                </ul>
+                 <div className="method-header">
+                   <h3>Method 2: Buy real GToken from DEX</h3>
+                 </div>
+                 <p>Swap GToken in our DEX on Uniswap V4(On building).</p>
+                 <ul>
+                   <li>Practice trading before mainnet</li>
+                   <li>Use any acceptable token to swap</li>
+                 </ul>
                 {config.resources.superPaymasterDex ? (
                   <a
                     href={config.resources.superPaymasterDex}
@@ -531,7 +531,7 @@ const GetGToken: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 3: Buy from Shops</h3>
+                  <h3>Method 3: Buy real GToken from Shops</h3>
                 </div>
                 <p>accept xPNTs(On building).</p>
                 <ul>
@@ -573,15 +573,15 @@ const GetGToken: React.FC = () => {
               </div>
 
               <div className="method-card">
-                <div className="method-header">
-                  <h3>Method 2: Buy from DEX</h3>
-                </div>
-                <p>accept any swapable token. Swap GToken in our DEX on Uniswap V4(On building).</p>
-                <ul>
-                  <li>Lower fees</li>
-                  <li>Direct protocol integration</li>
-                  <li>Stake GToken rewards</li>
-                </ul>
+                 <div className="method-header">
+                   <h3>Method 2: Buy real GToken from DEX</h3>
+                 </div>
+                 <p>Swap GToken in our DEX on Uniswap V4(On building).</p>
+                 <ul>
+                   <li>Lower fees</li>
+                   <li>Direct protocol integration</li>
+                   <li>Stake GToken rewards</li>
+                 </ul>
                 <a
                   href={config.resources.superPaymasterDex}
                   target="_blank"
@@ -594,7 +594,7 @@ const GetGToken: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 3: Buy from Shops</h3>
+                  <h3>Method 3: Buy real GToken from Shops</h3>
                 </div>
                 <p>accept xPNTs(On building).</p>
                 <ul>
