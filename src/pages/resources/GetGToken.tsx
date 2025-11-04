@@ -465,6 +465,12 @@ const GetGToken: React.FC = () => {
                 50 GT
               </span>
             </div>
+            <div className="info-row">
+              <span className="label">More service:</span>
+              <span className="value highlight">
+                on building
+              </span>
+            </div>
           </div>
         </section>
 
