@@ -172,15 +172,15 @@ export function GetSBT() {
 
       // Check if user has enough staked GToken
       const hasStakedBalance = parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN);
-      
-      // If not enough staked balance, check wallet balance
-      let needsApproval = false;
-      if (!hasStakedBalance) {
-        if (parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN)) {
-          throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: gTokenBalance }));
-        }
-        needsApproval = true;
+
+      // Check total available funds (staked + wallet)
+      const totalAvailable = parseFloat(stakedBalance) + parseFloat(gTokenBalance);
+      if (totalAvailable < parseFloat(REQUIRED_GTOKEN)) {
+        throw new Error(t("getSBT.errors.insufficientGToken", { required: REQUIRED_GTOKEN, current: totalAvailable.toFixed(2) }));
       }
+
+      // Determine which mint function to use
+      const useAutoStake = !hasStakedBalance; // Use auto-stake if no staked balance
 
       // Check for pending unstake that might block minting
       const stakingContract = new ethers.Contract(GTOKEN_STAKING_ADDRESS, GTokenStakingABI, provider);
@@ -239,94 +239,41 @@ export function GetSBT() {
 
       const signer = await provider.getSigner();
 
-      // Approve GToken spending only if user doesn't have enough staked balance
-      if (needsApproval) {
+      // Ensure address is properly checksummed
+      const checksummedCommunity = ethers.getAddress(selectedCommunity);
+
+      // Approve GToken spending for MySBT if using auto-stake
+      if (useAutoStake) {
         const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTokenABI, signer);
-        console.log(t("getSBT.console.approvingGToken"));
+        console.log("💰 Approving GToken for MySBT (auto-stake mode)...");
         const approveAmount = ethers.parseEther(REQUIRED_GTOKEN);
         const approveTx = await gToken.approve(MYSBT_ADDRESS, approveAmount);
         await approveTx.wait();
+        console.log("✅ GToken approved");
       }
 
-      // Mint MySBT
+      // Mint MySBT using appropriate function
       const mySBT = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, signer);
-      console.log(t("getSBT.console.mintingMySBT", { community: selectedCommunity }));
-      console.log("🔍 Debug - Community address:", selectedCommunity);
-      console.log("🔍 Debug - Community address checksummed:", ethers.getAddress(selectedCommunity));
-      console.log("🔍 Debug - MySBT contract:", MYSBT_ADDRESS);
-      console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
-      
-      // Check MySBT's Registry configuration using correct function name
-      // Use RPC provider instead of MetaMask to avoid cache issues
-      try {
-        const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
-        const mysbtForRead = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, rpcProvider);
-        const mysbtRegistry = await mysbtForRead.REGISTRY();
-        console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
-        if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
-          console.warn("⚠️ Registry address mismatch!");
-          console.warn("MySBT uses:", mysbtRegistry);
-          console.warn("Frontend uses:", REGISTRY_ADDRESS);
-        }
-      } catch (err) {
-        console.warn("Could not check MySBT's Registry address:", (err as Error).message);
-      }
-      
-      // Ensure address is properly checksummed
-      const checksummedCommunity = ethers.getAddress(selectedCommunity);
-      
-      // Check if MySBT can see the community using Registry functions
-      try {
-        console.log("🔍 Checking if MySBT can see the community...");
-        
-        // Try the exact functions MySBT uses internally
-        try {
-          const isRegistered = await mySBT.isRegisteredCommunity(checksummedCommunity);
-          console.log("🔍 MySBT isRegisteredCommunity result:", isRegistered);
-        } catch {
-          console.log("🔍 MySBT doesn't have isRegisteredCommunity function");
-        }
-        
-        try {
-          const communityStatus = await mySBT.getCommunityStatus(checksummedCommunity);
-          console.log("🔍 MySBT getCommunityStatus result:", communityStatus);
-        } catch {
-          console.log("🔍 MySBT doesn't have getCommunityStatus function");
-        }
-        
-      } catch (err) {
-        console.log("🔍 Could not get community info from MySBT:", (err as Error).message);
-      }
-      
-      // Try the mint call
+
       let tx;
-      try {
+      if (useAutoStake) {
+        // Use mintWithAutoStake() - automatically stakes and mints
+        console.log("🚀 Minting with auto-stake (will automatically lock GToken)...");
+        console.log("   Community:", checksummedCommunity);
+        console.log("   MySBT:", MYSBT_ADDRESS);
+        console.log("   Registry:", REGISTRY_ADDRESS);
+
+        tx = await mySBT.mintWithAutoStake(checksummedCommunity, "{}");
+        console.log("✅ mintWithAutoStake transaction sent");
+      } else {
+        // Use userMint() - user already has staked balance
+        console.log("🎫 Minting with existing staked balance...");
+        console.log("   Community:", checksummedCommunity);
+
         tx = await mySBT.userMint(checksummedCommunity, "{}");
-        setMintTxHash(tx.hash);
-        console.log(t("getSBT.console.waitingForConfirmation"));
-        await tx.wait();
-        console.log(t("getSBT.console.mintSuccess"));
-      } catch (mintError) {
-        // If it still fails with community not registered, try a different approach
-        if ((mintError as Error).message?.includes("community not registered")) {
-          console.log("🔍 Community registration failed, trying alternative approach...");
-          
-          // Try using lowercase address (some contracts are case-sensitive)
-          try {
-            const txLower = await mySBT.userMint(selectedCommunity.toLowerCase(), "{}");
-            tx = txLower;
-            setMintTxHash(tx.hash);
-            console.log(t("getSBT.console.waitingForConfirmation"));
-            await tx.wait();
-            console.log(t("getSBT.console.mintSuccess"));
-          } catch (lowerError) {
-            console.log("🔍 Lowercase address also failed:", (lowerError as Error).message);
-            throw mintError; // Re-throw original error
-          }
-        } else {
-          throw mintError;
-        }
+        console.log("✅ userMint transaction sent");
       }
+
       setMintTxHash(tx.hash);
 
       console.log(t("getSBT.console.waitingForConfirmation"));
@@ -508,13 +455,19 @@ export function GetSBT() {
                 <div className="balance-card">
                   <div className="card-label">Staked GToken</div>
                   <div className="card-value">{parseFloat(stakedBalance).toFixed(2)} GT</div>
-                  <div className={`card-status ${parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : "insufficient"}`}>
-                    {parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "✓ Will use staked funds" : "⚠️ Insufficient staked funds"}
+                  <div className={`card-status ${parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN) ? "sufficient" : (parseFloat(stakedBalance) + parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) ? "auto-stake" : "insufficient")}`}>
+                    {parseFloat(stakedBalance) >= parseFloat(REQUIRED_GTOKEN)
+                      ? "✓ Will use staked funds"
+                      : parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN)
+                      ? "🚀 Will auto-stake wallet funds"
+                      : "⚠️ Insufficient total funds"}
                   </div>
                   {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) && (
-                    <div className="card-sublabel">Will use wallet funds instead</div>
+                    <div className="card-sublabel" style={{ color: "#2196f3" }}>
+                      Auto-stake: Wallet GToken will be automatically staked
+                    </div>
                   )}
-                  {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
+                  {parseFloat(stakedBalance) + parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
                     <a href="/get-gtoken" className="get-gtoken-link">
                       {t("getSBT.buttons.getGToken")} →
                     </a>
@@ -569,12 +522,22 @@ export function GetSBT() {
               </div>
 
               {/* Warnings */}
-              {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && (
+              {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) >= parseFloat(REQUIRED_GTOKEN) && (
+                <div className="warning-banner" style={{ backgroundColor: "#e3f2fd", borderColor: "#2196f3" }}>
+                  <span className="warning-icon">ℹ️</span>
+                  <div className="warning-content">
+                    <strong>Auto-Stake Mode</strong>
+                    <p>You don't have enough staked GToken. When you mint, your wallet GToken will be automatically approved and staked for you.</p>
+                  </div>
+                </div>
+              )}
+
+              {parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN) && parseFloat(gTokenBalance) < parseFloat(REQUIRED_GTOKEN) && (
                 <div className="warning-banner">
                   <span className="warning-icon">⚠️</span>
                   <div className="warning-content">
                     <strong>{t("getSBT.warnings.title")}</strong>
-                    <p>{t("getSBT.warnings.insufficientGToken", { required: REQUIRED_GTOKEN, current: stakedBalance })}</p>
+                    <p>You need at least {REQUIRED_GTOKEN} GT total (staked + wallet balance) to mint. Current total: {(parseFloat(stakedBalance) + parseFloat(gTokenBalance)).toFixed(2)} GT</p>
                   </div>
                 </div>
               )}
@@ -586,7 +549,7 @@ export function GetSBT() {
                 disabled={
                   isMinting ||
                   !selectedCommunity ||
-                  parseFloat(stakedBalance) < parseFloat(REQUIRED_GTOKEN)
+                  (parseFloat(stakedBalance) + parseFloat(gTokenBalance)) < parseFloat(REQUIRED_GTOKEN)
                 }
               >
                 {isMinting ? (
