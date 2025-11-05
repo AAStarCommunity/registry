@@ -664,6 +664,11 @@
   color: #065f46;
 }
 
+.card-status.auto-stake {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
 .card-status.insufficient {
   background: #fef3c7;
   color: #92400e;
