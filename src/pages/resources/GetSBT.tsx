@@ -257,8 +257,11 @@ export function GetSBT() {
       console.log("🔍 Debug - Registry contract:", REGISTRY_ADDRESS);
       
       // Check MySBT's Registry configuration using correct function name
+      // Use RPC provider instead of MetaMask to avoid cache issues
       try {
-        const mysbtRegistry = await mySBT.REGISTRY();
+        const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+        const mysbtForRead = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, rpcProvider);
+        const mysbtRegistry = await mysbtForRead.REGISTRY();
         console.log("🔍 Debug - MySBT's Registry address:", mysbtRegistry);
         if (mysbtRegistry.toLowerCase() !== REGISTRY_ADDRESS.toLowerCase()) {
           console.warn("⚠️ Registry address mismatch!");
