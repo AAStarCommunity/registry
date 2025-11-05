@@ -11,6 +11,7 @@
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { getRpcUrl } from "../../../../config/rpc";
 import {
   ERC20_ABI,
   RegistryABI,
@@ -256,11 +257,9 @@ export async function checkAOAResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    if (!window.ethereum) {
-      throw new Error("MetaMask not installed");
-    }
-
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    // Use RPC provider instead of MetaMask to avoid cache issues
+    const rpcUrl = getRpcUrl();
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
     // Check community registration
@@ -340,11 +339,9 @@ export async function checkAOAPlusResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    if (!window.ethereum) {
-      throw new Error("MetaMask not installed");
-    }
-
-    const provider = new ethers.BrowserProvider(window.ethereum);
+    // Use RPC provider instead of MetaMask to avoid cache issues
+    const rpcUrl = getRpcUrl();
+    const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
     // Check community registration
