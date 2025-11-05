@@ -13,7 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aastar/shared-config": "^0.2.18",
+    "@aastar/shared-config": "^0.2.23",
     "@safe-global/safe-apps-react-sdk": "^4.7.2",
     "@safe-global/safe-apps-sdk": "^9.1.0",
     "ethers": "^6.15.0",
