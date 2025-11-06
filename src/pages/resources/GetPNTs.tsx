@@ -26,30 +26,30 @@ const GetPNTs: React.FC = () => {
           <button onClick={handleGoBack} className="back-button">
             ← Back
           </button>
-          <h1>Get PNTs</h1>
+          <h1>Get aPNTs(for Community Operators)</h1>
           <p className="subtitle">
-            PNTs (Points Token) are used to pay for gas in the SuperPaymaster ecosystem
+            aPNTs (AAStar Points Token) are used to pay for gas in the SuperPaymaster ecosystem AOA+ mode.
           </p>
         </div>
 
-        {/* What is PNTs Section */}
+        {/* What is aPNTs Section */}
         <section className="info-section">
-          <h2>💰 What are PNTs?</h2>
+          <h2>💰 What is aPNTs?</h2>
           <p>
-            PNTs (Points Token V2) are the utility tokens in the SuperPaymaster protocol, used for:
+            aPNTs (AAStar Points Token) are the utility tokens in the SuperPaymaster eco, used for:
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Gas Payment</strong>: Users pay gas fees with PNTs instead of ETH
+              <strong>Gas Payment</strong>: Operator Users pay gas fees with aPNTs instead of ETH
             </li>
             <li>
-              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit PNTs for quick setup
+              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit aPNTs for quick setup
             </li>
             <li>
-              <strong>Protocol Operations</strong>: Seamless conversion between PNTs and ETH
+              <strong>Protocol Operations</strong>: Seamless cross-chain conversion
             </li>
             <li>
-              <strong>Lower Barriers</strong>: Easier onboarding without large ETH holdings
+              <strong>Lower Barriers</strong>: Easier onboarding without large ETH holdings and asset fragments.
             </li>
           </ul>
         </section>
