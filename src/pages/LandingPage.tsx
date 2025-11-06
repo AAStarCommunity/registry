@@ -201,7 +201,7 @@ export function LandingPage() {
                 {t('registerCommunity.subtitle')}
               </p>
               <a href="/register-community" className="flow-link">
-                {t('registerCommunity.button.register')} →
+                Register →
               </a>
             </div>
             <div className="flow-arrow">→</div>
