@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryV2_1_4ABI, xPNTsFactoryABI } from "../../config/abis";
+import { RegistryV2_1_4ABI, xPNTsFactoryABI, PaymasterFactoryABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
@@ -18,6 +18,7 @@ export function RegisterCommunity() {
   const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
   const MYSBT_ADDRESS = networkConfig.contracts.mySBT; // MySBT white-label SBT
+  const PAYMASTER_FACTORY_ADDRESS = networkConfig.contracts.paymasterFactory;
   const RPC_URL = getRpcUrl();
 
   // Wallet state
@@ -28,6 +29,8 @@ export function RegisterCommunity() {
   const [ensName, setEnsName] = useState<string>("");
   const [xPNTsToken, setXPNTsToken] = useState<string>("");
   const [hasXPNTs, setHasXPNTs] = useState<boolean | null>(null); // null = not checked yet
+  const [paymasterAddress, setPaymasterAddress] = useState<string>("");
+  const [hasPaymaster, setHasPaymaster] = useState<boolean | null>(null); // null = not checked yet
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("30");
   const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
@@ -199,6 +202,7 @@ export function RegisterCommunity() {
       setAccount(accounts[0]);
       await checkExistingCommunity(accounts[0]);
       await checkXPNTsStatus(accounts[0]);
+      await checkPaymasterStatus(accounts[0]);
       await loadGTokenBalance(accounts[0]);
     } catch (err: unknown) {
       console.error(t('registerCommunity.errors.walletNotConnected'), err);
@@ -249,6 +253,32 @@ export function RegisterCommunity() {
     } catch (err) {
       console.error('Failed to check xPNTs status:', err);
       setHasXPNTs(false);
+    }
+  };
+
+  // Check if user has deployed Paymaster
+  const checkPaymasterStatus = async (address: string) => {
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const factory = new ethers.Contract(
+        PAYMASTER_FACTORY_ADDRESS,
+        PaymasterFactoryABI,
+        rpcProvider
+      );
+
+      const hasPaymaster = await factory.hasPaymaster(address);
+      setHasPaymaster(hasPaymaster);
+
+      if (hasPaymaster) {
+        const paymasterAddr = await factory.getPaymasterByOperator(address);
+        setPaymasterAddress(paymasterAddr);
+        console.log('Detected Paymaster:', paymasterAddr);
+      } else {
+        console.log('No Paymaster detected for this address');
+      }
+    } catch (err) {
+      console.error('Failed to check Paymaster status:', err);
+      setHasPaymaster(false);
     }
   };
 
@@ -323,7 +353,7 @@ export function RegisterCommunity() {
         xPNTsToken: xPNTsToken || ethers.ZeroAddress,
         supportedSBTs: [MYSBT_ADDRESS], // Automatically use AAstar MySBT white-label SBT
         nodeType: mode === "AOA" ? 0 : 1, // NodeType: PAYMASTER_AOA=0, PAYMASTER_SUPER=1
-        paymasterAddress: ethers.ZeroAddress, // Paymaster address is optional, use ZeroAddress
+        paymasterAddress: paymasterAddress || ethers.ZeroAddress, // Use detected Paymaster or ZeroAddress
         community: account,
         registeredAt: 0,
         lastUpdatedAt: 0,
@@ -555,6 +585,9 @@ export function RegisterCommunity() {
                   onChange={(e) => setEnsName(e.target.value)}
                   maxLength={500}
                 />
+                <small style={{ color: '#6b7280', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
+                  💡 如果留空，CommitENS 会自动根据社区名称分配 {communityName || 'name'}.aastar.eth（保留名称如 "paymaster" 和三字母名称除外）
+                </small>
               </div>
             </div>
 
@@ -625,7 +658,67 @@ export function RegisterCommunity() {
               <h2>{t('registerCommunity.form.paymasterSection')}</h2>
 
               <div className="form-group">
-                <label>Paymaster</label>
+                <label>Paymaster Address</label>
+                {hasPaymaster === null ? (
+                  // Checking status
+                  <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
+                    <p style={{ margin: 0, color: '#6b7280' }}>检测 Paymaster 状态中...</p>
+                  </div>
+                ) : hasPaymaster === false ? (
+                  // No Paymaster detected - show link to deploy
+                  <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
+                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>未检测到 Paymaster</p>
+                    <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
+                      部署 AOA/AOA+ Paymaster 以提供 gas 代付功能
+                    </p>
+                    <Link
+                      to="/operator/wizard"
+                      style={{
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        background: '#f59e0b',
+                        color: 'white',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.9em'
+                      }}
+                    >
+                      去部署 Paymaster →
+                    </Link>
+                    <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
+                      💡 也可以跳过，稍后再部署
+                    </p>
+                  </div>
+                ) : (
+                  // Paymaster detected - show address (read-only)
+                  <>
+                    <input
+                      type="text"
+                      value={paymasterAddress}
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '4px',
+                        border: '2px solid #10b981',
+                        background: '#f0fdf4',
+                        color: '#065f46',
+                        fontFamily: 'Monaco, Courier New, monospace',
+                        fontSize: '0.9em',
+                        cursor: 'not-allowed',
+                        marginBottom: '8px'
+                      }}
+                    />
+                    <small style={{ color: '#10b981', fontWeight: 600 }}>
+                      ✅ 已自动检测到您的 Paymaster
+                    </small>
+                  </>
+                )}
+              </div>
+
+              <div className="form-group">
+                <label>Paymaster Type</label>
                 <div className="radio-group">
                   <label className="radio-label">
                     <input

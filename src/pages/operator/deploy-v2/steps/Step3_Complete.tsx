@@ -119,6 +119,20 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">1</div>
                 <div className="step-content">
+                  <h4>更新 Registry 社区信息</h4>
+                  <p>将新部署的 Paymaster 地址更新到 Registry，确保社区信息完整</p>
+                  <button
+                    className="step-action"
+                    onClick={() => navigate(`/resources/register-community?returnUrl=/operator/wizard`)}
+                  >
+                    去更新 Registry →
+                  </button>
+                </div>
+              </div>
+
+              <div className="step-item">
+                <div className="step-number">2</div>
+                <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoa.step1.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoa.step1.description')}</p>
                   <button
@@ -131,7 +145,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               </div>
 
               <div className="step-item">
-                <div className="step-number">2</div>
+                <div className="step-number">3</div>
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoa.step2.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoa.step2.description')}</p>
@@ -147,7 +161,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               </div>
 
               <div className="step-item">
-                <div className="step-number">3</div>
+                <div className="step-number">4</div>
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoa.step3.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoa.step3.description')}</p>

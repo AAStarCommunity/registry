@@ -23,6 +23,8 @@ export function GetXPNTs() {
   const [existingToken, setExistingToken] = useState<string>("");
   const [tokenName, setTokenName] = useState<string>("");
   const [tokenSymbol, setTokenSymbol] = useState<string>("");
+  const [communityName, setCommunityName] = useState<string>("");
+  const [communityENS, setCommunityENS] = useState<string>("");
   const [paymasterMode, setPaymasterMode] = useState<"AOA+" | "AOA">("AOA+");
   const [paymasterAddress, setPaymasterAddress] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<string>("1");
@@ -30,10 +32,45 @@ export function GetXPNTs() {
   const [deployTxHash, setDeployTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
 
+  // Registry state
+  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  const [isCheckingRegistry, setIsCheckingRegistry] = useState<boolean>(false);
+
   // Registry update state
   const [isUpdatingRegistry, setIsUpdatingRegistry] = useState(false);
   const [registryUpdateStatus, setRegistryUpdateStatus] = useState<string>("");
   const [registryTxHash, setRegistryTxHash] = useState<string>("");
+
+  // Check if user is registered in Registry and load community info
+  const checkRegistryInfo = async (address: string) => {
+    setIsCheckingRegistry(true);
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const registry = new ethers.Contract(
+        REGISTRY_ADDRESS,
+        RegistryABI,
+        rpcProvider
+      );
+
+      const isReg = await registry.isRegisteredCommunity(address);
+      setIsRegistered(isReg);
+
+      if (isReg) {
+        // Load community profile from Registry
+        const profile = await registry.getCommunityProfile(address);
+        setCommunityName(profile.name || "");
+        setCommunityENS(profile.ensName || "");
+        console.log("Loaded community info from Registry:", {
+          name: profile.name,
+          ensName: profile.ensName
+        });
+      }
+    } catch (err) {
+      console.error("Failed to check Registry:", err);
+    } finally {
+      setIsCheckingRegistry(false);
+    }
+  };
 
   // Connect wallet
   const connectWallet = async () => {
@@ -48,6 +85,7 @@ export function GetXPNTs() {
       });
       setAccount(accounts[0]);
       await checkExistingToken(accounts[0]);
+      await checkRegistryInfo(accounts[0]);
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
       setError(err?.message || "Failed to connect wallet");
@@ -182,13 +220,12 @@ export function GetXPNTs() {
       console.log("Paymaster:", paymasterAddr);
       console.log("Exchange Rate:", exchangeRate, "->", exchangeRateWei.toString());
 
-      // Use tokenName as communityName, empty string for ENS
-      // These fields are legacy and should be read from Registry in future versions
+      // Deploy xPNTs token with community info from Registry (or manual input if not registered)
       const tx = await factory.deployxPNTsToken(
         tokenName,
         tokenSymbol,
-        tokenName,  // Use tokenName as community name
-        "",         // Empty ENS - should be set in Registry
+        communityName || tokenName,  // Use Registry community name or fallback to token name
+        communityENS || "",          // Use Registry ENS or empty
         exchangeRateWei,
         paymasterAddr
       );
@@ -235,6 +272,7 @@ export function GetXPNTs() {
         if (accounts.length > 0) {
           setAccount(accounts[0]);
           checkExistingToken(accounts[0]);
+          checkRegistryInfo(accounts[0]);
         }
       });
     }
@@ -392,6 +430,64 @@ export function GetXPNTs() {
                           fontSize: "1rem",
                         }}
                       />
+                    </div>
+
+                    {/* Community Name - Read-only if registered */}
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Community Name {isRegistered && <span style={{ color: "#10b981" }}>(从 Registry 自动读取)</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={communityName}
+                        onChange={(e) => setCommunityName(e.target.value)}
+                        placeholder={isRegistered ? "" : "e.g., My Community"}
+                        disabled={isRegistered}
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: isRegistered ? "2px solid #10b981" : "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                          background: isRegistered ? "#f0fdf4" : "#ffffff",
+                          color: isRegistered ? "#065f46" : "#000000",
+                          cursor: isRegistered ? "not-allowed" : "text",
+                        }}
+                      />
+                      {!isRegistered && (
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#f59e0b" }}>
+                          💡 建议先到 <a href="/register-community" style={{ color: "#f59e0b", textDecoration: "underline" }}>注册社区页面</a> 注册，可自动填充此字段
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Community ENS - Read-only if registered */}
+                    <div>
+                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        Community ENS (可选) {isRegistered && <span style={{ color: "#10b981" }}>(从 Registry 自动读取)</span>}
+                      </label>
+                      <input
+                        type="text"
+                        value={communityENS}
+                        onChange={(e) => setCommunityENS(e.target.value)}
+                        placeholder={isRegistered ? "" : "e.g., mycommunity.aastar.eth"}
+                        disabled={isRegistered}
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "8px",
+                          border: isRegistered ? "2px solid #10b981" : "2px solid #e5e7eb",
+                          fontSize: "1rem",
+                          background: isRegistered ? "#f0fdf4" : "#ffffff",
+                          color: isRegistered ? "#065f46" : "#000000",
+                          cursor: isRegistered ? "not-allowed" : "text",
+                        }}
+                      />
+                      {!isRegistered && (
+                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                          留空将使用社区名称自动分配（如：{communityName || tokenName}.aastar.eth）
+                        </p>
+                      )}
                     </div>
 
                     <div>
