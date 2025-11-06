@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { xPNTsFactoryABI } from "../../config/abis";
+import { xPNTsFactoryABI, RegistryABI } from "../../config/abis";
 import "./GetXPNTs.css";
 
 export function GetXPNTs() {
@@ -12,6 +12,7 @@ export function GetXPNTs() {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
+  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
   const RPC_URL = getRpcUrl();
   const SUPER_PAYMASTER_V2_ADDRESS = networkConfig.contracts.superPaymasterV2;
 
@@ -22,14 +23,17 @@ export function GetXPNTs() {
   const [existingToken, setExistingToken] = useState<string>("");
   const [tokenName, setTokenName] = useState<string>("");
   const [tokenSymbol, setTokenSymbol] = useState<string>("");
-  const [communityName, setCommunityName] = useState<string>("");
-  const [communityENS, setCommunityENS] = useState<string>("");
   const [paymasterMode, setPaymasterMode] = useState<"AOA+" | "AOA">("AOA+");
   const [paymasterAddress, setPaymasterAddress] = useState<string>("");
   const [exchangeRate, setExchangeRate] = useState<string>("1");
   const [isDeploying, setIsDeploying] = useState(false);
   const [deployTxHash, setDeployTxHash] = useState<string>("");
   const [error, setError] = useState<string>("");
+
+  // Registry update state
+  const [isUpdatingRegistry, setIsUpdatingRegistry] = useState(false);
+  const [registryUpdateStatus, setRegistryUpdateStatus] = useState<string>("");
+  const [registryTxHash, setRegistryTxHash] = useState<string>("");
 
   // Connect wallet
   const connectWallet = async () => {
@@ -67,6 +71,70 @@ export function GetXPNTs() {
       }
     } catch (err) {
       console.error("Failed to check existing token:", err);
+    }
+  };
+
+  // Update Registry with deployed xPNTs token address
+  const updateRegistryWithToken = async (tokenAddress: string) => {
+    setIsUpdatingRegistry(true);
+    setRegistryUpdateStatus("");
+    setRegistryTxHash("");
+
+    try {
+      if (!window.ethereum) {
+        throw new Error("MetaMask not installed");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, signer);
+
+      // Check if community is registered
+      const isRegistered = await registry.isRegisteredCommunity(account);
+
+      if (!isRegistered) {
+        setRegistryUpdateStatus("未注册社区");
+        console.log("Community not registered - skipping Registry update");
+        return false;
+      }
+
+      console.log("Updating Registry with xPNTs token:", tokenAddress);
+      setRegistryUpdateStatus("正在更新 Registry...");
+
+      // Get current community profile
+      const currentProfile = await registry.getCommunityProfile(account);
+
+      // Update profile with new xPNTs token address
+      const updatedProfile = {
+        name: currentProfile.name,
+        ensName: currentProfile.ensName,
+        xPNTsToken: tokenAddress,  // Update with new token address
+        supportedSBTs: currentProfile.supportedSBTs,
+        nodeType: currentProfile.nodeType,
+        paymasterAddress: currentProfile.paymasterAddress,
+        community: currentProfile.community,
+        registeredAt: currentProfile.registeredAt,
+        lastUpdatedAt: currentProfile.lastUpdatedAt,
+        isActive: currentProfile.isActive,
+        allowPermissionlessMint: currentProfile.allowPermissionlessMint,
+      };
+
+      const tx = await registry.updateCommunityProfile(updatedProfile);
+      setRegistryTxHash(tx.hash);
+      setRegistryUpdateStatus("等待确认...");
+
+      console.log("Waiting for Registry update confirmation...");
+      await tx.wait();
+
+      console.log("Registry update successful!");
+      setRegistryUpdateStatus("Registry 更新成功!");
+      return true;
+    } catch (err: any) {
+      console.error("Registry update failed:", err);
+      setRegistryUpdateStatus(`更新失败: ${err?.message || "Unknown error"}`);
+      return false;
+    } finally {
+      setIsUpdatingRegistry(false);
     }
   };
 
@@ -114,11 +182,13 @@ export function GetXPNTs() {
       console.log("Paymaster:", paymasterAddr);
       console.log("Exchange Rate:", exchangeRate, "->", exchangeRateWei.toString());
 
+      // Use tokenName as communityName, empty string for ENS
+      // These fields are legacy and should be read from Registry in future versions
       const tx = await factory.deployxPNTsToken(
         tokenName,
         tokenSymbol,
-        communityName || tokenName,
-        communityENS || "",
+        tokenName,  // Use tokenName as community name
+        "",         // Empty ENS - should be set in Registry
         exchangeRateWei,
         paymasterAddr
       );
@@ -129,8 +199,27 @@ export function GetXPNTs() {
 
       console.log("Deployment successful!");
 
+      // Get the deployed token address
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        xPNTsFactoryABI,
+        new ethers.JsonRpcProvider(RPC_URL)
+      );
+      const deployedTokenAddress = await factory.getTokenAddress(account);
+      console.log("Deployed xPNTs token address:", deployedTokenAddress);
+
       // Reload to get new token info
       await checkExistingToken(account);
+
+      // Auto-update Registry if community is registered
+      console.log("Attempting to update Registry...");
+      const registryUpdated = await updateRegistryWithToken(deployedTokenAddress);
+
+      if (registryUpdated) {
+        console.log("Registry updated successfully with xPNTs token");
+      } else if (registryUpdateStatus === "未注册社区") {
+        console.log("Community not registered - user can register later at /register-community");
+      }
     } catch (err: any) {
       console.error("Deployment failed:", err);
       setError(err?.message || "Failed to deploy xPNTs token");
@@ -307,44 +396,6 @@ export function GetXPNTs() {
 
                     <div>
                       <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                        Community Name (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={communityName}
-                        onChange={(e) => setCommunityName(e.target.value)}
-                        placeholder="e.g., My Community"
-                        style={{
-                          width: "100%",
-                          padding: "0.75rem",
-                          borderRadius: "8px",
-                          border: "2px solid #e5e7eb",
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                        Community ENS (optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={communityENS}
-                        onChange={(e) => setCommunityENS(e.target.value)}
-                        placeholder="e.g., mycommunity.eth"
-                        style={{
-                          width: "100%",
-                          padding: "0.75rem",
-                          borderRadius: "8px",
-                          border: "2px solid #e5e7eb",
-                          fontSize: "1rem",
-                        }}
-                      />
-                    </div>
-
-                    <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
                         Paymaster Mode *
                       </label>
                       <div style={{ display: "flex", gap: "1rem" }}>
@@ -456,6 +507,54 @@ export function GetXPNTs() {
                       >
                         View on Etherscan →
                       </a>
+                    </div>
+                  )}
+
+                  {/* Registry Update Status */}
+                  {registryUpdateStatus && (
+                    <div style={{
+                      padding: '12px',
+                      marginTop: '12px',
+                      borderRadius: '8px',
+                      background: registryUpdateStatus.includes('成功') ? '#d1fae5' :
+                                 registryUpdateStatus.includes('失败') ? '#fee2e2' :
+                                 registryUpdateStatus === '未注册社区' ? '#fef3c7' : '#e0e7ff',
+                      border: `1px solid ${
+                        registryUpdateStatus.includes('成功') ? '#10b981' :
+                        registryUpdateStatus.includes('失败') ? '#ef4444' :
+                        registryUpdateStatus === '未注册社区' ? '#f59e0b' : '#6366f1'
+                      }`,
+                      color: registryUpdateStatus.includes('成功') ? '#065f46' :
+                             registryUpdateStatus.includes('失败') ? '#7f1d1d' :
+                             registryUpdateStatus === '未注册社区' ? '#78350f' : '#3730a3'
+                    }}>
+                      <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9em' }}>
+                        {registryUpdateStatus.includes('成功') && '✅ '}
+                        {registryUpdateStatus.includes('失败') && '❌ '}
+                        {registryUpdateStatus === '未注册社区' && '⚠️ '}
+                        Registry 更新: {registryUpdateStatus}
+                      </p>
+                      {registryUpdateStatus === '未注册社区' && (
+                        <p style={{ margin: '8px 0 0', fontSize: '0.85em' }}>
+                          💡 您可以稍后在 <a href="/register-community" style={{ color: '#f59e0b', textDecoration: 'underline' }}>注册社区页面</a> 注册后自动绑定 xPNTs Token
+                        </p>
+                      )}
+                      {registryTxHash && (
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${registryTxHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-block',
+                            marginTop: '8px',
+                            color: 'inherit',
+                            textDecoration: 'underline',
+                            fontSize: '0.85em'
+                          }}
+                        >
+                          View Registry Update TX →
+                        </a>
+                      )}
                     </div>
                   )}
                 </div>

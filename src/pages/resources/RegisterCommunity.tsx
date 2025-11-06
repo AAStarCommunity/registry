@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryV2_1_4ABI } from "../../config/abis";
+import { RegistryV2_1_4ABI, xPNTsFactoryABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
@@ -16,6 +16,7 @@ export function RegisterCommunity() {
   const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1; // Registry v2.1.4
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
   const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
+  const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
   const RPC_URL = getRpcUrl();
 
   // Wallet state
@@ -25,6 +26,7 @@ export function RegisterCommunity() {
   const [communityName, setCommunityName] = useState<string>("");
   const [ensName, setEnsName] = useState<string>("");
   const [xPNTsToken, setXPNTsToken] = useState<string>("");
+  const [hasXPNTs, setHasXPNTs] = useState<boolean | null>(null); // null = not checked yet
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("30");
   const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
@@ -195,6 +197,7 @@ export function RegisterCommunity() {
       });
       setAccount(accounts[0]);
       await checkExistingCommunity(accounts[0]);
+      await checkXPNTsStatus(accounts[0]);
       await loadGTokenBalance(accounts[0]);
     } catch (err: unknown) {
       console.error(t('registerCommunity.errors.walletNotConnected'), err);
@@ -219,6 +222,32 @@ export function RegisterCommunity() {
       }
     } catch (err) {
       console.error(t('registerCommunity.console.checking'), err);
+    }
+  };
+
+  // Check if user has deployed xPNTs token
+  const checkXPNTsStatus = async (address: string) => {
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        xPNTsFactoryABI,
+        rpcProvider
+      );
+
+      const hasToken = await factory.hasToken(address);
+      setHasXPNTs(hasToken);
+
+      if (hasToken) {
+        const tokenAddress = await factory.getTokenAddress(address);
+        setXPNTsToken(tokenAddress);
+        console.log('Detected xPNTs token:', tokenAddress);
+      } else {
+        console.log('No xPNTs token detected for this address');
+      }
+    } catch (err) {
+      console.error('Failed to check xPNTs status:', err);
+      setHasXPNTs(false);
     }
   };
 
@@ -532,13 +561,61 @@ export function RegisterCommunity() {
 
               <div className="form-group">
                 <label>xPNTs Token</label>
-                <input
-                  type="text"
-                  placeholder="0x..."
-                  value={xPNTsToken}
-                  onChange={(e) => setXPNTsToken(e.target.value)}
-                />
-                <small>{t('step2ResourceCheck.resources.xpnts.notDeployed')}</small>
+                {hasXPNTs === null ? (
+                  // Checking status
+                  <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
+                    <p style={{ margin: 0, color: '#6b7280' }}>检测 xPNTs 状态中...</p>
+                  </div>
+                ) : hasXPNTs === false ? (
+                  // No xPNTs detected - show link to deploy
+                  <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
+                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>未检测到 xPNTs Token</p>
+                    <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
+                      部署 xPNTs Token 可获得社区积分功能和更好的 gas 代付体验
+                    </p>
+                    <Link
+                      to="/get-xpnts"
+                      style={{
+                        display: 'inline-block',
+                        padding: '8px 16px',
+                        background: '#f59e0b',
+                        color: 'white',
+                        borderRadius: '6px',
+                        textDecoration: 'none',
+                        fontWeight: 600,
+                        fontSize: '0.9em'
+                      }}
+                    >
+                      去部署 xPNTs Token →
+                    </Link>
+                    <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
+                      💡 也可以跳过，稍后再部署
+                    </p>
+                  </div>
+                ) : (
+                  // xPNTs detected - show address (read-only)
+                  <>
+                    <input
+                      type="text"
+                      value={xPNTsToken}
+                      disabled
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem',
+                        borderRadius: '4px',
+                        border: '2px solid #10b981',
+                        background: '#f0fdf4',
+                        color: '#065f46',
+                        fontFamily: 'Monaco, Courier New, monospace',
+                        fontSize: '0.9em',
+                        cursor: 'not-allowed'
+                      }}
+                    />
+                    <small style={{ color: '#10b981', fontWeight: 600 }}>
+                      ✅ 已自动检测到您的 xPNTs Token
+                    </small>
+                  </>
+                )}
               </div>
             </div>
 
