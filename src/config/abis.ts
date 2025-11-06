@@ -52,6 +52,8 @@ export const RegistryV2_1_4ABI = [
   "function getCommunityCount() view returns (uint256)",
   "function getCommunities(uint256 offset, uint256 limit) view returns (address[])",
   "function communities(address) view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
+  "function nodeTypeConfigs(uint8) view returns (tuple(uint256 minStake, uint256 lockPeriod, bool isActive))",
+  "function registerCommunity(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint), uint256 stakeAmount) external",
 ];
 
 // Export ABIs from shared-config

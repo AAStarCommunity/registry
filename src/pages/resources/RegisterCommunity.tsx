@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryABI, GTokenStakingABI, RegistryV2_1_4ABI } from "../../config/abis";
+import { RegistryV2_1_4ABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
@@ -34,12 +34,21 @@ export function RegisterCommunity() {
   const [registerTxHash, setRegisterTxHash] = useState<string>("");
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
   const [error, setError] = useState<string>("");
-  const [minStake, setMinStake] = useState<string>("0");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
 
   // Community list state
-  const [communities, setCommunities] = useState<any[]>([]);
+  const [communities, setCommunities] = useState<Array<{
+    address: string;
+    name: string;
+    ensName: string;
+    xPNTsToken: string;
+    nodeType: number;
+    paymasterAddress: string;
+    registeredAt: number;
+    isActive: boolean;
+    allowPermissionlessMint: boolean;
+  }>>([]);
   const [totalCommunities, setTotalCommunities] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [loadingCommunities, setLoadingCommunities] = useState<boolean>(false);
@@ -75,20 +84,37 @@ export function RegisterCommunity() {
       
       // Fetch first 4 communities
       const communityAddresses = await registryContract.getCommunities(0, communitiesPerPage);
+      
+      // Fetch detailed community information for each address
       const communityData = await Promise.all(
         communityAddresses.map(async (address: string) => {
-          const profile = await registryContract.communities(address);
-          return {
-            address,
-            name: profile.name,
-            ensName: profile.ensName,
-            xPNTsToken: profile.xPNTsToken,
-            nodeType: profile.nodeType,
-            paymasterAddress: profile.paymasterAddress,
-            registeredAt: Number(profile.registeredAt),
-            isActive: profile.isActive,
-            allowPermissionlessMint: profile.allowPermissionlessMint
-          };
+          try {
+            const communityInfo = await registryContract.communities(address);
+            return {
+              address,
+              name: communityInfo.name || 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
+              ensName: communityInfo.ensName || '',
+              xPNTsToken: communityInfo.xPNTsToken || '0x0000000000000000000000000000000000000000',
+              nodeType: Number(communityInfo.nodeType),
+              paymasterAddress: communityInfo.paymasterAddress || '0x0000000000000000000000000000000000000000',
+              registeredAt: Number(communityInfo.registeredAt),
+              isActive: communityInfo.isActive,
+              allowPermissionlessMint: communityInfo.allowPermissionlessMint
+            };
+          } catch (err) {
+            console.error(`Error fetching community ${address}:`, err);
+            return {
+              address,
+              name: 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
+              ensName: '',
+              xPNTsToken: '0x0000000000000000000000000000000000000000',
+              nodeType: 0,
+              paymasterAddress: '0x0000000000000000000000000000000000000000',
+              registeredAt: Date.now() / 1000,
+              isActive: true,
+              allowPermissionlessMint: false
+            };
+          }
         })
       );
       
@@ -113,20 +139,37 @@ export function RegisterCommunity() {
       const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1_4ABI, provider);
       
       const communityAddresses = await registryContract.getCommunities(offset, communitiesPerPage);
+      
+      // Fetch detailed community information for each address
       const communityData = await Promise.all(
         communityAddresses.map(async (address: string) => {
-          const profile = await registryContract.communities(address);
-          return {
-            address,
-            name: profile.name,
-            ensName: profile.ensName,
-            xPNTsToken: profile.xPNTsToken,
-            nodeType: profile.nodeType,
-            paymasterAddress: profile.paymasterAddress,
-            registeredAt: Number(profile.registeredAt),
-            isActive: profile.isActive,
-            allowPermissionlessMint: profile.allowPermissionlessMint
-          };
+          try {
+            const communityInfo = await registryContract.communities(address);
+            return {
+              address,
+              name: communityInfo.name || 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
+              ensName: communityInfo.ensName || '',
+              xPNTsToken: communityInfo.xPNTsToken || '0x0000000000000000000000000000000000000000',
+              nodeType: Number(communityInfo.nodeType),
+              paymasterAddress: communityInfo.paymasterAddress || '0x0000000000000000000000000000000000000000',
+              registeredAt: Number(communityInfo.registeredAt),
+              isActive: communityInfo.isActive,
+              allowPermissionlessMint: communityInfo.allowPermissionlessMint
+            };
+          } catch (err) {
+            console.error(`Error fetching community ${address}:`, err);
+            return {
+              address,
+              name: 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
+              ensName: '',
+              xPNTsToken: '0x0000000000000000000000000000000000000000',
+              nodeType: 0,
+              paymasterAddress: '0x0000000000000000000000000000000000000000',
+              registeredAt: Date.now() / 1000,
+              isActive: true,
+              allowPermissionlessMint: false
+            };
+          }
         })
       );
       
@@ -152,11 +195,10 @@ export function RegisterCommunity() {
       });
       setAccount(accounts[0]);
       await checkExistingCommunity(accounts[0]);
-      await loadMinStake();
       await loadGTokenBalance(accounts[0]);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(t('registerCommunity.errors.walletNotConnected'), err);
-      setError(err?.message || t('registerCommunity.errors.walletNotConnected'));
+      setError(err instanceof Error ? err.message : t('registerCommunity.errors.walletNotConnected'));
     }
   };
 
@@ -166,7 +208,7 @@ export function RegisterCommunity() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        RegistryABI,
+        RegistryV2_1_4ABI,
         rpcProvider
       );
 
@@ -180,23 +222,7 @@ export function RegisterCommunity() {
     }
   };
 
-  // Load minimum stake requirement for AOA mode
-  const loadMinStake = async () => {
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
-      const registry = new ethers.Contract(
-        REGISTRY_ADDRESS,
-        RegistryABI,
-        rpcProvider
-      );
 
-      // NodeType.PAYMASTER_AOA = 0
-      const config = await registry.nodeTypeConfigs(0);
-      setMinStake(ethers.formatEther(config.minStake));
-    } catch (err) {
-      console.error(t('registerCommunity.errors.stakeAmountRequired'), err);
-    }
-  };
 
   // Load user's GToken balance
   const loadGTokenBalance = async (address: string) => {
@@ -337,7 +363,7 @@ export function RegisterCommunity() {
       // Step 3: Register community (Registry will call GTokenStaking.lockStake internally)
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        RegistryABI,
+        RegistryV2_1_4ABI,
         signer
       );
 
@@ -349,9 +375,9 @@ export function RegisterCommunity() {
 
       // Success - show success UI with links
       setRegistrationSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(t('registerCommunity.errors.registrationFailed'), err);
-      setError(err?.message || t('registerCommunity.errors.registrationFailed'));
+      setError(err instanceof Error ? err.message : t('registerCommunity.errors.registrationFailed'));
     } finally {
       setIsRegistering(false);
     }
@@ -661,7 +687,7 @@ export function RegisterCommunity() {
           ) : (
             <>
               <div className="communities-grid">
-                {communities.map((community, index) => (
+                {communities.map((community) => (
                   <div key={community.address} className="community-card">
                     <div className="community-header">
                       <h3>{community.name}</h3>
