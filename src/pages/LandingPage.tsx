@@ -182,7 +182,7 @@ export function LandingPage() {
               <div className="flow-icon">🎫</div>
               <h3 className="flow-title">Get GToken</h3>
               <p className="flow-description">
-                获得协议准入许可GToken，成为协议成员，自由加入随时退出
+                获取协议准入许可GToken，成为协议成员，随时自由退出
               </p>
               <a href="/get-gtoken" className="flow-link">
                 获取 →

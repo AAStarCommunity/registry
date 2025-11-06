@@ -17,6 +17,7 @@ export function RegisterCommunity() {
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
   const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
+  const MYSBT_ADDRESS = networkConfig.contracts.mySBT; // MySBT white-label SBT
   const RPC_URL = getRpcUrl();
 
   // Wallet state
@@ -315,11 +316,12 @@ export function RegisterCommunity() {
         }
       }
 
-      // Prepare CommunityProfile (Registry v2.1.4 format - 10 fields with allowPermissionlessMint)
+      // Prepare CommunityProfile (Registry v2.1.4 format - 11 fields with supportedSBTs)
       const profile = {
         name: communityName,
         ensName: ensName || "",
         xPNTsToken: xPNTsToken || ethers.ZeroAddress,
+        supportedSBTs: [MYSBT_ADDRESS], // Automatically use AAstar MySBT white-label SBT
         nodeType: mode === "AOA" ? 0 : 1, // NodeType: PAYMASTER_AOA=0, PAYMASTER_SUPER=1
         paymasterAddress: ethers.ZeroAddress, // Paymaster address is optional, use ZeroAddress
         community: account,
