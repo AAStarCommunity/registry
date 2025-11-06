@@ -586,7 +586,7 @@ export function RegisterCommunity() {
                   maxLength={500}
                 />
                 <small style={{ color: '#6b7280', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
-                  💡 如果留空，CommitENS 会自动根据社区名称分配 {communityName || 'name'}.aastar.eth（保留名称如 "paymaster" 和三字母名称除外）
+                  {t('registerCommunity.form.ensHint', { communityName })}
                 </small>
               </div>
             </div>
@@ -599,14 +599,14 @@ export function RegisterCommunity() {
                 {hasXPNTs === null ? (
                   // Checking status
                   <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
-                    <p style={{ margin: 0, color: '#6b7280' }}>检测 xPNTs 状态中...</p>
+                    <p style={{ margin: 0, color: '#6b7280' }}>{t('registerCommunity.form.detectingXPNTs')}</p>
                   </div>
                 ) : hasXPNTs === false ? (
                   // No xPNTs detected - show link to deploy
                   <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
-                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>未检测到 xPNTs Token</p>
+                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>{t('registerCommunity.form.noXPNTsDetected')}</p>
                     <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
-                      部署 xPNTs Token 可获得社区积分功能和更好的 gas 代付体验
+                      {t('registerCommunity.form.deployXPNTsBenefit')}
                     </p>
                     <Link
                       to="/get-xpnts"
@@ -621,10 +621,10 @@ export function RegisterCommunity() {
                         fontSize: '0.9em'
                       }}
                     >
-                      去部署 xPNTs Token →
+                      {t('registerCommunity.form.deployXPNTs')}
                     </Link>
                     <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
-                      💡 也可以跳过，稍后再部署
+                      {t('registerCommunity.form.skipDeployXPNTs')}
                     </p>
                   </div>
                 ) : (
@@ -647,7 +647,7 @@ export function RegisterCommunity() {
                       }}
                     />
                     <small style={{ color: '#10b981', fontWeight: 600 }}>
-                      ✅ 已自动检测到您的 xPNTs Token
+                      {t('registerCommunity.form.xpNTsDetected')}
                     </small>
                   </>
                 )}
@@ -662,14 +662,14 @@ export function RegisterCommunity() {
                 {hasPaymaster === null ? (
                   // Checking status
                   <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
-                    <p style={{ margin: 0, color: '#6b7280' }}>检测 Paymaster 状态中...</p>
+                    <p style={{ margin: 0, color: '#6b7280' }}>{t('registerCommunity.form.detectingPaymaster')}</p>
                   </div>
                 ) : hasPaymaster === false ? (
                   // No Paymaster detected - show link to deploy
                   <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
-                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>未检测到 Paymaster</p>
+                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>{t('registerCommunity.form.noPaymasterDetected')}</p>
                     <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
-                      部署 AOA/AOA+ Paymaster 以提供 gas 代付功能
+                      {t('registerCommunity.form.deployPaymasterBenefit')}
                     </p>
                     <Link
                       to="/operator/wizard"
@@ -684,10 +684,10 @@ export function RegisterCommunity() {
                         fontSize: '0.9em'
                       }}
                     >
-                      去部署 Paymaster →
+                      {t('registerCommunity.form.deployPaymaster')}
                     </Link>
                     <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
-                      💡 也可以跳过，稍后再部署
+                      {t('registerCommunity.form.skipDeployPaymaster')}
                     </p>
                   </div>
                 ) : (
@@ -711,7 +711,7 @@ export function RegisterCommunity() {
                       }}
                     />
                     <small style={{ color: '#10b981', fontWeight: 600 }}>
-                      ✅ 已自动检测到您的 Paymaster
+                      {t('registerCommunity.form.paymasterDetected')}
                     </small>
                   </>
                 )}
@@ -793,10 +793,10 @@ export function RegisterCommunity() {
                   }}
                 />
                 <small style={{ color: '#3b82f6', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                  🔒 所有社区使用统一的 MySBT 白标 SBT
+                  {t('registerCommunity.form.unifiedMySBT')}
                 </small>
                 <small style={{ color: '#6b7280', fontSize: '0.85em' }}>
-                  此地址已自动从 shared-config 配置，注册时将自动添加到 supportedSBTs
+                  {t('registerCommunity.form.autoConfigSBT')}
                 </small>
               </div>
 

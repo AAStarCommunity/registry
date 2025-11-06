@@ -429,7 +429,22 @@
       "stakeAmountHint": "Minimum stake",
       "allowPermissionlessMint": "Allow Permissionless Mint",
       "allowPermissionlessMintHint": "When enabled, users can mint community MySBT without invitation",
-      "permissionlessMintWarning": "⚠️ Warning: Each community member needs your invitation, communication, and manual mint"
+      "permissionlessMintWarning": "⚠️ Warning: Each community member needs your invitation, communication, and manual mint",
+      "ensHint": "💡 If left empty, CommitENS will automatically assign {communityName || 'name'}.aastar.eth (except for reserved names like 'paymaster' and three-letter names)",
+      "detectingXPNTs": "Detecting xPNTs status...",
+      "noXPNTsDetected": "No xPNTs Token detected",
+      "deployXPNTsBenefit": "Deploy xPNTs Token to get community points and better gas payment experience",
+      "deployXPNTs": "Deploy xPNTs Token →",
+      "skipDeployXPNTs": "💡 You can also skip and deploy later",
+      "xpNTsDetected": "✅ Your xPNTs Token automatically detected",
+      "detectingPaymaster": "Detecting Paymaster status...",
+      "noPaymasterDetected": "No Paymaster detected",
+      "deployPaymasterBenefit": "Deploy AOA/AOA+ Paymaster to provide gas payment functionality",
+      "deployPaymaster": "Deploy Paymaster →",
+      "skipDeployPaymaster": "💡 You can also skip and deploy later",
+      "paymasterDetected": "✅ Your Paymaster automatically detected",
+      "unifiedMySBT": "🔒 All communities use unified MySBT white-label SBT",
+      "autoConfigSBT": "This address is automatically configured from shared-config and will be added to supportedSBTs upon registration"
     },
     "balance": {
       "title": "Current Balance",

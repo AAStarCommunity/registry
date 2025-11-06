@@ -429,7 +429,22 @@
       "stakeAmountHint": "最小质押",
       "allowPermissionlessMint": "允许无许可铸造",
       "allowPermissionlessMintHint": "启用后，用户无需邀请即可铸造社区 MySBT",
-      "permissionlessMintWarning": "⚠️ 警告: 每个社区成员都需要你邀请、沟通并人工mint"
+      "permissionlessMintWarning": "⚠️ 警告: 每个社区成员都需要你邀请、沟通并人工mint",
+      "ensHint": "💡 如果留空，CommitENS 会自动根据社区名称分配 {communityName || 'name'}.aastar.eth（保留名称如 'paymaster' 和三字母名称除外）",
+      "detectingXPNTs": "检测 xPNTs 状态中...",
+      "noXPNTsDetected": "未检测到 xPNTs Token",
+      "deployXPNTsBenefit": "部署 xPNTs Token 可获得社区积分功能和更好的 gas 代付体验",
+      "deployXPNTs": "部署 xPNTs Token →",
+      "skipDeployXPNTs": "💡 也可以跳过，稍后再部署",
+      "xpNTsDetected": "✅ 已自动检测到您的 xPNTs Token",
+      "detectingPaymaster": "检测 Paymaster 状态中...",
+      "noPaymasterDetected": "未检测到 Paymaster",
+      "deployPaymasterBenefit": "部署 AOA/AOA+ Paymaster 以提供 gas 代付功能",
+      "deployPaymaster": "去部署 Paymaster →",
+      "skipDeployPaymaster": "💡 也可以跳过，稍后再部署",
+      "paymasterDetected": "✅ 已自动检测到您的 Paymaster",
+      "unifiedMySBT": "🔒 所有社区使用统一的 MySBT 白标 SBT",
+      "autoConfigSBT": "此地址已自动从 shared-config 配置，注册时将自动添加到 supportedSBTs"
     },
     "balance": {
       "title": "当前余额",
