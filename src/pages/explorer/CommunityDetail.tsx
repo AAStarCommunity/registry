@@ -21,7 +21,7 @@ interface CommunityProfile {
   nodeType: number;
   xPNTsToken: string;
   paymasterAddress: string;
-  supportedSBTs: string[];
+  allowPermissionlessMint: boolean;
 }
 
 export function CommunityDetail() {
@@ -52,8 +52,8 @@ export function CommunityDetail() {
         provider
       );
 
-      // Fetch community profile from Registry
-      const profile = await registry.getCommunityProfile(address);
+      // Fetch community profile from Registry using communities mapping
+      const profile = await registry.communities(address);
 
       // Check if community is registered
       if (!profile.isActive && profile.registeredAt === 0n) {
@@ -70,7 +70,7 @@ export function CommunityDetail() {
         nodeType: Number(profile.nodeType),
         xPNTsToken: profile.xPNTsToken,
         paymasterAddress: profile.paymasterAddress,
-        supportedSBTs: profile.supportedSBTs,
+        allowPermissionlessMint: profile.allowPermissionlessMint,
       });
 
       setLoading(false);
@@ -210,27 +210,17 @@ export function CommunityDetail() {
           </div>
         </div>
 
-        {/* SBT Configuration */}
+        {/* Permissionless Mint Configuration */}
         <div className="info-card">
-          <h3>Supported SBTs</h3>
-          {community.supportedSBTs && community.supportedSBTs.length > 0 ? (
-            <div className="sbt-list">
-              {community.supportedSBTs.map((sbt, index) => (
-                <div key={index} className="sbt-item">
-                  <a
-                    href={getEtherscanAddressUrl(sbt)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="address-link"
-                  >
-                    {sbt.slice(0, 10)}...{sbt.slice(-8)}
-                  </a>
-                </div>
-              ))}
+          <h3>Mint Configuration</h3>
+          <div className="info-rows">
+            <div className="info-row">
+              <span className="label">Permissionless Mint:</span>
+              <span className="value">
+                {community.allowPermissionlessMint ? 'Enabled' : 'Disabled'}
+              </span>
             </div>
-          ) : (
-            <p className="empty-state">No SBTs configured</p>
-          )}
+          </div>
         </div>
       </div>
 

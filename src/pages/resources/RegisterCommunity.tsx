@@ -892,8 +892,6 @@ export function RegisterCommunity() {
                   <div
                     key={community.address}
                     className="community-card"
-                    onClick={() => navigate(`/explorer/community/${community.address}`)}
-                    style={{ cursor: 'pointer' }}
                   >
                     <div className="community-header">
                       <h3>{community.name}</h3>
@@ -941,15 +939,12 @@ export function RegisterCommunity() {
                     </div>
 
                     <div className="community-actions">
-                      <a
-                        href={`${networkConfig.explorerUrl}/address/${community.address}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        to={`/explorer/community/${community.address}`}
                         className="explorer-link"
-                        onClick={(e) => e.stopPropagation()}
                       >
-                        View on Explorer →
-                      </a>
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
