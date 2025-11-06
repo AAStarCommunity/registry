@@ -292,8 +292,8 @@ const GetPNTs: React.FC = () => {
           <details className="faq-item">
             <summary>What's the exchange rate between aPNTs and ETH?</summary>
             <p>
-              The exchange rate is dynamic and managed by the protocol's reserve
-              system. On testnet, the default rate is approximately 1 ETH = 225,000 aPNTs.
+              The aPNTs is endores by AAStar's GAS SPONSOR SERVICE PROMISE. The exchange rate is dynamic and managed by the protocol's reserve
+              system. On testnet, the default rate is approximately aPNTs=0.02U.
               On mainnet, rates are determined by market conditions and protocol
               reserves to ensure fair pricing.
             </p>
@@ -303,8 +303,7 @@ const GetPNTs: React.FC = () => {
             <summary>Can I withdraw my deposited aPNTs later?</summary>
             <p>
               Yes! As a Paymaster operator, you can withdraw unused aPNTs from your
-              deposit at any time through the Operator Portal dashboard. There's no
-              lockup period, but you must maintain the minimum deposit balance to keep
+              deposit at any time through the Operator Portal dashboard. There will be a 7 days lockup period for settlement, but you must maintain the minimum deposit balance to keep
               your Paymaster operational.
             </p>
           </details>
