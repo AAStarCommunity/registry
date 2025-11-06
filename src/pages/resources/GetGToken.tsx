@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
 import { ERC20_ABI, GTokenStakingABI } from "../../config/abis";
+import { getAllV2Contracts } from "@aastar/shared-config";
 import "./GetGToken.css";
 
 const GetGToken: React.FC = () => {
@@ -913,6 +914,47 @@ const GetGToken: React.FC = () => {
           </div>
 
 
+        </section>
+
+        {/* All Deployed Contracts */}
+        <section className="info-section">
+          <h2>📋 All Deployed Contracts (v0.2.26)</h2>
+          <div className="contracts-grid">
+            {getAllV2Contracts().map((contract) => (
+              <div key={contract.address} className="contract-card">
+                <div className="contract-header">
+                  <h4>{contract.name}</h4>
+                  <span className="version-badge">v{contract.version}</span>
+                </div>
+                <div className="contract-details">
+                  <div className="detail-row">
+                    <span className="label">Address:</span>
+                    <span className="value mono">
+                      {contract.address.slice(0, 6)}...{contract.address.slice(-4)}
+                    </span>
+                  </div>
+                  <div className="detail-row">
+                    <span className="label">Version Code:</span>
+                    <span className="value">{contract.versionCode}</span>
+                  </div>
+                  {contract.features && contract.features.length > 0 && (
+                    <div className="detail-row">
+                      <span className="label">Features:</span>
+                      <span className="value">{contract.features.join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+                <a
+                  href={`${config.explorerUrl}/address/${contract.address}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="explorer-link"
+                >
+                  View on Explorer →
+                </a>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* How to Get GToken */}
