@@ -245,9 +245,6 @@ export function CommunityDetail() {
 
       {/* Actions */}
       <div className="detail-actions">
-        <Link to="/resources/register-community" className="action-button">
-          Update Community Info
-        </Link>
         {community.paymasterAddress && community.paymasterAddress !== ethers.ZeroAddress && (
           <Link
             to={`/operator/manage?address=${community.paymasterAddress}`}
