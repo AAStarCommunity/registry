@@ -200,12 +200,12 @@ export function GetXPNTs() {
       console.log("Deployment successful!");
 
       // Get the deployed token address
-      const factory = new ethers.Contract(
+      const factoryReader = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
         new ethers.JsonRpcProvider(RPC_URL)
       );
-      const deployedTokenAddress = await factory.getTokenAddress(account);
+      const deployedTokenAddress = await factoryReader.getTokenAddress(account);
       console.log("Deployed xPNTs token address:", deployedTokenAddress);
 
       // Reload to get new token info
