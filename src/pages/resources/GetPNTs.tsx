@@ -26,24 +26,24 @@ const GetPNTs: React.FC = () => {
           <button onClick={handleGoBack} className="back-button">
             ← Back
           </button>
-          <h1>Get aaPNTss(for Community Operators)</h1>
+          <h1>Get aPNTs(for Community Operators)</h1>
           <p className="subtitle">
-            aaPNTss (AAStar Points Token) are used to pay for gas in the SuperPaymaster ecosystem AOA+ mode.
+            aPNTs (AAStar Points Token) are used to pay for gas in the SuperPaymaster ecosystem AOA+ mode.
           </p>
         </div>
 
-        {/* What is aaPNTss Section */}
+        {/* What is aPNTs Section */}
         <section className="info-section">
-          <h2>💰 What is aaPNTss?</h2>
+          <h2>💰 What is aPNTs?</h2>
           <p>
-            aaPNTss (AAStar Points Token) are the utility tokens in the SuperPaymaster eco, used for:
+            aPNTs (AAStar Points Token) are the utility tokens in the SuperPaymaster eco, used for:
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Gas Payment</strong>: Operator Users pay gas fees with aaPNTss instead of ETH
+              <strong>Gas Payment</strong>: Operator Users pay gas fees with aPNTs instead of ETH
             </li>
             <li>
-              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit aaPNTss for quick setup
+              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit aPNTs for quick setup
             </li>
             <li>
               <strong>Protocol Operations</strong>: Seamless cross-chain conversion
@@ -64,7 +64,7 @@ const GetPNTs: React.FC = () => {
             </div>
             <div className="info-row">
               <span className="label">Symbol:</span>
-              <span className="value">aaPNTss</span>
+              <span className="value">aPNTs</span>
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
@@ -73,9 +73,9 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Contract Address:</span>
               <span className="value mono">
-                {config.contracts.aaPNTss}
+                {config.contracts.aPNTs}
                 <a
-                  href={`${config.explorerUrl}/address/${config.contracts.aaPNTss}`}
+                  href={`${config.explorerUrl}/address/${config.contracts.aPNTs}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -87,7 +87,7 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Minimum Deposit:</span>
               <span className="value highlight">
-                {config.requirements.minPntDeposit} aaPNTss
+                {config.requirements.minPntDeposit} aPNTs
               </span>
             </div>
           </div>
@@ -127,11 +127,11 @@ const GetPNTs: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 2: Buy aaPNTss from Shops</h3>
+                  <h3>Method 2: Buy aPNTs from Shops</h3>
                 </div>
                 <p>Buy your aPNTss Token from our Web3 Shops</p>
                 <ul>
-                  <li>1 aaPNTss = 0.02U (testnet rate, dynamic)</li>
+                  <li>1 aPNTs = 0.02U (testnet rate, dynamic)</li>
                 </ul>
                 <a
                   href="https://shop.aastar.io"
@@ -139,15 +139,15 @@ const GetPNTs: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button secondary"
                 >
-                  Buy aaPNTss from Shops →
+                  Buy aPNTs from Shops →
                 </a>
               </div>
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 3: Get aaPNTss from DEX</h3>
+                  <h3>Method 3: Get aPNTs from DEX</h3>
                 </div>
-                <p>Buy aaPNTss with ETH, USDC, USDT or xaPNTss</p>
+                <p>Buy aPNTs with ETH, USDC, USDT or xaPNTss</p>
                 <ul>
                   <li>Practice trading before mainnet</li>
                 </ul>
@@ -241,8 +241,8 @@ const GetPNTs: React.FC = () => {
                   params: {
                     type: "ERC20",
                     options: {
-                      address: config.contracts.aaPNTss,
-                      symbol: "aaPNTss",
+                      address: config.contracts.aPNTs,
+                      symbol: "aPNTs",
                       decimals: 18,
                     },
                   },
