@@ -413,6 +413,10 @@
     "subtitle": "Create and register your community on the AAstar Network",
     "loading": "Loading...",
     "connectWallet": "Connect Wallet",
+    "button": {
+      "register": "Register",
+      "registering": "Registering..."
+    },
     "form": {
       "basicInfo": "Basic Information",
       "tokenSection": "Token",

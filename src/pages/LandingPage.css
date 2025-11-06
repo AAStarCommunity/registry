@@ -499,10 +499,10 @@
     background: var(--card-bg);
     border: 2px solid var(--border-color);
     border-radius: 16px;
-    padding: 2rem;
+    padding: 2.6rem;
     transition: all 0.3s ease;
     flex: 1;
-    height: 280px;
+    height: 364px;
     display: flex;
     flex-direction: column;
     align-items: center;
