@@ -5,6 +5,7 @@ import { OperatorsPortal } from "./pages/OperatorsPortal";
 import { LaunchTutorial } from "./pages/LaunchTutorial";
 import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
+import { CommunityDetail } from "./pages/explorer/CommunityDetail";
 import { DeployWizard } from "./pages/operator/DeployWizard";
 import { DeployWizardNew } from "./pages/operator/DeployWizardNew";
 import ManagePaymaster from "./pages/operator/ManagePaymaster";
@@ -48,6 +49,7 @@ function App() {
             <Route path="/explorer/dashboard" element={<ExplorerHub />} />
             <Route path="/explorer/user" element={<ExplorerHub />} />
             <Route path="/explorer/user/:address" element={<ExplorerHub />} />
+            <Route path="/explorer/community/:address" element={<CommunityDetail />} />
 
             {/* Legacy Analytics routes - redirect to Explorer */}
             <Route path="/analytics" element={<ExplorerHub />} />

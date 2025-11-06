@@ -745,6 +745,29 @@ export function RegisterCommunity() {
                 </small>
               </div>
 
+              {/* SBT Configuration */}
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1em', color: '#374151' }}>
+                  {t('registerCommunity.form.sbtSection')}
+                </h3>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={allowPermissionlessMint}
+                      onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
+                    />
+                    <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
+                  </label>
+                  <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
+                  {!allowPermissionlessMint && (
+                    <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
+                      {t('registerCommunity.form.permissionlessMintWarning')}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="form-group">
                 <label>Paymaster Type</label>
                 <div className="radio-group">
@@ -792,27 +815,6 @@ export function RegisterCommunity() {
                   <small className="helper-text">
                     {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
                   </small>
-                )}
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.sbtSection')}</h2>
-
-              <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={allowPermissionlessMint}
-                    onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
-                  />
-                  <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
-                </label>
-                <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
-                {!allowPermissionlessMint && (
-                  <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                    {t('registerCommunity.form.permissionlessMintWarning')}
-                  </div>
                 )}
               </div>
             </div>
@@ -887,44 +889,49 @@ export function RegisterCommunity() {
             <>
               <div className="communities-grid">
                 {communities.map((community) => (
-                  <div key={community.address} className="community-card">
+                  <Link
+                    key={community.address}
+                    to={`/explorer/community/${community.address}`}
+                    className="community-card"
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
                     <div className="community-header">
                       <h3>{community.name}</h3>
                       <span className={`status-badge ${community.isActive ? 'active' : 'inactive'}`}>
                         {community.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    
+
                     <div className="community-info">
                       <div className="info-item">
                         <span className="label">ENS:</span>
                         <span className="value">{community.ensName || 'N/A'}</span>
                       </div>
-                      
+
                       <div className="info-item">
                         <span className="label">Node Type:</span>
                         <span className="value">{community.nodeType === 0 ? 'AOA' : 'SUPER'}</span>
                       </div>
-                      
+
                       <div className="info-item">
                         <span className="label">xPNTs Token:</span>
                         <span className="value mono">
                           {community.xPNTsToken.slice(0, 6)}...{community.xPNTsToken.slice(-4)}
                         </span>
                       </div>
-                      
+
                       <div className="info-item">
                         <span className="label">Paymaster:</span>
                         <span className="value mono">
                           {community.paymasterAddress.slice(0, 6)}...{community.paymasterAddress.slice(-4)}
                         </span>
                       </div>
-                      
+
                       <div className="info-item">
                         <span className="label">Permissionless Mint:</span>
                         <span className="value">{community.allowPermissionlessMint ? 'Enabled' : 'Disabled'}</span>
                       </div>
-                      
+
                       <div className="info-item">
                         <span className="label">Registered:</span>
                         <span className="value">
@@ -943,7 +950,7 @@ export function RegisterCommunity() {
                         View on Explorer →
                       </a>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
 
