@@ -889,11 +889,11 @@ export function RegisterCommunity() {
             <>
               <div className="communities-grid">
                 {communities.map((community) => (
-                  <Link
+                  <div
                     key={community.address}
-                    to={`/explorer/community/${community.address}`}
                     className="community-card"
-                    style={{ textDecoration: 'none', color: 'inherit' }}
+                    onClick={() => navigate(`/explorer/community/${community.address}`)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="community-header">
                       <h3>{community.name}</h3>
@@ -939,18 +939,19 @@ export function RegisterCommunity() {
                         </span>
                       </div>
                     </div>
-                    
+
                     <div className="community-actions">
                       <a
                         href={`${networkConfig.explorerUrl}/address/${community.address}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="explorer-link"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         View on Explorer →
                       </a>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
 
