@@ -42,6 +42,7 @@ export function RegisterCommunity() {
   const [error, setError] = useState<string>("");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Community list state
   const [communities, setCommunities] = useState<Array<{
@@ -59,6 +60,19 @@ export function RegisterCommunity() {
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [loadingCommunities, setLoadingCommunities] = useState<boolean>(false);
   const communitiesPerPage = 4;
+
+  // Copy address to clipboard
+  const copyAddressToClipboard = async () => {
+    if (account) {
+      try {
+        await navigator.clipboard.writeText(account);
+        setCopiedAddress(true);
+        setTimeout(() => setCopiedAddress(false), 2000); // Reset after 2 seconds
+      } catch (err) {
+        console.error('Failed to copy address:', err);
+      }
+    }
+  };
 
   // Log contract addresses on mount
   useEffect(() => {
@@ -530,9 +544,41 @@ export function RegisterCommunity() {
         ) : (
           <div className="registration-form">
             <div className="wallet-info">
-              <p>
-                <strong>{t('step1.substep3.walletConnected')}:</strong> {account.slice(0, 6)}...{account.slice(-4)}
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <strong>{t('step1.substep3.walletConnected')}:</strong>
+                <span style={{ fontFamily: 'monospace', fontSize: '0.9em', color: '#666' }}>
+                  {account.slice(0, 6)}...{account.slice(-4)}
+                </span>
+                <button
+                  onClick={copyAddressToClipboard}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#666',
+                    transition: 'all 0.2s ease'
+                  }}
+                  title={copiedAddress ? "Copied!" : "Copy address"}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                >
+                  {copiedAddress ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 6L9 17l-5-5"/>
+                    </svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                    </svg>
+                  )}
+                </button>
+              </div>
               {GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && (
                 <>
                   <p>
