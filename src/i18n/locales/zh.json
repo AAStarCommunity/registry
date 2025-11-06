@@ -484,13 +484,13 @@
     "description": "获得协议准入许可GToken，成为协议成员，自由加入随时退出"
   },
   "deployXPNTs": {
-    "title": "Deploy xPNTs",
-    "description": "Create your community gas token for payment abstraction",
+    "title": "部署 xPNTs",
+    "description": "为您的社区创建用于支付抽象的gas代币",
     "action": "部署"
   },
   "launchPaymaster": {
-    "title": "Launch Paymaster",
-    "description": "Deploy your Paymaster via factory with one-click configuration",
+    "title": "启动 Paymaster",
+    "description": "通过工厂一键配置部署您的Paymaster",
     "action": "启动"
   },
   "getSBT": {
