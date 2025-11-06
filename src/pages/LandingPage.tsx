@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import "./LandingPage.css";
 
 export function LandingPage() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState({
     totalPaymasters: 0,
     totalTransactions: 0,
@@ -180,12 +182,12 @@ export function LandingPage() {
           <div className="flow-step">
             <div className="flow-card">
               <div className="flow-icon">🎫</div>
-              <h3 className="flow-title">Get GToken</h3>
+              <h3 className="flow-title">{t('getGToken.title')}</h3>
               <p className="flow-description">
-                获取协议准入许可GToken，成为协议成员，随时自由退出
+                {t('getGToken.description')}
               </p>
               <a href="/get-gtoken" className="flow-link">
-                获取 →
+                {t('common.get')} →
               </a>
             </div>
             <div className="flow-arrow">→</div>
@@ -194,12 +196,12 @@ export function LandingPage() {
           <div className="flow-step">
             <div className="flow-card">
               <div className="flow-icon">🏛️</div>
-              <h3 className="flow-title">Register Community</h3>
+              <h3 className="flow-title">{t('registerCommunity.title')}</h3>
               <p className="flow-description">
-                Register your community on-chain with metadata and governance token
+                {t('registerCommunity.subtitle')}
               </p>
               <a href="/register-community" className="flow-link">
-                Register →
+                {t('registerCommunity.button.register')} →
               </a>
             </div>
             <div className="flow-arrow">→</div>
@@ -208,12 +210,12 @@ export function LandingPage() {
           <div className="flow-step">
             <div className="flow-card">
               <div className="flow-icon">💎</div>
-              <h3 className="flow-title">Deploy xPNTs</h3>
+              <h3 className="flow-title">{t('deployXPNTs.title')}</h3>
               <p className="flow-description">
-                Create your community gas token for payment abstraction
+                {t('deployXPNTs.description')}
               </p>
               <a href="/get-xpnts" className="flow-link">
-                Deploy →
+                {t('deployXPNTs.action')} →
               </a>
             </div>
             <div className="flow-arrow">→</div>
@@ -222,12 +224,12 @@ export function LandingPage() {
           <div className="flow-step">
             <div className="flow-card highlight">
               <div className="flow-icon">🚀</div>
-              <h3 className="flow-title">Launch Paymaster</h3>
+              <h3 className="flow-title">{t('launchPaymaster.title')}</h3>
               <p className="flow-description">
-                Deploy your Paymaster via factory with one-click configuration
+                {t('launchPaymaster.description')}
               </p>
               <a href="/launch-paymaster" className="flow-link primary">
-                Launch →
+                {t('launchPaymaster.action')} →
               </a>
             </div>
           </div>

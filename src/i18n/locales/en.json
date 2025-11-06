@@ -7,7 +7,8 @@
     "loading": "Loading...",
     "refresh": "Refresh",
     "cancel": "Cancel",
-    "confirm": "Confirm"
+    "confirm": "Confirm",
+    "get": "Get"
   },
   "header": {
     "home": "Home",
@@ -473,6 +474,20 @@
       "alreadyRegistered": "This address is already registered as community: {{name}}",
       "registrationFailed": "Community registration failed"
     }
+  },
+  "getGToken": {
+    "title": "Get GToken",
+    "description": "Get protocol access permission GToken, become protocol member, join permissionless, quit anytime freely"
+  },
+  "deployXPNTs": {
+    "title": "Deploy xPNTs",
+    "description": "Create your community gas token for payment abstraction",
+    "action": "Deploy"
+  },
+  "launchPaymaster": {
+    "title": "Launch Paymaster",
+    "description": "Deploy your Paymaster via factory with one-click configuration",
+    "action": "Launch"
   },
   "getSBT": {
     "title": "Mint My MySBT",

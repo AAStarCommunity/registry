@@ -7,7 +7,8 @@
     "loading": "加载中...",
     "refresh": "刷新",
     "cancel": "取消",
-    "confirm": "确认"
+    "confirm": "确认",
+    "get": "获取"
   },
   "header": {
     "home": "首页",
@@ -473,6 +474,20 @@
       "alreadyRegistered": "该地址已作为社区注册: {{name}}",
       "registrationFailed": "社区注册失败"
     }
+  },
+  "getGToken": {
+    "title": "Get GToken",
+    "description": "获得协议准入许可GToken，成为协议成员，自由加入随时退出"
+  },
+  "deployXPNTs": {
+    "title": "Deploy xPNTs",
+    "description": "Create your community gas token for payment abstraction",
+    "action": "部署"
+  },
+  "launchPaymaster": {
+    "title": "Launch Paymaster",
+    "description": "Deploy your Paymaster via factory with one-click configuration",
+    "action": "启动"
   },
   "getSBT": {
     "title": "铸造我的 MySBT",
