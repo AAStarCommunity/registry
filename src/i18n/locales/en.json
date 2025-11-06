@@ -444,7 +444,7 @@
     },
     "button": {
       "registering": "Registering...",
-      "register": "Register Community"
+      "register": "Register"
     },
     "success": {
       "title": "Transaction Submitted!",

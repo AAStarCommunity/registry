@@ -444,7 +444,7 @@
     },
     "button": {
       "registering": "注册中...",
-      "register": "注册社区"
+      "register": "注册"
     },
     "success": {
       "title": "交易已提交!",
