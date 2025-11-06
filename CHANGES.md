@@ -9,3 +9,4 @@
 - Paymaster 自动检测
 - Wizard 简化流程
 - 部署后自动更新 Registry
+- Explorer 社区详情
