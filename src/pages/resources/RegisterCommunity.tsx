@@ -509,17 +509,14 @@ export function RegisterCommunity() {
             <div className="success-actions">
               <button
                 className="primary-btn"
-                onClick={() => navigate(`/explorer?community=${account}&highlight=true`)}
+                onClick={() => navigate(`/explorer/community/${account}`)}
               >
                 🔍 {t('registerCommunity.success.viewInExplorer')}
               </button>
 
               <button
                 className="secondary-btn"
-                onClick={() => {
-                  const returnUrl = new URLSearchParams(window.location.search).get('returnUrl');
-                  navigate(returnUrl || '/operator/wizard');
-                }}
+                onClick={() => navigate('/operator/wizard')}
               >
                 ← {t('registerCommunity.success.backToWizard')}
               </button>

@@ -463,6 +463,10 @@
     },
     "success": {
       "title": "Transaction Submitted!",
+      "message": "Your community has been successfully registered!",
+      "txHash": "Transaction Hash",
+      "viewInExplorer": "View in Explorer",
+      "backToWizard": "Back to Wizard",
       "viewTx": "View Transaction"
     },
     "console": {

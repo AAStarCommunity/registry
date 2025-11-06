@@ -463,6 +463,10 @@
     },
     "success": {
       "title": "交易已提交!",
+      "message": "您的社区已成功注册！",
+      "txHash": "交易哈希",
+      "viewInExplorer": "在浏览器中查看",
+      "backToWizard": "返回向导",
       "viewTx": "查看交易"
     },
     "console": {
