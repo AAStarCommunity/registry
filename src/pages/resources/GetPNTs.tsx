@@ -145,11 +145,10 @@ const GetPNTs: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 3: Test DEX</h3>
+                  <h3>Method 3: Get aPNTs from DEX</h3>
                 </div>
-                <p>Buy PNTs with testnet ETH</p>
+                <p>Buy aPNTs with ETH, USDC, USDT or xPNTs</p>
                 <ul>
-                  <li>Fixed rate: 1 ETH = 225,000 PNT</li>
                   <li>Practice trading before mainnet</li>
                 </ul>
                 <a
@@ -158,7 +157,7 @@ const GetPNTs: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button secondary"
                 >
-                  Go to Test DEX →
+                  Go to DEX →
                 </a>
               </div>
             </>
