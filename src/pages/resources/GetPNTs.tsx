@@ -1,15 +1,15 @@
 /**
- * Get aPNTss Resource Page
+ * Get PNTs Resource Page
  *
- * Guides users on how to obtain aPNTss (Points Token) for deposits
+ * Guides users on how to obtain PNTs (Points Token) for deposits
  */
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
-import "./GetaPNTss.css";
+import "./GetPNTs.css";
 
-const GetaPNTss: React.FC = () => {
+const GetPNTs: React.FC = () => {
   const navigate = useNavigate();
   const config = getCurrentNetworkConfig();
   const isTest = isTestnet();
@@ -350,4 +350,4 @@ const GetaPNTss: React.FC = () => {
   );
 };
 
-export default GetaPNTss;
+export default GetPNTs;
