@@ -438,17 +438,27 @@ export function RegisterCommunity() {
 
       // IMPORTANT: Wait for blockchain state to sync before calling Registry
       // Re-verify available balance right before registerCommunity to ensure state is synced
-      console.log(t('registerCommunity.console.verifyingBalanceBeforeRegister'));
-      const finalAvailableBalance = await staking.availableBalance(account);
-      console.log(t('registerCommunity.console.finalAvailableBalance'), ethers.formatEther(finalAvailableBalance));
+      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
+        console.log(t('registerCommunity.console.verifyingBalanceBeforeRegister'));
 
-      if (finalAvailableBalance < gTokenAmount) {
-        throw new Error(
-          t('registerCommunity.errors.stateNotSynced', {
-            expected: ethers.formatEther(gTokenAmount),
-            actual: ethers.formatEther(finalAvailableBalance)
-          }) + ' Please wait a moment and try again.'
+        // Create a read-only staking contract to verify balance
+        const stakingContract = new ethers.Contract(
+          GTOKEN_STAKING_ADDRESS,
+          ["function availableBalance(address user) external view returns (uint256)"],
+          provider
         );
+
+        const finalAvailableBalance = await stakingContract.availableBalance(account);
+        console.log(t('registerCommunity.console.finalAvailableBalance'), ethers.formatEther(finalAvailableBalance));
+
+        if (finalAvailableBalance < gTokenAmount) {
+          throw new Error(
+            t('registerCommunity.errors.stateNotSynced', {
+              expected: ethers.formatEther(gTokenAmount),
+              actual: ethers.formatEther(finalAvailableBalance)
+            }) + ' Please wait a moment and try again.'
+          );
+        }
       }
 
       const registry = new ethers.Contract(
