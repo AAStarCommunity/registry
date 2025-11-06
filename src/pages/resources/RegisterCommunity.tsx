@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryABI, GTokenStakingABI } from "../../config/abis";
+import { RegistryABI, GTokenStakingABI, RegistryV2_1_4ABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
@@ -38,6 +38,13 @@ export function RegisterCommunity() {
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
 
+  // Community list state
+  const [communities, setCommunities] = useState<any[]>([]);
+  const [totalCommunities, setTotalCommunities] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(0);
+  const [loadingCommunities, setLoadingCommunities] = useState<boolean>(false);
+  const communitiesPerPage = 4;
+
   // Log contract addresses on mount
   useEffect(() => {
     console.log('=== Contract Addresses ===');
@@ -47,6 +54,90 @@ export function RegisterCommunity() {
     console.log('Network:', networkConfig.chainName);
     console.log('========================');
   }, []);
+
+  // Fetch communities on mount
+  useEffect(() => {
+    fetchCommunities();
+  }, []);
+
+  // Fetch communities from registry
+  const fetchCommunities = async () => {
+    if (!window.ethereum) return;
+    
+    try {
+      setLoadingCommunities(true);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1_4ABI, provider);
+      
+      // Get total community count
+      const count = await registryContract.getCommunityCount();
+      setTotalCommunities(Number(count));
+      
+      // Fetch first 4 communities
+      const communityAddresses = await registryContract.getCommunities(0, communitiesPerPage);
+      const communityData = await Promise.all(
+        communityAddresses.map(async (address: string) => {
+          const profile = await registryContract.communities(address);
+          return {
+            address,
+            name: profile.name,
+            ensName: profile.ensName,
+            xPNTsToken: profile.xPNTsToken,
+            nodeType: profile.nodeType,
+            paymasterAddress: profile.paymasterAddress,
+            registeredAt: Number(profile.registeredAt),
+            isActive: profile.isActive,
+            allowPermissionlessMint: profile.allowPermissionlessMint
+          };
+        })
+      );
+      
+      setCommunities(communityData);
+    } catch (error) {
+      console.error('Error fetching communities:', error);
+    } finally {
+      setLoadingCommunities(false);
+    }
+  };
+
+  // Load more communities
+  const loadMoreCommunities = async () => {
+    if (!window.ethereum) return;
+    
+    try {
+      setLoadingCommunities(true);
+      const nextPage = currentPage + 1;
+      const offset = nextPage * communitiesPerPage;
+      
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1_4ABI, provider);
+      
+      const communityAddresses = await registryContract.getCommunities(offset, communitiesPerPage);
+      const communityData = await Promise.all(
+        communityAddresses.map(async (address: string) => {
+          const profile = await registryContract.communities(address);
+          return {
+            address,
+            name: profile.name,
+            ensName: profile.ensName,
+            xPNTsToken: profile.xPNTsToken,
+            nodeType: profile.nodeType,
+            paymasterAddress: profile.paymasterAddress,
+            registeredAt: Number(profile.registeredAt),
+            isActive: profile.isActive,
+            allowPermissionlessMint: profile.allowPermissionlessMint
+          };
+        })
+      );
+      
+      setCommunities(prev => [...prev, ...communityData]);
+      setCurrentPage(nextPage);
+    } catch (error) {
+      console.error('Error loading more communities:', error);
+    } finally {
+      setLoadingCommunities(false);
+    }
+  };
 
   // Connect wallet
   const connectWallet = async () => {
@@ -551,6 +642,99 @@ export function RegisterCommunity() {
             </div>
           </div>
         )}
+        </div>
+
+        {/* Registered Communities Section */}
+        <div className="registered-communities-section" style={{ marginTop: '40px' }}>
+          <div className="section-header">
+            <h2>Registered Communities</h2>
+            <div className="community-count">
+              Total: {totalCommunities} communities
+            </div>
+          </div>
+
+          {loadingCommunities && communities.length === 0 ? (
+            <div className="loading-communities">
+              <div className="spinner"></div>
+              <p>Loading communities...</p>
+            </div>
+          ) : (
+            <>
+              <div className="communities-grid">
+                {communities.map((community, index) => (
+                  <div key={community.address} className="community-card">
+                    <div className="community-header">
+                      <h3>{community.name}</h3>
+                      <span className={`status-badge ${community.isActive ? 'active' : 'inactive'}`}>
+                        {community.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    
+                    <div className="community-info">
+                      <div className="info-item">
+                        <span className="label">ENS:</span>
+                        <span className="value">{community.ensName || 'N/A'}</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="label">Node Type:</span>
+                        <span className="value">{community.nodeType === 0 ? 'AOA' : 'SUPER'}</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="label">xPNTs Token:</span>
+                        <span className="value mono">
+                          {community.xPNTsToken.slice(0, 6)}...{community.xPNTsToken.slice(-4)}
+                        </span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="label">Paymaster:</span>
+                        <span className="value mono">
+                          {community.paymasterAddress.slice(0, 6)}...{community.paymasterAddress.slice(-4)}
+                        </span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="label">Permissionless Mint:</span>
+                        <span className="value">{community.allowPermissionlessMint ? 'Enabled' : 'Disabled'}</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="label">Registered:</span>
+                        <span className="value">
+                          {new Date(community.registeredAt * 1000).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="community-actions">
+                      <a
+                        href={`${networkConfig.explorerUrl}/address/${community.address}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="explorer-link"
+                      >
+                        View on Explorer →
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {communities.length < totalCommunities && (
+                <div className="load-more-container">
+                  <button
+                    className="load-more-btn"
+                    onClick={loadMoreCommunities}
+                    disabled={loadingCommunities}
+                  >
+                    {loadingCommunities ? 'Loading...' : 'Next →'}
+                  </button>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
