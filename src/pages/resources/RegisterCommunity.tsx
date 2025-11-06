@@ -286,12 +286,11 @@ export function RegisterCommunity() {
         }
       }
 
-      // Prepare CommunityProfile (Registry v2.1.4 format - 11 fields with allowPermissionlessMint)
+      // Prepare CommunityProfile (Registry v2.1.4 format - 10 fields with allowPermissionlessMint)
       const profile = {
         name: communityName,
         ensName: ensName || "",
         xPNTsToken: xPNTsToken || ethers.ZeroAddress,
-        supportedSBTs: [], // Empty for now
         nodeType: mode === "AOA" ? 0 : 1, // NodeType: PAYMASTER_AOA=0, PAYMASTER_SUPER=1
         paymasterAddress: ethers.ZeroAddress, // Paymaster address is optional, use ZeroAddress
         community: account,
