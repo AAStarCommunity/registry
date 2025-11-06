@@ -44,7 +44,7 @@ export function CommunityDetail() {
 
       const provider = getProvider();
       const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
+      const registryAddress = networkConfig.contracts.registryV2_1; // Use latest Registry v2.1
 
       const registry = new ethers.Contract(
         registryAddress,
@@ -206,6 +206,25 @@ export function CommunityDetail() {
               ) : (
                 <span className="value empty">Not deployed</span>
               )}
+            </div>
+          </div>
+        </div>
+
+        {/* MySBT Information */}
+        <div className="info-card">
+          <h3>MySBT Information</h3>
+          <div className="info-rows">
+            <div className="info-row">
+              <span className="label">MySBT Address:</span>
+              <a
+                href={getEtherscanAddressUrl(getCurrentNetworkConfig().contracts.mySBT)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="address-link"
+                title="AAstar White-label SBT"
+              >
+                {getCurrentNetworkConfig().contracts.mySBT.slice(0, 10)}...{getCurrentNetworkConfig().contracts.mySBT.slice(-8)}
+              </a>
             </div>
           </div>
         </div>
