@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryV2_1_4ABI, xPNTsFactoryABI, PaymasterFactoryABI } from "../../config/abis";
+import { RegistryV2_1_4ABI, xPNTsFactoryABI, PaymasterFactoryABI, GTokenStakingABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
@@ -387,7 +387,7 @@ export function RegisterCommunity() {
 
         const staking = new ethers.Contract(
           GTOKEN_STAKING_ADDRESS,
-          ["function stake(uint256 amount) external returns (uint256)", "function availableBalance(address user) external view returns (uint256)"],
+          GTokenStakingABI,
           signer
         );
 
@@ -444,7 +444,7 @@ export function RegisterCommunity() {
         // Create a read-only staking contract to verify balance
         const stakingContract = new ethers.Contract(
           GTOKEN_STAKING_ADDRESS,
-          ["function availableBalance(address user) external view returns (uint256)"],
+          GTokenStakingABI,
           provider
         );
 
