@@ -525,7 +525,7 @@ export function RegisterCommunity() {
         ) : existingCommunity ? (
           <div className="error-box">
             <p>{error}</p>
-            <button onClick={() => navigate("/explorer")}>{t('header.explorer')}</button>
+            <button onClick={() => navigate(`/explorer/community/${account}`)}>{t('header.explorer')}</button>
           </div>
         ) : (
           <div className="registration-form">
