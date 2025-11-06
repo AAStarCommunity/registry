@@ -717,6 +717,34 @@ export function RegisterCommunity() {
                 )}
               </div>
 
+              {/* MySBT White-label SBT (Auto-configured) */}
+              <div className="form-group">
+                <label>MySBT Address (AAstar White-label SBT)</label>
+                <input
+                  type="text"
+                  value={MYSBT_ADDRESS}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '4px',
+                    border: '2px solid #3b82f6',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    fontFamily: 'Monaco, Courier New, monospace',
+                    fontSize: '0.9em',
+                    cursor: 'not-allowed',
+                    marginBottom: '8px'
+                  }}
+                />
+                <small style={{ color: '#3b82f6', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                  🔒 所有社区使用统一的 MySBT 白标 SBT
+                </small>
+                <small style={{ color: '#6b7280', fontSize: '0.85em' }}>
+                  此地址已自动从 shared-config 配置，注册时将自动添加到 supportedSBTs
+                </small>
+              </div>
+
               <div className="form-group">
                 <label>Paymaster Type</label>
                 <div className="radio-group">
