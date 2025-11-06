@@ -60,11 +60,11 @@ const GetPNTs: React.FC = () => {
           <div className="contract-info">
             <div className="info-row">
               <span className="label">Token Name:</span>
-              <span className="value">Points Token V2</span>
+              <span className="value">AAStar PNTs</span>
             </div>
             <div className="info-row">
               <span className="label">Symbol:</span>
-              <span className="value">PNTv2</span>
+              <span className="value">aPNTs</span>
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
@@ -73,9 +73,9 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Contract Address:</span>
               <span className="value mono">
-                {config.contracts.pntToken}
+                {config.contracts.aPNTs}
                 <a
-                  href={`${config.explorerUrl}/address/${config.contracts.pntToken}`}
+                  href={`${config.explorerUrl}/address/${config.contracts.aPNTs}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -87,7 +87,7 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Minimum Deposit:</span>
               <span className="value highlight">
-                {config.requirements.minPntDeposit} PNT
+                {config.requirements.minPntDeposit} aPNTs
               </span>
             </div>
           </div>
@@ -241,8 +241,8 @@ const GetPNTs: React.FC = () => {
                   params: {
                     type: "ERC20",
                     options: {
-                      address: config.contracts.pntToken,
-                      symbol: "PNTv2",
+                      address: config.contracts.aPNTs,
+                      symbol: "aPNTs",
                       decimals: 18,
                     },
                   },
