@@ -1,15 +1,15 @@
 /**
- * Get PNTs Resource Page
+ * Get aPNTss Resource Page
  *
- * Guides users on how to obtain PNTs (Points Token) for deposits
+ * Guides users on how to obtain aPNTss (Points Token) for deposits
  */
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
-import "./GetPNTs.css";
+import "./GetaPNTss.css";
 
-const GetPNTs: React.FC = () => {
+const GetaPNTss: React.FC = () => {
   const navigate = useNavigate();
   const config = getCurrentNetworkConfig();
   const isTest = isTestnet();
@@ -26,24 +26,24 @@ const GetPNTs: React.FC = () => {
           <button onClick={handleGoBack} className="back-button">
             ← Back
           </button>
-          <h1>Get aPNTs(for Community Operators)</h1>
+          <h1>Get aaPNTss(for Community Operators)</h1>
           <p className="subtitle">
-            aPNTs (AAStar Points Token) are used to pay for gas in the SuperPaymaster ecosystem AOA+ mode.
+            aaPNTss (AAStar Points Token) are used to pay for gas in the SuperPaymaster ecosystem AOA+ mode.
           </p>
         </div>
 
-        {/* What is aPNTs Section */}
+        {/* What is aaPNTss Section */}
         <section className="info-section">
-          <h2>💰 What is aPNTs?</h2>
+          <h2>💰 What is aaPNTss?</h2>
           <p>
-            aPNTs (AAStar Points Token) are the utility tokens in the SuperPaymaster eco, used for:
+            aaPNTss (AAStar Points Token) are the utility tokens in the SuperPaymaster eco, used for:
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Gas Payment</strong>: Operator Users pay gas fees with aPNTs instead of ETH
+              <strong>Gas Payment</strong>: Operator Users pay gas fees with aaPNTss instead of ETH
             </li>
             <li>
-              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit aPNTs for quick setup
+              <strong>Fast Stake Flow Deposit</strong>: Operators can deposit aaPNTss for quick setup
             </li>
             <li>
               <strong>Protocol Operations</strong>: Seamless cross-chain conversion
@@ -60,11 +60,11 @@ const GetPNTs: React.FC = () => {
           <div className="contract-info">
             <div className="info-row">
               <span className="label">Token Name:</span>
-              <span className="value">AAStar PNTs</span>
+              <span className="value">AAStar aPNTss</span>
             </div>
             <div className="info-row">
               <span className="label">Symbol:</span>
-              <span className="value">aPNTs</span>
+              <span className="value">aaPNTss</span>
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
@@ -73,9 +73,9 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Contract Address:</span>
               <span className="value mono">
-                {config.contracts.aPNTs}
+                {config.contracts.aaPNTss}
                 <a
-                  href={`${config.explorerUrl}/address/${config.contracts.aPNTs}`}
+                  href={`${config.explorerUrl}/address/${config.contracts.aaPNTss}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -87,15 +87,15 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Minimum Deposit:</span>
               <span className="value highlight">
-                {config.requirements.minPntDeposit} aPNTs
+                {config.requirements.minPntDeposit} aaPNTss
               </span>
             </div>
           </div>
         </section>
 
-        {/* How to Get PNTs */}
+        {/* How to Get aPNTss */}
         <section className="info-section">
-          <h2>🚀 How to Get PNTs?</h2>
+          <h2>🚀 How to Get aPNTss?</h2>
 
           {isTest ? (
             // Testnet Options
@@ -105,10 +105,10 @@ const GetPNTs: React.FC = () => {
                   <h3>Method 1: Faucet (Recommended)</h3>
                   <span className="badge">FREE</span>
                 </div>
-                <p>Get free testnet PNTs from our faucet</p>
+                <p>Get free testnet aPNTss from our faucet</p>
                 <ul>
                   <li>Instant delivery to your wallet</li>
-                  <li>1000 PNT per request</li>
+                  <li>1000 aPNTs per request</li>
                   <li>No gas fees required</li>
                 </ul>
                 {config.resources.pntFaucet ? (
@@ -118,7 +118,7 @@ const GetPNTs: React.FC = () => {
                     rel="noopener noreferrer"
                     className="action-button primary"
                   >
-                    Go to PNT Faucet →
+                    Go to aPNTs Faucet →
                   </a>
                 ) : (
                   <p className="coming-soon">Faucet coming soon</p>
@@ -127,11 +127,11 @@ const GetPNTs: React.FC = () => {
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 2: Buy aPNTs from Shops</h3>
+                  <h3>Method 2: Buy aaPNTss from Shops</h3>
                 </div>
-                <p>Buy your PNTs Token from our Web3 Shops</p>
+                <p>Buy your aPNTss Token from our Web3 Shops</p>
                 <ul>
-                  <li>1 aPNTs = 0.02U (testnet rate, dynamic)</li>
+                  <li>1 aaPNTss = 0.02U (testnet rate, dynamic)</li>
                 </ul>
                 <a
                   href="https://shop.aastar.io"
@@ -139,15 +139,15 @@ const GetPNTs: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button secondary"
                 >
-                  Buy aPNTs from Shops →
+                  Buy aaPNTss from Shops →
                 </a>
               </div>
 
               <div className="method-card">
                 <div className="method-header">
-                  <h3>Method 3: Get aPNTs from DEX</h3>
+                  <h3>Method 3: Get aaPNTss from DEX</h3>
                 </div>
-                <p>Buy aPNTs with ETH, USDC, USDT or xPNTs</p>
+                <p>Buy aaPNTss with ETH, USDC, USDT or xaPNTss</p>
                 <ul>
                   <li>Practice trading before mainnet</li>
                 </ul>
@@ -169,7 +169,7 @@ const GetPNTs: React.FC = () => {
                   <h3>Method 1: Exchange GToken (Recommended)</h3>
                   <span className="badge">BEST RATE</span>
                 </div>
-                <p>Swap your GToken for PNTs with best exchange rate</p>
+                <p>Swap your GToken for aPNTss with best exchange rate</p>
                 <ul>
                   <li>Dynamic rate based on protocol reserves</li>
                   <li>No slippage</li>
@@ -189,7 +189,7 @@ const GetPNTs: React.FC = () => {
                 <div className="method-header">
                   <h3>Method 2: SuperPaymaster Pool</h3>
                 </div>
-                <p>Buy PNTs directly from the protocol liquidity pool</p>
+                <p>Buy aPNTss directly from the protocol liquidity pool</p>
                 <ul>
                   <li>Pay with ETH or stablecoins</li>
                   <li>Market-rate pricing</li>
@@ -209,7 +209,7 @@ const GetPNTs: React.FC = () => {
                 <div className="method-header">
                   <h3>Method 3: Community Rewards</h3>
                 </div>
-                <p>Earn PNTs through community participation</p>
+                <p>Earn aPNTss through community participation</p>
                 <ul>
                   <li>Referral rewards</li>
                   <li>Liquidity provider incentives</li>
@@ -230,8 +230,8 @@ const GetPNTs: React.FC = () => {
 
         {/* Add to Wallet Section */}
         <section className="info-section">
-          <h2>🦊 Add PNT to MetaMask</h2>
-          <p>Click the button below to add PNT to your MetaMask wallet:</p>
+          <h2>🦊 Add aPNTs to MetaMask</h2>
+          <p>Click the button below to add aPNTs to your MetaMask wallet:</p>
           <button
             className="action-button outline"
             onClick={async () => {
@@ -241,8 +241,8 @@ const GetPNTs: React.FC = () => {
                   params: {
                     type: "ERC20",
                     options: {
-                      address: config.contracts.aPNTs,
-                      symbol: "aPNTs",
+                      address: config.contracts.aaPNTss,
+                      symbol: "aaPNTss",
                       decimals: 18,
                     },
                   },
@@ -253,7 +253,7 @@ const GetPNTs: React.FC = () => {
               }
             }}
           >
-            Add PNT to MetaMask
+            Add aPNTs to MetaMask
           </button>
 
           <details className="manual-add">
@@ -265,7 +265,7 @@ const GetPNTs: React.FC = () => {
                   <strong>Token Address:</strong> {config.contracts.pntToken}
                 </li>
                 <li>
-                  <strong>Token Symbol:</strong> PNTv2
+                  <strong>Token Symbol:</strong> aPNTsv2
                 </li>
                 <li>
                   <strong>Decimals:</strong> 18
@@ -280,29 +280,29 @@ const GetPNTs: React.FC = () => {
           <h2>❓ Frequently Asked Questions</h2>
 
           <details className="faq-item">
-            <summary>How much PNT do I need for Fast Stake Flow?</summary>
+            <summary>How much aPNTs do I need for Fast Stake Flow?</summary>
             <p>
               The minimum deposit requirement is{" "}
-              <strong>{config.requirements.minPntDeposit} PNT</strong>. This amount
+              <strong>{config.requirements.minPntDeposit} aPNTs</strong>. This amount
               will be used to sponsor gas fees for user operations. The protocol will
-              automatically convert PNT to ETH as needed for gas payments.
+              automatically convert aPNTs to ETH as needed for gas payments.
             </p>
           </details>
 
           <details className="faq-item">
-            <summary>What's the exchange rate between PNT and ETH?</summary>
+            <summary>What's the exchange rate between aPNTs and ETH?</summary>
             <p>
               The exchange rate is dynamic and managed by the protocol's reserve
-              system. On testnet, the default rate is approximately 1 ETH = 225,000 PNT.
+              system. On testnet, the default rate is approximately 1 ETH = 225,000 aPNTs.
               On mainnet, rates are determined by market conditions and protocol
               reserves to ensure fair pricing.
             </p>
           </details>
 
           <details className="faq-item">
-            <summary>Can I withdraw my deposited PNT later?</summary>
+            <summary>Can I withdraw my deposited aPNTs later?</summary>
             <p>
-              Yes! As a Paymaster operator, you can withdraw unused PNT from your
+              Yes! As a Paymaster operator, you can withdraw unused aPNTs from your
               deposit at any time through the Operator Portal dashboard. There's no
               lockup period, but you must maintain the minimum deposit balance to keep
               your Paymaster operational.
@@ -310,9 +310,9 @@ const GetPNTs: React.FC = () => {
           </details>
 
           <details className="faq-item">
-            <summary>What happens if I run out of PNT?</summary>
+            <summary>What happens if I run out of aPNTs?</summary>
             <p>
-              If your PNT balance falls below the minimum threshold, your Paymaster
+              If your aPNTs balance falls below the minimum threshold, your Paymaster
               will stop sponsoring transactions until you top up. You'll receive
               notifications before this happens so you can maintain service continuity.
               Consider setting up auto-refill for uninterrupted operation.
@@ -320,13 +320,13 @@ const GetPNTs: React.FC = () => {
           </details>
 
           <details className="faq-item">
-            <summary>Is PNT the same as GToken?</summary>
+            <summary>Is aPNTs the same as GToken?</summary>
             <p>
               No, they serve different purposes. <strong>GToken</strong> is the
               governance token used for staking and protocol participation.{" "}
-              <strong>PNT</strong> is the utility token used for gas payments and
+              <strong>aPNTs</strong> is the utility token used for gas payments and
               deposits. You need both for the Fast Stake Flow: GToken for governance
-              stake and PNT for gas deposit.
+              stake and aPNTs for gas deposit.
             </p>
           </details>
         </section>
@@ -350,4 +350,4 @@ const GetPNTs: React.FC = () => {
   );
 };
 
-export default GetPNTs;
+export default GetaPNTss;
