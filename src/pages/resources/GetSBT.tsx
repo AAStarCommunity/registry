@@ -44,6 +44,13 @@ export function GetSBT() {
   const [error, setError] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
+  // Reputation state
+  const [globalReputation, setGlobalReputation] = useState<string>("0");
+  const [sbtData, setSbtData] = useState<any>(null);
+  const [memberships, setMemberships] = useState<any[]>([]);
+  const [communityReputations, setCommunityReputations] = useState<{[key: string]: string}>({});
+  const [isLoadingReputation, setIsLoadingReputation] = useState(false);
+
   // Copy address to clipboard
   const copyAddress = async () => {
     try {
@@ -133,6 +140,57 @@ export function GetSBT() {
     }
   }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, t]);
 
+  // Load reputation data for existing SBT holder
+  const loadReputationData = useCallback(async (address: string, tokenId: string) => {
+    setIsLoadingReputation(true);
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const mySBT = new ethers.Contract(MYSBT_ADDRESS, MySBTABI, rpcProvider);
+
+      // Load global reputation
+      const globalRep = await mySBT.getGlobalReputation(address);
+      setGlobalReputation(ethers.formatEther(globalRep));
+
+      // Load SBT data
+      const sbtDataResult = await mySBT.getSBTData(tokenId);
+      setSbtData({
+        holder: sbtDataResult.holder,
+        firstCommunity: sbtDataResult.firstCommunity,
+        mintedAt: sbtDataResult.mintedAt.toString(),
+        totalCommunities: sbtDataResult.totalCommunities.toString()
+      });
+
+      // Load memberships
+      const membershipsResult = await mySBT.getMemberships(tokenId);
+      const membershipList = membershipsResult.map((mem: any) => ({
+        community: mem.community,
+        joinedAt: mem.joinedAt.toString(),
+        lastActiveTime: mem.lastActiveTime.toString(),
+        isActive: mem.isActive,
+        metadata: mem.metadata
+      }));
+      setMemberships(membershipList);
+
+      // Load community reputations for each membership
+      const communityReps: {[key: string]: string} = {};
+      for (const membership of membershipList) {
+        try {
+          const communityRep = await mySBT.getCommunityReputation(address, membership.community);
+          communityReps[membership.community] = ethers.formatEther(communityRep);
+        } catch (err) {
+          console.warn(`Failed to load community reputation for ${membership.community}:`, err);
+          communityReps[membership.community] = "0";
+        }
+      }
+      setCommunityReputations(communityReps);
+
+    } catch (err) {
+      console.error("Failed to load reputation data:", err);
+    } finally {
+      setIsLoadingReputation(false);
+    }
+  }, [RPC_URL, MYSBT_ADDRESS, MySBTABI]);
+
   // Check if user already has a MySBT
   const checkExistingSBT = useCallback(async (address: string) => {
     try {
@@ -147,11 +205,13 @@ export function GetSBT() {
       if (tokenId > 0n) {
         setExistingSBT(address);
         setSbtId(tokenId.toString());
+        // Load reputation data for existing SBT holder
+        await loadReputationData(address, tokenId.toString());
       }
     } catch (err) {
       console.error(t("getSBT.console.failedToCheckExistingSBT"), err);
     }
-  }, [RPC_URL, MYSBT_ADDRESS, MySBTABI, t]);
+  }, [RPC_URL, MYSBT_ADDRESS, MySBTABI, t, loadReputationData]);
 
   // Mint MySBT
   const handleMintMySBT = async () => {
@@ -398,21 +458,115 @@ export function GetSBT() {
               </button>
             </div>
           ) : existingSBT ? (
-            <div className="existing-sbt-box">
-              <h2>{t("getSBT.existing.title")}</h2>
-              <p>{t("getSBT.existing.tokenId")} #{sbtId}</p>
-              <a
-                href={`https://sepolia.etherscan.io/address/${MYSBT_ADDRESS}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="explorer-link"
-              >
-                {t("getSBT.links.viewEtherscan")} →
-              </a>
-              <button className="action-button secondary" onClick={() => navigate(-1)}>
-                {t("common.back")}
-              </button>
-            </div>
+            <>
+              <div className="existing-sbt-box">
+                <h2>{t("getSBT.existing.title")}</h2>
+                <p>{t("getSBT.existing.tokenId")} #{sbtId}</p>
+                <a
+                  href={`https://sepolia.etherscan.io/address/${MYSBT_ADDRESS}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="explorer-link"
+                >
+                  {t("getSBT.links.viewEtherscan")} →
+                </a>
+                <button className="action-button secondary" onClick={() => navigate(-1)}>
+                  {t("common.back")}
+                </button>
+              </div>
+
+              {/* Reputation Section */}
+              <div className="reputation-section">
+                <h2>Your Reputation & Identity</h2>
+                
+                {isLoadingReputation ? (
+                  <div className="loading-reputation">
+                    <div className="spinner"></div>
+                    <p>Loading reputation data...</p>
+                  </div>
+                ) : (
+                  <>
+                    {/* Global Reputation Card */}
+                    <div className="reputation-card global-reputation-card">
+                      <div className="reputation-header">
+                        <h3>Global Reputation</h3>
+                        <div className="reputation-score">
+                          <span className="score-value">{parseFloat(globalReputation).toFixed(2)}</span>
+                          <span className="score-label">REP</span>
+                        </div>
+                      </div>
+                      <p className="reputation-description">
+                        Your overall reputation score across all communities in the AAStar ecosystem.
+                      </p>
+                    </div>
+
+                    {/* SBT Data Card */}
+                    {sbtData && (
+                      <div className="reputation-card sbt-data-card">
+                        <h3>SBT Identity</h3>
+                        <div className="sbt-info-grid">
+                          <div className="sbt-info-item">
+                            <span className="info-label">Token ID</span>
+                            <span className="info-value">#{sbtId}</span>
+                          </div>
+                          <div className="sbt-info-item">
+                            <span className="info-label">First Community</span>
+                            <span className="info-value mono">{sbtData.firstCommunity.slice(0, 6)}...{sbtData.firstCommunity.slice(-4)}</span>
+                          </div>
+                          <div className="sbt-info-item">
+                            <span className="info-label">Minted Date</span>
+                            <span className="info-value">{new Date(parseInt(sbtData.mintedAt) * 1000).toLocaleDateString()}</span>
+                          </div>
+                          <div className="sbt-info-item">
+                            <span className="info-label">Total Communities</span>
+                            <span className="info-value">{sbtData.totalCommunities}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Community Memberships */}
+                    {memberships.length > 0 && (
+                      <div className="reputation-card memberships-card">
+                        <h3>Community Memberships</h3>
+                        <div className="memberships-list">
+                          {memberships.map((membership, index) => (
+                            <div key={index} className="membership-item">
+                              <div className="membership-header">
+                                <div className="community-info">
+                                  <span className="community-address mono">
+                                    {membership.community.slice(0, 8)}...{membership.community.slice(-6)}
+                                  </span>
+                                  <span className={`membership-status ${membership.isActive ? 'active' : 'inactive'}`}>
+                                    {membership.isActive ? 'Active' : 'Inactive'}
+                                  </span>
+                                </div>
+                                <div className="community-reputation">
+                                  <span className="rep-label">Reputation:</span>
+                                  <span className="rep-value">
+                                    {parseFloat(communityReputations[membership.community] || "0").toFixed(2)} REP
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="membership-details">
+                                <div className="detail-item">
+                                  <span className="detail-label">Joined:</span>
+                                  <span className="detail-value">{new Date(parseInt(membership.joinedAt) * 1000).toLocaleDateString()}</span>
+                                </div>
+                                <div className="detail-item">
+                                  <span className="detail-label">Last Active:</span>
+                                  <span className="detail-value">{new Date(parseInt(membership.lastActiveTime) * 1000).toLocaleDateString()}</span>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            </>
           ) : (
             <div className="mint-flow">
               <h2>{t("getSBT.flow.title")}</h2>

@@ -889,6 +889,254 @@
   text-decoration: underline;
 }
 
+/* Reputation Section Styles */
+.reputation-section {
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+}
+
+.reputation-section h2 {
+  margin: 0 0 1.5rem;
+  font-size: 1.75rem;
+  color: #1e293b;
+  text-align: center;
+  font-weight: 700;
+}
+
+.loading-reputation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 3rem;
+  text-align: center;
+}
+
+.loading-reputation .spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-reputation p {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+.reputation-card {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.reputation-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.reputation-card h3 {
+  margin: 0 0 1rem;
+  font-size: 1.25rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+/* Global Reputation Card */
+.global-reputation-card {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  color: white;
+  border: none;
+}
+
+.global-reputation-card h3 {
+  color: white;
+}
+
+.reputation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reputation-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.score-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+.global-reputation-card .reputation-description {
+  margin: 0;
+  opacity: 0.95;
+  line-height: 1.6;
+}
+
+/* SBT Data Card */
+.sbt-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.sbt-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.info-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.info-value.mono {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+}
+
+/* Memberships Card */
+.memberships-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.membership-item {
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.membership-item:hover {
+  border-color: #3b82f6;
+  background: #f1f5f9;
+}
+
+.membership-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.community-info {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.community-address {
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 0.85rem;
+  color: #475569;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.membership-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.membership-status.active {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.membership-status.inactive {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.community-reputation {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rep-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+.rep-value {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.membership-details {
+  display: flex;
+  gap: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
 /* Responsive adjustments for new components */
 @media (max-width: 768px) {
   .balance-cards {
@@ -912,5 +1160,44 @@
   .mysbt-icon {
     width: 100px;
     height: 100px;
+  }
+
+  /* Reputation responsive styles */
+  .reputation-section {
+    padding: 1.5rem 1rem;
+  }
+
+  .reputation-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .reputation-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+
+  .reputation-score {
+    align-self: center;
+  }
+
+  .sbt-info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .membership-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .community-info {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .membership-details {
+    flex-direction: column;
+    gap: 0.75rem;
   }
 }
