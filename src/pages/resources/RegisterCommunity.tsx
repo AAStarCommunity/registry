@@ -745,6 +745,24 @@ export function RegisterCommunity() {
                 </small>
               </div>
 
+              {/* SBT Minting Permission */}
+              <div className="form-group checkbox-group">
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={allowPermissionlessMint}
+                    onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
+                  />
+                  <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
+                </label>
+                <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
+                {!allowPermissionlessMint && (
+                  <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
+                    {t('registerCommunity.form.permissionlessMintWarning')}
+                  </div>
+                )}
+              </div>
+
               <div className="form-group">
                 <label>Paymaster Type</label>
                 <div className="radio-group">
@@ -792,27 +810,6 @@ export function RegisterCommunity() {
                   <small className="helper-text">
                     {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
                   </small>
-                )}
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.sbtSection')}</h2>
-
-              <div className="form-group checkbox-group">
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={allowPermissionlessMint}
-                    onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
-                  />
-                  <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
-                </label>
-                <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
-                {!allowPermissionlessMint && (
-                  <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                    {t('registerCommunity.form.permissionlessMintWarning')}
-                  </div>
                 )}
               </div>
             </div>
