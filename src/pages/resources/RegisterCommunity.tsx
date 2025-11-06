@@ -435,13 +435,33 @@ export function RegisterCommunity() {
       }
 
       // Step 3: Register community (Registry will call GTokenStaking.lockStake internally)
+
+      // IMPORTANT: Wait for blockchain state to sync before calling Registry
+      // Re-verify available balance right before registerCommunity to ensure state is synced
+      console.log(t('registerCommunity.console.verifyingBalanceBeforeRegister'));
+      const finalAvailableBalance = await staking.availableBalance(account);
+      console.log(t('registerCommunity.console.finalAvailableBalance'), ethers.formatEther(finalAvailableBalance));
+
+      if (finalAvailableBalance < gTokenAmount) {
+        throw new Error(
+          t('registerCommunity.errors.stateNotSynced', {
+            expected: ethers.formatEther(gTokenAmount),
+            actual: ethers.formatEther(finalAvailableBalance)
+          }) + ' Please wait a moment and try again.'
+        );
+      }
+
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
         RegistryV2_1_4ABI,
         signer
       );
 
-      const tx = await registry.registerCommunity(profile, gTokenAmount);
+      // Use manual gasLimit to skip estimateGas which might see stale state
+      // This prevents the "InsufficientStake" error during gas estimation
+      const tx = await registry.registerCommunity(profile, gTokenAmount, {
+        gasLimit: 500000 // Manual gas limit to bypass estimateGas
+      });
       setRegisterTxHash(tx.hash);
 
       const receipt = await tx.wait();
