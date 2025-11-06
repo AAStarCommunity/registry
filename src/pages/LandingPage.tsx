@@ -179,13 +179,13 @@ export function LandingPage() {
         <div className="flow-container">
           <div className="flow-step">
             <div className="flow-card">
-              <div className="flow-icon">🏛️</div>
-              <h3 className="flow-title">Register Community</h3>
+              <div className="flow-icon">🎫</div>
+              <h3 className="flow-title">Get GToken</h3>
               <p className="flow-description">
-                Register your community on-chain with metadata and governance token
+                获得协议准入许可GToken，成为协议成员，自由加入随时退出
               </p>
-              <a href="/register-community" className="flow-link">
-                Register →
+              <a href="/get-gtoken" className="flow-link">
+                获取 →
               </a>
             </div>
             <div className="flow-arrow">→</div>
@@ -193,13 +193,13 @@ export function LandingPage() {
 
           <div className="flow-step">
             <div className="flow-card">
-              <div className="flow-icon">🔗</div>
-              <h3 className="flow-title">Bind MySBT</h3>
+              <div className="flow-icon">🏛️</div>
+              <h3 className="flow-title">Register Community</h3>
               <p className="flow-description">
-                Deploy your Soul Bound Token for community identity verification
+                Register your community on-chain with metadata and governance token
               </p>
-              <a href="/get-sbt" className="flow-link">
-                Bind
+              <a href="/register-community" className="flow-link">
+                Register →
               </a>
             </div>
             <div className="flow-arrow">→</div>
