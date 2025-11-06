@@ -717,57 +717,6 @@ export function RegisterCommunity() {
                 )}
               </div>
 
-              {/* MySBT White-label SBT (Auto-configured) */}
-              <div className="form-group">
-                <label>MySBT Address (AAstar White-label SBT)</label>
-                <input
-                  type="text"
-                  value={MYSBT_ADDRESS}
-                  disabled
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '4px',
-                    border: '2px solid #3b82f6',
-                    background: '#eff6ff',
-                    color: '#1e40af',
-                    fontFamily: 'Monaco, Courier New, monospace',
-                    fontSize: '0.9em',
-                    cursor: 'not-allowed',
-                    marginBottom: '8px'
-                  }}
-                />
-                <small style={{ color: '#3b82f6', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                  🔒 所有社区使用统一的 MySBT 白标 SBT
-                </small>
-                <small style={{ color: '#6b7280', fontSize: '0.85em' }}>
-                  此地址已自动从 shared-config 配置，注册时将自动添加到 supportedSBTs
-                </small>
-              </div>
-
-              {/* SBT Configuration */}
-              <div className="form-group" style={{ marginTop: '16px' }}>
-                <h3 style={{ margin: '0 0 12px 0', fontSize: '1.1em', color: '#374151' }}>
-                  {t('registerCommunity.form.sbtSection')}
-                </h3>
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={allowPermissionlessMint}
-                      onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
-                    />
-                    <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
-                  </label>
-                  <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
-                  {!allowPermissionlessMint && (
-                    <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                      {t('registerCommunity.form.permissionlessMintWarning')}
-                    </div>
-                  )}
-                </div>
-              </div>
-
               <div className="form-group">
                 <label>Paymaster Type</label>
                 <div className="radio-group">
@@ -816,6 +765,60 @@ export function RegisterCommunity() {
                     {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
                   </small>
                 )}
+              </div>
+            </div>
+
+            {/* MySBT Section */}
+            <div className="form-section">
+              <h2>{t('registerCommunity.form.sbtSection')}</h2>
+
+              {/* MySBT White-label SBT (Auto-configured) */}
+              <div className="form-group">
+                <label>MySBT Address (AAstar White-label SBT)</label>
+                <input
+                  type="text"
+                  value={MYSBT_ADDRESS}
+                  disabled
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    borderRadius: '4px',
+                    border: '2px solid #3b82f6',
+                    background: '#eff6ff',
+                    color: '#1e40af',
+                    fontFamily: 'Monaco, Courier New, monospace',
+                    fontSize: '0.9em',
+                    cursor: 'not-allowed',
+                    marginBottom: '8px'
+                  }}
+                />
+                <small style={{ color: '#3b82f6', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
+                  🔒 所有社区使用统一的 MySBT 白标 SBT
+                </small>
+                <small style={{ color: '#6b7280', fontSize: '0.85em' }}>
+                  此地址已自动从 shared-config 配置，注册时将自动添加到 supportedSBTs
+                </small>
+              </div>
+
+              {/* SBT Configuration */}
+              <div className="form-group">
+                <label>Permissionless Mint Configuration</label>
+                <div className="checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={allowPermissionlessMint}
+                      onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
+                    />
+                    <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
+                  </label>
+                  <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
+                  {!allowPermissionlessMint && (
+                    <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
+                      {t('registerCommunity.form.permissionlessMintWarning')}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
