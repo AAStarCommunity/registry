@@ -147,7 +147,12 @@ export function Step7_Complete({
       <div className="quick-actions">
         <div className="actions-title">🚀 Quick Actions</div>
         <div className="actions-grid">
-          <button className="action-card primary" onClick={handleManage}>
+          <a
+            href={`/operator/manage?address=${paymasterAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="action-card primary"
+          >
             <div className="card-icon">⚙️</div>
             <div className="card-content">
               <div className="card-title">Manage Paymaster</div>
@@ -156,11 +161,13 @@ export function Step7_Complete({
                 Paymaster
               </div>
             </div>
-          </button>
+          </a>
 
-          <button
+          <a
+            href={`/paymaster/${paymasterAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="action-card secondary"
-            onClick={handleViewOnExplorer}
           >
             <div className="card-icon">🔍</div>
             <div className="card-content">
@@ -169,11 +176,30 @@ export function Step7_Complete({
                 See your Paymaster listed in the public registry
               </div>
             </div>
-          </button>
+          </a>
 
-          <button
+          {deployedResources?.sbtAddress && (
+            <a
+              href="/get-sbt"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-card secondary"
+            >
+              <div className="card-icon">🎫</div>
+              <div className="card-content">
+                <div className="card-title">MySBT Management</div>
+                <div className="card-description">
+                  Manage MySBT and community memberships
+                </div>
+              </div>
+            </a>
+          )}
+
+          <a
+            href={`https://sepolia.etherscan.io/address/${paymasterAddress}`}
+            target="_blank"
+            rel="noopener noreferrer"
             className="action-card secondary"
-            onClick={handleViewOnEtherscan}
           >
             <div className="card-icon">📊</div>
             <div className="card-content">
@@ -182,7 +208,7 @@ export function Step7_Complete({
                 Explore contract details and transactions
               </div>
             </div>
-          </button>
+          </a>
         </div>
       </div>
 
@@ -198,12 +224,14 @@ export function Step7_Complete({
                 Keep an eye on your EntryPoint balance and registry stake. Top
                 up when needed.
               </div>
-              <button
-                onClick={handleManage}
+              <a
+                href={`/operator/manage?address=${paymasterAddress}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="step-link"
               >
                 Manage Paymaster →
-              </button>
+              </a>
             </div>
           </div>
 
@@ -234,12 +262,14 @@ export function Step7_Complete({
                 Fine-tune your service fee, gas price, and token requirements
                 based on usage.
               </div>
-              <button
-                onClick={handleManage}
+              <a
+                href={`/operator/manage?address=${paymasterAddress}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="step-link"
               >
                 Manage Paymaster →
-              </button>
+              </a>
             </div>
           </div>
 
@@ -250,12 +280,14 @@ export function Step7_Complete({
               <div className="step-description">
                 Track service fee revenue collected in your treasury address.
               </div>
-              <button
-                onClick={handleManage}
+              <a
+                href={`/operator/manage?address=${paymasterAddress}`}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="step-link"
               >
                 Manage Paymaster →
-              </button>
+              </a>
             </div>
           </div>
         </div>
@@ -267,12 +299,14 @@ export function Step7_Complete({
         <div className="resources-grid">
           <a
             href="/operator/operate-guide"
+            target="_blank"
+            rel="noopener noreferrer"
             className="resource-link"
           >
             📚 Operation Guide
           </a>
           <a
-            href="http://localhost:5173/launch-tutorial"
+            href="/launch-tutorial"
             target="_blank"
             rel="noopener noreferrer"
             className="resource-link"

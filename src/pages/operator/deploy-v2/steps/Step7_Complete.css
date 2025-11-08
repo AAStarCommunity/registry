@@ -147,6 +147,8 @@
   cursor: pointer;
   transition: all 0.2s;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
 }
 
 .action-card:hover {
