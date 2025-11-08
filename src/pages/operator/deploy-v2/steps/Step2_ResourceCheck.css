@@ -176,6 +176,17 @@
   transform: translateY(-2px);
 }
 
+/* Link styled as button */
+.action-btn.action-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+
+.action-btn.action-link:visited {
+  color: white;
+}
+
 /* Step Summary */
 .step-summary {
   background: var(--card-bg);

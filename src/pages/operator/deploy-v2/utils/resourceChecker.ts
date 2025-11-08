@@ -12,6 +12,7 @@
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
+import { loadFromCache, saveToCache } from "../../../../utils/cache";
 import {
   ERC20_ABI,
   RegistryABI,
@@ -20,6 +21,9 @@ import {
   PaymasterFactoryABI,
   PaymasterV4ABI,
 } from "../../../../config/abis";
+
+// Cache configuration
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes (matches walletChecker)
 
 // ====================================
 // Types
@@ -187,13 +191,22 @@ async function checkSBTBinding(
     const networkConfig = getCurrentNetworkConfig();
     const globalMySBT = networkConfig.contracts.mySBT;
 
+    console.log("=== MySBT Binding Check ===");
+    console.log("Paymaster address:", paymasterAddress);
+    console.log("Expected MySBT address (from shared-config):", globalMySBT);
+
     const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
     const supportedSBTs = await paymaster.getSupportedSBTs();
+
+    console.log("Supported SBTs from Paymaster:", supportedSBTs);
 
     // Check if global MySBT is in supported list
     const hasSBTBinding = supportedSBTs.some(
       (sbt: string) => sbt.toLowerCase() === globalMySBT.toLowerCase()
     );
+
+    console.log("MySBT binding status:", hasSBTBinding);
+    console.log("===========================");
 
     return {
       hasSBTBinding,
@@ -257,19 +270,34 @@ export async function checkAOAResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
+    // Check cache first
+    const cacheKey = `resource_check_aoa_${walletAddress.toLowerCase()}`;
+    const cached = loadFromCache<ResourceStatus>(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log("✅ Using cached resource status (AOA mode)");
+      return cached.data;
+    }
+
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
-    // Check community registration
-    const communityCheck = await checkCommunityRegistration(provider, walletAddress);
-
-    // Check xPNTs deployment
-    const xpntsCheck = await checkXPNTsDeployment(provider, walletAddress);
-
-    // Check Paymaster deployment
-    const paymasterCheck = await checkPaymasterDeployment(provider, walletAddress);
+    // Parallel RPC calls for all checks
+    const [
+      communityCheck,
+      xpntsCheck,
+      paymasterCheck,
+      gTokenBalance,
+      ethBalance
+    ] = await Promise.all([
+      checkCommunityRegistration(provider, walletAddress),
+      checkXPNTsDeployment(provider, walletAddress),
+      checkPaymasterDeployment(provider, walletAddress),
+      checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+      checkETHBalance(provider, walletAddress)
+    ]);
 
     // Check MySBT binding (only if Paymaster deployed)
     let sbtCheck: { hasSBTBinding: boolean; supportedSBTs?: string[] } = { hasSBTBinding: false, supportedSBTs: [] };
@@ -277,22 +305,16 @@ export async function checkAOAResources(
       sbtCheck = await checkSBTBinding(provider, paymasterCheck.paymasterAddress);
     }
 
-    // Check GToken balance
-    const gTokenAddress = networkConfig.contracts.gToken;
-    const gTokenBalance = await checkTokenBalance(provider, gTokenAddress, walletAddress);
-
     // Calculate required GToken
     // If not registered: 30 GT (register community) + 30 GT (register paymaster) = 60 GT
     // If registered: 30 GT (register paymaster only)
     const requiredGToken = communityCheck.isRegistered ? "30" : "60";
     const hasEnoughGToken = parseFloat(gTokenBalance) >= parseFloat(requiredGToken);
 
-    // Check ETH balance
-    const ethBalance = await checkETHBalance(provider, walletAddress);
     const requiredETH = "0.05";
     const hasEnoughETH = parseFloat(ethBalance) >= parseFloat(requiredETH);
 
-    return {
+    const result: ResourceStatus = {
       isCommunityRegistered: communityCheck.isRegistered,
       communityName: communityCheck.communityName,
       communityRegisteredAt: communityCheck.registeredAt,
@@ -319,6 +341,12 @@ export async function checkAOAResources(
       requiredETH,
       hasEnoughETH,
     };
+
+    // Save to cache
+    saveToCache(cacheKey, result, CACHE_DURATION / 1000);
+    console.log("💾 Saved resource status to cache (AOA mode)");
+
+    return result;
   } catch (error) {
     console.error("Failed to check AOA resources:", error);
     throw error;
@@ -339,24 +367,34 @@ export async function checkAOAPlusResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
+    // Check cache first
+    const cacheKey = `resource_check_aoa_plus_${walletAddress.toLowerCase()}`;
+    const cached = loadFromCache<ResourceStatus>(cacheKey);
+
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log("✅ Using cached resource status (AOA+ mode)");
+      return cached.data;
+    }
+
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
-    // Check community registration
-    const communityCheck = await checkCommunityRegistration(provider, walletAddress);
-
-    // Check xPNTs deployment
-    const xpntsCheck = await checkXPNTsDeployment(provider, walletAddress);
-
-    // For AOA+ mode, we don't deploy individual Paymaster
-    // Instead, we check if operator is registered in SuperPaymaster
-    // This will be checked in the SuperPaymaster configuration page
-
-    // Check GToken balance
-    const gTokenAddress = networkConfig.contracts.gToken;
-    const gTokenBalance = await checkTokenBalance(provider, gTokenAddress, walletAddress);
+    // Parallel RPC calls for all checks
+    const [
+      communityCheck,
+      xpntsCheck,
+      gTokenBalance,
+      aPNTsBalance,
+      ethBalance
+    ] = await Promise.all([
+      checkCommunityRegistration(provider, walletAddress),
+      checkXPNTsDeployment(provider, walletAddress),
+      checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+      checkTokenBalance(provider, networkConfig.contracts.aPNTs, walletAddress),
+      checkETHBalance(provider, walletAddress)
+    ]);
 
     // Calculate required GToken
     // If not registered: 30 GT (register community) + 50 GT (register to SuperPaymaster) = 80 GT
@@ -364,18 +402,13 @@ export async function checkAOAPlusResources(
     const requiredGToken = communityCheck.isRegistered ? "50" : "80";
     const hasEnoughGToken = parseFloat(gTokenBalance) >= parseFloat(requiredGToken);
 
-    // Check aPNTs balance
-    const aPNTsAddress = networkConfig.contracts.aPNTs;
-    const aPNTsBalance = await checkTokenBalance(provider, aPNTsAddress, walletAddress);
     const requiredAPNTs = "1000";
     const hasEnoughAPNTs = parseFloat(aPNTsBalance) >= parseFloat(requiredAPNTs);
 
-    // Check ETH balance
-    const ethBalance = await checkETHBalance(provider, walletAddress);
     const requiredETH = "0.05";
     const hasEnoughETH = parseFloat(ethBalance) >= parseFloat(requiredETH);
 
-    return {
+    const result: ResourceStatus = {
       isCommunityRegistered: communityCheck.isRegistered,
       communityName: communityCheck.communityName,
       communityRegisteredAt: communityCheck.registeredAt,
@@ -402,6 +435,12 @@ export async function checkAOAPlusResources(
       requiredETH,
       hasEnoughETH,
     };
+
+    // Save to cache
+    saveToCache(cacheKey, result, CACHE_DURATION / 1000);
+    console.log("💾 Saved resource status to cache (AOA+ mode)");
+
+    return result;
   } catch (error) {
     console.error("Failed to check AOA+ resources:", error);
     throw error;

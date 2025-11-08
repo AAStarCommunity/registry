@@ -79,9 +79,9 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
     }
   };
 
-  const handleNavigate = (path: string) => {
-    // Navigate with returnUrl to come back to wizard
-    navigate(`${path}?returnUrl=/operator/wizard`);
+  // Helper to get resource URL
+  const getResourceUrl = (path: string) => {
+    return `${path}?returnUrl=/operator/wizard`;
   };
 
   if (isLoading) {
@@ -146,12 +146,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             ) : (
               <>
                 <p className="status-text error">{t('step2ResourceCheck.resources.community.notRegistered')}</p>
-                <button
-                  className="action-btn"
-                  onClick={() => handleNavigate("/register-community")}
+                <a
+                  href={getResourceUrl("/register-community")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-btn action-link"
                 >
-                  {t('step2ResourceCheck.resources.community.action')}
-                </button>
+                  {t('step2ResourceCheck.resources.community.action')} ↗
+                </a>
               </>
             )}
           </div>
@@ -179,12 +181,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
             ) : (
               <>
                 <p className="status-text error">{t('step2ResourceCheck.resources.xpnts.notDeployed')}</p>
-                <button
-                  className="action-btn"
-                  onClick={() => handleNavigate("/get-xpnts")}
+                <a
+                  href={getResourceUrl("/get-xpnts")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-btn action-link"
                 >
-                  {t('step2ResourceCheck.resources.xpnts.action')}
-                </button>
+                  {t('step2ResourceCheck.resources.xpnts.action')} ↗
+                </a>
               </>
             )}
           </div>
@@ -210,12 +214,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                 ) : (
                   <>
                     <p className="status-text error">{t('step2ResourceCheck.resources.paymaster.notDeployed')}</p>
-                    <button
-                      className="action-btn"
-                      onClick={() => handleNavigate("/launch-paymaster")}
+                    <a
+                      href={getResourceUrl("/launch-paymaster")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="action-btn action-link"
                     >
-                      {t('step2ResourceCheck.resources.paymaster.action')}
-                    </button>
+                      {t('step2ResourceCheck.resources.paymaster.action')} ↗
+                    </a>
                   </>
                 )}
               </div>
@@ -247,12 +253,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                 ) : (
                   <>
                     <p className="status-text error">{t('step2ResourceCheck.resources.sbt.notBound')}</p>
-                    <button
-                      className="action-btn"
-                      onClick={() => handleNavigate("/get-sbt")}
+                    <a
+                      href={getResourceUrl("/get-sbt")}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="action-btn action-link"
                     >
-                      {t('step2ResourceCheck.resources.sbt.action')}
-                    </button>
+                      {t('step2ResourceCheck.resources.sbt.action')} ↗
+                    </a>
                   </>
                 )}
               </div>
@@ -274,12 +282,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
               {t('step2ResourceCheck.resources.gtoken.required')} {resources?.requiredGToken} {t('step2ResourceCheck.resources.gtoken.suffix')}
             </p>
             {!resources?.hasEnoughGToken && (
-              <button
-                className="action-btn"
-                onClick={() => handleNavigate("/get-gtoken")}
+              <a
+                href={getResourceUrl("/get-gtoken")}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-btn action-link"
               >
-                {t('step2ResourceCheck.resources.gtoken.action')}
-              </button>
+                {t('step2ResourceCheck.resources.gtoken.action')} ↗
+              </a>
             )}
           </div>
         </div>
@@ -299,12 +309,14 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
                 {t('step2ResourceCheck.resources.apnts.required')} {resources?.requiredAPNTs} {t('step2ResourceCheck.resources.apnts.suffix')}
               </p>
               {!resources?.hasEnoughAPNTs && (
-                <button
-                  className="action-btn"
-                  onClick={() => handleNavigate("/get-pnts")}
+                <a
+                  href={getResourceUrl("/get-pnts")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-btn action-link"
                 >
-                  {t('step2ResourceCheck.resources.apnts.action')}
-                </button>
+                  {t('step2ResourceCheck.resources.apnts.action')} ↗
+                </a>
               )}
             </div>
           </div>
