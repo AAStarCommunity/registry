@@ -1,64 +1,51 @@
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
 import { RegistryExplorer } from "./RegistryExplorer";
 import { AnalyticsDashboard } from "./analytics/AnalyticsDashboard";
 import { UserGasRecords } from "./analytics/UserGasRecords";
 import "./ExplorerHub.css";
 
-type ExplorerView = "explorer" | "dashboard" | "user";
+type ExplorerView = "communities" | "members" | "paymasters" | "dashboard" | "user";
 
 export function ExplorerHub() {
-  const navigate = useNavigate();
-  const location = useLocation();
-
-  // Determine current view from URL path
-  const getCurrentView = (): ExplorerView => {
-    if (location.pathname.includes("/dashboard")) return "dashboard";
-    if (location.pathname.includes("/user")) return "user";
-    return "explorer";
-  };
-
-  const currentView = getCurrentView();
-
-  const switchView = (view: ExplorerView) => {
-    switch (view) {
-      case "explorer":
-        navigate("/explorer");
-        break;
-      case "dashboard":
-        navigate("/explorer/dashboard");
-        break;
-      case "user":
-        navigate("/explorer/user");
-        break;
-    }
-  };
+  const [activeView, setActiveView] = useState<ExplorerView>("communities");
 
   return (
     <div className="explorer-hub">
       {/* Hero Section */}
       <section className="explorer-hero">
         <div className="hero-content-wrapper">
-          <h1>Paymaster Registry Explorer</h1>
+          <h1>Registry Explorer</h1>
           <p className="hero-subtitle">
-            Browse registered Paymasters, analyze global statistics, and track
-            user gas usage
+            Browse registered communities, paymasters, members, and analyze statistics
           </p>
           <div className="hero-ctas">
             <button
-              onClick={() => switchView("explorer")}
-              className={`cta-button ${currentView === "explorer" ? "primary" : "secondary"}`}
+              onClick={() => setActiveView("communities")}
+              className={`cta-button ${activeView === "communities" ? "primary" : "secondary"}`}
             >
-              🔍 Paymaster Registry
+              🔍 Community Registry
             </button>
             <button
-              onClick={() => switchView("dashboard")}
-              className={`cta-button ${currentView === "dashboard" ? "primary" : "secondary"}`}
+              onClick={() => setActiveView("members")}
+              className={`cta-button ${activeView === "members" ? "primary" : "secondary"}`}
             >
-              📊 Analytics Dashboard
+              👥 Community Users Registry
             </button>
             <button
-              onClick={() => switchView("user")}
-              className={`cta-button ${currentView === "user" ? "primary" : "secondary"}`}
+              onClick={() => setActiveView("paymasters")}
+              className={`cta-button ${activeView === "paymasters" ? "primary" : "secondary"}`}
+            >
+              💳 Paymaster Registry
+            </button>
+            <button
+              onClick={() => setActiveView("dashboard")}
+              className={`cta-button ${activeView === "dashboard" ? "primary" : "secondary"}`}
+            >
+              📊 Paymaster Analytics Dashboard
+            </button>
+            <button
+              onClick={() => setActiveView("user")}
+              className={`cta-button ${activeView === "user" ? "primary" : "secondary"}`}
             >
               👤 User Records
             </button>
@@ -68,9 +55,11 @@ export function ExplorerHub() {
 
       {/* Content Area */}
       <div className="explorer-content">
-        {currentView === "explorer" && <RegistryExplorer />}
-        {currentView === "dashboard" && <AnalyticsDashboard />}
-        {currentView === "user" && <UserGasRecords />}
+        {(activeView === "communities" || activeView === "members" || activeView === "paymasters") && (
+          <RegistryExplorer initialTab={activeView} />
+        )}
+        {activeView === "dashboard" && <AnalyticsDashboard />}
+        {activeView === "user" && <UserGasRecords />}
       </div>
     </div>
   );

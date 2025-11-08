@@ -38,9 +38,13 @@ interface MySBTHolder {
   owner: string;
 }
 
-export function RegistryExplorer() {
+interface RegistryExplorerProps {
+  initialTab?: ExplorerTab;
+}
+
+export function RegistryExplorer({ initialTab = "communities" }: RegistryExplorerProps) {
   const [searchParams] = useSearchParams();
-  const [activeTab, setActiveTab] = useState<ExplorerTab>("communities");
+  const [activeTab, setActiveTab] = useState<ExplorerTab>(initialTab);
   const [communities, setCommunities] = useState<CommunityProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
@@ -58,6 +62,11 @@ export function RegistryExplorer() {
   useEffect(() => {
     loadRegistryData();
   }, []);
+
+  // Sync activeTab with initialTab prop
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
   // Load MySBT holders when switching to members tab
   useEffect(() => {
@@ -577,29 +586,8 @@ export function RegistryExplorer() {
         </div>
       </section>
 
-      {/* Tabs */}
+      {/* Search and Refresh */}
       <section className="tabs-section">
-        <div className="tabs">
-          <button
-            className={`tab ${activeTab === "communities" ? "active" : ""}`}
-            onClick={() => setActiveTab("communities")}
-          >
-            🏘️ Communities ({communities.length})
-          </button>
-          <button
-            className={`tab ${activeTab === "paymasters" ? "active" : ""}`}
-            onClick={() => setActiveTab("paymasters")}
-          >
-            💳 Paymasters ({getPaymasters().length})
-          </button>
-          <button
-            className={`tab ${activeTab === "members" ? "active" : ""}`}
-            onClick={() => setActiveTab("members")}
-          >
-            🎫 Members (MySBT) ({mySBTHolders.length})
-          </button>
-        </div>
-
         {/* Search */}
         <div className="search-bar">
           <input
