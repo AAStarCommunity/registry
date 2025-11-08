@@ -22,9 +22,9 @@ export function GetSBT() {
   const RPC_URL = getRpcUrl();
 
   // Constants
-  const REQUIRED_GTOKEN = "0.4"; // Minimum 0.4 GT required
+  const REQUIRED_GTOKEN = "0.3"; // Personal Mint Minimum 0.3 GT required
   const MINT_COST = "0.1"; // 0.1 GT will be burned/transferred
-  const REFUND_AMOUNT = "0.3"; // 0.3 GT will be refunded if user quits
+  const REFUND_AMOUNT = "0.2"; // 0.2 GT will be refunded if user quits
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -32,7 +32,14 @@ export function GetSBT() {
   const [stakedBalance, setStakedBalance] = useState<string>("0");
 
   // Community selection state
-  const [communities, setCommunities] = useState<{address: string; name: string}[]>([]);
+  const [communities, setCommunities] = useState<{
+    address: string;
+    name: string;
+    ensName?: string;
+    isActive?: boolean;
+    supportedSBTs?: string[];
+    hasMySBT?: boolean;
+  }[]>([]);
   const [selectedCommunity, setSelectedCommunity] = useState<string>("");
   const [communityName, setCommunityName] = useState<string>("");
 
@@ -50,6 +57,10 @@ export function GetSBT() {
   const [memberships, setMemberships] = useState<any[]>([]);
   const [communityReputations, setCommunityReputations] = useState<{[key: string]: string}>({});
   const [isLoadingReputation, setIsLoadingReputation] = useState(false);
+
+  // Binding state
+  const [isBinding, setIsBinding] = useState(false);
+  const [bindingCommunity, setBindingCommunity] = useState<string>("");
 
   // Copy address to clipboard
   const copyAddress = async () => {
@@ -127,18 +138,27 @@ export function GetSBT() {
       const communityList = [];
       for (const addr of communityAddresses) {
         const community = await registry.communities(addr);
+
+        // Check if MySBT is in supportedSBTs array
+        const supportedSBTs = community.supportedSBTs || [];
+        const hasMySBT = supportedSBTs.some((sbt: string) =>
+          sbt.toLowerCase() === MYSBT_ADDRESS.toLowerCase()
+        );
+
         communityList.push({
           address: addr,
           name: community.name,
           ensName: community.ensName,
           isActive: community.isActive,
+          supportedSBTs: supportedSBTs,
+          hasMySBT: hasMySBT,
         });
       }
       setCommunities(communityList);
     } catch (err) {
       console.error(t("getSBT.console.failedToLoadCommunities"), err);
     }
-  }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, t]);
+  }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, MYSBT_ADDRESS, t]);
 
   // Load reputation data for existing SBT holder
   const loadReputationData = useCallback(async (address: string, tokenId: string) => {
@@ -212,6 +232,68 @@ export function GetSBT() {
       console.error(t("getSBT.console.failedToCheckExistingSBT"), err);
     }
   }, [RPC_URL, MYSBT_ADDRESS, MySBTABI, t, loadReputationData]);
+
+  // Bind MySBT to community
+  const handleBindMySBT = async (communityAddress: string) => {
+    setIsBinding(true);
+    setBindingCommunity(communityAddress);
+    setError("");
+
+    try {
+      if (!window.ethereum) {
+        throw new Error("MetaMask not installed");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, signer);
+
+      console.log("Binding MySBT to community:", communityAddress);
+
+      // Get current community profile
+      const currentProfile = await registry.getCommunityProfile(communityAddress);
+
+      // Check if MySBT is already in supportedSBTs
+      const supportedSBTs = currentProfile.supportedSBTs || [];
+      if (supportedSBTs.some((sbt: string) => sbt.toLowerCase() === MYSBT_ADDRESS.toLowerCase())) {
+        throw new Error("MySBT is already bound to this community");
+      }
+
+      // Add MySBT to supportedSBTs array
+      const updatedSBTs = [...supportedSBTs, MYSBT_ADDRESS];
+
+      // Update profile with new supportedSBTs
+      const updatedProfile = {
+        name: currentProfile.name,
+        ensName: currentProfile.ensName,
+        xPNTsToken: currentProfile.xPNTsToken,
+        supportedSBTs: updatedSBTs,
+        nodeType: currentProfile.nodeType,
+        paymasterAddress: currentProfile.paymasterAddress,
+        community: currentProfile.community,
+        registeredAt: currentProfile.registeredAt,
+        lastUpdatedAt: currentProfile.lastUpdatedAt,
+        isActive: currentProfile.isActive,
+        allowPermissionlessMint: currentProfile.allowPermissionlessMint,
+      };
+
+      const tx = await registry.updateCommunityProfile(updatedProfile);
+      console.log("Binding transaction sent:", tx.hash);
+
+      await tx.wait();
+      console.log("MySBT bound successfully!");
+
+      // Reload communities to update UI
+      await loadCommunities();
+
+    } catch (err) {
+      console.error("Failed to bind MySBT:", err);
+      setError(err instanceof Error ? err.message : "Failed to bind MySBT to community");
+    } finally {
+      setIsBinding(false);
+      setBindingCommunity("");
+    }
+  };
 
   // Mint MySBT
   const handleMintMySBT = async () => {
@@ -526,9 +608,56 @@ export function GetSBT() {
                     )}
 
                     {/* Community Memberships */}
-                    {memberships.length > 0 && (
+                    {communities.length > 0 && (
                       <div className="reputation-card memberships-card">
                         <h3>Community Memberships</h3>
+                        <div className="memberships-list">
+                          {communities.map((community, index) => (
+                            <div key={index} className="membership-item">
+                              <div className="membership-header">
+                                <div className="community-info">
+                                  <span className="community-name">{community.name}</span>
+                                  <span className="community-address mono">
+                                    {community.address.slice(0, 8)}...{community.address.slice(-6)}
+                                  </span>
+                                  <span className={`membership-status ${community.hasMySBT ? 'active' : 'inactive'}`}>
+                                    {community.hasMySBT ? '✅ MySBT Bound' : '⚪ Not Bound'}
+                                  </span>
+                                </div>
+                              </div>
+                              {!community.hasMySBT && (
+                                <div className="membership-actions" style={{ marginTop: "0.75rem" }}>
+                                  <button
+                                    className="bind-button"
+                                    onClick={() => handleBindMySBT(community.address)}
+                                    disabled={isBinding && bindingCommunity === community.address}
+                                    style={{
+                                      padding: "0.5rem 1rem",
+                                      background: "#10b981",
+                                      color: "white",
+                                      border: "none",
+                                      borderRadius: "6px",
+                                      cursor: "pointer",
+                                      fontSize: "0.9rem",
+                                      fontWeight: 500,
+                                    }}
+                                  >
+                                    {isBinding && bindingCommunity === community.address
+                                      ? "Binding..."
+                                      : "Bind MySBT to Community"}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* User Memberships (if any) */}
+                    {memberships.length > 0 && (
+                      <div className="reputation-card memberships-card">
+                        <h3>My Community Memberships</h3>
                         <div className="memberships-list">
                           {memberships.map((membership, index) => (
                             <div key={index} className="membership-item">
@@ -765,7 +894,7 @@ export function GetSBT() {
               <span className="value">{t("getSBT.contractInfo.sepolia")}</span>
             </div>
             <div className="info-row">
-              <span className="label">{t("getSBT.contractInfo.minStake")}</span>
+              <span className="label">Personal Mint Minimum Stake:</span>
               <span className="value highlight">{REQUIRED_GTOKEN} GT</span>
             </div>
           </div>

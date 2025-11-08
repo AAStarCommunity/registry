@@ -543,6 +543,62 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             </div>
           </div>
 
+          {/* Cost Analysis Section */}
+          <div className="cost-analysis-section" style={{
+            margin: "1.5rem 0",
+            padding: "1.25rem",
+            background: "linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)",
+            borderRadius: "12px",
+            border: "1px solid #bae6fd",
+          }}>
+            <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ fontSize: "1.3rem" }}>💡</span>
+              Simple Cost Analysis
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "0.95rem", lineHeight: "1.6" }}>
+              <div style={{ padding: "1rem", background: "white", borderRadius: "8px", border: "2px solid #10b981" }}>
+                <div style={{ fontWeight: 600, color: "#047857", marginBottom: "0.5rem", fontSize: "1rem" }}>
+                  🏢 AOA Mode (Independent)
+                </div>
+                <div style={{ color: "#374151", marginBottom: "0.5rem" }}>
+                  <strong>Cost:</strong> 1,000-3,000 USD/year
+                </div>
+                <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                  • Requires dedicated/part-time technical staff
+                  <br />
+                  • Maintenance: cross-chain operations, ETH balance monitoring, refills
+                  <br />
+                  • Suitable for: Communities with technical resources and budget
+                </div>
+              </div>
+              <div style={{ padding: "1rem", background: "white", borderRadius: "8px", border: "2px solid #3b82f6" }}>
+                <div style={{ fontWeight: 600, color: "#1d4ed8", marginBottom: "0.5rem", fontSize: "1rem" }}>
+                  ⚡ Super Mode (aPNTs)
+                </div>
+                <div style={{ color: "#374151", marginBottom: "0.5rem" }}>
+                  <strong>Cost:</strong> ~234 USD/month (120-member community, full sponsorship)
+                </div>
+                <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
+                  • 1.5% service fee paid to AAstar ecosystem
+                  <br />
+                  • No technical maintenance required
+                  <br />
+                  • Suitable for: Communities focused on operations, providing gasless UX
+                </div>
+              </div>
+            </div>
+            <div style={{ marginTop: "0.75rem", textAlign: "center", fontSize: "0.9rem" }}>
+              <a
+                href="/superpaymaster_proposal.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#0369a1", textDecoration: "none", fontWeight: 500 }}
+              >
+                More Analysis →
+              </a>
+            </div>
+          </div>
+
           <div className="stake-options-grid">
             <StakeOptionCard
               option={aoaOption}
