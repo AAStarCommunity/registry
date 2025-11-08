@@ -7,9 +7,9 @@ import "./WalletStatus.css";
 export interface WalletStatusProps {
   status: WalletStatusType;
   gTokenAddress?: string;
-  onGetGToken?: () => void;
-  onGetPNTs?: () => void;
-  onGetETH?: () => void;
+  getGTokenUrl?: string; // URL to get GToken (opens in new tab)
+  getPNTsUrl?: string; // URL to get PNTs (opens in new tab)
+  getETHUrl?: string; // URL to get ETH (opens in new tab)
   onRefresh?: () => void;
 }
 
@@ -22,9 +22,9 @@ export interface WalletStatusProps {
 export function WalletStatus({
   status,
   gTokenAddress,
-  onGetGToken,
-  onGetPNTs,
-  onGetETH,
+  getGTokenUrl = "/get-gtoken",
+  getPNTsUrl = "/get-pnts",
+  getETHUrl,
   onRefresh,
 }: WalletStatusProps) {
   if (!status.isConnected) {
@@ -84,15 +84,16 @@ export function WalletStatus({
             <span className="balance-required">
               Required: {status.requiredETH} ETH
             </span>
-            {!status.hasEnoughETH && (
+            {!status.hasEnoughETH && getETHUrl && (
               <div className="balance-action">
-                <button
-                  className="action-button"
-                  onClick={onGetETH}
-                  disabled={!onGetETH}
+                <a
+                  href={getETHUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button action-link"
                 >
-                  Get ETH →
-                </button>
+                  Get ETH ↗
+                </a>
               </div>
             )}
           </div>
@@ -148,13 +149,14 @@ export function WalletStatus({
             </span>
             {!status.hasEnoughGToken && (
               <div className="balance-action">
-                <button
-                  className="action-button"
-                  onClick={onGetGToken}
-                  disabled={!onGetGToken}
+                <a
+                  href={getGTokenUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button action-link"
                 >
-                  Get GToken →
-                </button>
+                  Get GToken ↗
+                </a>
               </div>
             )}
           </div>
@@ -198,13 +200,14 @@ export function WalletStatus({
             </span>
             {!status.hasEnoughAPNTs && parseFloat(status.requiredAPNTs) > 0 && (
               <div className="balance-action">
-                <button
-                  className="action-button"
-                  onClick={onGetPNTs}
-                  disabled={!onGetPNTs}
+                <a
+                  href={getPNTsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button action-link"
                 >
-                  Get aPNTs →
-                </button>
+                  Get aPNTs ↗
+                </a>
               </div>
             )}
           </div>

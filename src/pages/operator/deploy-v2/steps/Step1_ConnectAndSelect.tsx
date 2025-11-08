@@ -235,36 +235,14 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
     }
   };
 
-  const handleGetGToken = () => {
-    window.open("/get-gtoken", "_blank");
-  };
-
-  const handleGetPNTs = () => {
-    window.open("/get-pnts", "_blank");
-  };
-
-  const handleGetETH = () => {
+  // Get ETH URL based on network
+  const getETHUrl = () => {
     if (networkInfo?.chainId === 11155111) {
-      // Sepolia - offer multiple faucet options
-      const faucets = [
-        { name: "Google Cloud Sepolia Faucet", url: "https://cloud.google.com/application/web3/faucet/ethereum/sepolia" },
-        { name: "Sepolia Faucet", url: "https://sepoliafaucet.com" }
-      ];
-      
-      const faucetChoice = window.prompt(
-        "Choose a Sepolia faucet:\n" +
-        faucets.map((f, i) => `${i + 1}. ${f.name}`).join("\n") +
-        "\n\nEnter 1 or 2:",
-        "1"
-      );
-      
-      const selectedFaucet = faucets[parseInt(faucetChoice || "1") - 1];
-      if (selectedFaucet) {
-        window.open(selectedFaucet.url, "_blank");
-      }
-    } else {
-      alert("Please acquire ETH from your preferred exchange or faucet");
+      // Sepolia - use Google Cloud faucet as default
+      return "https://cloud.google.com/application/web3/faucet/ethereum/sepolia";
     }
+    // For other networks, could return a guide page or null
+    return undefined;
   };
 
   const canProceed = () => {
@@ -694,9 +672,9 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <WalletStatus
               status={walletStatus}
               gTokenAddress={config.contracts.gToken}
-              onGetGToken={handleGetGToken}
-              onGetPNTs={handleGetPNTs}
-              onGetETH={handleGetETH}
+              getGTokenUrl="/get-gtoken"
+              getPNTsUrl="/get-pnts"
+              getETHUrl={getETHUrl()}
               onRefresh={handleRefreshResources}
             />
           )}

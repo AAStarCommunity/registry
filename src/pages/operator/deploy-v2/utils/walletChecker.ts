@@ -177,8 +177,18 @@ export async function checkCommunityRegistration(
   }
 }
 
+// Cache for wallet status
+const walletStatusCache: {
+  [address: string]: {
+    data: WalletStatus;
+    timestamp: number;
+  };
+} = {};
+
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
+
 /**
- * Main function to check wallet status
+ * Main function to check wallet status (with caching and parallel RPC calls)
  */
 export async function checkWalletStatus(
   options: CheckOptions = {}
@@ -219,59 +229,96 @@ export async function checkWalletStatus(
     status.isConnected = true;
     status.address = address;
 
-    // Check community registration status
-    const { isRegistered, communityName } = await checkCommunityRegistration(address);
-    status.isCommunityRegistered = isRegistered;
-    status.communityName = communityName;
+    // Check cache first
+    const cached = walletStatusCache[address.toLowerCase()];
+    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+      console.log("✅ Using cached wallet status (age:", Math.floor((Date.now() - cached.timestamp) / 1000), "s)");
+      // Update requirements but keep cached data
+      return {
+        ...cached.data,
+        requiredETH,
+        requiredGToken: requiredGToken || cached.data.requiredGToken,
+        requiredAPNTs,
+        hasEnoughETH: parseFloat(cached.data.ethBalance) >= parseFloat(requiredETH),
+        hasEnoughGToken: parseFloat(cached.data.gTokenBalance) >= parseFloat(requiredGToken || cached.data.requiredGToken),
+        hasEnoughAPNTs: parseFloat(cached.data.aPNTsBalance) >= parseFloat(requiredAPNTs),
+      };
+    }
+
+    console.log("🔍 Fetching fresh wallet status (parallel RPC calls)...");
+
+    // Parallel RPC calls for all checks
+    const networkConfig = getCurrentNetworkConfig();
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+
+    const [
+      communityResult,
+      ethBalance,
+      gTokenBalance,
+      aPNTsBalance,
+      xPNTsResult
+    ] = await Promise.all([
+      // 1. Check community registration
+      checkCommunityRegistration(address),
+
+      // 2. Check ETH balance
+      checkETHBalance(address),
+
+      // 3. Check GToken balance
+      gTokenAddress ? checkTokenBalance(gTokenAddress, address) : Promise.resolve("0"),
+
+      // 4. Check aPNTs balance
+      aPNTAddress ? checkTokenBalance(aPNTAddress, address) : Promise.resolve("0"),
+
+      // 5 & 6. Check xPNTs factory (combined hasToken + getTokenAddress)
+      (async () => {
+        try {
+          const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
+          const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
+          const hasToken = await factory.hasToken(address);
+
+          if (hasToken) {
+            const tokenAddress = await factory.getTokenAddress(address);
+            console.log("✅ Found existing xPNTs contract:", tokenAddress);
+            return { hasGasTokenContract: true, gasTokenAddress: tokenAddress };
+          } else {
+            console.log("ℹ️ No xPNTs contract found for this address");
+            return { hasGasTokenContract: false, gasTokenAddress: undefined };
+          }
+        } catch (error) {
+          console.log("Failed to check xPNTs factory:", error);
+          return { hasGasTokenContract: false, gasTokenAddress: undefined };
+        }
+      })()
+    ]);
+
+    // Process results
+    status.isCommunityRegistered = communityResult.isRegistered;
+    status.communityName = communityResult.communityName;
 
     // Calculate required GToken based on registration status
-    // If not registered: 30 (register community) + 300 (register paymaster) = 330 GToken
-    // If registered: 300 (register paymaster only)
-    const calculatedRequiredGToken = isRegistered ? "300" : "330";
+    const calculatedRequiredGToken = communityResult.isRegistered ? "300" : "330";
     status.requiredGToken = requiredGToken || calculatedRequiredGToken;
 
-    // Check ETH balance
-    status.ethBalance = await checkETHBalance(address);
-    status.hasEnoughETH =
-      parseFloat(status.ethBalance) >= parseFloat(requiredETH);
+    status.ethBalance = ethBalance;
+    status.hasEnoughETH = parseFloat(ethBalance) >= parseFloat(requiredETH);
 
-    // Check GToken balance (if address provided)
-    if (gTokenAddress) {
-      status.gTokenBalance = await checkTokenBalance(gTokenAddress, address);
-      status.hasEnoughGToken =
-        parseFloat(status.gTokenBalance) >= parseFloat(status.requiredGToken);
-    }
+    status.gTokenBalance = gTokenBalance;
+    status.hasEnoughGToken = parseFloat(gTokenBalance) >= parseFloat(status.requiredGToken);
 
-    // Check aPNT balance (if address provided - for AOA+ / Super Mode only)
-    if (aPNTAddress) {
-      status.aPNTsBalance = await checkTokenBalance(aPNTAddress, address);
-      status.hasEnoughAPNTs =
-        parseFloat(status.aPNTsBalance) >= parseFloat(requiredAPNTs);
-    }
+    status.aPNTsBalance = aPNTsBalance;
+    status.hasEnoughAPNTs = parseFloat(aPNTsBalance) >= parseFloat(requiredAPNTs);
 
-    // Check for existing xPNTs (GasToken) contract via xPNTsFactory
-    try {
-      const networkConfig = getCurrentNetworkConfig();
-      const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
-      
-      // hasToken() should return boolean, not revert
-      const hasToken = await factory.hasToken(address);
+    status.hasGasTokenContract = xPNTsResult.hasGasTokenContract;
+    status.gasTokenAddress = xPNTsResult.gasTokenAddress;
 
-      if (hasToken) {
-        const tokenAddress = await factory.getTokenAddress(address);
-        status.hasGasTokenContract = true;
-        status.gasTokenAddress = tokenAddress;
-        console.log("✅ Found existing xPNTs contract:", tokenAddress);
-      } else {
-        status.hasGasTokenContract = false;
-        console.log("ℹ️ No xPNTs contract found for this address");
-      }
-    } catch (error) {
-      console.log("Failed to check xPNTs factory:", error);
-      status.hasGasTokenContract = false;
-    }
+    // Cache the result
+    walletStatusCache[address.toLowerCase()] = {
+      data: status,
+      timestamp: Date.now(),
+    };
+
+    console.log("✅ Wallet status fetched and cached");
 
     return status;
   } catch (error) {

@@ -205,6 +205,13 @@
   cursor: not-allowed;
 }
 
+/* Link styled as button */
+.action-button.action-link {
+  display: inline-block;
+  text-decoration: none;
+  text-align: center;
+}
+
 .balance-help {
   margin-top: 0.5rem;
   font-size: 0.8rem;
