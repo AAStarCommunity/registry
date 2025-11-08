@@ -142,13 +142,23 @@ async function checkTokenBalance(
   }
 
   try {
+    console.log(`🔍 Checking token balance:`, { tokenAddress, userAddress });
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
     const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
 
     const balance = await contract.balanceOf(userAddress);
     const decimals = await contract.decimals();
+    const formattedBalance = ethers.formatUnits(balance, decimals);
 
-    return ethers.formatUnits(balance, decimals);
+    console.log(`💰 Token balance result:`, {
+      tokenAddress: tokenAddress.slice(0, 10) + '...',
+      userAddress: userAddress.slice(0, 10) + '...',
+      rawBalance: balance.toString(),
+      decimals,
+      formattedBalance
+    });
+
+    return formattedBalance;
   } catch (error) {
     console.error(`Failed to check token balance for ${tokenAddress}:`, error);
     return "0";
@@ -286,6 +296,10 @@ export async function checkWalletStatus(
     const addr = address.toLowerCase();
 
     console.log("🔍 Fetching wallet status with granular caching...");
+    console.log("📋 Check options:", {
+      requiredAPNTs,
+      aPNTAddress: aPNTAddress ? aPNTAddress.slice(0, 10) + '...' : 'NOT PROVIDED',
+    });
 
     // Parallel RPC calls with individual caching per resource
     const networkConfig = getCurrentNetworkConfig();
