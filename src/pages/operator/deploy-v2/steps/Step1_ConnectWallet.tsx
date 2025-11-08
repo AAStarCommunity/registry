@@ -92,8 +92,23 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
   const handleGetETH = () => {
     // Open faucet or guide based on network
     if (networkInfo?.chainId === 11155111) {
-      // Sepolia
-      window.open("https://cloud.google.com/application/web3/faucet/ethereum/sepolia", "_blank");
+      // Sepolia - offer multiple faucet options
+      const faucets = [
+        { name: "Google Cloud Sepolia Faucet", url: "https://cloud.google.com/application/web3/faucet/ethereum/sepolia" },
+        { name: "Sepolia Faucet", url: "https://sepoliafaucet.com" }
+      ];
+      
+      const faucetChoice = window.prompt(
+        "Choose a Sepolia faucet:\n" +
+        faucets.map((f, i) => `${i + 1}. ${f.name}`).join("\n") +
+        "\n\nEnter 1 or 2:",
+        "1"
+      );
+      
+      const selectedFaucet = faucets[parseInt(faucetChoice || "1") - 1];
+      if (selectedFaucet) {
+        window.open(selectedFaucet.url, "_blank");
+      }
     } else {
       alert("Please acquire ETH from your preferred exchange or faucet");
     }
