@@ -22,9 +22,9 @@ export function GetSBT() {
   const RPC_URL = getRpcUrl();
 
   // Constants
-  const REQUIRED_GTOKEN = "0.3"; // Personal Mint Minimum 0.3 GT required
+  const REQUIRED_GTOKEN = "0.4"; // Personal Mint Minimum 0.4 GT required
   const MINT_COST = "0.1"; // 0.1 GT will be burned/transferred
-  const REFUND_AMOUNT = "0.2"; // 0.2 GT will be refunded if user quits
+  const REFUND_AMOUNT = "0.3"; // 0.3 GT will be refunded if user quits
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -122,8 +122,10 @@ export function GetSBT() {
     }
   }, [RPC_URL, GTOKEN_ADDRESS, GTokenABI, GTOKEN_STAKING_ADDRESS, GTokenStakingABI, t]);
 
-  // Load list of registered communities
+  // Load current account's community info (if registered as a community)
   const loadCommunities = useCallback(async () => {
+    if (!account) return;
+
     try {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
@@ -132,12 +134,11 @@ export function GetSBT() {
         rpcProvider
       );
 
-      const count = await registry.getCommunityCount();
-      const communityAddresses = await registry.getCommunities(0, Math.min(Number(count), 50));
+      // Check if current account is a registered community
+      const isRegistered = await registry.isRegisteredCommunity(account);
 
-      const communityList = [];
-      for (const addr of communityAddresses) {
-        const community = await registry.communities(addr);
+      if (isRegistered) {
+        const community = await registry.getCommunityProfile(account);
 
         // Check if MySBT is in supportedSBTs array
         const supportedSBTs = community.supportedSBTs || [];
@@ -145,20 +146,22 @@ export function GetSBT() {
           sbt.toLowerCase() === MYSBT_ADDRESS.toLowerCase()
         );
 
-        communityList.push({
-          address: addr,
+        setCommunities([{
+          address: account,
           name: community.name,
           ensName: community.ensName,
           isActive: community.isActive,
           supportedSBTs: supportedSBTs,
           hasMySBT: hasMySBT,
-        });
+        }]);
+      } else {
+        setCommunities([]);
       }
-      setCommunities(communityList);
     } catch (err) {
       console.error(t("getSBT.console.failedToLoadCommunities"), err);
+      setCommunities([]);
     }
-  }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, MYSBT_ADDRESS, t]);
+  }, [RPC_URL, REGISTRY_ADDRESS, RegistryABI, MYSBT_ADDRESS, account, t]);
 
   // Load reputation data for existing SBT holder
   const loadReputationData = useCallback(async (address: string, tokenId: string) => {
@@ -607,88 +610,81 @@ export function GetSBT() {
                       </div>
                     )}
 
-                    {/* Community Memberships */}
+                    {/* Community Information */}
                     {communities.length > 0 && (
                       <div className="reputation-card memberships-card">
-                        <h3>Community Memberships</h3>
+                        <h3>Community Information</h3>
                         <div className="memberships-list">
-                          {communities.map((community, index) => (
-                            <div key={index} className="membership-item">
-                              <div className="membership-header">
-                                <div className="community-info">
-                                  <span className="community-name">{community.name}</span>
-                                  <span className="community-address mono">
-                                    {community.address.slice(0, 8)}...{community.address.slice(-6)}
-                                  </span>
-                                  <span className={`membership-status ${community.hasMySBT ? 'active' : 'inactive'}`}>
-                                    {community.hasMySBT ? '✅ MySBT Bound' : '⚪ Not Bound'}
-                                  </span>
-                                </div>
-                              </div>
-                              {!community.hasMySBT && (
-                                <div className="membership-actions" style={{ marginTop: "0.75rem" }}>
-                                  <button
-                                    className="bind-button"
-                                    onClick={() => handleBindMySBT(community.address)}
-                                    disabled={isBinding && bindingCommunity === community.address}
-                                    style={{
-                                      padding: "0.5rem 1rem",
-                                      background: "#10b981",
-                                      color: "white",
-                                      border: "none",
-                                      borderRadius: "6px",
-                                      cursor: "pointer",
-                                      fontSize: "0.9rem",
-                                      fontWeight: 500,
-                                    }}
-                                  >
-                                    {isBinding && bindingCommunity === community.address
-                                      ? "Binding..."
-                                      : "Bind MySBT to Community"}
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          {communities.map((community, index) => {
+                            // Find matching membership data if exists
+                            const membership = memberships.find(m => m.community.toLowerCase() === community.address.toLowerCase());
+                            const reputation = communityReputations[community.address] || "0";
 
-                    {/* User Memberships (if any) */}
-                    {memberships.length > 0 && (
-                      <div className="reputation-card memberships-card">
-                        <h3>My Community Memberships</h3>
-                        <div className="memberships-list">
-                          {memberships.map((membership, index) => (
-                            <div key={index} className="membership-item">
-                              <div className="membership-header">
-                                <div className="community-info">
-                                  <span className="community-address mono">
-                                    {membership.community.slice(0, 8)}...{membership.community.slice(-6)}
-                                  </span>
-                                  <span className={`membership-status ${membership.isActive ? 'active' : 'inactive'}`}>
-                                    {membership.isActive ? 'Active' : 'Inactive'}
-                                  </span>
+                            return (
+                              <div key={index} className="membership-item">
+                                <div className="membership-header">
+                                  <div className="community-info">
+                                    <span className="community-name">{community.name}</span>
+                                    <span className="community-address mono">
+                                      {community.address.slice(0, 8)}...{community.address.slice(-6)}
+                                    </span>
+                                    <span className={`membership-status ${community.hasMySBT ? 'active' : 'inactive'}`}>
+                                      {community.hasMySBT ? '✅ MySBT Bound' : '⚪ Not Bound'}
+                                    </span>
+                                  </div>
+                                  {membership && (
+                                    <div className="community-reputation">
+                                      <span className="rep-label">Reputation:</span>
+                                      <span className="rep-value">
+                                        {parseFloat(reputation).toFixed(2)} REP
+                                      </span>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="community-reputation">
-                                  <span className="rep-label">Reputation:</span>
-                                  <span className="rep-value">
-                                    {parseFloat(communityReputations[membership.community] || "0").toFixed(2)} REP
-                                  </span>
-                                </div>
+                                {membership && (
+                                  <div className="membership-details">
+                                    <div className="detail-item">
+                                      <span className="detail-label">Joined:</span>
+                                      <span className="detail-value">{new Date(parseInt(membership.joinedAt) * 1000).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="detail-item">
+                                      <span className="detail-label">Last Active:</span>
+                                      <span className="detail-value">{new Date(parseInt(membership.lastActiveTime) * 1000).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="detail-item">
+                                      <span className="detail-label">Status:</span>
+                                      <span className={`detail-value ${membership.isActive ? 'active' : 'inactive'}`}>
+                                        {membership.isActive ? 'Active' : 'Inactive'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {!community.hasMySBT && (
+                                  <div className="membership-actions" style={{ marginTop: "0.75rem" }}>
+                                    <button
+                                      className="bind-button"
+                                      onClick={() => handleBindMySBT(community.address)}
+                                      disabled={isBinding && bindingCommunity === community.address}
+                                      style={{
+                                        padding: "0.5rem 1rem",
+                                        background: "#10b981",
+                                        color: "white",
+                                        border: "none",
+                                        borderRadius: "6px",
+                                        cursor: "pointer",
+                                        fontSize: "0.9rem",
+                                        fontWeight: 500,
+                                      }}
+                                    >
+                                      {isBinding && bindingCommunity === community.address
+                                        ? "Binding..."
+                                        : "Bind MySBT to Community"}
+                                    </button>
+                                  </div>
+                                )}
                               </div>
-                              <div className="membership-details">
-                                <div className="detail-item">
-                                  <span className="detail-label">Joined:</span>
-                                  <span className="detail-value">{new Date(parseInt(membership.joinedAt) * 1000).toLocaleDateString()}</span>
-                                </div>
-                                <div className="detail-item">
-                                  <span className="detail-label">Last Active:</span>
-                                  <span className="detail-value">{new Date(parseInt(membership.lastActiveTime) * 1000).toLocaleDateString()}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </div>
                     )}
