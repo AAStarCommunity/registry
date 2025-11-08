@@ -7,6 +7,7 @@
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { getRpcUrl } from "../../../../config/rpc";
 import { ERC20_ABI, RegistryABI, xPNTsFactoryABI } from "../../../../config/abis";
 
 export interface WalletStatus {
@@ -80,7 +81,7 @@ export async function checkETHBalance(address: string): Promise<string> {
   try {
     // Try RPC proxy first for reliability
     try {
-      const rpcProvider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
       const balance = await rpcProvider.getBalance(address);
       return ethers.formatEther(balance);
     } catch (rpcError) {
@@ -111,7 +112,7 @@ export async function checkTokenBalance(
   try {
     // Try RPC proxy first for reliability
     try {
-      const rpcProvider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
       const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
 
       const balance = await contract.balanceOf(userAddress);
@@ -146,7 +147,7 @@ export async function isContractDeployed(address: string): Promise<boolean> {
   try {
     // Try RPC proxy first for reliability
     try {
-      const rpcProvider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
       const code = await rpcProvider.getCode(address);
       return code !== "0x";
     } catch (rpcError) {
@@ -174,7 +175,7 @@ export async function checkCommunityRegistration(
 
     // Try RPC proxy first for reliability
     try {
-      const rpcProvider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
       const registry = new ethers.Contract(registryAddress, RegistryABI, rpcProvider);
 
       const community = await registry.communities(address);
@@ -283,7 +284,7 @@ export async function checkWalletStatus(
 
       // Try RPC proxy first for reliability
       try {
-        const rpcProvider = new ethers.JsonRpcProvider('/api/rpc-proxy');
+        const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
         const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
         const hasToken = await factory.hasToken(address);
 
