@@ -4,733 +4,494 @@ import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
-import { RegistryV1ABI, RegistryV2_1ABI, RegistryV2_1_4ABI } from "../config/abis";
+import { RegistryABI } from "../config/abis";
+import packageJson from "../../package.json";
 import "./RegistryExplorer.css";
 
-type RegistryVersion = "v1.2" | "v2.1" | "v2.1.4";
+type ExplorerTab = "communities" | "paymasters" | "members";
 
-interface PaymasterInfo {
-  address: string;
+interface CommunityProfile {
+  // 11 fields from Registry v2.2.0
   name: string;
-  description: string;
-  category: string;
-  verified: boolean;
-  totalTransactions: number;
-  totalGasSponsored: string;
-  supportedTokens: string[];
-  serviceFee: string;
-  owner: string;
-  registeredAt: string;
-  metadata?: any;
+  ensName: string;
+  xPNTsToken: string;
+  supportedSBTs: string[];
+  paymasterAddress: string;
+  community: string;
+  nodeType: number; // 0: AOA, 1: Super
+  registeredAt: bigint;
+  lastUpdatedAt: bigint;
+  isActive: boolean;
+  allowPermissionlessMint: boolean;
 }
 
-const mockPaymasters: PaymasterInfo[] = [
-  {
-    address: "0x1234...5678",
-    name: "AAStar Community Paymaster",
-    description: "Official AAStar community paymaster for gasless transactions",
-    category: "Community",
-    verified: true,
-    totalTransactions: 12450,
-    totalGasSponsored: "45.8 ETH",
-    supportedTokens: ["SBT", "PNT"],
-    serviceFee: "2%",
-    owner: "0xabcd...ef01",
-    registeredAt: "2024-01-15",
-  },
-  {
-    address: "0x2345...6789",
-    name: "DeFi Protocol Paymaster",
-    description: "Gasless swaps and liquidity provision",
-    category: "DeFi",
-    verified: true,
-    totalTransactions: 8920,
-    totalGasSponsored: "32.4 ETH",
-    supportedTokens: ["USDC", "DAI"],
-    serviceFee: "1.5%",
-    owner: "0xbcde...f012",
-    registeredAt: "2024-02-01",
-  },
-  {
-    address: "0x3456...7890",
-    name: "GameFi Paymaster",
-    description: "Sponsor gas fees for in-game transactions",
-    category: "Gaming",
-    verified: false,
-    totalTransactions: 5670,
-    totalGasSponsored: "18.3 ETH",
-    supportedTokens: ["GAME", "NFT"],
-    serviceFee: "3%",
-    owner: "0xcdef...0123",
-    registeredAt: "2024-03-10",
-  },
-  {
-    address: "0x4567...8901",
-    name: "Social Paymaster",
-    description: "Gasless social interactions and content creation",
-    category: "Social",
-    verified: true,
-    totalTransactions: 15320,
-    totalGasSponsored: "52.1 ETH",
-    supportedTokens: ["SOCIAL", "CREATOR"],
-    serviceFee: "2.5%",
-    owner: "0xdef0...1234",
-    registeredAt: "2024-02-20",
-  },
-];
+interface RegistryInfo {
+  address: string;
+  version: string;
+  deployedAt: string;
+  sharedConfigVersion: string;
+  totalCommunities: number;
+}
 
 export function RegistryExplorer() {
   const [searchParams] = useSearchParams();
-  const highlightCommunity = searchParams.get("community");
-  const shouldHighlight = searchParams.get("highlight") === "true";
-
-  const [registryVersion, setRegistryVersion] = useState<RegistryVersion>("v2.1.4");
-  const [paymasters, setPaymasters] = useState<PaymasterInfo[]>([]);
-  const [filteredPaymasters, setFilteredPaymasters] = useState<PaymasterInfo[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [sortBy, setSortBy] = useState("transactions");
-  const [selectedPaymaster, setSelectedPaymaster] = useState<PaymasterInfo | null>(null);
+  const [activeTab, setActiveTab] = useState<ExplorerTab>("communities");
+  const [communities, setCommunities] = useState<CommunityProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  const [registryInfo, setRegistryInfo] = useState<{address: string, totalPaymasters: number} | null>(null);
+  const [registryInfo, setRegistryInfo] = useState<RegistryInfo | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = ["All", "Community", "DeFi", "Gaming", "Social"];
-
-  // Cache key generator
-  const getCacheKey = (version: RegistryVersion, address: string) =>
-    `registry_explorer_${version}_${address.toLowerCase()}`;
-
-  // Load paymasters from registry contract
+  // Load registry data
   useEffect(() => {
-    loadPaymasters();
-  }, [registryVersion]);
+    loadRegistryData();
+  }, []);
 
-  const loadPaymasters = async () => {
+  const loadRegistryData = async () => {
     setLoading(true);
     setError("");
 
     try {
       const provider = getProvider();
       const networkConfig = getCurrentNetworkConfig();
+      const registryAddress = networkConfig.contracts.registry;
 
-      // Select registry address based on version
-      // Legacy addresses hardcoded for historical exploration only
-      let registryAddress: string;
-      if (registryVersion === "v1.2") {
-        registryAddress = "0x838da93c815a6E45Aa50429529da9106C0621eF0"; // Registry v1.2 (deprecated)
-      } else if (registryVersion === "v2.1") {
-        registryAddress = "0x6806e4937038e783cA0D3961B7E258A3549A0043"; // Registry v2.0 (deprecated)
-      } else {
-        // v2.2.0 (latest)
-        registryAddress = networkConfig.contracts.registry;
-      }
-
-      console.log("=== Registry Explorer Debug ===");
-      console.log("Version selected:", registryVersion);
+      console.log("=== Registry Explorer ===");
       console.log("Registry address:", registryAddress);
-      console.log("==============================");
-
-      setRegistryInfo({
-        address: registryAddress,
-        totalPaymasters: 0,
-      });
+      console.log("========================");
 
       // Check cache first
-      const cacheKey = getCacheKey(registryVersion, registryAddress);
-      const cached = loadFromCache<PaymasterInfo[]>(cacheKey);
+      const cacheKey = `registry_explorer_v2.2_${registryAddress.toLowerCase()}`;
+      const cached = loadFromCache<CommunityProfile[]>(cacheKey);
 
       if (cached) {
         console.log(`📦 Loaded from cache (${formatCacheAge(cached.timestamp)})`);
-        setPaymasters(cached.data);
+        setCommunities(cached.data);
         setLastUpdated(cached.timestamp);
-        setRegistryInfo({
-          address: registryAddress,
-          totalPaymasters: cached.data.length,
-        });
+
+        // Load registry info
+        await loadRegistryInfo(registryAddress, cached.data.length);
         setLoading(false);
         return;
       }
 
-      // No cache, query blockchain
+      // Query blockchain
       console.log("🔍 Querying blockchain...");
-      let result: PaymasterInfo[] = [];
+      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
 
-      if (registryVersion === "v1.2") {
-        result = await loadV1Paymasters(provider, registryAddress);
-      } else if (registryVersion === "v2.1") {
-        result = await loadV2Paymasters(provider, registryAddress);
-      } else {
-        // v2.1.4 (latest)
-        result = await loadV2_1_4Paymasters(provider, registryAddress);
-      }
-
-      // Save to cache
-      saveToCache(cacheKey, result, 3600); // 1 hour TTL
-      setLastUpdated(Date.now());
-      console.log(`💾 Saved to cache`);
-
-    } catch (err: any) {
-      console.error("Failed to load paymasters:", err);
-      setError(err.message || "Failed to load registry data");
-      setPaymasters([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadV1Paymasters = async (_provider: any, registryAddress: string) => {
-    // ✅ Registry v1.2 DOES support listing all paymasters
-    // Use independent RPC provider (not MetaMask) as per CLAUDE.md best practices
-    const provider = getProvider();
-
-    const registry = new ethers.Contract(registryAddress, RegistryV1ABI, provider);
-
-    try {
-      const paymasterAddresses = await registry.getActivePaymasters();
-      console.log(`📋 Found ${paymasterAddresses.length} paymasters in Registry v1.2`);
-
-      const paymasterList: PaymasterInfo[] = [];
-
-      for (const pmAddress of paymasterAddresses) {
-        try {
-          // Use getPaymasterInfo instead of getPaymasterFullInfo (bug in v1.2)
-          const info = await registry.getPaymasterInfo(pmAddress);
-          const isActive = await registry.isPaymasterActive(pmAddress);
-
-          // Skip if not registered (name is empty)
-          if (!info.name || info.name.length === 0) {
-            console.warn(`Skipping unregistered paymaster: ${pmAddress}`);
-            continue;
-          }
-
-          paymasterList.push({
-            address: pmAddress,
-            name: info.name || "Unnamed Paymaster",
-            description: "", // v1.2 doesn't store description
-            category: "Paymaster", // v1.2 doesn't have mode/category distinction
-            verified: isActive,
-            totalTransactions: Number(info.totalAttempts),
-            totalGasSponsored: "N/A", // TODO: Calculate from analytics events
-            supportedTokens: [], // TODO: Query from paymaster contract
-            serviceFee: `${Number(info.feeRate) / 100}%`, // Convert basis points to percentage
-            owner: pmAddress, // v1.2 doesn't store owner separately
-            registeredAt: "N/A", // getPaymasterInfo doesn't return registeredAt
-            metadata: {
-              feeRate: Number(info.feeRate),
-              successCount: Number(info.successCount),
-              totalAttempts: Number(info.totalAttempts)
-            },
-          });
-        } catch (err) {
-          console.warn(`Failed to load info for ${pmAddress}:`, err);
-        }
-      }
-
-      setPaymasters(paymasterList);
-      setRegistryInfo({
-        address: registryAddress,
-        totalPaymasters: paymasterList.length,
-      });
-      return paymasterList;
-    } catch (err: any) {
-      throw new Error(`Failed to query Registry v1.2: ${err.message}`);
-    }
-  };
-
-  const loadV2Paymasters = async (_provider: any, registryAddress: string) => {
-    // Use independent RPC provider (not MetaMask) as per v1.2 pattern
-    const provider = getProvider();
-
-    const registry = new ethers.Contract(registryAddress, RegistryV2_1ABI, provider);
-
-    try {
-      // Get total count first
+      // Get total count
       const count = await registry.getCommunityCount();
-      console.log(`📋 Found ${count} communities in Registry v2.1`);
+      console.log(`📋 Found ${count} communities`);
 
-      // If no communities, return empty array
+      // Get registry info
+      await loadRegistryInfo(registryAddress, Number(count));
+
+      // If no communities, return empty
       if (count === 0n) {
-        setPaymasters([]);
-        setRegistryInfo({
-          address: registryAddress,
-          totalPaymasters: 0,
-        });
-        return [];
+        setCommunities([]);
+        setLoading(false);
+        return;
       }
 
-      // Get all communities using paginated API
-      const communities = await registry.getCommunities(0, count);
-      const paymasterList: PaymasterInfo[] = [];
-
-      for (const communityAddr of communities) {
-        try {
-          const profile = await registry.getCommunityProfile(communityAddr);
-
-          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
-            paymasterList.push({
-              address: profile.paymasterAddress,
-              name: profile.name || "Unnamed",
-              description: profile.description || "",
-              category: profile.mode === 0 ? "AOA" : "Super",
-              verified: profile.isActive,
-              totalTransactions: 0, // TODO: Query from analytics
-              totalGasSponsored: "N/A",
-              supportedTokens: [], // TODO: Query from paymaster
-              serviceFee: "N/A",
-              owner: profile.community,
-              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
-              metadata: profile,
-            });
-          }
-        } catch (err) {
-          console.warn(`Failed to load profile for ${communityAddr}:`, err);
-        }
-      }
-
-      setPaymasters(paymasterList);
-      setRegistryInfo({
-        address: registryAddress,
-        totalPaymasters: paymasterList.length,
-      });
-      return paymasterList;
-    } catch (err: any) {
-      throw new Error(`Failed to query Registry v2.1: ${err.message}`);
-    }
-  };
-
-  const loadV2_1_4Paymasters = async (_provider: any, registryAddress: string) => {
-    // Use independent RPC provider (not MetaMask)
-    const provider = getProvider();
-
-    // Registry v2.1.4 uses simplified 11-field CommunityProfile (no metadata fields)
-    const registry = new ethers.Contract(registryAddress, RegistryV2_1_4ABI, provider);
-
-    try {
-      // Get total count first
-      const count = await registry.getCommunityCount();
-      console.log(`📋 Found ${count} communities in Registry v2.1.4`);
-
-      // If no communities, return empty array
-      if (count === 0n) {
-        setPaymasters([]);
-        setRegistryInfo({
-          address: registryAddress,
-          totalPaymasters: 0,
-        });
-        return [];
-      }
-
-      // Get all communities using paginated API
+      // Get all communities
       const communityAddresses = await registry.getCommunities(0, count);
-      const paymasterList: PaymasterInfo[] = [];
+      const communityList: CommunityProfile[] = [];
 
       for (const communityAddr of communityAddresses) {
         try {
           const profile = await registry.communities(communityAddr);
 
-          if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
-            paymasterList.push({
-              address: profile.paymasterAddress,
-              name: profile.name || "Unnamed",
-              description: profile.ensName || "", // Use ENS name as description fallback
-              category: profile.nodeType === 0 ? "AOA" : "Super", // nodeType instead of mode
-              verified: profile.isActive,
-              totalTransactions: 0, // TODO: Query from analytics
-              totalGasSponsored: "N/A",
-              supportedTokens: [], // TODO: Query from paymaster
-              serviceFee: "N/A",
-              owner: profile.community,
-              registeredAt: new Date(Number(profile.registeredAt) * 1000).toLocaleDateString(),
-              metadata: {
-                ...profile,
-                allowPermissionlessMint: profile.allowPermissionlessMint,
-              },
-            });
-          }
+          communityList.push({
+            name: profile.name || "Unnamed",
+            ensName: profile.ensName || "",
+            xPNTsToken: profile.xPNTsToken || ethers.ZeroAddress,
+            supportedSBTs: profile.supportedSBTs || [],
+            paymasterAddress: profile.paymasterAddress || ethers.ZeroAddress,
+            community: communityAddr,
+            nodeType: profile.nodeType,
+            registeredAt: profile.registeredAt,
+            lastUpdatedAt: profile.lastUpdatedAt,
+            isActive: profile.isActive,
+            allowPermissionlessMint: profile.allowPermissionlessMint,
+          });
         } catch (err) {
           console.warn(`Failed to load profile for ${communityAddr}:`, err);
         }
       }
 
-      setPaymasters(paymasterList);
-      setRegistryInfo({
-        address: registryAddress,
-        totalPaymasters: paymasterList.length,
-      });
-      return paymasterList;
+      // Save to cache (1 hour TTL)
+      saveToCache(cacheKey, communityList, 3600);
+      setLastUpdated(Date.now());
+      console.log(`💾 Saved to cache`);
+
+      setCommunities(communityList);
     } catch (err: any) {
-      throw new Error(`Failed to query Registry v2.1.4: ${err.message}`);
+      console.error("Failed to load registry data:", err);
+      setError(err.message || "Failed to load registry data");
+      setCommunities([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Filter and sort
-  useEffect(() => {
-    let filtered = paymasters;
+  const loadRegistryInfo = async (address: string, totalCount: number) => {
+    try {
+      const provider = getProvider();
 
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (pm) =>
-          pm.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          pm.address.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          pm.description.toLowerCase().includes(searchQuery.toLowerCase()),
+      // Get deployment timestamp from creation event or block
+      let deployedAt = "Unknown";
+      try {
+        const code = await provider.getCode(address);
+        if (code !== "0x") {
+          // Try to get creation block (this is approximate, real deployment time needs event query)
+          deployedAt = "2024-11-08"; // TODO: Query from deployment event
+        }
+      } catch (err) {
+        console.warn("Failed to get deployment time:", err);
+      }
+
+      setRegistryInfo({
+        address,
+        version: "v2.2.0", // Registry version from shared-config
+        deployedAt,
+        sharedConfigVersion: packageJson.dependencies["@aastar/shared-config"].replace("^", ""),
+        totalCommunities: totalCount,
+      });
+    } catch (err) {
+      console.error("Failed to load registry info:", err);
+    }
+  };
+
+  // Filter communities/paymasters based on search
+  const getFilteredData = () => {
+    if (!searchQuery) return communities;
+
+    return communities.filter((community) =>
+      community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      community.community.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      community.ensName.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  // Get paymasters from communities
+  const getPaymasters = () => {
+    return getFilteredData().filter(
+      (c) => c.paymasterAddress && c.paymasterAddress !== ethers.ZeroAddress
+    );
+  };
+
+  // Get members (MySBT holders) - flatten supportedSBTs
+  const getMembers = () => {
+    const members = new Set<string>();
+    getFilteredData().forEach((c) => {
+      c.supportedSBTs.forEach((sbt) => members.add(sbt));
+    });
+    return Array.from(members);
+  };
+
+  const renderTabContent = () => {
+    const filteredData = getFilteredData();
+
+    if (loading) {
+      return (
+        <div className="loading-state">
+          <div className="spinner">⏳</div>
+          <p>Loading registry data...</p>
+        </div>
       );
     }
 
-    // Filter by category
-    if (selectedCategory !== "All") {
-      filtered = filtered.filter((pm) => pm.category === selectedCategory);
+    if (error) {
+      return (
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <p>{error}</p>
+          <button onClick={loadRegistryData} className="retry-btn">
+            Retry
+          </button>
+        </div>
+      );
     }
 
-    // Sort
-    filtered = [...filtered].sort((a, b) => {
-      if (sortBy === "transactions") {
-        return b.totalTransactions - a.totalTransactions;
-      } else if (sortBy === "gas") {
+    switch (activeTab) {
+      case "communities":
         return (
-          parseFloat(b.totalGasSponsored) - parseFloat(a.totalGasSponsored)
-        );
-      } else if (sortBy === "recent") {
-        return (
-          new Date(b.registeredAt).getTime() -
-          new Date(a.registeredAt).getTime()
-        );
-      }
-      return 0;
-    });
+          <div className="community-grid">
+            {filteredData.length === 0 ? (
+              <div className="no-results">
+                <p>No communities found.</p>
+              </div>
+            ) : (
+              filteredData.map((community) => (
+                <div key={community.community} className="community-card">
+                  <div className="card-header">
+                    <h3>{community.name}</h3>
+                    <div className="badges">
+                      {community.isActive && (
+                        <span className="badge active">Active</span>
+                      )}
+                      <span className={`badge node-type ${community.nodeType === 0 ? 'aoa' : 'super'}`}>
+                        {community.nodeType === 0 ? "AOA" : "Super"}
+                      </span>
+                    </div>
+                  </div>
 
-    setFilteredPaymasters(filtered);
-  }, [searchQuery, selectedCategory, sortBy, paymasters]);
+                  <div className="card-body">
+                    <div className="info-row">
+                      <span className="label">Community Address:</span>
+                      <code className="value">{community.community.slice(0, 10)}...{community.community.slice(-8)}</code>
+                    </div>
+
+                    {community.ensName && (
+                      <div className="info-row">
+                        <span className="label">ENS Name:</span>
+                        <span className="value">{community.ensName}</span>
+                      </div>
+                    )}
+
+                    <div className="info-row">
+                      <span className="label">Node Type:</span>
+                      <span className="value">{community.nodeType === 0 ? "AOA (Independent)" : "Super (Managed)"}</span>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Paymaster:</span>
+                      {community.paymasterAddress && community.paymasterAddress !== ethers.ZeroAddress ? (
+                        <code className="value">
+                          {community.paymasterAddress.slice(0, 10)}...{community.paymasterAddress.slice(-8)}
+                        </code>
+                      ) : (
+                        <span className="value text-muted">Not deployed</span>
+                      )}
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">xPNTs Token:</span>
+                      {community.xPNTsToken && community.xPNTsToken !== ethers.ZeroAddress ? (
+                        <code className="value">
+                          {community.xPNTsToken.slice(0, 10)}...{community.xPNTsToken.slice(-8)}
+                        </code>
+                      ) : (
+                        <span className="value text-muted">Not deployed</span>
+                      )}
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Supported SBTs:</span>
+                      <div className="sbt-list">
+                        {community.supportedSBTs.length > 0 ? (
+                          community.supportedSBTs.map((sbt, idx) => (
+                            <code key={idx} className="sbt-badge">
+                              {sbt.slice(0, 6)}...{sbt.slice(-4)}
+                            </code>
+                          ))
+                        ) : (
+                          <span className="value text-muted">None</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Permissionless Mint:</span>
+                      <span className="value">
+                        {community.allowPermissionlessMint ? "✅ Enabled" : "❌ Disabled"}
+                      </span>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Registered At:</span>
+                      <span className="value">
+                        {new Date(Number(community.registeredAt) * 1000).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Last Updated:</span>
+                      <span className="value">
+                        {new Date(Number(community.lastUpdatedAt) * 1000).toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Status:</span>
+                      <span className="value">
+                        {community.isActive ? (
+                          <span className="status-active">🟢 Active</span>
+                        ) : (
+                          <span className="status-inactive">🔴 Inactive</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        );
+
+      case "paymasters":
+        const paymasters = getPaymasters();
+        return (
+          <div className="paymaster-grid">
+            {paymasters.length === 0 ? (
+              <div className="no-results">
+                <p>No paymasters found.</p>
+              </div>
+            ) : (
+              paymasters.map((community) => (
+                <div key={community.paymasterAddress} className="paymaster-card">
+                  <div className="card-header">
+                    <h3>{community.name}</h3>
+                    <span className={`badge node-type ${community.nodeType === 0 ? 'aoa' : 'super'}`}>
+                      {community.nodeType === 0 ? "AOA" : "Super"}
+                    </span>
+                  </div>
+
+                  <div className="card-body">
+                    <div className="info-row">
+                      <span className="label">Paymaster Address:</span>
+                      <code className="value">{community.paymasterAddress}</code>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Owner (Community):</span>
+                      <code className="value">{community.community}</code>
+                    </div>
+
+                    <div className="info-row">
+                      <span className="label">Registered:</span>
+                      <span className="value">
+                        {new Date(Number(community.registeredAt) * 1000).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        );
+
+      case "members":
+        const members = getMembers();
+        return (
+          <div className="members-grid">
+            {members.length === 0 ? (
+              <div className="no-results">
+                <p>No MySBT contracts found.</p>
+              </div>
+            ) : (
+              members.map((sbtAddress) => (
+                <div key={sbtAddress} className="member-card">
+                  <div className="card-header">
+                    <h3>MySBT Contract</h3>
+                  </div>
+                  <div className="card-body">
+                    <div className="info-row">
+                      <span className="label">Contract Address:</span>
+                      <code className="value">{sbtAddress}</code>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Used by Communities:</span>
+                      <span className="value">
+                        {communities.filter((c) => c.supportedSBTs.includes(sbtAddress)).length}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        );
+    }
+  };
 
   return (
     <div className="registry-explorer">
-      {/* Registry Info & Version Selector */}
+      {/* Registry Info Section */}
       <section className="registry-info-section">
         <div className="registry-header">
-          <div className="registry-title">
-            <h1>🏛️ Registry Explorer</h1>
-            {registryInfo && (
-              <div className="registry-address">
-                <span className="label">Contract:</span>
-                <code>{registryInfo.address}</code>
+          <h1>🏛️ Registry Explorer</h1>
+          {registryInfo && (
+            <div className="registry-details">
+              <div className="info-grid">
+                <div className="info-item">
+                  <span className="label">Contract Address:</span>
+                  <code className="value">{registryInfo.address}</code>
+                </div>
+                <div className="info-item">
+                  <span className="label">Registry Version:</span>
+                  <span className="value">{registryInfo.version}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Deployed At:</span>
+                  <span className="value">{registryInfo.deployedAt}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Shared-Config Version:</span>
+                  <span className="value">v{registryInfo.sharedConfigVersion}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">Total Communities:</span>
+                  <span className="value">{registryInfo.totalCommunities}</span>
+                </div>
               </div>
-            )}
-            {lastUpdated && (
-              <p className="cache-status">
-                Last updated: {formatCacheAge(lastUpdated)}
-                {loading && <span className="refreshing"> (refreshing...)</span>}
-              </p>
-            )}
-          </div>
-
-          <div className="version-selector">
-            <label>Registry Version:</label>
-            <div className="version-buttons">
-              <button
-                className={`version-btn ${registryVersion === "v1.2" ? "active" : ""}`}
-                onClick={() => setRegistryVersion("v1.2")}
-                disabled={loading}
-              >
-                v1.2 (Legacy)
-              </button>
-              <button
-                className={`version-btn ${registryVersion === "v2.1" ? "active" : ""}`}
-                onClick={() => setRegistryVersion("v2.1")}
-                disabled={loading}
-                title="Registry v2.0 (deprecated)"
-              >
-                v2.1
-              </button>
-              <button
-                className={`version-btn ${registryVersion === "v2.1.4" ? "active" : ""}`}
-                onClick={() => setRegistryVersion("v2.1.4")}
-                disabled={loading || !getCurrentNetworkConfig().contracts.registry}
-                title={!getCurrentNetworkConfig().contracts.registry ? "v2.1.4 not deployed yet" : ""}
-              >
-                v2.1.4 (Latest)
-              </button>
             </div>
-          </div>
-        </div>
-
-        {error && (
-          <div className="error-banner">
-            <span className="error-icon">⚠️</span>
-            <span>{error}</span>
-          </div>
-        )}
-
-        {loading && (
-          <div className="loading-banner">
-            <span className="spinner">⏳</span>
-            <span>Loading paymasters from {registryVersion}...</span>
-          </div>
-        )}
-      </section>
-
-      {/* Stats Bar */}
-      <section className="stats-section">
-        <div className="stats-bar">
-          <div className="stat-item">
-            <div className="stat-value">{paymasters.length}</div>
-            <div className="stat-label">Active Paymasters</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">
-              {paymasters
-                .reduce((sum, pm) => sum + pm.totalTransactions, 0)
-                .toLocaleString()}
-            </div>
-            <div className="stat-label">Total Transactions</div>
-          </div>
-          <div className="stat-item">
-            <div className="stat-value">{registryVersion}</div>
-            <div className="stat-label">Registry Version</div>
-          </div>
+          )}
+          {lastUpdated && (
+            <p className="cache-status">
+              Last updated: {formatCacheAge(lastUpdated)}
+              {loading && <span className="refreshing"> (refreshing...)</span>}
+            </p>
+          )}
         </div>
       </section>
 
-      {/* Search and Filter Section */}
-      <section className="search-section">
-        <div className="search-container">
-          <div className="search-bar">
-            <input
-              type="text"
-              placeholder="Search by name, address, or description..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="search-input"
-            />
-            <span className="search-icon">🔍</span>
-          </div>
-
-          <div className="filter-controls">
-            <div className="category-filter">
-              {categories.map((cat) => (
-                <button
-                  key={cat}
-                  className={`category-btn ${selectedCategory === cat ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            <div className="sort-control">
-              <label>Sort by:</label>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                <option value="transactions">Most Transactions</option>
-                <option value="gas">Most Gas Sponsored</option>
-                <option value="recent">Recently Added</option>
-              </select>
-            </div>
-          </div>
+      {/* Tabs */}
+      <section className="tabs-section">
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === "communities" ? "active" : ""}`}
+            onClick={() => setActiveTab("communities")}
+          >
+            🏘️ Communities ({communities.length})
+          </button>
+          <button
+            className={`tab ${activeTab === "paymasters" ? "active" : ""}`}
+            onClick={() => setActiveTab("paymasters")}
+          >
+            💳 Paymasters ({getPaymasters().length})
+          </button>
+          <button
+            className={`tab ${activeTab === "members" ? "active" : ""}`}
+            onClick={() => setActiveTab("members")}
+          >
+            🎫 Members (MySBT) ({getMembers().length})
+          </button>
         </div>
+
+        {/* Search */}
+        <div className="search-bar">
+          <input
+            type="text"
+            placeholder="Search by name, address, or ENS..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+          <span className="search-icon">🔍</span>
+        </div>
+
+        {/* Refresh Button */}
+        <button onClick={loadRegistryData} className="refresh-btn" disabled={loading}>
+          {loading ? "⏳" : "🔄"} Refresh
+        </button>
       </section>
 
-      {/* Paymaster Grid */}
-      <section className="paymaster-grid">
-        {filteredPaymasters.length === 0 ? (
-          <div className="no-results">
-            <p>No paymasters found matching your search criteria.</p>
-          </div>
-        ) : (
-          filteredPaymasters.map((pm) => {
-            const isHighlighted = shouldHighlight && highlightCommunity &&
-              pm.owner.toLowerCase() === highlightCommunity.toLowerCase();
-
-            return (
-              <div
-                key={pm.address}
-                className={`paymaster-card ${isHighlighted ? "highlighted" : ""}`}
-                onClick={() => setSelectedPaymaster(pm)}
-              >
-              <div className="card-header">
-                <div className="paymaster-name">
-                  <h3>{pm.name}</h3>
-                  {pm.verified && (
-                    <span className="verified-badge">✓ Verified</span>
-                  )}
-                </div>
-                <span className={`category-badge ${pm.category.toLowerCase()}`}>
-                  {pm.category}
-                </span>
-              </div>
-
-              <p className="paymaster-description">{pm.description}</p>
-
-              <div className="paymaster-stats">
-                <div className="stat">
-                  <span className="stat-label">Transactions</span>
-                  <span className="stat-value">
-                    {pm.totalTransactions.toLocaleString()}
-                  </span>
-                </div>
-                <div className="stat">
-                  <span className="stat-label">Gas Sponsored</span>
-                  <span className="stat-value">{pm.totalGasSponsored}</span>
-                </div>
-                <div className="stat">
-                  <span className="stat-label">Service Fee</span>
-                  <span className="stat-value">{pm.serviceFee}</span>
-                </div>
-              </div>
-
-              <div className="supported-tokens">
-                <span className="tokens-label">Supported Tokens:</span>
-                <div className="token-list">
-                  {pm.supportedTokens.map((token) => (
-                    <span key={token} className="token-badge">
-                      {token}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <div className="card-footer">
-                <span className="address">{pm.address}</span>
-                <button className="view-details-btn">View Details →</button>
-              </div>
-            </div>
-            );
-          })
-        )}
+      {/* Content */}
+      <section className="content-section">
+        {renderTabContent()}
       </section>
-
-      {/* Detail Modal */}
-      {selectedPaymaster && (
-        <div
-          className="modal-overlay"
-          onClick={() => setSelectedPaymaster(null)}
-        >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="close-modal"
-              onClick={() => setSelectedPaymaster(null)}
-            >
-              ✕
-            </button>
-
-            <div className="modal-header">
-              <div>
-                <h2>{selectedPaymaster.name}</h2>
-                {selectedPaymaster.verified && (
-                  <span className="verified-badge">✓ Verified</span>
-                )}
-              </div>
-              <span
-                className={`category-badge ${selectedPaymaster.category.toLowerCase()}`}
-              >
-                {selectedPaymaster.category}
-              </span>
-            </div>
-
-            <div className="modal-body">
-              <section className="detail-section">
-                <h3>Description</h3>
-                <p>{selectedPaymaster.description}</p>
-              </section>
-
-              <section className="detail-section">
-                <h3>Statistics</h3>
-                <div className="stats-grid">
-                  <div className="detail-stat">
-                    <span className="stat-label">Total Transactions</span>
-                    <span className="stat-value">
-                      {selectedPaymaster.totalTransactions.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="detail-stat">
-                    <span className="stat-label">Total Gas Sponsored</span>
-                    <span className="stat-value">
-                      {selectedPaymaster.totalGasSponsored}
-                    </span>
-                  </div>
-                  <div className="detail-stat">
-                    <span className="stat-label">Service Fee</span>
-                    <span className="stat-value">
-                      {selectedPaymaster.serviceFee}
-                    </span>
-                  </div>
-                  <div className="detail-stat">
-                    <span className="stat-label">Registered</span>
-                    <span className="stat-value">
-                      {selectedPaymaster.registeredAt}
-                    </span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="detail-section">
-                <h3>Supported Tokens</h3>
-                <div className="token-list large">
-                  {selectedPaymaster.supportedTokens.map((token) => (
-                    <span key={token} className="token-badge large">
-                      {token}
-                    </span>
-                  ))}
-                </div>
-              </section>
-
-              <section className="detail-section">
-                <h3>Contract Information</h3>
-                <div className="info-table">
-                  <div className="info-row">
-                    <span className="info-label">Paymaster Address:</span>
-                    <span className="info-value">
-                      <code>{selectedPaymaster.address}</code>
-                      <button className="copy-btn" title="Copy address">
-                        📋
-                      </button>
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">Owner Address:</span>
-                    <span className="info-value">
-                      <code>{selectedPaymaster.owner}</code>
-                      <button className="copy-btn" title="Copy address">
-                        📋
-                      </button>
-                    </span>
-                  </div>
-                </div>
-              </section>
-
-              <section className="detail-section">
-                <h3>Integration</h3>
-                <div className="code-block">
-                  <pre>
-                    <code>{`// Use this paymaster in your dApp
-const paymasterAddress = "${selectedPaymaster.address}";
-
-const userOp = await buildUserOperation({
-  sender: accountAddress,
-  callData: encodedCallData,
-  paymasterAndData: paymasterAddress
-});`}</code>
-                  </pre>
-                </div>
-              </section>
-            </div>
-
-            <div className="modal-footer">
-              <button
-                className="btn-secondary"
-                onClick={() => setSelectedPaymaster(null)}
-              >
-                Close
-              </button>
-              <button className="btn-primary">Integrate This Paymaster</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
