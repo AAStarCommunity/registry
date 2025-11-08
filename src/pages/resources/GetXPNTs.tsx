@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { xPNTsFactoryABI, RegistryABI } from "../../config/abis";
+import { xPNTsFactoryABI, RegistryABI, ERC20_ABI } from "../../config/abis";
 import "./GetXPNTs.css";
 
 export function GetXPNTs() {
@@ -23,6 +23,9 @@ export function GetXPNTs() {
   const [existingToken, setExistingToken] = useState<string>("");
   const [tokenName, setTokenName] = useState<string>("");
   const [tokenSymbol, setTokenSymbol] = useState<string>("");
+  const [tokenDecimals, setTokenDecimals] = useState<number>(18);
+  const [tokenTotalSupply, setTokenTotalSupply] = useState<string>("");
+  const [tokenCreatedAt, setTokenCreatedAt] = useState<string>("");
   const [communityName, setCommunityName] = useState<string>("");
   const [communityENS, setCommunityENS] = useState<string>("");
   const [paymasterMode, setPaymasterMode] = useState<"AOA+" | "AOA">("AOA+");
@@ -35,6 +38,8 @@ export function GetXPNTs() {
   // Registry state
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [isCheckingRegistry, setIsCheckingRegistry] = useState<boolean>(false);
+  const [communityXPNTsToken, setCommunityXPNTsToken] = useState<string>("");
+  const [isTokenBound, setIsTokenBound] = useState<boolean>(false);
 
   // Registry update state
   const [isUpdatingRegistry, setIsUpdatingRegistry] = useState(false);
@@ -60,9 +65,17 @@ export function GetXPNTs() {
         const profile = await registry.getCommunityProfile(address);
         setCommunityName(profile.name || "");
         setCommunityENS(profile.ensName || "");
+
+        // Check if xPNTsToken is already bound
+        const boundToken = profile.xPNTsToken || "";
+        setCommunityXPNTsToken(boundToken);
+        setIsTokenBound(boundToken !== "" && boundToken !== ethers.ZeroAddress);
+
         console.log("Loaded community info from Registry:", {
           name: profile.name,
-          ensName: profile.ensName
+          ensName: profile.ensName,
+          xPNTsToken: boundToken,
+          isTokenBound: boundToken !== "" && boundToken !== ethers.ZeroAddress
         });
       }
     } catch (err) {
@@ -106,6 +119,50 @@ export function GetXPNTs() {
       if (hasToken) {
         const tokenAddress = await factory.getTokenAddress(address);
         setExistingToken(tokenAddress);
+
+        // Get token details from ERC20 contract
+        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
+
+        try {
+          const [name, symbol, decimals, totalSupply] = await Promise.all([
+            tokenContract.name(),
+            tokenContract.symbol(),
+            tokenContract.decimals(),
+            tokenContract.totalSupply()
+          ]);
+
+          setTokenName(name);
+          setTokenSymbol(symbol);
+          setTokenDecimals(Number(decimals));
+          setTokenTotalSupply(ethers.formatUnits(totalSupply, decimals));
+
+          console.log("Token details loaded:", {
+            address: tokenAddress,
+            name,
+            symbol,
+            decimals: Number(decimals),
+            totalSupply: ethers.formatUnits(totalSupply, decimals)
+          });
+        } catch (tokenErr) {
+          console.error("Failed to fetch token details:", tokenErr);
+        }
+
+        // Try to get creation timestamp from xPNTsFactory events
+        try {
+          const createdFilter = factory.filters.TokenCreated(address);
+          const events = await factory.queryFilter(createdFilter, 0, 'latest');
+
+          if (events.length > 0) {
+            const block = await rpcProvider.getBlock(events[0].blockNumber);
+            if (block) {
+              const createdDate = new Date(block.timestamp * 1000);
+              setTokenCreatedAt(createdDate.toISOString());
+              console.log("Token created at:", createdDate.toISOString());
+            }
+          }
+        } catch (eventErr) {
+          console.error("Failed to fetch creation timestamp:", eventErr);
+        }
       }
     } catch (err) {
       console.error("Failed to check existing token:", err);
@@ -173,6 +230,21 @@ export function GetXPNTs() {
       return false;
     } finally {
       setIsUpdatingRegistry(false);
+    }
+  };
+
+  // Bind existing token to community
+  const handleBindToken = async () => {
+    if (!existingToken) {
+      setError("No token found to bind");
+      return;
+    }
+
+    const success = await updateRegistryWithToken(existingToken);
+
+    if (success) {
+      // Refresh community info to show updated binding
+      await checkRegistryInfo(account);
     }
   };
 
@@ -369,7 +441,106 @@ export function GetXPNTs() {
               {existingToken && (
                 <div className="existing-sbt-box">
                   <h4>Your xPNTs Token</h4>
-                  <p className="mono">{existingToken}</p>
+
+                  {/* Token Details */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
+                    <div className="info-row">
+                      <span className="label">Token Name:</span>
+                      <span className="value">{tokenName || "Loading..."}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Symbol:</span>
+                      <span className="value">{tokenSymbol || "Loading..."}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Contract Address:</span>
+                      <span className="value mono" style={{ fontSize: "0.9rem" }}>{existingToken}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Decimals:</span>
+                      <span className="value">{tokenDecimals}</span>
+                    </div>
+                    <div className="info-row">
+                      <span className="label">Total Supply:</span>
+                      <span className="value">{tokenTotalSupply ? `${tokenTotalSupply} ${tokenSymbol}` : "Loading..."}</span>
+                    </div>
+                    {tokenCreatedAt && (
+                      <div className="info-row">
+                        <span className="label">Deployed:</span>
+                        <span className="value">{new Date(tokenCreatedAt).toLocaleString()}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Community Binding Status */}
+                  {isRegistered && (
+                    <div style={{
+                      padding: "0.75rem",
+                      borderRadius: "8px",
+                      backgroundColor: isTokenBound ? "#d4edda" : "#fff3cd",
+                      border: `2px solid ${isTokenBound ? "#28a745" : "#ffc107"}`,
+                      marginBottom: "1rem"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
+                        <span style={{ fontSize: "1.2rem" }}>{isTokenBound ? "✅" : "⚠️"}</span>
+                        <strong>{isTokenBound ? "Token Bound to Community" : "Token Not Bound"}</strong>
+                      </div>
+                      <div style={{ fontSize: "0.9rem", color: "#666" }}>
+                        <div>Community: {communityName}</div>
+                        {isTokenBound && communityXPNTsToken && (
+                          <div className="mono" style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                            Bound Address: {communityXPNTsToken.slice(0, 10)}...{communityXPNTsToken.slice(-8)}
+                          </div>
+                        )}
+                        {!isTokenBound && (
+                          <div style={{ marginTop: "0.5rem" }}>
+                            <button
+                              className="action-button primary"
+                              onClick={handleBindToken}
+                              disabled={isUpdatingRegistry}
+                              style={{ width: "100%", padding: "0.5rem" }}
+                            >
+                              {isUpdatingRegistry ? "Binding..." : "Bind Token to Community"}
+                            </button>
+                            {registryUpdateStatus && (
+                              <div style={{
+                                marginTop: "0.5rem",
+                                fontSize: "0.85rem",
+                                color: registryUpdateStatus.includes("成功") ? "#28a745" : "#dc3545"
+                              }}>
+                                {registryUpdateStatus}
+                                {registryTxHash && (
+                                  <a
+                                    href={`https://sepolia.etherscan.io/tx/${registryTxHash}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ display: "block", marginTop: "0.25rem" }}
+                                  >
+                                    View TX →
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {!isRegistered && (
+                    <div style={{
+                      padding: "0.75rem",
+                      borderRadius: "8px",
+                      backgroundColor: "#f8f9fa",
+                      border: "2px solid #dee2e6",
+                      marginBottom: "1rem",
+                      fontSize: "0.9rem",
+                      color: "#666"
+                    }}>
+                      ℹ️ Register as a community to bind this token
+                    </div>
+                  )}
+
                   <a
                     href={`https://sepolia.etherscan.io/address/${existingToken}`}
                     target="_blank"
