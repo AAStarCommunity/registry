@@ -613,5 +613,17 @@
   border-radius: 6px;
   font-size: 0.85rem;
   font-weight: 600;
+}
+
+.registry-info-banner .version-badge {
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
   white-space: nowrap;
 }

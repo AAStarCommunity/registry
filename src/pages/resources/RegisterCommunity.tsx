@@ -43,6 +43,10 @@ export function RegisterCommunity() {
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
+  
+  // Version info state
+  const [registryVersion, setRegistryVersion] = useState<string>("");
+  const [sharedConfigVersion, setSharedConfigVersion] = useState<string>("");
 
   // Community list state
   const [communities, setCommunities] = useState<Array<{
@@ -74,15 +78,48 @@ export function RegisterCommunity() {
     }
   };
 
-  // Log contract addresses on mount
+  // Fetch version info on mount
   useEffect(() => {
-    console.log('=== Contract Addresses ===');
-    console.log('Registry:', REGISTRY_ADDRESS);
-    console.log('GToken:', GTOKEN_ADDRESS);
-    console.log('GTokenStaking:', GTOKEN_STAKING_ADDRESS);
-    console.log('Network:', networkConfig.chainName);
-    console.log('========================');
+    fetchVersionInfo();
   }, []);
+
+  // Fetch version information
+  const fetchVersionInfo = async () => {
+    try {
+      // Get shared-config version from package.json
+      const sharedConfigVersion = "@aastar/shared-config@0.3.1"; // From package.json
+      setSharedConfigVersion(sharedConfigVersion);
+
+      // Get Registry version from contract
+      if (REGISTRY_ADDRESS && REGISTRY_ADDRESS !== "0x0") {
+        const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+        const registryContract = new ethers.Contract(
+          REGISTRY_ADDRESS,
+          ["function VERSION() view returns (string)", "function VERSION_CODE() view returns (uint256)"],
+          rpcProvider
+        );
+
+        try {
+          const version = await registryContract.VERSION();
+          const versionCode = await registryContract.VERSION_CODE();
+          setRegistryVersion(`${version} (${versionCode.toString()})`);
+        } catch (err) {
+          console.error('Failed to fetch Registry version:', err);
+          setRegistryVersion("Unknown");
+        }
+      }
+
+      console.log('=== Version Information ===');
+      console.log('Shared Config:', sharedConfigVersion);
+      console.log('Registry:', registryVersion || "Loading...");
+      console.log('Registry Address:', REGISTRY_ADDRESS);
+      console.log('========================');
+    } catch (error) {
+      console.error('Error fetching version info:', error);
+      setRegistryVersion("Error");
+      setSharedConfigVersion("Error");
+    }
+  };
 
   // Fetch communities on mount
   useEffect(() => {
@@ -511,16 +548,28 @@ export function RegisterCommunity() {
         <div className="registry-info-banner">
           <div className="info-icon">ℹ️</div>
           <div className="info-content">
-            <strong>Registry Contract:</strong>{' '}
-            <a
-              href={`${networkConfig.explorerUrl}/address/${REGISTRY_ADDRESS}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="registry-link"
-            >
-              {REGISTRY_ADDRESS}
-            </a>
-            <span className="network-badge">{networkConfig.chainName}</span>
+            <div style={{ marginBottom: '8px' }}>
+              <strong>Registry Contract:</strong>{' '}
+              <a
+                href={`${networkConfig.explorerUrl}/address/${REGISTRY_ADDRESS}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="registry-link"
+              >
+                {REGISTRY_ADDRESS}
+              </a>
+              <span className="network-badge">{networkConfig.chainName}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div>
+                <strong>Registry Version:</strong>{' '}
+                <span className="version-badge">{registryVersion || "Loading..."}</span>
+              </div>
+              <div>
+                <strong>Shared Config:</strong>{' '}
+                <span className="version-badge">{sharedConfigVersion}</span>
+              </div>
+            </div>
           </div>
         </div>
 

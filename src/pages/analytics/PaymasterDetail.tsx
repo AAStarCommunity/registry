@@ -136,7 +136,7 @@ export function PaymasterDetail() {
         // Calculate reputation based on success rate
         // For now, use a simplified reputation calculation
         // In a real implementation, this would come from the Registry contract
-        let reputation = 100; // Default reputation
+        const reputation = 100; // Default reputation
 
         // Paymaster was deployed via factory - this means it's registered
         registryData = {
