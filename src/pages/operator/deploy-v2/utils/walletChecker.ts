@@ -334,12 +334,12 @@ export async function checkWalletStatus(
           )
         : Promise.resolve("0"),
 
-      // 4. Check aPNTs balance (always cache, even if 0)
+      // 4. Check aPNTs balance (only cache if balance > 0, to avoid caching 0 from AOA mode)
       aPNTAddress
         ? getCachedOrFetch(
             `wallet_apnts_${addr}`,
             () => checkTokenBalance(aPNTAddress, address),
-            (result) => parseFloat(result) >= 0
+            (result) => parseFloat(result) > 0 // ✅ Only cache non-zero balance
           )
         : Promise.resolve("0"),
 
