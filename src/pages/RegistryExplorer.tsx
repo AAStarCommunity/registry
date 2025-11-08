@@ -66,6 +66,11 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
   // Sync activeTab with initialTab prop
   useEffect(() => {
     setActiveTab(initialTab);
+
+    // Trigger data loading for the initial tab
+    if (initialTab === "members" && mySBTHolders.length === 0) {
+      loadMySBTHolders();
+    }
   }, [initialTab]);
 
   // Load MySBT holders when switching to members tab
@@ -129,18 +134,19 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
         try {
           const profile = await registry.communities(communityAddr);
 
+          // Explicitly convert all values to avoid BigInt serialization issues
           communityList.push({
-            name: profile.name || "Unnamed",
-            ensName: profile.ensName || "",
-            xPNTsToken: profile.xPNTsToken || ethers.ZeroAddress,
-            supportedSBTs: profile.supportedSBTs || [],
-            paymasterAddress: profile.paymasterAddress || ethers.ZeroAddress,
-            community: communityAddr,
-            nodeType: profile.nodeType,
-            registeredAt: profile.registeredAt.toString(), // Store as string for JSON serialization
+            name: String(profile.name || "Unnamed"),
+            ensName: String(profile.ensName || ""),
+            xPNTsToken: String(profile.xPNTsToken || ethers.ZeroAddress),
+            supportedSBTs: (profile.supportedSBTs || []).map((sbt: any) => String(sbt)),
+            paymasterAddress: String(profile.paymasterAddress || ethers.ZeroAddress),
+            community: String(communityAddr),
+            nodeType: Number(profile.nodeType),
+            registeredAt: profile.registeredAt.toString(),
             lastUpdatedAt: profile.lastUpdatedAt.toString(),
-            isActive: profile.isActive,
-            allowPermissionlessMint: profile.allowPermissionlessMint,
+            isActive: Boolean(profile.isActive),
+            allowPermissionlessMint: Boolean(profile.allowPermissionlessMint),
           });
         } catch (err) {
           console.warn(`Failed to load profile for ${communityAddr}:`, err);

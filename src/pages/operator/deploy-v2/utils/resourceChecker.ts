@@ -277,8 +277,8 @@ export async function checkAOAResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first
-    const cacheKey = `resource_check_aoa_${walletAddress.toLowerCase()}`;
+    // Check cache first (v2 - MySBT binding from Registry)
+    const cacheKey = `resource_check_aoa_v2_${walletAddress.toLowerCase()}`;
     const cached = loadFromCache<ResourceStatus>(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -376,8 +376,8 @@ export async function checkAOAPlusResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first
-    const cacheKey = `resource_check_aoa_plus_${walletAddress.toLowerCase()}`;
+    // Check cache first (v2 - MySBT binding from Registry)
+    const cacheKey = `resource_check_aoa_plus_v2_${walletAddress.toLowerCase()}`;
     const cached = loadFromCache<ResourceStatus>(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
