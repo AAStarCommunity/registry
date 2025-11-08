@@ -169,15 +169,13 @@ export async function isContractDeployed(address: string): Promise<boolean> {
 export async function checkCommunityRegistration(
   address: string
 ): Promise<{ isRegistered: boolean; communityName?: string }> {
-  try {
-    const networkConfig = getCurrentNetworkConfig();
-    const registryAddress = networkConfig.contracts.registry;
+  const networkConfig = getCurrentNetworkConfig();
+  const registryAddress = networkConfig.contracts.registry;
 
-    // Try RPC proxy first for reliability
+  // Helper function to check with a specific provider
+  async function checkWithProvider(provider: ethers.Provider): Promise<{ isRegistered: boolean; communityName?: string }> {
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      const registry = new ethers.Contract(registryAddress, RegistryABI, rpcProvider);
-
+      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
       const community = await registry.communities(address);
 
       // Check if registeredAt is not 0 (means community is registered)
@@ -185,19 +183,27 @@ export async function checkCommunityRegistration(
       const communityName = isRegistered ? community.name : undefined;
 
       return { isRegistered, communityName };
+    } catch (error) {
+      // If the call reverts, it likely means the community is not registered
+      // This is expected behavior for unregistered communities
+      if (error instanceof Error && error.message.includes('execution reverted')) {
+        console.log("Community not registered (expected for new users)");
+        return { isRegistered: false };
+      }
+      throw error;
+    }
+  }
+
+  try {
+    // Try RPC proxy first for reliability
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+      return await checkWithProvider(rpcProvider);
     } catch (rpcError) {
       console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
       // Fallback to MetaMask provider
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
-
-      const community = await registry.communities(address);
-
-      // Check if registeredAt is not 0 (means community is registered)
-      const isRegistered = community.registeredAt !== 0n;
-      const communityName = isRegistered ? community.name : undefined;
-
-      return { isRegistered, communityName };
+      return await checkWithProvider(provider);
     }
   } catch (error) {
     console.error("Failed to check community registration:", error);
