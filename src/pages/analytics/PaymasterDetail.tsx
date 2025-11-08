@@ -104,6 +104,7 @@ export function PaymasterDetail() {
 
         // Fetch stake amount from GTokenStaking contract
         let stakedAmount = "0";
+        let stakedAmountFormatted = "0";
         try {
           const gTokenStakingAddress = networkConfig.contracts.gTokenStaking;
           const gTokenStakingAbi = [
@@ -120,11 +121,14 @@ export function PaymasterDetail() {
           try {
             const balance = await gTokenStaking.balanceOf(operatorAddress);
             stakedAmount = balance.toString();
+            stakedAmountFormatted = ethers.formatUnits(balance, 18); // GToken has 18 decimals
           } catch (e) {
             // If balanceOf fails, try stakes mapping
             try {
               const stake = await gTokenStaking.stakes(operatorAddress);
-              stakedAmount = stake.amount ? stake.amount.toString() : stake[0] ? stake[0].toString() : "0";
+              const amount = stake.amount ? stake.amount : stake[0] ? stake[0] : 0n;
+              stakedAmount = amount.toString();
+              stakedAmountFormatted = ethers.formatUnits(amount, 18);
             } catch (err) {
               console.log("Could not read stake from GTokenStaking:", err);
             }
@@ -147,12 +151,13 @@ export function PaymasterDetail() {
           timestamp: new Date().toLocaleString(),
           feeRate: 0,
           stakedAmount: stakedAmount,
+          stakedAmountFormatted: stakedAmountFormatted,
           reputation: reputation.toString(),
           isActive: true,
           successCount: 0,
           totalAttempts: 0,
-          registeredAt: "0",
-          lastActiveAt: "0",
+          registeredAt: null, // Will be set from Registry if available
+          lastActiveAt: null, // Will be set from Registry if available
         };
       }
 
@@ -215,7 +220,10 @@ export function PaymasterDetail() {
         ).toFixed(2)
       : "N/A";
 
-  const formatTimestamp = (timestamp: number) => {
+  const formatTimestamp = (timestamp: number | null) => {
+    if (!timestamp || timestamp === 0) {
+      return "未注册";
+    }
     return new Date(timestamp * 1000).toLocaleString();
   };
 
@@ -405,7 +413,7 @@ export function PaymasterDetail() {
             <div className="info-item">
               <label>Staked Amount:</label>
               <span className="value">
-                {formatEther(registryInfo.stakedAmount)} ETH/PNT
+                {registryInfo.stakedAmountFormatted} GToken
               </span>
             </div>
             <div className="info-item">
@@ -469,11 +477,11 @@ export function PaymasterDetail() {
           <div className="info-grid">
             <div className="info-item">
               <label>Registered At:</label>
-              <span>{formatTimestamp(Number(registryInfo.registeredAt))}</span>
+              <span>{formatTimestamp(registryInfo.registeredAt)}</span>
             </div>
             <div className="info-item">
               <label>Last Active:</label>
-              <span>{formatTimestamp(Number(registryInfo.lastActiveAt))}</span>
+              <span>{registryInfo.lastActiveAt ? formatTimestamp(registryInfo.lastActiveAt) : "未活跃"}</span>
             </div>
           </div>
         </div>
