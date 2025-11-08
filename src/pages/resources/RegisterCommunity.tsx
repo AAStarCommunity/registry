@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getCoreContracts, getTokenContracts, getBlockExplorer } from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
 import { RegistryV2_1_4ABI, xPNTsFactoryABI, PaymasterFactoryABI, GTokenStakingABI } from "../../config/abis";
 import "./RegisterCommunity.css";
@@ -11,15 +11,18 @@ export function RegisterCommunity() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Get addresses from shared-config
-  const networkConfig = getCurrentNetworkConfig();
-  const REGISTRY_ADDRESS = networkConfig.contracts.registry; // Registry v2.1.4
-  const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
-  const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
-  const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
-  const MYSBT_ADDRESS = networkConfig.contracts.mySBT; // MySBT white-label SBT
-  const PAYMASTER_FACTORY_ADDRESS = networkConfig.contracts.paymasterFactory;
+  // Get addresses directly from shared-config
+  const core = getCoreContracts('sepolia');
+  const tokens = getTokenContracts('sepolia');
+  
+  const REGISTRY_ADDRESS = core.registry; // Registry v2.1.4
+  const GTOKEN_ADDRESS = core.gToken;
+  const GTOKEN_STAKING_ADDRESS = core.gTokenStaking;
+  const XPNTS_FACTORY_ADDRESS = tokens.xPNTsFactory;
+  const MYSBT_ADDRESS = tokens.mySBT; // MySBT white-label SBT
+  const PAYMASTER_FACTORY_ADDRESS = core.paymasterFactory;
   const RPC_URL = getRpcUrl();
+  const EXPLORER_URL = getBlockExplorer('sepolia');
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -91,7 +94,7 @@ export function RegisterCommunity() {
       setSharedConfigVersion(sharedConfigVersion);
 
       // Get Registry version from contract
-      if (REGISTRY_ADDRESS && REGISTRY_ADDRESS !== "0x0") {
+      if (REGISTRY_ADDRESS) {
         const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
         const registryContract = new ethers.Contract(
           REGISTRY_ADDRESS,
@@ -338,7 +341,7 @@ export function RegisterCommunity() {
   // Load user's GToken balance
   const loadGTokenBalance = async (address: string) => {
     try {
-      if (!GTOKEN_ADDRESS || GTOKEN_ADDRESS === "0x0") {
+      if (!GTOKEN_ADDRESS) {
         return;
       }
 
@@ -381,7 +384,7 @@ export function RegisterCommunity() {
       const signer = await provider.getSigner();
 
       // Check user's GToken balance BEFORE starting any transactions
-      if (GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0") {
+      if (GTOKEN_ADDRESS) {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
           ["function balanceOf(address) external view returns (uint256)"],
@@ -415,7 +418,7 @@ export function RegisterCommunity() {
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
       // Step 1: Approve GToken to GTokenStaking and stake
-      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
+      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_STAKING_ADDRESS) {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
           ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)", "function balanceOf(address) external view returns (uint256)"],
@@ -475,7 +478,7 @@ export function RegisterCommunity() {
 
       // IMPORTANT: Wait for blockchain state to sync before calling Registry
       // Re-verify available balance right before registerCommunity to ensure state is synced
-      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS && GTOKEN_STAKING_ADDRESS !== "0x0") {
+      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS) {
         console.log(t('registerCommunity.console.verifyingBalanceBeforeRegister'));
 
         // Create a read-only staking contract to verify balance
@@ -551,14 +554,14 @@ export function RegisterCommunity() {
             <div style={{ marginBottom: '8px' }}>
               <strong>Registry Contract:</strong>{' '}
               <a
-                href={`${networkConfig.explorerUrl}/address/${REGISTRY_ADDRESS}`}
+                href={`${EXPLORER_URL}/address/${REGISTRY_ADDRESS}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="registry-link"
               >
                 {REGISTRY_ADDRESS}
               </a>
-              <span className="network-badge">{networkConfig.chainName}</span>
+              <span className="network-badge">Sepolia Testnet</span>
             </div>
             <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
               <div>
@@ -589,7 +592,7 @@ export function RegisterCommunity() {
                 <p className="tx-hash">
                   <strong>{t('registerCommunity.success.txHash')}:</strong>{' '}
                   <a
-                    href={`${networkConfig.explorerUrl}/tx/${registerTxHash}`}
+                    href={`${EXPLORER_URL}/tx/${registerTxHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -658,12 +661,12 @@ export function RegisterCommunity() {
                   )}
                 </button>
               </div>
-              {GTOKEN_ADDRESS && GTOKEN_ADDRESS !== "0x0" && (
+              {GTOKEN_ADDRESS && (
                 <>
                   <p>
                     <strong>GToken Contract:</strong>{' '}
                     <a
-                      href={`${networkConfig.explorerUrl}/address/${GTOKEN_ADDRESS}`}
+                      href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ color: '#2196f3', textDecoration: 'underline', fontFamily: 'monospace', fontSize: '0.9em' }}
