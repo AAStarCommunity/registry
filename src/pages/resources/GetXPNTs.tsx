@@ -12,7 +12,7 @@ export function GetXPNTs() {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
-  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
+  const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
   const RPC_URL = getRpcUrl();
   const SUPER_PAYMASTER_V2_ADDRESS = networkConfig.contracts.superPaymasterV2;
 

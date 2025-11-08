@@ -7,7 +7,7 @@
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
-import { getRpcUrl } from "../../../../config/rpc";
+import { getRpcUrl, getPublicRpcUrls } from "../../../../config/rpc";
 import { ERC20_ABI, RegistryABI, xPNTsFactoryABI } from "../../../../config/abis";
 
 export interface WalletStatus {
@@ -50,6 +50,40 @@ export interface CheckOptions {
 // ABIs imported from shared-config via config/abis.ts
 
 /**
+ * Get RPC provider with fallback support
+ */
+async function getRpcProvider(): Promise<ethers.JsonRpcProvider> {
+  // In development, use direct public RPCs since proxy may not be available
+  // In production, use the configured RPC proxy
+  const rpcUrls = import.meta.env.MODE === "development" 
+    ? [
+        "https://eth-sepolia.g.alchemy.com/v2/demo", // Public demo key
+        "https://rpc.sepolia.org",
+        "https://ethereum-sepolia.publicnode.com",
+        ...getPublicRpcUrls()
+      ]
+    : [getRpcUrl(), ...getPublicRpcUrls()];
+
+  let lastError: Error | null = null;
+
+  for (const rpcUrl of rpcUrls) {
+    try {
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+      // Test the connection with a simple call
+      await provider.getNetwork();
+      console.log(`✅ RPC connected: ${rpcUrl.replace(/\/v2\/.*$/, '/v2/***')}`);
+      return provider;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Unknown error");
+      console.warn(`⚠️ RPC failed: ${rpcUrl}`, lastError.message);
+    }
+  }
+
+  // All RPCs failed, throw the last error
+  throw lastError || new Error("All RPC endpoints failed");
+}
+
+/**
  * Connect to MetaMask and get user address
  */
 export async function connectWallet(): Promise<string> {
@@ -79,7 +113,12 @@ export async function connectWallet(): Promise<string> {
  */
 export async function checkETHBalance(address: string): Promise<string> {
   try {
-    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    // Try direct public RPC first for development
+    const rpcUrl = import.meta.env.MODE === "development" 
+      ? "https://rpc.sepolia.org" 
+      : getRpcUrl();
+    
+    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
     const balance = await rpcProvider.getBalance(address);
     return ethers.formatEther(balance);
   } catch (error) {
@@ -101,7 +140,12 @@ export async function checkTokenBalance(
   }
 
   try {
-    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    // Try direct public RPC first for development
+    const rpcUrl = import.meta.env.MODE === "development" 
+      ? "https://rpc.sepolia.org" 
+      : getRpcUrl();
+    
+    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
     const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
 
     const balance = await contract.balanceOf(userAddress);
@@ -123,7 +167,12 @@ export async function isContractDeployed(address: string): Promise<boolean> {
   }
 
   try {
-    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    // Try direct public RPC first for development
+    const rpcUrl = import.meta.env.MODE === "development" 
+      ? "https://rpc.sepolia.org" 
+      : getRpcUrl();
+    
+    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
     const code = await rpcProvider.getCode(address);
     return code !== "0x";
   } catch (error) {
@@ -139,7 +188,7 @@ export async function checkCommunityRegistration(
   address: string
 ): Promise<{ isRegistered: boolean; communityName?: string }> {
   const networkConfig = getCurrentNetworkConfig();
-  const registryAddress = networkConfig.contracts.registry;
+  const registryAddress = networkConfig.contracts.registryV2_1;
 
   // Helper function to check with a specific provider
   async function checkWithProvider(provider: ethers.Provider): Promise<{ isRegistered: boolean; communityName?: string }> {
@@ -169,7 +218,12 @@ export async function checkCommunityRegistration(
   }
 
   try {
-    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    // Try direct public RPC first for development
+    const rpcUrl = import.meta.env.MODE === "development" 
+      ? "https://rpc.sepolia.org" 
+      : getRpcUrl();
+    
+    const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
     return await checkWithProvider(rpcProvider);
   } catch (error) {
     console.error("Failed to check community registration:", error);
@@ -252,8 +306,14 @@ export async function checkWalletStatus(
     // Check for existing xPNTs (GasToken) contract via xPNTsFactory
     try {
       const networkConfig = getCurrentNetworkConfig();
-      const gasTokenFactoryAddress = networkConfig.contracts.gasTokenFactory;
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+      const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
+      
+      // Try direct public RPC first for development
+      const rpcUrl = import.meta.env.MODE === "development" 
+        ? "https://rpc.sepolia.org" 
+        : getRpcUrl();
+      
+      const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
       const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
       
       // hasToken() should return boolean, not revert
