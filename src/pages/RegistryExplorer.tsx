@@ -132,7 +132,9 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
       for (const communityAddr of communityAddresses) {
         try {
-          const profile = await registry.communities(communityAddr);
+          // Use getCommunityProfile instead of communities mapping
+          // communities(address) mapping does NOT have supportedSBTs field
+          const profile = await registry.getCommunityProfile(communityAddr);
 
           // Explicitly convert all values to avoid BigInt serialization issues
           communityList.push({
@@ -220,13 +222,13 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       // Query MySBT contract
       const mySBT = new ethers.Contract(mySBTAddress, MySBTABI, provider);
 
-      // Get total supply
-      const totalSupply = await mySBT.totalSupply();
-      console.log(`📋 Total MySBT supply: ${totalSupply}`);
+      // Get next token ID (MySBT uses incremental token IDs starting from 0)
+      const nextTokenId = await mySBT.nextTokenId();
+      console.log(`📋 Total MySBT tokens: ${nextTokenId}`);
 
       // Query all holders via ownerOf
       const holders: MySBTHolder[] = [];
-      for (let tokenId = 0; tokenId < Number(totalSupply); tokenId++) {
+      for (let tokenId = 0; tokenId < Number(nextTokenId); tokenId++) {
         try {
           const owner = await mySBT.ownerOf(tokenId);
           holders.push({ tokenId, owner });

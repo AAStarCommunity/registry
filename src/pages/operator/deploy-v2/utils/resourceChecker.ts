@@ -200,12 +200,14 @@ async function checkSBTBinding(
     console.log("Expected MySBT address (from shared-config):", globalMySBT);
     console.log("Registry address:", registryAddress);
 
-    // Query community profile from Registry
+    // Query community profile from Registry using getCommunityProfile (NOT communities mapping)
+    // communities(address) mapping does NOT have supportedSBTs field
+    // getCommunityProfile(address) function returns complete profile with supportedSBTs
     const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
-    const community = await registry.communities(communityAddress);
+    const profile = await registry.getCommunityProfile(communityAddress);
 
-    const supportedSBTs = community.supportedSBTs || [];
-    console.log("Supported SBTs from Registry.communities:", supportedSBTs);
+    const supportedSBTs = profile.supportedSBTs || [];
+    console.log("Supported SBTs from Registry.getCommunityProfile:", supportedSBTs);
 
     // Check if global MySBT is in supported list
     const hasSBTBinding = supportedSBTs.some(
@@ -277,8 +279,8 @@ export async function checkAOAResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first (v2 - MySBT binding from Registry)
-    const cacheKey = `resource_check_aoa_v2_${walletAddress.toLowerCase()}`;
+    // Check cache first (v3 - MySBT binding from getCommunityProfile)
+    const cacheKey = `resource_check_aoa_v3_${walletAddress.toLowerCase()}`;
     const cached = loadFromCache<ResourceStatus>(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
@@ -376,8 +378,8 @@ export async function checkAOAPlusResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first (v2 - MySBT binding from Registry)
-    const cacheKey = `resource_check_aoa_plus_v2_${walletAddress.toLowerCase()}`;
+    // Check cache first (v3 - MySBT binding from getCommunityProfile)
+    const cacheKey = `resource_check_aoa_plus_v3_${walletAddress.toLowerCase()}`;
     const cached = loadFromCache<ResourceStatus>(cacheKey);
 
     if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
