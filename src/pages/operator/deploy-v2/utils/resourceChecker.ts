@@ -24,6 +24,39 @@ import {
 
 // Cache configuration
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes (matches walletChecker)
+const CACHE_TTL_SECONDS = 3600; // 60 minutes in seconds for saveToCache
+
+/**
+ * Helper to get cached value or execute function
+ * Only caches successful results (non-null, non-zero, non-empty)
+ */
+async function getCachedOrFetch<T>(
+  cacheKey: string,
+  fetchFn: () => Promise<T>,
+  isSuccess: (value: T) => boolean
+): Promise<T> {
+  // Try cache first
+  const cached = loadFromCache<T>(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`✅ Cache hit: ${cacheKey}`);
+    return cached.data;
+  }
+
+  console.log(`🔄 Cache miss: ${cacheKey}, fetching...`);
+
+  // Fetch new data
+  const result = await fetchFn();
+
+  // Only cache successful results
+  if (isSuccess(result)) {
+    saveToCache(cacheKey, result, CACHE_TTL_SECONDS);
+    console.log(`💾 Cached: ${cacheKey}`);
+  } else {
+    console.log(`⚠️ Not caching (failed): ${cacheKey}`);
+  }
+
+  return result;
+}
 
 // ====================================
 // Types
@@ -279,21 +312,18 @@ export async function checkAOAResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first (v3 - MySBT binding from getCommunityProfile)
-    const cacheKey = `resource_check_aoa_v3_${walletAddress.toLowerCase()}`;
-    const cached = loadFromCache<ResourceStatus>(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log("✅ Using cached resource status (AOA mode)");
-      return cached.data;
-    }
+    console.log("=== Resource Check (AOA Mode) ===");
+    console.log("Checking resources for:", walletAddress);
 
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
-    // Parallel RPC calls for all checks
+    const addr = walletAddress.toLowerCase();
+
+    // Check each resource individually with separate caching
+    // Only successful checks are cached, failed checks are always re-fetched
     const [
       communityCheck,
       xpntsCheck,
@@ -301,19 +331,44 @@ export async function checkAOAResources(
       gTokenBalance,
       ethBalance
     ] = await Promise.all([
-      checkCommunityRegistration(provider, walletAddress),
-      checkXPNTsDeployment(provider, walletAddress),
-      checkPaymasterDeployment(provider, walletAddress),
-      checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
-      checkETHBalance(provider, walletAddress)
+      getCachedOrFetch(
+        `resource_community_${addr}`,
+        () => checkCommunityRegistration(provider, walletAddress),
+        (result) => result.isRegistered === true
+      ),
+      getCachedOrFetch(
+        `resource_xpnts_${addr}`,
+        () => checkXPNTsDeployment(provider, walletAddress),
+        (result) => result.hasToken === true
+      ),
+      getCachedOrFetch(
+        `resource_paymaster_${addr}`,
+        () => checkPaymasterDeployment(provider, walletAddress),
+        (result) => result.hasPaymaster === true
+      ),
+      getCachedOrFetch(
+        `resource_gtoken_${addr}`,
+        () => checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+        (result) => parseFloat(result) >= 0 // Always cache balance (even 0)
+      ),
+      getCachedOrFetch(
+        `resource_eth_${addr}`,
+        () => checkETHBalance(provider, walletAddress),
+        (result) => parseFloat(result) >= 0 // Always cache balance (even 0)
+      )
     ]);
 
-    // Check MySBT binding from Registry (not Paymaster)
-    // MySBT binding is in Registry.communities(address).supportedSBTs
-    let sbtCheck: { hasSBTBinding: boolean; supportedSBTs?: string[] } = { hasSBTBinding: false, supportedSBTs: [] };
+    // Check MySBT binding from Registry (only if community is registered)
+    let sbtCheck: { hasSBTBinding: boolean; supportedSBTs?: string[] } = {
+      hasSBTBinding: false,
+      supportedSBTs: []
+    };
     if (communityCheck.isRegistered) {
-      // Query community's supportedSBTs from Registry
-      sbtCheck = await checkSBTBinding(provider, walletAddress);
+      sbtCheck = await getCachedOrFetch(
+        `resource_sbt_binding_${addr}`,
+        () => checkSBTBinding(provider, walletAddress),
+        (result) => result.hasSBTBinding === true
+      );
     }
 
     // Calculate required GToken
@@ -325,7 +380,9 @@ export async function checkAOAResources(
     const requiredETH = "0.05";
     const hasEnoughETH = parseFloat(ethBalance) >= parseFloat(requiredETH);
 
-    const result: ResourceStatus = {
+    console.log("=== Resource Check Complete ===");
+
+    return {
       isCommunityRegistered: communityCheck.isRegistered,
       communityName: communityCheck.communityName,
       communityRegisteredAt: communityCheck.registeredAt,
@@ -352,12 +409,6 @@ export async function checkAOAResources(
       requiredETH,
       hasEnoughETH,
     };
-
-    // Save to cache
-    saveToCache(cacheKey, result, CACHE_DURATION / 1000);
-    console.log("💾 Saved resource status to cache (AOA mode)");
-
-    return result;
   } catch (error) {
     console.error("Failed to check AOA resources:", error);
     throw error;
@@ -378,21 +429,17 @@ export async function checkAOAPlusResources(
   walletAddress: string
 ): Promise<ResourceStatus> {
   try {
-    // Check cache first (v3 - MySBT binding from getCommunityProfile)
-    const cacheKey = `resource_check_aoa_plus_v3_${walletAddress.toLowerCase()}`;
-    const cached = loadFromCache<ResourceStatus>(cacheKey);
-
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log("✅ Using cached resource status (AOA+ mode)");
-      return cached.data;
-    }
+    console.log("=== Resource Check (AOA+ Mode) ===");
+    console.log("Checking resources for:", walletAddress);
 
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
     const networkConfig = getCurrentNetworkConfig();
 
-    // Parallel RPC calls for all checks
+    const addr = walletAddress.toLowerCase();
+
+    // Check each resource individually with separate caching
     const [
       communityCheck,
       xpntsCheck,
@@ -400,11 +447,31 @@ export async function checkAOAPlusResources(
       aPNTsBalance,
       ethBalance
     ] = await Promise.all([
-      checkCommunityRegistration(provider, walletAddress),
-      checkXPNTsDeployment(provider, walletAddress),
-      checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
-      checkTokenBalance(provider, networkConfig.contracts.aPNTs, walletAddress),
-      checkETHBalance(provider, walletAddress)
+      getCachedOrFetch(
+        `resource_community_${addr}`,
+        () => checkCommunityRegistration(provider, walletAddress),
+        (result) => result.isRegistered === true
+      ),
+      getCachedOrFetch(
+        `resource_xpnts_${addr}`,
+        () => checkXPNTsDeployment(provider, walletAddress),
+        (result) => result.hasToken === true
+      ),
+      getCachedOrFetch(
+        `resource_gtoken_${addr}`,
+        () => checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+        (result) => parseFloat(result) >= 0
+      ),
+      getCachedOrFetch(
+        `resource_apnts_${addr}`,
+        () => checkTokenBalance(provider, networkConfig.contracts.aPNTs, walletAddress),
+        (result) => parseFloat(result) >= 0
+      ),
+      getCachedOrFetch(
+        `resource_eth_${addr}`,
+        () => checkETHBalance(provider, walletAddress),
+        (result) => parseFloat(result) >= 0
+      )
     ]);
 
     // Calculate required GToken
@@ -419,7 +486,9 @@ export async function checkAOAPlusResources(
     const requiredETH = "0.05";
     const hasEnoughETH = parseFloat(ethBalance) >= parseFloat(requiredETH);
 
-    const result: ResourceStatus = {
+    console.log("=== Resource Check Complete ===");
+
+    return {
       isCommunityRegistered: communityCheck.isRegistered,
       communityName: communityCheck.communityName,
       communityRegisteredAt: communityCheck.registeredAt,
@@ -446,12 +515,6 @@ export async function checkAOAPlusResources(
       requiredETH,
       hasEnoughETH,
     };
-
-    // Save to cache
-    saveToCache(cacheKey, result, CACHE_DURATION / 1000);
-    console.log("💾 Saved resource status to cache (AOA+ mode)");
-
-    return result;
   } catch (error) {
     console.error("Failed to check AOA+ resources:", error);
     throw error;
