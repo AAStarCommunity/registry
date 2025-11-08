@@ -90,6 +90,7 @@ export function LaunchPaymaster() {
   const [deployedPaymasterInfo, setDeployedPaymasterInfo] = useState<DeployedPaymasterInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [existingPaymaster, setExistingPaymaster] = useState<string>("");
+  const [paymasterRegistered, setPaymasterRegistered] = useState<boolean>(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDeployForm, setShowDeployForm] = useState(false);
 
@@ -107,15 +108,121 @@ export function LaunchPaymaster() {
       setAccount(accounts[0]);
       setIsConnected(true);
       setTreasury(accounts[0]); // Default treasury to connected account
-      await checkExistingPaymaster(accounts[0]);
-      await loadCommunityInfo(accounts[0]);
+      // Load all data in one go to avoid multiple RPC calls
+      await loadAccountData(accounts[0]);
     } catch (err: any) {
       console.error("Wallet connection failed:", err);
       setError(err?.message || "Failed to connect wallet");
     }
   };
 
-  // Load community info from Registry
+  // Load all account data (community + paymaster) in one go
+  const loadAccountData = async (address: string) => {
+    setLoadingCommunity(true);
+    setError(null);
+
+    try {
+      const rpcUrl = getRpcUrl();
+      const provider = new ethers.JsonRpcProvider(rpcUrl);
+
+      // Get both community and paymaster info from contracts
+      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, provider);
+      const factory = new ethers.Contract(PAYMASTER_FACTORY_ADDRESS, PaymasterFactoryABI, provider);
+
+      // Parallel fetch
+      const [community, paymasterInfo] = await Promise.all([
+        registry.communities(address),
+        factory.getPaymasterInfo(address).catch(() => ({ paymaster: ethers.ZeroAddress, isValid: false }))
+      ]);
+
+      // Check if community is registered
+      const isCommunityRegistered = community.registeredAt !== 0n;
+
+      if (isCommunityRegistered) {
+        let exchangeRate = "1"; // Default 1:1 if no xPNTs token
+
+        // Auto-load xPNTs token if exists and get exchange rate
+        if (community.xPNTsToken !== ethers.ZeroAddress) {
+          setInitialGasToken(community.xPNTsToken);
+
+          try {
+            const xPNTsToken = new ethers.Contract(
+              community.xPNTsToken,
+              xPNTsTokenABI,
+              provider
+            );
+            const rate = await xPNTsToken.exchangeRate();
+            exchangeRate = ethers.formatEther(rate);
+            console.log("xPNTs Exchange Rate:", exchangeRate);
+          } catch (err) {
+            console.warn("Failed to get xPNTs exchange rate, using default 1:1");
+          }
+        }
+
+        setCommunityInfo({
+          name: community.name,
+          ensName: community.ensName,
+          description: community.description || undefined,
+          website: community.website || undefined,
+          twitterHandle: community.twitterHandle || undefined,
+          xPNTsToken: community.xPNTsToken,
+          xPNTsExchangeRate: exchangeRate,
+          isRegistered: true,
+          registeredAt: community.registeredAt ? Number(community.registeredAt) : undefined,
+          memberCount: community.memberCount ? Number(community.memberCount) : undefined,
+        });
+
+        // Calculate minTokenBalance based on exchange rate
+        const rate = parseFloat(exchangeRate);
+        const calculatedMinBalance = rate > 0 ? (100 / rate).toFixed(2) : "100";
+        setMinTokenBalance(calculatedMinBalance);
+
+        // Check for SBT
+        try {
+          const mySBTFactory = networkConfig.contracts.mySBT;
+          if (mySBTFactory && mySBTFactory !== ethers.ZeroAddress) {
+            const sbtFactory = new ethers.Contract(mySBTFactory, MySBTABI, provider);
+            if (typeof sbtFactory.hasSBT === 'function') {
+              const hasSBT = await sbtFactory.hasSBT(address);
+              if (hasSBT) {
+                const sbtAddress = await sbtFactory.getSBTAddress(address);
+                setInitialSBT(sbtAddress);
+              }
+            }
+          }
+        } catch (err) {
+          console.warn("Could not check MySBT:", err);
+        }
+      } else {
+        setCommunityInfo(null);
+      }
+
+      // Check paymaster info
+      if (paymasterInfo.paymaster && paymasterInfo.paymaster !== ethers.ZeroAddress) {
+        setExistingPaymaster(paymasterInfo.paymaster);
+
+        // Check if paymaster is registered in Registry
+        const isPaymasterRegistered = await registry.isRegisteredPaymaster(paymasterInfo.paymaster).catch(() => false);
+        setPaymasterRegistered(isPaymasterRegistered);
+      } else {
+        setExistingPaymaster("");
+        setPaymasterRegistered(false);
+      }
+
+    } catch (err: any) {
+      console.error("Failed to load account data:", err);
+      if (err?.message?.includes("network") || err?.message?.includes("RPC")) {
+        setError("Unable to connect to blockchain. Please check your RPC provider and try again.");
+      }
+      setCommunityInfo(null);
+      setExistingPaymaster("");
+      setPaymasterRegistered(false);
+    } finally {
+      setLoadingCommunity(false);
+    }
+  };
+
+  // Load community info from Registry (kept for backward compatibility, now calls loadAccountData)
   const loadCommunityInfo = async (address: string) => {
     setLoadingCommunity(true);
     setError(null);
@@ -811,6 +918,12 @@ export function LaunchPaymaster() {
                           >
                             {existingPaymaster.slice(0, 6)}...{existingPaymaster.slice(-4)} ↗
                           </a>
+                        </div>
+                        <div className="info-item">
+                          <span className="item-label">Registry Status:</span>
+                          <span className={`item-value ${paymasterRegistered ? "success" : "warning"}`}>
+                            {paymasterRegistered ? "🟢 Registered" : "⚪ Not Registered"}
+                          </span>
                         </div>
                         <div className="info-item">
                           <span className="item-label">Owner:</span>
