@@ -488,7 +488,7 @@ export function GetXPNTs() {
 
                     <div>
                       <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                        Paymaster Mode *
+                        Paymaster Mode
                       </label>
                       <div style={{ display: "flex", gap: "1rem" }}>
                         <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
