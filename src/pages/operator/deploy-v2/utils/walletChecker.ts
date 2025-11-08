@@ -144,11 +144,20 @@ async function checkTokenBalance(
   try {
     console.log(`🔍 Checking token balance:`, { tokenAddress, userAddress });
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    console.log(`📡 Using RPC:`, getRpcUrl());
+
     const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
 
+    console.log(`🔍 Calling balanceOf...`);
     const balance = await contract.balanceOf(userAddress);
+    console.log(`📊 Raw balance:`, balance.toString());
+
+    console.log(`🔍 Calling decimals...`);
     const decimals = await contract.decimals();
+    console.log(`📊 Decimals:`, decimals);
+
     const formattedBalance = ethers.formatUnits(balance, decimals);
+    console.log(`✅ Formatted balance:`, formattedBalance);
 
     console.log(`💰 Token balance result:`, {
       tokenAddress: tokenAddress.slice(0, 10) + '...',
@@ -160,9 +169,38 @@ async function checkTokenBalance(
 
     return formattedBalance;
   } catch (error) {
-    console.error(`Failed to check token balance for ${tokenAddress}:`, error);
+    console.error(`❌ Failed to check token balance for ${tokenAddress}:`, error);
     return "0";
   }
+}
+
+/**
+ * TEMPORARY DEBUG: Direct query without cache
+ * Add this to window for console testing
+ */
+if (typeof window !== 'undefined') {
+  (window as any).debugAPNTsBalance = async (address: string) => {
+    console.log('=== DEBUG: Direct aPNTs balance query (NO CACHE) ===');
+    const networkConfig = getCurrentNetworkConfig();
+    const aPNTsAddress = networkConfig.contracts.aPNTs;
+    console.log('aPNTs contract:', aPNTsAddress);
+    console.log('User address:', address);
+
+    const balance = await checkTokenBalance(aPNTsAddress, address);
+    console.log('=== RESULT:', balance, 'aPNTs ===');
+    return balance;
+  };
+
+  // Clear aPNTs cache helper
+  (window as any).clearAPNTsCache = (address: string) => {
+    const addr = address.toLowerCase();
+    const oldKey = `spm_wallet_apnts_${addr}`;
+    const newKey = `spm_wallet_apnts_v2_${addr}`;
+    console.log('Clearing cache keys:', oldKey, newKey);
+    localStorage.removeItem(oldKey);
+    localStorage.removeItem(newKey);
+    console.log('✅ Cache cleared. Please refresh the page.');
+  };
 }
 
 /**
