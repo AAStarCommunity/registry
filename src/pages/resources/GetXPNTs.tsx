@@ -147,7 +147,7 @@ export function GetXPNTs() {
         name: currentProfile.name,
         ensName: currentProfile.ensName,
         xPNTsToken: tokenAddress,  // Update with new token address
-        supportedSBTs: currentProfile.supportedSBTs,
+        supportedSBTs: [...currentProfile.supportedSBTs], // Create new array to avoid read-only error
         nodeType: currentProfile.nodeType,
         paymasterAddress: currentProfile.paymasterAddress,
         community: currentProfile.community,
