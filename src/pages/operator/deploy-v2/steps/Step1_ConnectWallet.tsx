@@ -93,7 +93,7 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
     // Open faucet or guide based on network
     if (networkInfo?.chainId === 11155111) {
       // Sepolia
-      window.open("https://sepoliafaucet.com", "_blank");
+      window.open("https://cloud.google.com/application/web3/faucet/ethereum/sepolia", "_blank");
     } else {
       alert("Please acquire ETH from your preferred exchange or faucet");
     }
