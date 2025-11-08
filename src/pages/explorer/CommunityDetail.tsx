@@ -29,11 +29,59 @@ export function CommunityDetail() {
   const [community, setCommunity] = useState<CommunityProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  
+  // Version info state
+  const [registryVersion, setRegistryVersion] = useState<string>("");
+  const [sharedConfigVersion, setSharedConfigVersion] = useState<string>("");
+  const [registryAddress, setRegistryAddress] = useState<string>("");
 
   useEffect(() => {
     if (!address) return;
     fetchCommunityData();
+    fetchVersionInfo();
   }, [address]);
+
+  const fetchVersionInfo = async () => {
+    try {
+      // Get shared-config version from package.json
+      const sharedConfigVersion = "@aastar/shared-config@0.3.1"; // From package.json
+      setSharedConfigVersion(sharedConfigVersion);
+
+      // Get Registry version and address from network config
+      const networkConfig = getCurrentNetworkConfig();
+      const registryAddress = networkConfig.contracts.registry;
+      setRegistryAddress(registryAddress);
+
+      // Get Registry version from contract
+      if (registryAddress && registryAddress !== "0x0") {
+        const provider = getProvider();
+        const registryContract = new ethers.Contract(
+          registryAddress,
+          ["function VERSION() view returns (string)", "function VERSION_CODE() view returns (uint256)"],
+          provider
+        );
+
+        try {
+          const version = await registryContract.VERSION();
+          const versionCode = await registryContract.VERSION_CODE();
+          setRegistryVersion(`${version} (${versionCode.toString()})`);
+        } catch (err) {
+          console.error('Failed to fetch Registry version:', err);
+          setRegistryVersion("Unknown");
+        }
+      }
+
+      console.log('=== Version Information ===');
+      console.log('Shared Config:', sharedConfigVersion);
+      console.log('Registry:', registryVersion || "Loading...");
+      console.log('Registry Address:', registryAddress);
+      console.log('========================');
+    } catch (error) {
+      console.error('Error fetching version info:', error);
+      setRegistryVersion("Error");
+      setSharedConfigVersion("Error");
+    }
+  };
 
   const fetchCommunityData = async () => {
     if (!address) return;
@@ -108,6 +156,35 @@ export function CommunityDetail() {
 
   return (
     <div className="community-detail">
+      {/* Registry Info Banner */}
+      <div className="registry-info-banner">
+        <div className="info-icon">ℹ️</div>
+        <div className="info-content">
+          <div style={{ marginBottom: '8px' }}>
+            <strong>Registry Contract:</strong>{' '}
+            <a
+              href={getEtherscanAddressUrl(registryAddress)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="registry-link"
+            >
+              {registryAddress}
+            </a>
+            <span className="network-badge">{getCurrentNetworkConfig().chainName}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div>
+              <strong>Registry Version:</strong>{' '}
+              <span className="version-badge">{registryVersion || "Loading..."}</span>
+            </div>
+            <div>
+              <strong>Shared Config:</strong>{' '}
+              <span className="version-badge">{sharedConfigVersion}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="detail-header">
         <Link to="/explorer" className="back-link">

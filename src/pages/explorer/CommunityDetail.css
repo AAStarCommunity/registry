@@ -304,3 +304,91 @@
     background: #374151;
   }
 }
+
+/* Registry Info Banner */
+.registry-info-banner {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border: 2px solid rgba(102, 126, 234, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.registry-info-banner .info-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.registry-info-banner .info-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  flex: 1;
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+.registry-info-banner .registry-link {
+  font-family: 'Monaco', 'Menlo', monospace;
+  color: #667eea;
+  text-decoration: none;
+  padding: 0.25rem 0.75rem;
+  background: rgba(102, 126, 234, 0.1);
+  border-radius: 6px;
+  transition: all 0.3s;
+}
+
+.registry-info-banner .registry-link:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-1px);
+}
+
+.registry-info-banner .network-badge {
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.registry-info-banner .version-badge {
+  padding: 0.25rem 0.75rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: 'Monaco', 'Menlo', monospace;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+/* Responsive Design for Registry Info Banner */
+@media (max-width: 768px) {
+  .registry-info-banner {
+    margin: 1rem;
+    padding: 1rem;
+  }
+
+  .registry-info-banner .info-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .registry-info-banner .registry-link {
+    word-break: break-all;
+    font-size: 0.85rem;
+  }
+
+  .registry-info-banner .network-badge {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+}
