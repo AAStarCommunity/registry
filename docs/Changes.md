@@ -1,8 +1,12 @@
-# Changes
+# Registry Frontend 改进记录
 
-## 2025-10-30
-- 重构GetXPNTs为信息页
-- 创建shared-config包
-- 发布npm v0.2.1
-- 迁移registry使用
-- 迁移faucet使用
+## 2025-11-06
+
+- xPNTs 自动检测与填充
+- GetXPNTs 恢复社区字段
+- ENS 自动分配提示
+- MySBT 自动配置
+- Paymaster 自动检测
+- Wizard 简化流程
+- 部署后自动更新 Registry
+- Explorer 社区详情
