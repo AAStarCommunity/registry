@@ -14,6 +14,9 @@ const GetPNTs: React.FC = () => {
   const config = getCurrentNetworkConfig();
   const isTest = isTestnet();
 
+  // Legacy PNT token address (deprecated, use GetXPNTs for new deployments)
+  const LEGACY_PNT_TOKEN = "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180";
+
   const handleGoBack = () => {
     navigate(-1);
   };
@@ -262,7 +265,7 @@ const GetPNTs: React.FC = () => {
               <p>Open MetaMask → Assets → Import tokens, then enter:</p>
               <ul>
                 <li>
-                  <strong>Token Address:</strong> {config.contracts.pntToken}
+                  <strong>Token Address:</strong> {LEGACY_PNT_TOKEN}
                 </li>
                 <li>
                   <strong>Token Symbol:</strong> aPNTsv2
@@ -336,7 +339,7 @@ const GetPNTs: React.FC = () => {
             ← Back to Deployment
           </button>
           <a
-            href={`${config.explorerUrl}/address/${config.contracts.pntToken}`}
+            href={`${config.explorerUrl}/address/${LEGACY_PNT_TOKEN}`}
             target="_blank"
             rel="noopener noreferrer"
             className="action-button outline"

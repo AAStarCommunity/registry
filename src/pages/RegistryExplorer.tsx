@@ -116,13 +116,14 @@ export function RegistryExplorer() {
       const networkConfig = getCurrentNetworkConfig();
 
       // Select registry address based on version
+      // Legacy addresses hardcoded for historical exploration only
       let registryAddress: string;
       if (registryVersion === "v1.2") {
-        registryAddress = networkConfig.contracts.registry;
+        registryAddress = "0x838da93c815a6E45Aa50429529da9106C0621eF0"; // Registry v1.2 (deprecated)
       } else if (registryVersion === "v2.1") {
-        registryAddress = networkConfig.contracts.registryV2;
+        registryAddress = "0x6806e4937038e783cA0D3961B7E258A3549A0043"; // Registry v2.0 (deprecated)
       } else {
-        // v2.1.4 (latest)
+        // v2.2.0 (latest)
         registryAddress = networkConfig.contracts.registryV2_1;
       }
 
@@ -437,8 +438,8 @@ export function RegistryExplorer() {
               <button
                 className={`version-btn ${registryVersion === "v2.1" ? "active" : ""}`}
                 onClick={() => setRegistryVersion("v2.1")}
-                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2}
-                title={!getCurrentNetworkConfig().contracts.registryV2 ? "v2.1 not deployed yet" : ""}
+                disabled={loading}
+                title="Registry v2.0 (deprecated)"
               >
                 v2.1
               </button>

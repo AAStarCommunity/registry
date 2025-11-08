@@ -49,19 +49,6 @@ export interface NetworkConfig {
     /** PaymasterFactory v1.0 - Permissionless Paymaster deployment using EIP-1167 */
     paymasterFactory: string;
 
-    // ========================================
-    // Legacy Contracts (for backward compatibility)
-    // ========================================
-    /** @deprecated Use registryV2_1 instead. Registry v1.2 (ETH staking) */
-    registry: string;
-    /** @deprecated Use registryV2_1 instead. Registry v2.0 (metadata only) */
-    registryV2: string;
-    /** @deprecated Use xPNTsFactory to deploy new tokens. Old PNT token */
-    pntToken: string;
-    /** @deprecated Use xPNTsFactory instead. Old gas token factory */
-    gasTokenFactory: string;
-    /** @deprecated Use mySBT instead. Old SBT contract */
-    sbtContract: string;
 
     // ========================================
     // Other Contracts
@@ -128,22 +115,6 @@ const sepoliaConfig: NetworkConfig = (() => {
       paymasterFactory: core.paymasterFactory,
 
       // ========================================
-      // Legacy Contracts (for backward compatibility)
-      // Only kept for RegistryExplorer version switching
-      // All addresses are hardcoded - no env overrides
-      // ========================================
-      registry: '0x838da93c815a6E45Aa50429529da9106C0621eF0', // v1.2 (ETH staking)
-      registryV2: '0x6806e4937038e783cA0D3961B7E258A3549A0043', // v2.0 (metadata only)
-
-      // ========================================
-      // Deprecated Contracts (should migrate)
-      // All addresses are hardcoded - no env overrides
-      // ========================================
-      pntToken: '0xD14E87d8D8B69016Fcc08728c33799bD3F66F180', // Old PNT
-      gasTokenFactory: '0x6720Dc8ce5021bC6F3F126054556b5d3C125101F', // Old factory
-      sbtContract: '0xBfde68c232F2248114429DDD9a7c3Adbff74bD7f', // Old SBT
-
-      // ========================================
       // Other Contracts (from shared-config)
       // ========================================
       usdtContract: testTokens.mockUSDT,
@@ -189,13 +160,6 @@ const mainnetConfig: NetworkConfig = {
     superPaymasterV2: '', // TBD
     entryPointV07: '0x0000000071727De22E5E9d8BAf0edAc6f37da032',
     paymasterFactory: '', // TBD
-
-    // Legacy
-    registry: '', // TBD
-    registryV2: '', // TBD
-    pntToken: '', // TBD
-    gasTokenFactory: '', // TBD
-    sbtContract: '', // TBD
 
     // Other
     usdtContract: '0xdac17f958d2ee523a2206206994597c13d831ec7', // Real USDT
@@ -285,28 +249,25 @@ export default getCurrentNetworkConfig();
 export { getTxUrl, getAddressUrl, getChainId };
 
 // ========================================
-// Migration Helper Functions
+// Helper Functions
 // ========================================
 
 /**
- * Get latest registry address (always returns v2.1)
- * Use this instead of accessing config.contracts.registry directly
+ * Get Registry v2.2.0 address
  */
 export function getLatestRegistry(): string {
   return getCurrentNetworkConfig().contracts.registryV2_1;
 }
 
 /**
- * Get latest SBT contract (MySBT v2.3)
- * Use this instead of accessing config.contracts.sbtContract directly
+ * Get MySBT contract address
  */
 export function getLatestSBT(): string {
   return getCurrentNetworkConfig().contracts.mySBT;
 }
 
 /**
- * Get latest gas token factory (xPNTsFactory)
- * Use this instead of accessing config.contracts.gasTokenFactory directly
+ * Get xPNTsFactory contract address
  */
 export function getLatestGasTokenFactory(): string {
   return getCurrentNetworkConfig().contracts.xPNTsFactory;
