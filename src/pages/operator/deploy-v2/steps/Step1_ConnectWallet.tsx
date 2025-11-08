@@ -141,6 +141,7 @@ export function Step1_ConnectWallet({ onNext, isTestMode = false }: Step1Props) 
           <WalletStatus
             status={walletStatus}
             gTokenAddress={getCurrentNetworkConfig().contracts.gToken}
+            aPNTsAddress={getCurrentNetworkConfig().contracts.aPNTs}
             getGTokenUrl="/get-gtoken"
             getPNTsUrl="/get-pnts"
             getETHUrl={getETHUrl()}

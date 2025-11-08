@@ -7,6 +7,7 @@ import "./WalletStatus.css";
 export interface WalletStatusProps {
   status: WalletStatusType;
   gTokenAddress?: string;
+  aPNTsAddress?: string;
   getGTokenUrl?: string; // URL to get GToken (opens in new tab)
   getPNTsUrl?: string; // URL to get PNTs (opens in new tab)
   getETHUrl?: string; // URL to get ETH (opens in new tab)
@@ -22,6 +23,7 @@ export interface WalletStatusProps {
 export function WalletStatus({
   status,
   gTokenAddress,
+  aPNTsAddress,
   getGTokenUrl = "/get-gtoken",
   getPNTsUrl = "/get-pnts",
   getETHUrl,
@@ -192,6 +194,32 @@ export function WalletStatus({
               {formatBalance(status.aPNTsBalance)} aPNT
             </div>
           </div>
+          {aPNTsAddress && (
+            <div className="contract-address-row" style={{
+              fontSize: '0.8rem',
+              color: '#666',
+              marginTop: '0.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <span>Contract:</span>
+              <a
+                href={getExplorerLink(aPNTsAddress, 'address')}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  fontFamily: 'Monaco, Courier New, monospace',
+                  color: '#667eea',
+                  textDecoration: 'none',
+                }}
+                onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+              >
+                {aPNTsAddress.slice(0, 6)}...{aPNTsAddress.slice(-4)} ↗
+              </a>
+            </div>
+          )}
           <div className="balance-details">
             <span className="balance-required">
               {parseFloat(status.requiredAPNTs) === 0
