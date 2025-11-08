@@ -672,6 +672,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
             <WalletStatus
               status={walletStatus}
               gTokenAddress={config.contracts.gToken}
+              aPNTsAddress={config.contracts.aPNTs}
               getGTokenUrl="/get-gtoken"
               getPNTsUrl="/get-pnts"
               getETHUrl={getETHUrl()}
