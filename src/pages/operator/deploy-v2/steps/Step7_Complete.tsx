@@ -92,6 +92,12 @@ export function Step7_Complete({
               </button>
             </div>
           )}
+          <div className="summary-item">
+            <span className="label">MySBT Binding:</span>
+            <span className="value">
+              {deployedResources?.sbtAddress ? "✅ Bound" : "⏸️ Not Configured"}
+            </span>
+          </div>
           {deployedResources?.xPNTsAddress && (
             <div className="summary-item">
               <span className="label">xPNTs Token:</span>

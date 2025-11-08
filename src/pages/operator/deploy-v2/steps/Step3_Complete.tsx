@@ -121,12 +121,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-content">
                   <h4>更新 Registry 社区信息</h4>
                   <p>将新部署的 Paymaster 地址更新到 Registry，确保社区信息完整</p>
-                  <button
+                  <a
+                    href="/register-community?returnUrl=/operator/wizard"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="step-action"
-                    onClick={() => navigate(`/resources/register-community?returnUrl=/operator/wizard`)}
                   >
-                    去更新 Registry →
-                  </button>
+                    去更新 Registry ↗
+                  </a>
                 </div>
               </div>
 
@@ -135,12 +137,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoa.step1.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoa.step1.description')}</p>
-                  <button
+                  <a
+                    href={`/operator/manage?address=${resources.paymasterAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="step-action"
-                    onClick={() => navigate(`/operator/manage?address=${resources.paymasterAddress}`)}
                   >
-                    {t('step3Complete.nextSteps.aoa.step1.action')}
-                  </button>
+                    {t('step3Complete.nextSteps.aoa.step1.action')} ↗
+                  </a>
                 </div>
               </div>
 
@@ -155,7 +159,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoa.step2.action')}
+                    {t('step3Complete.nextSteps.aoa.step2.action')} ↗
                   </a>
                 </div>
               </div>
@@ -165,12 +169,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoa.step3.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoa.step3.description')}</p>
-                  <button
+                  <a
+                    href="/developer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="step-action"
-                    onClick={() => navigate("/developer")}
                   >
-                    {t('step3Complete.nextSteps.aoa.step3.action')}
-                  </button>
+                    {t('step3Complete.nextSteps.aoa.step3.action')} ↗
+                  </a>
                 </div>
               </div>
             </>
@@ -181,12 +187,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoaPlus.step1.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoaPlus.step1.description')}</p>
-                  <button
+                  <a
+                    href="/get-pnts"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="step-action"
-                    onClick={() => navigate("/get-pnts")}
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step1.action')}
-                  </button>
+                    {t('step3Complete.nextSteps.aoaPlus.step1.action')} ↗
+                  </a>
                 </div>
               </div>
 
@@ -201,7 +209,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step2.action')}
+                    {t('step3Complete.nextSteps.aoaPlus.step2.action')} ↗
                   </a>
                 </div>
               </div>
@@ -211,12 +219,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-content">
                   <h4>{t('step3Complete.nextSteps.aoaPlus.step3.title')}</h4>
                   <p>{t('step3Complete.nextSteps.aoaPlus.step3.description')}</p>
-                  <button
+                  <a
+                    href="/explorer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="step-action"
-                    onClick={() => navigate("/explorer")}
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step3.action')}
-                  </button>
+                    {t('step3Complete.nextSteps.aoaPlus.step3.action')} ↗
+                  </a>
                 </div>
               </div>
             </>
