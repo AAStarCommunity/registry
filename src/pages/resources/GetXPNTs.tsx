@@ -14,7 +14,6 @@ export function GetXPNTs() {
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
   const REGISTRY_ADDRESS = networkConfig.contracts.registry;
   const RPC_URL = getRpcUrl();
-  const SUPER_PAYMASTER_V2_ADDRESS = networkConfig.contracts.superPaymasterV2;
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -37,7 +36,6 @@ export function GetXPNTs() {
 
   // Registry state
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
-  const [isCheckingRegistry, setIsCheckingRegistry] = useState<boolean>(false);
   const [communityXPNTsToken, setCommunityXPNTsToken] = useState<string>("");
   const [isTokenBound, setIsTokenBound] = useState<boolean>(false);
 
@@ -48,7 +46,6 @@ export function GetXPNTs() {
 
   // Check if user is registered in Registry and load community info
   const checkRegistryInfo = async (address: string) => {
-    setIsCheckingRegistry(true);
     try {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
@@ -80,8 +77,6 @@ export function GetXPNTs() {
       }
     } catch (err) {
       console.error("Failed to check Registry:", err);
-    } finally {
-      setIsCheckingRegistry(false);
     }
   };
 
@@ -99,9 +94,9 @@ export function GetXPNTs() {
       setAccount(accounts[0]);
       await checkExistingToken(accounts[0]);
       await checkRegistryInfo(accounts[0]);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Wallet connection failed:", err);
-      setError(err?.message || "Failed to connect wallet");
+      setError(err instanceof Error ? err.message : "Failed to connect wallet");
     }
   };
 
@@ -224,9 +219,9 @@ export function GetXPNTs() {
       console.log("Registry update successful!");
       setRegistryUpdateStatus("Registry 更新成功!");
       return true;
-    } catch (err: any) {
+    } catch (err) {
       console.error("Registry update failed:", err);
-      setRegistryUpdateStatus(`更新失败: ${err?.message || "Unknown error"}`);
+      setRegistryUpdateStatus(`更新失败: ${err instanceof Error ? err.message : "Unknown error"}`);
       return false;
     } finally {
       setIsUpdatingRegistry(false);
@@ -325,9 +320,9 @@ export function GetXPNTs() {
       } else if (registryUpdateStatus === "未注册社区") {
         console.log("Community not registered - user can register later at /register-community");
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error("Deployment failed:", err);
-      setError(err?.message || "Failed to deploy xPNTs token");
+      setError(err instanceof Error ? err.message : "Failed to deploy xPNTs token");
     } finally {
       setIsDeploying(false);
     }
@@ -344,6 +339,7 @@ export function GetXPNTs() {
         }
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
