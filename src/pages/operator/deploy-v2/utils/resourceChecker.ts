@@ -178,11 +178,14 @@ async function checkPaymasterDeployment(
 }
 
 /**
- * Check MySBT binding in Paymaster
+ * Check MySBT binding in Community Registry (NOT Paymaster)
+ *
+ * MySBT binding is stored in Registry.communities(address).supportedSBTs
+ * NOT in Paymaster.getSupportedSBTs()
  */
 async function checkSBTBinding(
   provider: ethers.Provider,
-  paymasterAddress: string
+  communityAddress: string
 ): Promise<{
   hasSBTBinding: boolean;
   supportedSBTs?: string[];
@@ -190,15 +193,19 @@ async function checkSBTBinding(
   try {
     const networkConfig = getCurrentNetworkConfig();
     const globalMySBT = networkConfig.contracts.mySBT;
+    const registryAddress = networkConfig.contracts.registry;
 
     console.log("=== MySBT Binding Check ===");
-    console.log("Paymaster address:", paymasterAddress);
+    console.log("Community address:", communityAddress);
     console.log("Expected MySBT address (from shared-config):", globalMySBT);
+    console.log("Registry address:", registryAddress);
 
-    const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, provider);
-    const supportedSBTs = await paymaster.getSupportedSBTs();
+    // Query community profile from Registry
+    const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
+    const community = await registry.communities(communityAddress);
 
-    console.log("Supported SBTs from Paymaster:", supportedSBTs);
+    const supportedSBTs = community.supportedSBTs || [];
+    console.log("Supported SBTs from Registry.communities:", supportedSBTs);
 
     // Check if global MySBT is in supported list
     const hasSBTBinding = supportedSBTs.some(
@@ -299,10 +306,12 @@ export async function checkAOAResources(
       checkETHBalance(provider, walletAddress)
     ]);
 
-    // Check MySBT binding (only if Paymaster deployed)
+    // Check MySBT binding from Registry (not Paymaster)
+    // MySBT binding is in Registry.communities(address).supportedSBTs
     let sbtCheck: { hasSBTBinding: boolean; supportedSBTs?: string[] } = { hasSBTBinding: false, supportedSBTs: [] };
-    if (paymasterCheck.hasPaymaster && paymasterCheck.paymasterAddress) {
-      sbtCheck = await checkSBTBinding(provider, paymasterCheck.paymasterAddress);
+    if (communityCheck.isRegistered) {
+      // Query community's supportedSBTs from Registry
+      sbtCheck = await checkSBTBinding(provider, walletAddress);
     }
 
     // Calculate required GToken

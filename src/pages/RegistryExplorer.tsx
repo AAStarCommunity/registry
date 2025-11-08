@@ -19,8 +19,8 @@ interface CommunityProfile {
   paymasterAddress: string;
   community: string;
   nodeType: number; // 0: AOA, 1: Super
-  registeredAt: bigint;
-  lastUpdatedAt: bigint;
+  registeredAt: string; // Store as string to avoid BigInt serialization issues
+  lastUpdatedAt: string;
   isActive: boolean;
   allowPermissionlessMint: boolean;
 }
@@ -137,8 +137,8 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
             paymasterAddress: profile.paymasterAddress || ethers.ZeroAddress,
             community: communityAddr,
             nodeType: profile.nodeType,
-            registeredAt: profile.registeredAt,
-            lastUpdatedAt: profile.lastUpdatedAt,
+            registeredAt: profile.registeredAt.toString(), // Store as string for JSON serialization
+            lastUpdatedAt: profile.lastUpdatedAt.toString(),
             isActive: profile.isActive,
             allowPermissionlessMint: profile.allowPermissionlessMint,
           });
@@ -549,39 +549,35 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
     <div className="registry-explorer">
       {/* Registry Info Section */}
       <section className="registry-info-section">
-        <div className="registry-header">
-          <h1>🏛️ Registry Explorer</h1>
+        <div className="registry-header-row">
+          <div className="section-title">
+            <h2>
+              {activeTab === "communities" && "🏘️ Community Registry"}
+              {activeTab === "members" && "👥 Community Users Registry"}
+              {activeTab === "paymasters" && "💳 Paymaster Registry"}
+            </h2>
+          </div>
+
           {registryInfo && (
-            <div className="registry-details">
-              <div className="info-grid">
-                <div className="info-item">
-                  <span className="label">Contract Address:</span>
-                  <code className="value">{registryInfo.address}</code>
-                </div>
-                <div className="info-item">
-                  <span className="label">Registry Version:</span>
-                  <span className="value">{registryInfo.version}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Deployed At:</span>
-                  <span className="value">{registryInfo.deployedAt}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Shared-Config Version:</span>
-                  <span className="value">v{registryInfo.sharedConfigVersion}</span>
-                </div>
-                <div className="info-item">
-                  <span className="label">Total Communities:</span>
-                  <span className="value">{registryInfo.totalCommunities}</span>
-                </div>
+            <div className="registry-info-card">
+              <div className="info-row">
+                <span className="label">Registry v{registryInfo.version}</span>
+                <span className="separator">•</span>
+                <code className="address-short">{registryInfo.address.slice(0, 10)}...{registryInfo.address.slice(-8)}</code>
               </div>
+              <div className="info-row">
+                <span className="label">Deployed: {registryInfo.deployedAt}</span>
+                <span className="separator">•</span>
+                <span className="label">Config: v{registryInfo.sharedConfigVersion}</span>
+                <span className="separator">•</span>
+                <span className="label">Total: {registryInfo.totalCommunities}</span>
+              </div>
+              {lastUpdated && (
+                <div className="cache-info">
+                  Updated {formatCacheAge(lastUpdated)} ago
+                </div>
+              )}
             </div>
-          )}
-          {lastUpdated && (
-            <p className="cache-status">
-              Last updated: {formatCacheAge(lastUpdated)}
-              {loading && <span className="refreshing"> (refreshing...)</span>}
-            </p>
           )}
         </div>
       </section>

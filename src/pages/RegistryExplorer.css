@@ -7,9 +7,68 @@
 
 /* Registry Info Section */
 .registry-info-section {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
-    color: white;
+    background: white;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.registry-header-row {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+}
+
+.section-title h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.registry-info-card {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.registry-info-card .info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.registry-info-card .info-row:last-child {
+    margin-bottom: 0;
+}
+
+.registry-info-card .label {
+    font-weight: 500;
+}
+
+.registry-info-card .separator {
+    color: #d1d5db;
+}
+
+.registry-info-card .address-short {
+    font-family: 'Monaco', monospace;
+    font-size: 0.8rem;
+    background: white;
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.registry-info-card .cache-info {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
 }
 
 .registry-header {
@@ -216,6 +275,150 @@
     align-items: center;
     gap: 2rem;
     flex-wrap: wrap;
+}
+
+/* Community Grid - 3 columns */
+.community-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 1024px) {
+    .community-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .community-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Community Card */
+.community-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.community-card:hover {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-4px);
+    border-color: #667eea;
+}
+
+.community-card .card-header {
+    border-bottom: 1px solid #f3f4f6;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+}
+
+.community-card .card-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.community-card .badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.community-card .badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.community-card .badge.active {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.community-card .badge.node-type.aoa {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.community-card .badge.node-type.super {
+    background: #fce7f3;
+    color: #9f1239;
+}
+
+.community-card .card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.community-card .info-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.community-card .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.community-card .value {
+    font-size: 0.875rem;
+    color: #374151;
+    word-break: break-all;
+}
+
+.community-card .value code {
+    font-family: 'Monaco', monospace;
+    font-size: 0.8rem;
+    background: #f3f4f6;
+    padding: 0.125rem 0.5rem;
+    border-radius: 4px;
+}
+
+.community-card .text-muted {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+.community-card .sbt-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.community-card .sbt-badge {
+    font-family: 'Monaco', monospace;
+    font-size: 0.7rem;
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px solid #e5e7eb;
+}
+
+.community-card .status-active {
+    color: #059669;
+    font-weight: 600;
+}
+
+.community-card .status-inactive {
+    color: #dc2626;
+    font-weight: 600;
 }
 
 .category-filter {
