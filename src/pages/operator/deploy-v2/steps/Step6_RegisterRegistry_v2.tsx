@@ -63,7 +63,7 @@ export function Step6_RegisterRegistry_v2({
 
       console.log("🔍 Pre-registration checks...");
       console.log("User address:", userAddress);
-      console.log("Registry v2.1:", config.contracts.registryV2_1);
+      console.log("Registry v2.1:", config.contracts.registry);
       console.log("Paymaster:", paymasterAddress);
       console.log("xPNTs:", xPNTsAddress);
       console.log("SBT:", sbtAddress);
@@ -131,7 +131,7 @@ Solutions:
       }
 
       const registry = new ethers.Contract(
-        config.contracts.registryV2_1,
+        config.contracts.registry,
         RegistryV2_1ABI,
         signer
       );

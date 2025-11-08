@@ -44,7 +44,7 @@ export function CommunityDetail() {
 
       const provider = getProvider();
       const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registryV2_1; // Use latest Registry v2.1
+      const registryAddress = networkConfig.contracts.registry; // Use latest Registry v2.1
 
       const registry = new ethers.Contract(
         registryAddress,

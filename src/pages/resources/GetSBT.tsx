@@ -18,7 +18,7 @@ export function GetSBT() {
   const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
   const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
-  const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
+  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
   const RPC_URL = getRpcUrl();
 
   // Constants

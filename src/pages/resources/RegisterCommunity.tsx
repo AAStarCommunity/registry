@@ -13,7 +13,7 @@ export function RegisterCommunity() {
 
   // Get addresses from shared-config
   const networkConfig = getCurrentNetworkConfig();
-  const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1; // Registry v2.1.4
+  const REGISTRY_ADDRESS = networkConfig.contracts.registry; // Registry v2.1.4
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
   const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
   const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;

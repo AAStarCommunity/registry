@@ -37,7 +37,7 @@ export interface RegisteredCommunity {
 
 // Get contract addresses from shared-config
 const networkConfig = getCurrentNetworkConfig();
-const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
+const REGISTRY_ADDRESS = networkConfig.contracts.registry;
 const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
 const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;

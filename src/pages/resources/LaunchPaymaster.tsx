@@ -25,7 +25,7 @@ const PAYMASTER_FACTORY_ADDRESS = networkConfig.contracts.paymasterFactory;
 // PaymasterV4 is the implementation used by factory (EIP-1167 minimal proxy)
 const PAYMASTER_V4_1I_IMPLEMENTATION = networkConfig.contracts.paymasterV4;
 const ENTRY_POINT_ADDRESS = networkConfig.contracts.entryPointV07;
-const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
+const REGISTRY_ADDRESS = networkConfig.contracts.registry;
 const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
 const ETH_USD_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306"; // Chainlink Sepolia ETH/USD
 

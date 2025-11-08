@@ -32,8 +32,8 @@ export interface NetworkConfig {
     // ========================================
     /** PaymasterV4 - AOA mode independent paymaster */
     paymasterV4: string;
-    /** Registry v2.1 - Latest with node types + progressive slash */
-    registryV2_1: string;
+    /** Registry v2.1.4 - Latest with auto-stake registration */
+    registry: string;
     /** GToken - Governance token (sGT) */
     gToken: string;
     /** GTokenStaking - Stake management */
@@ -105,7 +105,7 @@ const sepoliaConfig: NetworkConfig = (() => {
       // Current Contracts (from shared-config)
       // ========================================
       paymasterV4: getPaymasterV4_1(network),
-      registryV2_1: core.registry,
+      registry: core.registry,
       gToken: core.gToken,
       gTokenStaking: core.gTokenStaking,
       xPNTsFactory: tokens.xPNTsFactory,
@@ -152,7 +152,7 @@ const mainnetConfig: NetworkConfig = {
 
   contracts: {
     paymasterV4: '', // TBD
-    registryV2_1: '', // TBD
+    registry: '', // TBD
     gToken: '', // TBD
     gTokenStaking: '', // TBD
     xPNTsFactory: '', // TBD
@@ -256,7 +256,7 @@ export { getTxUrl, getAddressUrl, getChainId };
  * Get Registry v2.2.0 address
  */
 export function getLatestRegistry(): string {
-  return getCurrentNetworkConfig().contracts.registryV2_1;
+  return getCurrentNetworkConfig().contracts.registry;
 }
 
 /**

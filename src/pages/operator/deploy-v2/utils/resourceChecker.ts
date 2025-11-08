@@ -81,7 +81,7 @@ async function checkCommunityRegistration(
 }> {
   try {
     const networkConfig = getCurrentNetworkConfig();
-    const registryAddress = networkConfig.contracts.registryV2_1;
+    const registryAddress = networkConfig.contracts.registry;
 
     const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
     const community = await registry.communities(address);

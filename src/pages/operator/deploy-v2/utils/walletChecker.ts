@@ -139,7 +139,7 @@ export async function checkCommunityRegistration(
   address: string
 ): Promise<{ isRegistered: boolean; communityName?: string }> {
   const networkConfig = getCurrentNetworkConfig();
-  const registryAddress = networkConfig.contracts.registryV2_1;
+  const registryAddress = networkConfig.contracts.registry; // Use latest registry from shared-config
 
   // Helper function to check with a specific provider
   async function checkWithProvider(provider: ethers.Provider): Promise<{ isRegistered: boolean; communityName?: string }> {

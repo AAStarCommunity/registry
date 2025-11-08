@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test @aastar/shared-config@0.2.9
+ * Test @aastar/shared-config@0.3.1
  * Fetch contract versions from deployed contracts
  */
 

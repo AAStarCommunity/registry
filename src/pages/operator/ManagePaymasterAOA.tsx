@@ -57,7 +57,7 @@ export default function ManagePaymasterAOA() {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
   const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
-  const REGISTRY = networkConfig.contracts.registryV2_1;
+  const REGISTRY = networkConfig.contracts.registry;
   const GTOKEN_STAKING = networkConfig.contracts.gTokenStaking;
 
   const [config, setConfig] = useState<PaymasterConfig | null>(null);

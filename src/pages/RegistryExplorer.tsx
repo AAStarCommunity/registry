@@ -124,7 +124,7 @@ export function RegistryExplorer() {
         registryAddress = "0x6806e4937038e783cA0D3961B7E258A3549A0043"; // Registry v2.0 (deprecated)
       } else {
         // v2.2.0 (latest)
-        registryAddress = networkConfig.contracts.registryV2_1;
+        registryAddress = networkConfig.contracts.registry;
       }
 
       console.log("=== Registry Explorer Debug ===");
@@ -446,8 +446,8 @@ export function RegistryExplorer() {
               <button
                 className={`version-btn ${registryVersion === "v2.1.4" ? "active" : ""}`}
                 onClick={() => setRegistryVersion("v2.1.4")}
-                disabled={loading || !getCurrentNetworkConfig().contracts.registryV2_1}
-                title={!getCurrentNetworkConfig().contracts.registryV2_1 ? "v2.1.4 not deployed yet" : ""}
+                disabled={loading || !getCurrentNetworkConfig().contracts.registry}
+                title={!getCurrentNetworkConfig().contracts.registry ? "v2.1.4 not deployed yet" : ""}
               >
                 v2.1.4 (Latest)
               </button>

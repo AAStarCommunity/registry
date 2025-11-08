@@ -97,7 +97,7 @@ export function Step3_DeployPaymaster({
         const rpcProvider = new ethers.JsonRpcProvider(rpcUrl);
 
         const registry = new ethers.Contract(
-          networkConfig.contracts.registryV2_1,
+          networkConfig.contracts.registry,
           RegistryV2_1ABI,
           rpcProvider // Use independent provider, not MetaMask
         );
@@ -176,7 +176,7 @@ export function Step3_DeployPaymaster({
 
       // Get Registry v2.1 address
       const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registryV2_1 || ethers.ZeroAddress;
+      const registryAddress = networkConfig.contracts.registry || ethers.ZeroAddress;
 
       // Parse constructor parameters
       const serviceFeeRate = parseInt(config.serviceFeeRate) * 100; // Convert % to basis points

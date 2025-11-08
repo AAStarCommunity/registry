@@ -25,7 +25,7 @@ export function Step6_RegisterRegistry({
 }: Step6Props) {
   // Get addresses from config
   const networkConfig = getCurrentNetworkConfig();
-  const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
+  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
   const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
 
   const [gTokenAmount, setGTokenAmount] = useState<string>("30");

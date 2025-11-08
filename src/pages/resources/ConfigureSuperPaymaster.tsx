@@ -23,7 +23,7 @@ import "./ConfigureSuperPaymaster.css";
 // Get contract addresses from config
 const networkConfig = getCurrentNetworkConfig();
 const SUPERPAYMASTER_ADDRESS = networkConfig.contracts.superPaymasterV2;
-const REGISTRY_ADDRESS = networkConfig.contracts.registryV2_1;
+const REGISTRY_ADDRESS = networkConfig.contracts.registry;
 const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
 
 // Helper function to get explorer link
