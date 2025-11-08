@@ -4,7 +4,7 @@ import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
-import { RegistryABI } from "../config/abis";
+import { RegistryABI, MySBTABI } from "../config/abis";
 import packageJson from "../../package.json";
 import "./RegistryExplorer.css";
 
@@ -33,6 +33,11 @@ interface RegistryInfo {
   totalCommunities: number;
 }
 
+interface MySBTHolder {
+  tokenId: number;
+  owner: string;
+}
+
 export function RegistryExplorer() {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<ExplorerTab>("communities");
@@ -43,10 +48,23 @@ export function RegistryExplorer() {
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
+  // MySBT members state
+  const [mySBTHolders, setMySBTHolders] = useState<MySBTHolder[]>([]);
+  const [mySBTLoading, setMySBTLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const MEMBERS_PER_PAGE = 8; // 2 rows x 4 columns
+
   // Load registry data
   useEffect(() => {
     loadRegistryData();
   }, []);
+
+  // Load MySBT holders when switching to members tab
+  useEffect(() => {
+    if (activeTab === "members" && mySBTHolders.length === 0) {
+      loadMySBTHolders();
+    }
+  }, [activeTab]);
 
   const loadRegistryData = async () => {
     setLoading(true);
@@ -120,8 +138,8 @@ export function RegistryExplorer() {
         }
       }
 
-      // Save to cache (1 hour TTL)
-      saveToCache(cacheKey, communityList, 3600);
+      // Save to cache (24 hours TTL)
+      saveToCache(cacheKey, communityList, 86400);
       setLastUpdated(Date.now());
       console.log(`💾 Saved to cache`);
 
@@ -163,6 +181,58 @@ export function RegistryExplorer() {
     }
   };
 
+  const loadMySBTHolders = async () => {
+    setMySBTLoading(true);
+
+    try {
+      const provider = getProvider();
+      const networkConfig = getCurrentNetworkConfig();
+      const mySBTAddress = networkConfig.contracts.mySBT;
+
+      console.log("🎫 Loading MySBT holders from:", mySBTAddress);
+
+      // Check cache first
+      const cacheKey = `mysbt_holders_${mySBTAddress.toLowerCase()}`;
+      const cached = loadFromCache<MySBTHolder[]>(cacheKey);
+
+      if (cached) {
+        console.log(`📦 Loaded MySBT holders from cache (${formatCacheAge(cached.timestamp)})`);
+        setMySBTHolders(cached.data);
+        setMySBTLoading(false);
+        return;
+      }
+
+      // Query MySBT contract
+      const mySBT = new ethers.Contract(mySBTAddress, MySBTABI, provider);
+
+      // Get total supply
+      const totalSupply = await mySBT.totalSupply();
+      console.log(`📋 Total MySBT supply: ${totalSupply}`);
+
+      // Query all holders via ownerOf
+      const holders: MySBTHolder[] = [];
+      for (let tokenId = 0; tokenId < Number(totalSupply); tokenId++) {
+        try {
+          const owner = await mySBT.ownerOf(tokenId);
+          holders.push({ tokenId, owner });
+        } catch (err) {
+          console.warn(`Failed to get owner for token ${tokenId}:`, err);
+        }
+      }
+
+      // Save to cache (24 hours TTL)
+      saveToCache(cacheKey, holders, 86400);
+      console.log(`💾 Saved ${holders.length} MySBT holders to cache`);
+
+      setMySBTHolders(holders);
+    } catch (err: any) {
+      console.error("Failed to load MySBT holders:", err);
+      setMySBTHolders([]);
+    } finally {
+      setMySBTLoading(false);
+    }
+  };
+
   // Filter communities/paymasters based on search
   const getFilteredData = () => {
     if (!searchQuery) return communities;
@@ -181,13 +251,21 @@ export function RegistryExplorer() {
     );
   };
 
-  // Get members (MySBT holders) - flatten supportedSBTs
-  const getMembers = () => {
-    const members = new Set<string>();
-    getFilteredData().forEach((c) => {
-      c.supportedSBTs.forEach((sbt) => members.add(sbt));
-    });
-    return Array.from(members);
+  // Get paginated MySBT holders
+  const getPaginatedHolders = () => {
+    const start = currentPage * MEMBERS_PER_PAGE;
+    const end = start + MEMBERS_PER_PAGE;
+    return mySBTHolders.slice(start, end);
+  };
+
+  const totalPages = Math.ceil(mySBTHolders.length / MEMBERS_PER_PAGE);
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
   };
 
   const renderTabContent = () => {
@@ -373,33 +451,85 @@ export function RegistryExplorer() {
         );
 
       case "members":
-        const members = getMembers();
+        if (mySBTLoading) {
+          return (
+            <div className="loading-state">
+              <div className="spinner">⏳</div>
+              <p>Loading MySBT holders...</p>
+            </div>
+          );
+        }
+
+        const paginatedHolders = getPaginatedHolders();
+        const networkConfig = getCurrentNetworkConfig();
+
         return (
-          <div className="members-grid">
-            {members.length === 0 ? (
+          <div className="members-section">
+            {/* MySBT Contract Info */}
+            <div className="mysbt-info-card">
+              <div className="card-header">
+                <h3>🎫 MySBT Contract</h3>
+              </div>
+              <div className="card-body">
+                <div className="info-row">
+                  <span className="label">Contract Address:</span>
+                  <code className="value">{networkConfig.contracts.mySBT}</code>
+                </div>
+                <div className="info-row">
+                  <span className="label">Total Members:</span>
+                  <span className="value">{mySBTHolders.length}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Members Grid (2 rows x 4 columns = 8 per page) */}
+            {mySBTHolders.length === 0 ? (
               <div className="no-results">
-                <p>No MySBT contracts found.</p>
+                <p>No MySBT holders found.</p>
               </div>
             ) : (
-              members.map((sbtAddress) => (
-                <div key={sbtAddress} className="member-card">
-                  <div className="card-header">
-                    <h3>MySBT Contract</h3>
-                  </div>
-                  <div className="card-body">
-                    <div className="info-row">
-                      <span className="label">Contract Address:</span>
-                      <code className="value">{sbtAddress}</code>
+              <>
+                <div className="members-grid">
+                  {paginatedHolders.map((holder) => (
+                    <div key={holder.tokenId} className="member-card">
+                      <div className="card-header">
+                        <h3>Token #{holder.tokenId}</h3>
+                      </div>
+                      <div className="card-body">
+                        <div className="info-row">
+                          <span className="label">Owner:</span>
+                          <code className="value">
+                            {holder.owner.slice(0, 6)}...{holder.owner.slice(-4)}
+                          </code>
+                        </div>
+                      </div>
                     </div>
-                    <div className="info-row">
-                      <span className="label">Used by Communities:</span>
-                      <span className="value">
-                        {communities.filter((c) => c.supportedSBTs.includes(sbtAddress)).length}
-                      </span>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="pagination">
+                    <button
+                      onClick={handlePreviousPage}
+                      disabled={currentPage === 0}
+                      className="page-btn"
+                    >
+                      ← Previous
+                    </button>
+                    <span className="page-info">
+                      Page {currentPage + 1} of {totalPages}
+                    </span>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={currentPage >= totalPages - 1}
+                      className="page-btn"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
@@ -466,7 +596,7 @@ export function RegistryExplorer() {
             className={`tab ${activeTab === "members" ? "active" : ""}`}
             onClick={() => setActiveTab("members")}
           >
-            🎫 Members (MySBT) ({getMembers().length})
+            🎫 Members (MySBT) ({mySBTHolders.length})
           </button>
         </div>
 
