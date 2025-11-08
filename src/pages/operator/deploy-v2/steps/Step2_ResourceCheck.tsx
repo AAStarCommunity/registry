@@ -14,7 +14,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { checkResources, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
-import { getCurrentNetworkConfig, isTestnet } from "../../../../config/networkConfig";
+import { getCurrentNetworkConfig, isTestnet, getExplorerLink } from "../../../../config/networkConfig";
 import "./Step2_ResourceCheck.css";
 
 export interface Step2Props {
@@ -308,6 +308,30 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
               <p className="detail-text">
                 {t('step2ResourceCheck.resources.apnts.required')} {resources?.requiredAPNTs} {t('step2ResourceCheck.resources.apnts.suffix')}
               </p>
+              <div style={{
+                fontSize: '0.8rem',
+                color: '#666',
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <span>Contract:</span>
+                <a
+                  href={getExplorerLink(networkConfig.contracts.aPNTs, 'address')}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    fontFamily: 'Monaco, Courier New, monospace',
+                    color: '#667eea',
+                    textDecoration: 'none',
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.textDecoration = 'underline'}
+                  onMouseOut={(e) => e.currentTarget.style.textDecoration = 'none'}
+                >
+                  {networkConfig.contracts.aPNTs.slice(0, 6)}...{networkConfig.contracts.aPNTs.slice(-4)} ↗
+                </a>
+              </div>
               {!resources?.hasEnoughAPNTs && (
                 <a
                   href={getResourceUrl("/get-pnts")}
