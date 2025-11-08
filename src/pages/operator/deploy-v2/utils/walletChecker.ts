@@ -79,18 +79,9 @@ export async function connectWallet(): Promise<string> {
  */
 export async function checkETHBalance(address: string): Promise<string> {
   try {
-    // Try RPC proxy first for reliability
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      const balance = await rpcProvider.getBalance(address);
-      return ethers.formatEther(balance);
-    } catch (rpcError) {
-      console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
-      // Fallback to MetaMask provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const balance = await provider.getBalance(address);
-      return ethers.formatEther(balance);
-    }
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    const balance = await rpcProvider.getBalance(address);
+    return ethers.formatEther(balance);
   } catch (error) {
     console.error("Failed to check ETH balance:", error);
     return "0";
@@ -110,26 +101,13 @@ export async function checkTokenBalance(
   }
 
   try {
-    // Try RPC proxy first for reliability
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    const contract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
 
-      const balance = await contract.balanceOf(userAddress);
-      const decimals = await contract.decimals();
+    const balance = await contract.balanceOf(userAddress);
+    const decimals = await contract.decimals();
 
-      return ethers.formatUnits(balance, decimals);
-    } catch (rpcError) {
-      console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
-      // Fallback to MetaMask provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const contract = new ethers.Contract(tokenAddress, ERC20_ABI, provider);
-
-      const balance = await contract.balanceOf(userAddress);
-      const decimals = await contract.decimals();
-
-      return ethers.formatUnits(balance, decimals);
-    }
+    return ethers.formatUnits(balance, decimals);
   } catch (error) {
     console.error(`Failed to check token balance for ${tokenAddress}:`, error);
     return "0";
@@ -145,18 +123,9 @@ export async function isContractDeployed(address: string): Promise<boolean> {
   }
 
   try {
-    // Try RPC proxy first for reliability
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      const code = await rpcProvider.getCode(address);
-      return code !== "0x";
-    } catch (rpcError) {
-      console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
-      // Fallback to MetaMask provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const code = await provider.getCode(address);
-      return code !== "0x";
-    }
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    const code = await rpcProvider.getCode(address);
+    return code !== "0x";
   } catch (error) {
     console.error("Failed to check contract deployment:", error);
     return false;
@@ -200,16 +169,8 @@ export async function checkCommunityRegistration(
   }
 
   try {
-    // Try RPC proxy first for reliability
-    try {
-      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-      return await checkWithProvider(rpcProvider);
-    } catch (rpcError) {
-      console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
-      // Fallback to MetaMask provider
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      return await checkWithProvider(provider);
-    }
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    return await checkWithProvider(rpcProvider);
   } catch (error) {
     console.error("Failed to check community registration:", error);
     return { isRegistered: false };
@@ -292,60 +253,20 @@ export async function checkWalletStatus(
     try {
       const networkConfig = getCurrentNetworkConfig();
       const gasTokenFactoryAddress = networkConfig.contracts.gasTokenFactory;
+      const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+      const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
+      
+      // hasToken() should return boolean, not revert
+      const hasToken = await factory.hasToken(address);
 
-      // Try RPC proxy first for reliability
-      try {
-        const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-        const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
-        
-        try {
-          const hasToken = await factory.hasToken(address);
-
-          if (hasToken) {
-            const tokenAddress = await factory.getTokenAddress(address);
-            status.hasGasTokenContract = true;
-            status.gasTokenAddress = tokenAddress;
-            console.log("✅ Found existing xPNTs contract:", tokenAddress);
-          } else {
-            status.hasGasTokenContract = false;
-            console.log("ℹ️ No xPNTs contract found for this address");
-          }
-        } catch (factoryError) {
-          // If hasToken reverts, it means no token exists (expected for new users)
-          if (factoryError instanceof Error && factoryError.message.includes('execution reverted')) {
-            console.log("ℹ️ No xPNTs contract found for this address (revert expected)");
-            status.hasGasTokenContract = false;
-          } else {
-            throw factoryError;
-          }
-        }
-      } catch (rpcError) {
-        console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
-        // Fallback to MetaMask provider
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, provider);
-        
-        try {
-          const hasToken = await factory.hasToken(address);
-
-          if (hasToken) {
-            const tokenAddress = await factory.getTokenAddress(address);
-            status.hasGasTokenContract = true;
-            status.gasTokenAddress = tokenAddress;
-            console.log("✅ Found existing xPNTs contract:", tokenAddress);
-          } else {
-            status.hasGasTokenContract = false;
-            console.log("ℹ️ No xPNTs contract found for this address");
-          }
-        } catch (factoryError) {
-          // If hasToken reverts, it means no token exists (expected for new users)
-          if (factoryError instanceof Error && factoryError.message.includes('execution reverted')) {
-            console.log("ℹ️ No xPNTs contract found for this address (revert expected)");
-            status.hasGasTokenContract = false;
-          } else {
-            throw factoryError;
-          }
-        }
+      if (hasToken) {
+        const tokenAddress = await factory.getTokenAddress(address);
+        status.hasGasTokenContract = true;
+        status.gasTokenAddress = tokenAddress;
+        console.log("✅ Found existing xPNTs contract:", tokenAddress);
+      } else {
+        status.hasGasTokenContract = false;
+        console.log("ℹ️ No xPNTs contract found for this address");
       }
     } catch (error) {
       console.log("Failed to check xPNTs factory:", error);
@@ -393,6 +314,11 @@ export async function getCurrentNetwork(): Promise<{
  */
 export async function switchNetwork(chainId: number): Promise<boolean> {
   try {
+    if (!window.ethereum) {
+      console.error("MetaMask not available for network switch");
+      return false;
+    }
+    
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: `0x${chainId.toString(16)}` }],
