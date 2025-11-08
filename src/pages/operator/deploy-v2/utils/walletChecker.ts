@@ -176,20 +176,25 @@ export async function checkCommunityRegistration(
   async function checkWithProvider(provider: ethers.Provider): Promise<{ isRegistered: boolean; communityName?: string }> {
     try {
       const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
-      const community = await registry.communities(address);
-
-      // Check if registeredAt is not 0 (means community is registered)
-      const isRegistered = community.registeredAt !== 0n;
-      const communityName = isRegistered ? community.name : undefined;
-
-      return { isRegistered, communityName };
-    } catch (error) {
-      // If the call reverts, it likely means the community is not registered
-      // This is expected behavior for unregistered communities
-      if (error instanceof Error && error.message.includes('execution reverted')) {
-        console.log("Community not registered (expected for new users)");
+      
+      // First use isRegisteredCommunity - this returns bool and won't revert
+      const isRegistered = await registry.isRegisteredCommunity(address);
+      
+      if (!isRegistered) {
         return { isRegistered: false };
       }
+
+      // If registered, get the community details
+      try {
+        const community = await registry.communities(address);
+        const communityName = community.name;
+        return { isRegistered: true, communityName };
+      } catch (detailError) {
+        console.warn("Community registered but failed to get details:", detailError);
+        return { isRegistered: true, communityName: "Unknown Community" };
+      }
+    } catch (error) {
+      console.error("Failed to check community registration:", error);
       throw error;
     }
   }
@@ -292,32 +297,54 @@ export async function checkWalletStatus(
       try {
         const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
         const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
-        const hasToken = await factory.hasToken(address);
+        
+        try {
+          const hasToken = await factory.hasToken(address);
 
-        if (hasToken) {
-          const tokenAddress = await factory.getTokenAddress(address);
-          status.hasGasTokenContract = true;
-          status.gasTokenAddress = tokenAddress;
-          console.log("✅ Found existing xPNTs contract:", tokenAddress);
-        } else {
-          status.hasGasTokenContract = false;
-          console.log("ℹ️ No xPNTs contract found for this address");
+          if (hasToken) {
+            const tokenAddress = await factory.getTokenAddress(address);
+            status.hasGasTokenContract = true;
+            status.gasTokenAddress = tokenAddress;
+            console.log("✅ Found existing xPNTs contract:", tokenAddress);
+          } else {
+            status.hasGasTokenContract = false;
+            console.log("ℹ️ No xPNTs contract found for this address");
+          }
+        } catch (factoryError) {
+          // If hasToken reverts, it means no token exists (expected for new users)
+          if (factoryError instanceof Error && factoryError.message.includes('execution reverted')) {
+            console.log("ℹ️ No xPNTs contract found for this address (revert expected)");
+            status.hasGasTokenContract = false;
+          } else {
+            throw factoryError;
+          }
         }
       } catch (rpcError) {
         console.warn("RPC proxy failed, falling back to MetaMask:", rpcError);
         // Fallback to MetaMask provider
         const provider = new ethers.BrowserProvider(window.ethereum);
         const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, provider);
-        const hasToken = await factory.hasToken(address);
+        
+        try {
+          const hasToken = await factory.hasToken(address);
 
-        if (hasToken) {
-          const tokenAddress = await factory.getTokenAddress(address);
-          status.hasGasTokenContract = true;
-          status.gasTokenAddress = tokenAddress;
-          console.log("✅ Found existing xPNTs contract:", tokenAddress);
-        } else {
-          status.hasGasTokenContract = false;
-          console.log("ℹ️ No xPNTs contract found for this address");
+          if (hasToken) {
+            const tokenAddress = await factory.getTokenAddress(address);
+            status.hasGasTokenContract = true;
+            status.gasTokenAddress = tokenAddress;
+            console.log("✅ Found existing xPNTs contract:", tokenAddress);
+          } else {
+            status.hasGasTokenContract = false;
+            console.log("ℹ️ No xPNTs contract found for this address");
+          }
+        } catch (factoryError) {
+          // If hasToken reverts, it means no token exists (expected for new users)
+          if (factoryError instanceof Error && factoryError.message.includes('execution reverted')) {
+            console.log("ℹ️ No xPNTs contract found for this address (revert expected)");
+            status.hasGasTokenContract = false;
+          } else {
+            throw factoryError;
+          }
         }
       }
     } catch (error) {
