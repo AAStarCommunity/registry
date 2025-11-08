@@ -8,6 +8,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step3_Complete.css";
 
 export interface Step3Props {
@@ -19,6 +20,8 @@ export interface Step3Props {
 export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const networkConfig = getCurrentNetworkConfig();
+  const mySBTAddress = networkConfig.contracts.mySBT;
 
   const getExplorerLink = (address: string): string => {
     return `https://sepolia.etherscan.io/address/${address}`;
@@ -90,6 +93,28 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                   className="explorer-link"
                 >
                   {t('step3Complete.summary.paymaster.viewExplorer')}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* MySBT (AOA mode only) */}
+          {mode === "aoa" && (
+            <div className="summary-card">
+              <div className="card-icon">🎫</div>
+              <div className="card-content">
+                <h4>MySBT Contract</h4>
+                <p className="card-value mono">{mySBTAddress.slice(0, 10)}...</p>
+                <p className="card-detail">
+                  Binding Status: {resources.hasSBTBinding ? "✅ Bound" : "❌ Not Bound"}
+                </p>
+                <a
+                  href={getExplorerLink(mySBTAddress)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="explorer-link"
+                >
+                  View on Etherscan
                 </a>
               </div>
             </div>

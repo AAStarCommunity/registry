@@ -2,13 +2,16 @@
  * Wallet Checker Utility
  *
  * Checks wallet balances and contract deployment status
- * Used in Step 2 to verify user has required resources
+ * Used in Step 1 to verify user has required resources
+ *
+ * Granular caching: Only cache successful resources, refresh only re-queries failed resources
  */
 
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
 import { ERC20_ABI, RegistryABI, xPNTsFactoryABI } from "../../../../config/abis";
+import { loadFromCache, saveToCache } from "../../../../utils/cache";
 
 export interface WalletStatus {
   // Connection status
@@ -47,7 +50,45 @@ export interface CheckOptions {
   aPNTAddress?: string; // aPNT token contract address (AOA+ mode only)
 }
 
-// ABIs imported from shared-config via config/abis.ts
+// Cache configuration
+const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
+const CACHE_TTL_SECONDS = 3600; // 60 minutes in seconds for saveToCache
+
+/**
+ * Helper to get cached value or execute function
+ * Only caches successful results (non-null, non-zero, non-empty)
+ */
+async function getCachedOrFetch<T>(
+  cacheKey: string,
+  fetchFn: () => Promise<T>,
+  isSuccess: (value: T) => boolean
+): Promise<T> {
+  // Try cache first
+  const cached = loadFromCache<T>(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    console.log(`✅ Cache hit: ${cacheKey}`);
+    return cached.data;
+  }
+
+  console.log(`🔄 Cache miss: ${cacheKey}, fetching...`);
+
+  // Fetch new data
+  const result = await fetchFn();
+
+  // Only cache successful results
+  if (isSuccess(result)) {
+    saveToCache(cacheKey, result, CACHE_TTL_SECONDS);
+    console.log(`💾 Cached: ${cacheKey}`);
+  } else {
+    console.log(`⚠️ Not caching (failed): ${cacheKey}`);
+  }
+
+  return result;
+}
+
+// ====================================
+// Helper Functions
+// ====================================
 
 /**
  * Connect to MetaMask and get user address
@@ -77,7 +118,7 @@ export async function connectWallet(): Promise<string> {
 /**
  * Check ETH balance
  */
-export async function checkETHBalance(address: string): Promise<string> {
+async function checkETHBalance(address: string): Promise<string> {
   try {
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
     const balance = await rpcProvider.getBalance(address);
@@ -91,7 +132,7 @@ export async function checkETHBalance(address: string): Promise<string> {
 /**
  * Check ERC-20 token balance
  */
-export async function checkTokenBalance(
+async function checkTokenBalance(
   tokenAddress: string,
   userAddress: string
 ): Promise<string> {
@@ -135,60 +176,73 @@ export async function isContractDeployed(address: string): Promise<boolean> {
 /**
  * Check if community is already registered
  */
-export async function checkCommunityRegistration(
+async function checkCommunityRegistration(
   address: string
 ): Promise<{ isRegistered: boolean; communityName?: string }> {
   const networkConfig = getCurrentNetworkConfig();
-  const registryAddress = networkConfig.contracts.registry; // Use latest registry from shared-config
-
-  // Helper function to check with a specific provider
-  async function checkWithProvider(provider: ethers.Provider): Promise<{ isRegistered: boolean; communityName?: string }> {
-    try {
-      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
-      
-      // First use isRegisteredCommunity - this returns bool and won't revert
-      const isRegistered = await registry.isRegisteredCommunity(address);
-      
-      if (!isRegistered) {
-        return { isRegistered: false };
-      }
-
-      // If registered, get the community details
-      try {
-        const community = await registry.communities(address);
-        const communityName = community.name;
-        return { isRegistered: true, communityName };
-      } catch (detailError) {
-        console.warn("Community registered but failed to get details:", detailError);
-        return { isRegistered: true, communityName: "Unknown Community" };
-      }
-    } catch (error) {
-      console.error("Failed to check community registration:", error);
-      throw error;
-    }
-  }
+  const registryAddress = networkConfig.contracts.registry;
 
   try {
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
-    return await checkWithProvider(rpcProvider);
+    const registry = new ethers.Contract(registryAddress, RegistryABI, rpcProvider);
+
+    // First use isRegisteredCommunity - this returns bool and won't revert
+    const isRegistered = await registry.isRegisteredCommunity(address);
+
+    if (!isRegistered) {
+      return { isRegistered: false };
+    }
+
+    // If registered, get the community details
+    try {
+      const community = await registry.communities(address);
+      const communityName = community.name;
+      return { isRegistered: true, communityName };
+    } catch (detailError) {
+      console.warn("Community registered but failed to get details:", detailError);
+      return { isRegistered: true, communityName: "Unknown Community" };
+    }
   } catch (error) {
     console.error("Failed to check community registration:", error);
     return { isRegistered: false };
   }
 }
 
-// Cache for wallet status
-const walletStatusCache: {
-  [address: string]: {
-    data: WalletStatus;
-    timestamp: number;
-  };
-} = {};
+/**
+ * Check xPNTs token deployment
+ */
+async function checkXPNTsDeployment(
+  address: string
+): Promise<{ hasToken: boolean; tokenAddress?: string }> {
+  try {
+    const networkConfig = getCurrentNetworkConfig();
+    const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
+    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+    const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
 
-const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes
+    const hasToken = await factory.hasToken(address);
+
+    if (hasToken) {
+      const tokenAddress = await factory.getTokenAddress(address);
+      console.log("✅ Found existing xPNTs contract:", tokenAddress);
+      return { hasToken: true, tokenAddress };
+    } else {
+      console.log("ℹ️ No xPNTs contract found for this address");
+      return { hasToken: false };
+    }
+  } catch (error) {
+    console.log("Failed to check xPNTs factory:", error);
+    return { hasToken: false };
+  }
+}
+
+// ====================================
+// Main Function
+// ====================================
 
 /**
- * Main function to check wallet status (with caching and parallel RPC calls)
+ * Main function to check wallet status (with granular caching)
+ * Only caches successful resources, refresh only re-queries failed resources
  */
 export async function checkWalletStatus(
   options: CheckOptions = {}
@@ -229,27 +283,12 @@ export async function checkWalletStatus(
     status.isConnected = true;
     status.address = address;
 
-    // Check cache first
-    const cached = walletStatusCache[address.toLowerCase()];
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log("✅ Using cached wallet status (age:", Math.floor((Date.now() - cached.timestamp) / 1000), "s)");
-      // Update requirements but keep cached data
-      return {
-        ...cached.data,
-        requiredETH,
-        requiredGToken: requiredGToken || cached.data.requiredGToken,
-        requiredAPNTs,
-        hasEnoughETH: parseFloat(cached.data.ethBalance) >= parseFloat(requiredETH),
-        hasEnoughGToken: parseFloat(cached.data.gTokenBalance) >= parseFloat(requiredGToken || cached.data.requiredGToken),
-        hasEnoughAPNTs: parseFloat(cached.data.aPNTsBalance) >= parseFloat(requiredAPNTs),
-      };
-    }
+    const addr = address.toLowerCase();
 
-    console.log("🔍 Fetching fresh wallet status (parallel RPC calls)...");
+    console.log("🔍 Fetching wallet status with granular caching...");
 
-    // Parallel RPC calls for all checks
+    // Parallel RPC calls with individual caching per resource
     const networkConfig = getCurrentNetworkConfig();
-    const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
 
     const [
       communityResult,
@@ -258,38 +297,44 @@ export async function checkWalletStatus(
       aPNTsBalance,
       xPNTsResult
     ] = await Promise.all([
-      // 1. Check community registration
-      checkCommunityRegistration(address),
+      // 1. Check community registration (only cache if registered)
+      getCachedOrFetch(
+        `wallet_community_${addr}`,
+        () => checkCommunityRegistration(address),
+        (result) => result.isRegistered === true
+      ),
 
-      // 2. Check ETH balance
-      checkETHBalance(address),
+      // 2. Check ETH balance (always cache, even if 0)
+      getCachedOrFetch(
+        `wallet_eth_${addr}`,
+        () => checkETHBalance(address),
+        (result) => parseFloat(result) >= 0
+      ),
 
-      // 3. Check GToken balance
-      gTokenAddress ? checkTokenBalance(gTokenAddress, address) : Promise.resolve("0"),
+      // 3. Check GToken balance (always cache, even if 0)
+      gTokenAddress
+        ? getCachedOrFetch(
+            `wallet_gtoken_${addr}`,
+            () => checkTokenBalance(gTokenAddress, address),
+            (result) => parseFloat(result) >= 0
+          )
+        : Promise.resolve("0"),
 
-      // 4. Check aPNTs balance
-      aPNTAddress ? checkTokenBalance(aPNTAddress, address) : Promise.resolve("0"),
+      // 4. Check aPNTs balance (always cache, even if 0)
+      aPNTAddress
+        ? getCachedOrFetch(
+            `wallet_apnts_${addr}`,
+            () => checkTokenBalance(aPNTAddress, address),
+            (result) => parseFloat(result) >= 0
+          )
+        : Promise.resolve("0"),
 
-      // 5 & 6. Check xPNTs factory (combined hasToken + getTokenAddress)
-      (async () => {
-        try {
-          const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
-          const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
-          const hasToken = await factory.hasToken(address);
-
-          if (hasToken) {
-            const tokenAddress = await factory.getTokenAddress(address);
-            console.log("✅ Found existing xPNTs contract:", tokenAddress);
-            return { hasGasTokenContract: true, gasTokenAddress: tokenAddress };
-          } else {
-            console.log("ℹ️ No xPNTs contract found for this address");
-            return { hasGasTokenContract: false, gasTokenAddress: undefined };
-          }
-        } catch (error) {
-          console.log("Failed to check xPNTs factory:", error);
-          return { hasGasTokenContract: false, gasTokenAddress: undefined };
-        }
-      })()
+      // 5. Check xPNTs deployment (only cache if hasToken)
+      getCachedOrFetch(
+        `wallet_xpnts_${addr}`,
+        () => checkXPNTsDeployment(address),
+        (result) => result.hasToken === true
+      )
     ]);
 
     // Process results
@@ -309,16 +354,10 @@ export async function checkWalletStatus(
     status.aPNTsBalance = aPNTsBalance;
     status.hasEnoughAPNTs = parseFloat(aPNTsBalance) >= parseFloat(requiredAPNTs);
 
-    status.hasGasTokenContract = xPNTsResult.hasGasTokenContract;
-    status.gasTokenAddress = xPNTsResult.gasTokenAddress;
+    status.hasGasTokenContract = xPNTsResult.hasToken;
+    status.gasTokenAddress = xPNTsResult.tokenAddress;
 
-    // Cache the result
-    walletStatusCache[address.toLowerCase()] = {
-      data: status,
-      timestamp: Date.now(),
-    };
-
-    console.log("✅ Wallet status fetched and cached");
+    console.log("✅ Wallet status fetched with granular caching");
 
     return status;
   } catch (error) {
@@ -326,6 +365,10 @@ export async function checkWalletStatus(
     return status;
   }
 }
+
+// ====================================
+// Utility Functions
+// ====================================
 
 /**
  * Get current network information
@@ -365,7 +408,7 @@ export async function switchNetwork(chainId: number): Promise<boolean> {
       console.error("MetaMask not available for network switch");
       return false;
     }
-    
+
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: `0x${chainId.toString(16)}` }],
