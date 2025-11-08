@@ -191,11 +191,7 @@ export function GetXPNTs() {
         throw new Error("Please enter token name and symbol");
       }
 
-      if (paymasterMode === "AOA" && !paymasterAddress) {
-        throw new Error("Please enter paymaster address for AOA mode");
-      }
-
-      if (paymasterMode === "AOA" && !ethers.isAddress(paymasterAddress)) {
+      if (paymasterMode === "AOA" && paymasterAddress && !ethers.isAddress(paymasterAddress)) {
         throw new Error("Invalid paymaster address");
       }
 
@@ -213,7 +209,7 @@ export function GetXPNTs() {
       // Determine paymaster address based on mode
       const paymasterAddr = paymasterMode === "AOA+"
         ? ethers.ZeroAddress
-        : paymasterAddress;
+        : (paymasterAddress || ethers.ZeroAddress);
 
       console.log("Deploying xPNTs token...");
       console.log("Mode:", paymasterMode);
@@ -523,14 +519,14 @@ export function GetXPNTs() {
                       <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
                         {paymasterMode === "AOA+"
                           ? "使用共享SuperPaymaster V2，无需部署自己的Paymaster"
-                          : "需要先部署自己的PaymasterV4合约"}
+                          : "可选：使用自己的PaymasterV4合约，留空使用零地址"}
                       </p>
                     </div>
 
                     {paymasterMode === "AOA" && (
                       <div>
                         <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                          Paymaster Address *
+                          Paymaster Address (可选)
                         </label>
                         <input
                           type="text"
@@ -547,7 +543,7 @@ export function GetXPNTs() {
                           }}
                         />
                         <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
-                          输入你已部署的PaymasterV4合约地址
+                          输入你已部署的PaymasterV4合约地址，留空将使用零地址
                         </p>
                       </div>
                     )}
@@ -581,8 +577,7 @@ export function GetXPNTs() {
                     disabled={
                       isDeploying ||
                       !tokenName ||
-                      !tokenSymbol ||
-                      (paymasterMode === "AOA" && !paymasterAddress)
+                      !tokenSymbol
                     }
                   >
                     {isDeploying ? "Deploying..." : "Deploy xPNTs Token"}
