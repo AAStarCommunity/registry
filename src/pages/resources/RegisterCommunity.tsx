@@ -116,6 +116,9 @@ export function RegisterCommunity() {
       console.log('Shared Config:', sharedConfigVersion);
       console.log('Registry:', registryVersion || "Loading...");
       console.log('Registry Address:', REGISTRY_ADDRESS);
+      console.log('Expected Address:', '0x028aB52B4E0EF26820043ca4F1B5Fe14FfC1EF75');
+      console.log('Address Match:', REGISTRY_ADDRESS === '0x028aB52B4E0EF26820043ca4F1B5Fe14FfC1EF75' ? '✅' : '❌');
+      console.log('Timestamp:', new Date().toISOString());
       console.log('========================');
     } catch (error) {
       console.error('Error fetching version info:', error);
