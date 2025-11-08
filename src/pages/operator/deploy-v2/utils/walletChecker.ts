@@ -337,7 +337,7 @@ export async function checkWalletStatus(
       // 4. Check aPNTs balance (only cache if balance > 0, to avoid caching 0 from AOA mode)
       aPNTAddress
         ? getCachedOrFetch(
-            `wallet_apnts_${addr}`,
+            `wallet_apnts_v2_${addr}`, // v2: force refresh old 0-balance caches
             () => checkTokenBalance(aPNTAddress, address),
             (result) => parseFloat(result) > 0 // ✅ Only cache non-zero balance
           )
