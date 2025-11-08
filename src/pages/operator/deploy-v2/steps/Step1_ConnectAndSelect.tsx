@@ -553,37 +553,37 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
           }}>
             <h3 style={{ margin: "0 0 1rem 0", fontSize: "1.1rem", color: "#0369a1", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <span style={{ fontSize: "1.3rem" }}>💡</span>
-              Simple Cost Analysis
+              简单的成本分析
             </h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "0.95rem", lineHeight: "1.6" }}>
               <div style={{ padding: "1rem", background: "white", borderRadius: "8px", border: "2px solid #10b981" }}>
                 <div style={{ fontWeight: 600, color: "#047857", marginBottom: "0.5rem", fontSize: "1rem" }}>
-                  🏢 AOA Mode (Independent)
+                  🏢 AOA 模式（独立）
                 </div>
                 <div style={{ color: "#374151", marginBottom: "0.5rem" }}>
-                  <strong>Cost:</strong> 1,000-3,000 USD/year
+                  <strong>成本：</strong> 1,000-3,000 USD/月
                 </div>
                 <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                  • Requires dedicated/part-time technical staff
+                  • 需要专职或兼职技术人员维护
                   <br />
-                  • Maintenance: cross-chain operations, ETH balance monitoring, refills
+                  • 维护工作：跨链操作、ETH余额预警和充值
                   <br />
-                  • Suitable for: Communities with technical resources and budget
+                  • 适合：有技术资源和预算的社区
                 </div>
               </div>
               <div style={{ padding: "1rem", background: "white", borderRadius: "8px", border: "2px solid #3b82f6" }}>
                 <div style={{ fontWeight: 600, color: "#1d4ed8", marginBottom: "0.5rem", fontSize: "1rem" }}>
-                  ⚡ Super Mode (aPNTs)
+                  ⚡ AOA+ 模式（Super）
                 </div>
                 <div style={{ color: "#374151", marginBottom: "0.5rem" }}>
-                  <strong>Cost:</strong> ~234 USD/month (120-member community, full sponsorship)
+                  <strong>成本：</strong> 4.68-234 USD/月
                 </div>
                 <div style={{ color: "#6b7280", fontSize: "0.9rem" }}>
-                  • 1.5% service fee paid to AAstar ecosystem
+                  • 1.5% 服务费支付给 AAstar 生态
                   <br />
-                  • No technical maintenance required
+                  • 无需技术维护，购买 aPNTs 充值模式
                   <br />
-                  • Suitable for: Communities focused on operations, providing gasless UX
+                  • 适合：希望聚焦社区运营，提供 Gasless 服务体验的社区（120人社区全赞助约234U/月）
                 </div>
               </div>
             </div>
@@ -594,7 +594,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
                 rel="noopener noreferrer"
                 style={{ color: "#0369a1", textDecoration: "none", fontWeight: 500 }}
               >
-                More Analysis →
+                更多分析 →
               </a>
             </div>
           </div>
