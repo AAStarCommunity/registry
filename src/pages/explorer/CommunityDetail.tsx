@@ -212,7 +212,13 @@ export function CommunityDetail() {
       setLoading(false);
     } catch (err: any) {
       console.error("Failed to fetch community data:", err);
-      setError(err.message || "Failed to load community data");
+      
+      // Handle specific CommunityNotRegistered error
+      if (err.message && err.message.includes('CommunityNotRegistered')) {
+        setError(`Community ${address} is not registered in the Registry`);
+      } else {
+        setError(err.message || "Failed to load community data");
+      }
       setLoading(false);
     }
   };
@@ -606,14 +612,31 @@ export function CommunityDetail() {
   }
 
   if (error || !community) {
+    const isNotRegistered = error && error.includes('is not registered');
+    
     return (
       <div className="community-detail">
         <div className="error-state">
-          <h2>Error</h2>
+          <h2>{isNotRegistered ? 'Community Not Registered' : 'Error'}</h2>
           <p>{error || "Community not found"}</p>
-          <Link to="/explorer" className="back-link">
-            ← Back to Explorer
-          </Link>
+          
+          {isNotRegistered && (
+            <div style={{marginTop: '20px', padding: '15px', backgroundColor: '#f8f9fa', borderRadius: '8px'}}>
+              <h4>💡 Possible Solutions:</h4>
+              <ul style={{textAlign: 'left', margin: '10px 0'}}>
+                <li>Check if the community address is correct</li>
+                <li>The community might not have been registered yet</li>
+                <li>Visit the <Link to="/resources/register-community" style={{color: '#007bff'}}>Register Community</Link> page to create a new community</li>
+                <li>Browse <Link to="/explorer" style={{color: '#007bff'}}>all registered communities</Link></li>
+              </ul>
+            </div>
+          )}
+          
+          <div style={{marginTop: '20px'}}>
+            <Link to="/explorer" className="back-link">
+              ← Back to Explorer
+            </Link>
+          </div>
         </div>
       </div>
     );
