@@ -193,11 +193,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     } catch (err: any) {
       console.error("Failed to register to SuperPaymaster:", err);
 
-      // Handle user rejection
+      // Handle specific errors
       if (err.code === "ACTION_REJECTED" || err.code === 4001) {
         setRegistrationError("Transaction cancelled by user. Please try again when ready.");
+      } else if (err.data === "0xc52a9bd3" || err.message?.includes("InvalidConfiguration")) {
+        setRegistrationError(
+          "SuperPaymaster contract not configured. The aPNTs token address needs to be set by the contract owner. Please contact support."
+        );
       } else if (err.message?.includes("insufficient funds")) {
         setRegistrationError("Insufficient balance. Please ensure you have enough GT and aPNTs.");
+      } else if (err.data === "0xadb9e043" || err.message?.includes("InsufficientAvailableBalance")) {
+        setRegistrationError("Insufficient stGToken balance. Please ensure you have staked enough GT first.");
       } else {
         setRegistrationError(err.message || "Registration failed. Please try again.");
       }
