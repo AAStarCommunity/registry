@@ -225,26 +225,55 @@ async function checkSuperPaymasterRegistration(
 ): Promise<{
   isRegistered: boolean;
 }> {
+  console.log("🔍 [Step2/resourceChecker] Checking SuperPaymaster registration for:", address);
+
   try {
     const networkConfig = getCurrentNetworkConfig();
     const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
 
-    // Use minimal ABI to check registration
+    console.log("📍 [Step2/resourceChecker] SuperPaymaster address:", superPaymasterAddress);
+
+    // Use minimal ABI to check registration - only get first 2 fields
     const superPaymasterABI = [
-      "function accounts(address) external view returns (uint256, uint256 stakedAt)"
+      "function accounts(address) external view returns (uint256, uint256)"
     ];
 
     const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, provider);
 
     try {
-      const [, stakedAt] = await superPaymaster.accounts(address);
-      return { isRegistered: stakedAt > 0n };
-    } catch (error) {
+      const result = await superPaymaster.accounts(address);
+      console.log("✅ [Step2/resourceChecker] Raw result:", result);
+
+      const stGTokenLocked = result[0];
+      const stakedAt = result[1];
+
+      console.log("📊 [Step2/resourceChecker] Parsed values:", {
+        stGTokenLocked: stGTokenLocked.toString(),
+        stakedAt: stakedAt.toString(),
+        isRegistered: stakedAt > 0n
+      });
+
+      const isRegistered = stakedAt > 0n;
+      console.log(isRegistered ? "✅ [Step2/resourceChecker] REGISTERED" : "⏸️ [Step2/resourceChecker] NOT REGISTERED");
+
+      return { isRegistered };
+    } catch (error: any) {
       // Decode error likely means not registered
+      console.error("❌ [Step2/resourceChecker] Decode error:", error);
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        data: error.data
+      });
       return { isRegistered: false };
     }
-  } catch (error) {
-    console.error("Failed to check SuperPaymaster registration:", error);
+  } catch (error: any) {
+    console.error("❌ [Step2/resourceChecker] Failed to check SuperPaymaster registration:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      data: error.data
+    });
     return { isRegistered: false };
   }
 }

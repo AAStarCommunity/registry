@@ -67,53 +67,103 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const checkSuperPaymasterRegistration = async (address: string) => {
     if (mode !== "aoa+") return false;
 
+    console.log("🔍 [Step3] Checking SuperPaymaster registration for:", address);
+
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
 
+      console.log("📍 [Step3] SuperPaymaster address:", superPaymasterAddress);
+
       // Use minimal ABI to avoid decoding errors with unregistered accounts
-      // We only need stakedAt to check if registered
+      // We only need first two fields: stGTokenLocked and stakedAt
       const abi = [
-        "function accounts(address) external view returns (uint256, uint256 stakedAt)"
+        "function accounts(address) external view returns (uint256, uint256)"
       ];
 
       const superPaymaster = new ethers.Contract(superPaymasterAddress, abi, provider);
 
       try {
-        const [, stakedAt] = await superPaymaster.accounts(address);
+        const result = await superPaymaster.accounts(address);
+        console.log("✅ [Step3] Raw result from accounts():", result);
+
+        const stGTokenLocked = result[0];
+        const stakedAt = result[1];
+
+        console.log("📊 [Step3] Parsed values:", {
+          stGTokenLocked: stGTokenLocked.toString(),
+          stakedAt: stakedAt.toString(),
+          isRegistered: stakedAt > 0n
+        });
 
         // stakedAt > 0 means registered
         if (stakedAt > 0n) {
-          // Get full account info with complete ABI (returns OperatorAccount struct/tuple)
+          console.log("✅ [Step3] Account IS registered, fetching full info...");
+
+          // Get full account info - use array indices instead of named fields
           const fullABI = [
-            "function accounts(address) external view returns (tuple(uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))"
+            "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
           ];
           const fullContract = new ethers.Contract(superPaymasterAddress, fullABI, provider);
-          const account = await fullContract.accounts(address);
 
-          setIsRegistered(true);
-          setSuperPaymasterInfo({
-            stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
-            aPNTsBalance: ethers.formatEther(account.aPNTsBalance || account[2]),
-            reputationLevel: Number(account.reputationLevel || account[13]),
-            treasury: account.treasury || account[8],
-          });
-          return true;
+          try {
+            const account = await fullContract.accounts(address);
+            console.log("✅ [Step3] Full account data:", account);
+
+            setIsRegistered(true);
+            setSuperPaymasterInfo({
+              stGTokenLocked: ethers.formatEther(account[0]), // Use index
+              aPNTsBalance: ethers.formatEther(account[2]),
+              reputationLevel: Number(account[13]),
+              treasury: account[8],
+            });
+
+            console.log("✅ [Step3] Registration check complete - REGISTERED");
+            return true;
+          } catch (fullError: any) {
+            console.error("❌ [Step3] Failed to get full account info:", fullError);
+            console.error("Error details:", {
+              message: fullError.message,
+              code: fullError.code,
+              data: fullError.data
+            });
+
+            // Still set as registered since stakedAt > 0
+            setIsRegistered(true);
+            setSuperPaymasterInfo({
+              stGTokenLocked: ethers.formatEther(stGTokenLocked),
+              aPNTsBalance: "0",
+              reputationLevel: 0,
+              treasury: address,
+            });
+            return true;
+          }
         }
 
         // Not registered (stakedAt == 0)
+        console.log("⏸️ [Step3] Account NOT registered (stakedAt = 0)");
         setIsRegistered(false);
         setSuperPaymasterInfo(null);
         return false;
-      } catch (decodeError) {
+      } catch (decodeError: any) {
         // Decode error likely means not registered (returns default values)
-        console.log("Account not registered in SuperPaymaster (decode error)");
+        console.error("❌ [Step3] Decode error when checking registration:", decodeError);
+        console.error("Error details:", {
+          message: decodeError.message,
+          code: decodeError.code,
+          data: decodeError.data
+        });
         setIsRegistered(false);
         setSuperPaymasterInfo(null);
         return false;
       }
-    } catch (err) {
-      console.error("Failed to check SuperPaymaster registration:", err);
+    } catch (err: any) {
+      console.error("❌ [Step3] Failed to check SuperPaymaster registration:", err);
+      console.error("Error details:", {
+        message: err.message,
+        code: err.code,
+        data: err.data
+      });
       setIsRegistered(false);
       setSuperPaymasterInfo(null);
       return false;
