@@ -25,6 +25,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const mySBTAddress = networkConfig.contracts.mySBT;
   const [communityAddress, setCommunityAddress] = useState<string>("");
 
+  // AOA+ SuperPaymaster registration state
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registrationError, setRegistrationError] = useState<string>("");
+  const [superPaymasterInfo, setSuperPaymasterInfo] = useState<{
+    stGTokenLocked: string;
+    aPNTsBalance: string;
+    reputationLevel: number;
+    treasury: string;
+  } | null>(null);
+
   // Get current wallet address (community owner)
   useEffect(() => {
     const getAddress = async () => {
@@ -46,6 +57,127 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const getExplorerLink = (address: string): string => {
     return `https://sepolia.etherscan.io/address/${address}`;
   };
+
+  // Check if already registered in SuperPaymaster (AOA+ mode)
+  const checkSuperPaymasterRegistration = async (address: string) => {
+    if (mode !== "aoa+") return false;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+
+      // Simplified ABI for accounts function
+      const abi = [
+        "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
+      ];
+
+      const superPaymaster = new ethers.Contract(superPaymasterAddress, abi, provider);
+      const account = await superPaymaster.accounts(address);
+
+      // stakedAt > 0 means registered
+      if (account.stakedAt > 0n) {
+        setIsRegistered(true);
+        setSuperPaymasterInfo({
+          stGTokenLocked: ethers.formatEther(account.stGTokenLocked),
+          aPNTsBalance: ethers.formatEther(account.aPNTsBalance),
+          reputationLevel: Number(account.reputationLevel),
+          treasury: account.treasury,
+        });
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("Failed to check SuperPaymaster registration:", err);
+      return false;
+    }
+  };
+
+  // Register to SuperPaymaster (AOA+ mode)
+  const registerToSuperPaymaster = async () => {
+    if (!communityAddress || mode !== "aoa+") return;
+
+    setIsRegistering(true);
+    setRegistrationError("");
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+      const gTokenStakingAddress = networkConfig.contracts.gTokenStaking;
+      const aPNTsAddress = networkConfig.contracts.aPNTs;
+
+      // ABIs
+      const superPaymasterABI = [
+        "function registerOperator(uint256 stGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
+        "function depositAPNTs(uint256 amount) external"
+      ];
+      const erc20ABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+
+      const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, signer);
+      const stGToken = new ethers.Contract(networkConfig.contracts.gToken, erc20ABI, signer);
+      const aPNTs = new ethers.Contract(aPNTsAddress, erc20ABI, signer);
+
+      // Parameters
+      const stakeAmount = ethers.parseEther("50"); // 50 GT
+      const initialAPNTs = ethers.parseEther("1000"); // 1000 aPNTs
+      const supportedSBTs = [mySBTAddress];
+      const xPNTsToken = resources.xPNTsAddress || ethers.ZeroAddress;
+      const treasury = communityAddress;
+
+      console.log("=== Starting SuperPaymaster Registration ===");
+
+      // Step 1: Approve stGToken
+      console.log("Step 1: Approving stGToken...");
+      const approveTx1 = await stGToken.approve(gTokenStakingAddress, stakeAmount);
+      await approveTx1.wait();
+      console.log("✅ stGToken approved");
+
+      // Step 2: Register Operator
+      console.log("Step 2: Registering operator...");
+      const registerTx = await superPaymaster.registerOperator(
+        stakeAmount,
+        supportedSBTs,
+        xPNTsToken,
+        treasury
+      );
+      await registerTx.wait();
+      console.log("✅ Operator registered");
+
+      // Step 3: Approve aPNTs
+      console.log("Step 3: Approving aPNTs...");
+      const approveTx2 = await aPNTs.approve(superPaymasterAddress, initialAPNTs);
+      await approveTx2.wait();
+      console.log("✅ aPNTs approved");
+
+      // Step 4: Deposit aPNTs
+      console.log("Step 4: Depositing aPNTs...");
+      const depositTx = await superPaymaster.depositAPNTs(initialAPNTs);
+      await depositTx.wait();
+      console.log("✅ aPNTs deposited");
+
+      console.log("=== Registration Complete ===");
+
+      // Refresh SuperPaymaster info
+      await checkSuperPaymasterRegistration(communityAddress);
+      setIsRegistering(false);
+    } catch (err: any) {
+      console.error("Failed to register to SuperPaymaster:", err);
+      setRegistrationError(err.message || "Registration failed");
+      setIsRegistering(false);
+    }
+  };
+
+  // Check SuperPaymaster registration on mount (AOA+ mode only)
+  useEffect(() => {
+    if (mode === "aoa+" && communityAddress) {
+      checkSuperPaymasterRegistration(communityAddress).then((registered) => {
+        if (!registered && !isRegistering) {
+          // Auto-start registration
+          registerToSuperPaymaster();
+        }
+      });
+    }
+  }, [mode, communityAddress]);
 
   return (
     <div className="step3-complete">
@@ -152,6 +284,56 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <p className="card-detail">{t('step3Complete.summary.balances.eth')} {resources.ethBalance} ETH</p>
             </div>
           </div>
+
+          {/* SuperPaymaster Registration (AOA+ mode) */}
+          {mode === "aoa+" && (
+            <div className="summary-card highlight">
+              <div className="card-icon">🌟</div>
+              <div className="card-content">
+                <h4>SuperPaymaster Registration</h4>
+                {isRegistering ? (
+                  <p className="card-detail">⏳ Registering to SuperPaymaster...</p>
+                ) : registrationError ? (
+                  <>
+                    <p className="card-detail error">❌ Registration failed</p>
+                    <p className="card-detail">{registrationError}</p>
+                    <button
+                      onClick={registerToSuperPaymaster}
+                      className="retry-btn"
+                      style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Retry Registration
+                    </button>
+                  </>
+                ) : isRegistered && superPaymasterInfo ? (
+                  <>
+                    <p className="card-detail">
+                      ✅ Registered
+                    </p>
+                    <p className="card-detail">
+                      Staked: {superPaymasterInfo.stGTokenLocked} stGToken
+                    </p>
+                    <p className="card-detail">
+                      aPNTs Balance: {superPaymasterInfo.aPNTsBalance}
+                    </p>
+                    <p className="card-detail">
+                      Reputation Level: {superPaymasterInfo.reputationLevel}/12
+                    </p>
+                    <a
+                      href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                    >
+                      View SuperPaymaster Contract ↗
+                    </a>
+                  </>
+                ) : (
+                  <p className="card-detail">⏸️ Checking registration status...</p>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -166,6 +348,62 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             <p>
               For production use, we strongly recommend transferring community ownership to a
               <strong> Gnosis Safe multisig wallet</strong> instead of using a single EOA account.
+            </p>
+            <div className="recommendation-benefits">
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Prevent single point of failure (lost private key)</span>
+              </div>
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Require multiple approvals for critical operations</span>
+              </div>
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Enable team-based governance</span>
+              </div>
+            </div>
+            <div className="recommendation-actions">
+              <a
+                href="https://app.safe.global/new-safe/create"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-create-safe"
+              >
+                🛡️ Create Gnosis Safe Multisig ↗
+              </a>
+              <a
+                href={communityAddress ? `/explorer/community/${communityAddress}` : "/explorer"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-transfer"
+              >
+                🔄 Manage Community (Transfer Ownership) ↗
+              </a>
+            </div>
+            <div className="recommendation-note">
+              <strong>Note:</strong> After creating a Safe multisig wallet:
+              <ol style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
+                <li>Click "Manage Community" to open your community management page</li>
+                <li>Connect your current wallet (owner account)</li>
+                <li>Use the "Edit" button on "Owner Address" to transfer ownership to your Safe wallet address</li>
+                <li>The page supports both MetaMask and Safe App modes</li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Security Recommendation (AOA+ Mode) */}
+      {mode === "aoa+" && (
+        <div className="security-recommendation">
+          <div className="recommendation-header">
+            <span className="icon">🔐</span>
+            <h3>Security Recommendation: Create Community Multisig Vault</h3>
+          </div>
+          <div className="recommendation-content">
+            <p>
+              For production use, we recommend creating a <strong>Gnosis Safe multisig wallet</strong> to manage your community resources securely.
             </p>
             <div className="recommendation-benefits">
               <div className="benefit-item">

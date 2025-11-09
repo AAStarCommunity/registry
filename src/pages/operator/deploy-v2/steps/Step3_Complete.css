@@ -134,6 +134,31 @@
   text-decoration: underline;
 }
 
+/* Error state for card details */
+.card-detail.error {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* Retry button */
+.retry-btn {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  borderRadius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.retry-btn:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
 /* Next Steps */
 .next-steps {
   background: var(--card-bg);
