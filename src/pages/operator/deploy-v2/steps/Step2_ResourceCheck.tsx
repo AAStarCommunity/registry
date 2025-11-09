@@ -72,8 +72,8 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
       return (
         resources.isCommunityRegistered &&
         resources.hasXPNTs &&
-        !resources.hasAOAPaymaster && // Must NOT have AOA Paymaster
-        !resources.hasSuperPaymasterRegistered && // Must NOT already be registered in SuperPaymaster
+        !resources.hasAOAPaymaster && // Must NOT have AOA Paymaster (mode conflict)
+        // Note: hasSuperPaymasterRegistered is NOT a blocker - user can proceed to Step3 to manage
         resources.hasEnoughGToken &&
         resources.hasEnoughAPNTs &&
         resources.hasEnoughETH
@@ -196,47 +196,55 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
           </div>
         </div>
 
-        {/* AOA+ Mode: Deployment Conflict Check (Combined AOA & AOA+) */}
+        {/* AOA+ Mode: Deployment Check */}
         {mode === "aoa+" && (
-          <div className={`resource-card ${resources?.hasAOAPaymaster || resources?.hasSuperPaymasterRegistered ? "warning" : "ready"}`}>
+          <div className={`resource-card ${resources?.hasAOAPaymaster ? "warning" : "ready"}`}>
             <div className="resource-icon">
-              {resources?.hasAOAPaymaster || resources?.hasSuperPaymasterRegistered ? "⚠️" : "✅"}
+              {resources?.hasAOAPaymaster ? "⚠️" : "✅"}
             </div>
             <div className="resource-info">
-              <h3>Deployment Conflict Check</h3>
+              <h3>Deployment Check</h3>
 
-              {/* Check AOA Paymaster deployment status */}
+              {/* Check AOA Paymaster deployment status - MODE CONFLICT */}
               <div style={{ marginBottom: '0.75rem' }}>
                 <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
                   {resources?.hasAOAPaymaster ? "⚠️" : "✅"} AOA Paymaster: {resources?.hasAOAPaymaster ? "已部署" : "未部署"}
                 </p>
                 {resources?.hasAOAPaymaster && (
                   <p className="help-text" style={{ fontSize: '0.875rem', color: '#f59e0b' }}>
-                    账户已通过 PaymasterFactory 部署 AOA Paymaster
+                    账户已通过 PaymasterFactory 部署 AOA Paymaster（模式冲突）
                   </p>
                 )}
               </div>
 
-              {/* Check SuperPaymaster operator registration status */}
+              {/* Check SuperPaymaster deployment status - INFORMATIONAL */}
               <div>
                 <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.25rem' }}>
-                  {resources?.hasSuperPaymasterRegistered ? "⚠️" : "✅"} SuperPaymaster Operator: {resources?.hasSuperPaymasterRegistered ? "已注册" : "未注册"}
+                  {resources?.hasSuperPaymasterRegistered ? "✅" : "⏸️"} SuperPaymaster (AOA+): {resources?.hasSuperPaymasterRegistered ? "已部署" : "未部署"}
                 </p>
-                {resources?.hasSuperPaymasterRegistered && (
-                  <p className="help-text" style={{ fontSize: '0.875rem', color: '#f59e0b' }}>
-                    账户已在 SuperPaymaster 注册为 operator
+                {resources?.hasSuperPaymasterRegistered ? (
+                  <p className="help-text" style={{ fontSize: '0.875rem', color: '#10b981' }}>
+                    ✅ 账户已在 SuperPaymaster 部署（注册为 operator），可以继续到下一步管理
+                  </p>
+                ) : (
+                  <p className="help-text" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    账户未在 SuperPaymaster 部署，可以在下一步部署
                   </p>
                 )}
               </div>
 
               {/* Summary message */}
-              {(resources?.hasAOAPaymaster || resources?.hasSuperPaymasterRegistered) ? (
+              {resources?.hasAOAPaymaster ? (
                 <p className="help-text" style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#fef3c7', borderRadius: '4px', fontSize: '0.875rem' }}>
-                  ⚠️ 检测到部署冲突。一个账户只能选择一种模式。请使用其他账户或先注销现有部署。
+                  ⚠️ 模式冲突：账户已部署 AOA Paymaster，不能使用 AOA+ 模式。请使用其他账户或先注销 AOA 部署。
+                </p>
+              ) : resources?.hasSuperPaymasterRegistered ? (
+                <p className="status-text success" style={{ marginTop: '0.75rem', padding: '0.5rem', background: '#d1fae5', borderRadius: '4px', fontSize: '0.875rem' }}>
+                  ✅ AOA+ 已部署，可以继续到下一步管理账户或注册到 Registry
                 </p>
               ) : (
                 <p className="status-text success" style={{ marginTop: '0.75rem' }}>
-                  ✅ 无部署冲突，可以继续部署 AOA+ 模式
+                  ✅ 无部署，可以继续部署 AOA+ 模式
                 </p>
               )}
             </div>
