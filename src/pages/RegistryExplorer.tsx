@@ -223,13 +223,13 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       // Query MySBT contract
       const mySBT = new ethers.Contract(mySBTAddress, MySBTABI, provider);
 
-      // Get next token ID (MySBT uses incremental token IDs starting from 0)
+      // Get next token ID (MySBT uses incremental token IDs starting from 1)
       const nextTokenId = await mySBT.nextTokenId();
       console.log(`📋 Total MySBT tokens: ${nextTokenId}`);
 
-      // Query all holders via ownerOf
+      // Query all holders via ownerOf (MySBT uses 1-based tokenId)
       const holders: MySBTHolder[] = [];
-      for (let tokenId = 0; tokenId < Number(nextTokenId); tokenId++) {
+      for (let tokenId = 1; tokenId < Number(nextTokenId); tokenId++) {
         try {
           const owner = await mySBT.ownerOf(tokenId);
           holders.push({ tokenId, owner });
@@ -264,9 +264,28 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
   // Get paymasters from communities
   const getPaymasters = () => {
-    return getFilteredData().filter(
-      (c) => c.paymasterAddress && c.paymasterAddress !== ethers.ZeroAddress
-    );
+    const networkConfig = getCurrentNetworkConfig();
+    const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+
+    return getFilteredData()
+      .filter((c) => {
+        // Include communities that have a paymaster address set
+        if (c.paymasterAddress && c.paymasterAddress !== ethers.ZeroAddress) {
+          return true;
+        }
+        // For AOA+ (Super) mode communities, use SuperPaymaster address
+        if (c.nodeType === 1) {
+          return true;
+        }
+        return false;
+      })
+      .map((c) => {
+        // For AOA+ communities without paymaster set, use SuperPaymaster address
+        if (c.nodeType === 1 && (!c.paymasterAddress || c.paymasterAddress === ethers.ZeroAddress)) {
+          return { ...c, paymasterAddress: superPaymasterAddress };
+        }
+        return c;
+      });
   };
 
   // Get paginated MySBT holders

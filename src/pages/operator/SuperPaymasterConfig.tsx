@@ -444,12 +444,14 @@ export function SuperPaymasterConfig() {
               </p>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                {/* Contract Balance - Yellow if < 100 */}
+                {/* Contract Balance - Red if < 25, Yellow if < 100, Green otherwise */}
                 <div style={{
                   padding: '1rem',
-                  background: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#fef3c7' : '#f0fdf4',
+                  background: parseFloat(accountInfo.aPNTsBalance) < 25 ? '#fee2e2' :
+                             parseFloat(accountInfo.aPNTsBalance) < 100 ? '#fef3c7' : '#f0fdf4',
                   borderRadius: '8px',
-                  border: parseFloat(accountInfo.aPNTsBalance) < 100 ? '2px solid #f59e0b' : '1px solid #86efac',
+                  border: parseFloat(accountInfo.aPNTsBalance) < 25 ? '2px solid #dc2626' :
+                          parseFloat(accountInfo.aPNTsBalance) < 100 ? '2px solid #f59e0b' : '1px solid #86efac',
                   position: 'relative'
                 }}>
                   {parseFloat(accountInfo.aPNTsBalance) < 100 && (
@@ -457,7 +459,7 @@ export function SuperPaymasterConfig() {
                       position: 'absolute',
                       top: '-8px',
                       right: '8px',
-                      background: '#f59e0b',
+                      background: parseFloat(accountInfo.aPNTsBalance) < 25 ? '#dc2626' : '#f59e0b',
                       color: 'white',
                       padding: '2px 8px',
                       borderRadius: '12px',
@@ -465,12 +467,13 @@ export function SuperPaymasterConfig() {
                       fontWeight: 700,
                       animation: 'pulse 2s infinite'
                     }}>
-                      LOW
+                      {parseFloat(accountInfo.aPNTsBalance) < 25 ? 'CRITICAL' : 'LOW'}
                     </div>
                   )}
                   <div style={{
                     fontSize: '0.875rem',
-                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#92400e' : '#15803d',
+                    color: parseFloat(accountInfo.aPNTsBalance) < 25 ? '#7f1d1d' :
+                           parseFloat(accountInfo.aPNTsBalance) < 100 ? '#92400e' : '#15803d',
                     fontWeight: 600
                   }}>
                     Contract Balance
@@ -478,18 +481,22 @@ export function SuperPaymasterConfig() {
                   <div style={{
                     fontSize: '1.5rem',
                     fontWeight: 700,
-                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#b45309' : '#166534',
+                    color: parseFloat(accountInfo.aPNTsBalance) < 25 ? '#991b1b' :
+                           parseFloat(accountInfo.aPNTsBalance) < 100 ? '#b45309' : '#166534',
                     marginTop: '0.25rem'
                   }}>
                     {accountInfo.aPNTsBalance} aPNTs
                   </div>
                   <div style={{
                     fontSize: '0.75rem',
-                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#f59e0b' : '#4ade80',
+                    color: parseFloat(accountInfo.aPNTsBalance) < 25 ? '#dc2626' :
+                           parseFloat(accountInfo.aPNTsBalance) < 100 ? '#f59e0b' : '#4ade80',
                     marginTop: '0.25rem',
                     fontWeight: parseFloat(accountInfo.aPNTsBalance) < 100 ? 600 : 400
                   }}>
-                    {parseFloat(accountInfo.aPNTsBalance) < 100 ? '⚠️ Low balance - Please deposit!' : 'Available for sponsoring'}
+                    {parseFloat(accountInfo.aPNTsBalance) < 25 ? '🚨 Critical - Deposit urgently!' :
+                     parseFloat(accountInfo.aPNTsBalance) < 100 ? '⚠️ Low balance - Please deposit!' :
+                     'Available for sponsoring'}
                   </div>
                 </div>
 
@@ -704,6 +711,36 @@ export function SuperPaymasterConfig() {
                 >
                   {networkConfig.contracts.superPaymasterV2.slice(0, 10)}...{networkConfig.contracts.superPaymasterV2.slice(-8)}
                 </a>
+              </div>
+              <div className="detail-row">
+                <span className="detail-label">aPNTs Token Address:</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  <a
+                    href={getExplorerLink(networkConfig.contracts.aPNTs)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="detail-value link"
+                    style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
+                  >
+                    {networkConfig.contracts.aPNTs}
+                  </a>
+                  <span style={{
+                    fontSize: '0.75rem',
+                    color: '#6b7280',
+                    fontStyle: 'italic'
+                  }}>
+                    📦 From{' '}
+                    <a
+                      href="https://www.npmjs.com/package/@aastar/shared-config"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ color: '#3b82f6', textDecoration: 'underline' }}
+                    >
+                      @aastar/shared-config
+                    </a>
+                    {' '}v0.3.1
+                  </span>
+                </div>
               </div>
             </div>
           </div>
