@@ -8,20 +8,25 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ethers } from "ethers";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { SuperPaymasterV2ABI } from "../../config/abis";
 import "./SuperPaymasterConfig.css";
 
 export function SuperPaymasterConfig() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const networkConfig = getCurrentNetworkConfig();
 
   // Wallet state
   const [isConnected, setIsConnected] = useState(false);
   const [userAddress, setUserAddress] = useState<string>("");
+
+  // Get operator address from URL query parameter
+  const operatorFromUrl = searchParams.get("operator");
 
   // Account info state
   const [accountInfo, setAccountInfo] = useState<{
@@ -53,12 +58,12 @@ export function SuperPaymasterConfig() {
     checkWalletConnection();
   }, []);
 
-  // Load account info when wallet connected
+  // Load account info when wallet connected or operator URL param available
   useEffect(() => {
-    if (userAddress) {
+    if (userAddress || operatorFromUrl) {
       loadAccountInfo();
     }
-  }, [userAddress]);
+  }, [userAddress, operatorFromUrl]);
 
   const checkWalletConnection = async () => {
     if (typeof window.ethereum === "undefined") {
@@ -103,36 +108,58 @@ export function SuperPaymasterConfig() {
     setIsLoading(true);
     setError("");
 
+    // Use operator from URL if available, otherwise use connected wallet
+    const addressToCheck = operatorFromUrl || userAddress;
+
+    if (!addressToCheck) {
+      setError("No address available. Please connect wallet or provide operator address.");
+      setIsLoading(false);
+      return;
+    }
+
+    console.log("🔍 [SuperPaymaster] Loading account info for:", addressToCheck);
+
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
 
-      // SuperPaymaster ABI for accounts function
-      const abi = [
-        "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
-      ];
+      console.log("📍 [SuperPaymaster] Contract address:", superPaymasterAddress);
 
-      const superPaymaster = new ethers.Contract(superPaymasterAddress, abi, provider);
-      const account = await superPaymaster.accounts(userAddress);
+      // Use shared-config's SuperPaymasterV2ABI
+      const superPaymaster = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, provider);
+      const account = await superPaymaster.accounts(addressToCheck);
 
-      if (account.stakedAt === 0n) {
+      console.log("✅ [SuperPaymaster] Account data:", account);
+
+      if (account.stakedAt === 0n || account[1] === 0n) {
         setError("Account not registered in SuperPaymaster. Please complete AOA+ deployment first.");
         setAccountInfo(null);
       } else {
+        // ABI is missing supportedSBTs, so indices are offset by -1 after index 5
+        // 0:stGTokenLocked, 1:stakedAt, 2:aPNTsBalance, 3:totalSpent, 4:lastRefillTime, 5:minBalanceThreshold
+        // 6:xPNTsToken, 7:treasury, 8:exchangeRate, 9:reputationScore, 10:consecutiveDays
+        // 11:totalTxSponsored, 12:reputationLevel, 13:lastCheckTime, 14:isPaused
         setAccountInfo({
-          stGTokenLocked: ethers.formatEther(account.stGTokenLocked),
-          stakedAt: Number(account.stakedAt),
-          aPNTsBalance: ethers.formatEther(account.aPNTsBalance),
-          totalSpent: ethers.formatEther(account.totalSpent),
-          reputationLevel: Number(account.reputationLevel),
-          reputationScore: ethers.formatEther(account.reputationScore),
-          treasury: account.treasury,
-          isPaused: account.isPaused,
-          totalTxSponsored: account.totalTxSponsored.toString(),
+          stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
+          stakedAt: Number(account.stakedAt || account[1]),
+          aPNTsBalance: ethers.formatEther(account.aPNTsBalance || account[2]),
+          totalSpent: ethers.formatEther(account.totalSpent || account[3]),
+          reputationLevel: Number(account.reputationLevel || account[12]),
+          reputationScore: ethers.formatEther(account.reputationScore || account[9]),
+          treasury: account.treasury || account[7],
+          isPaused: account.isPaused ?? account[14],
+          totalTxSponsored: (account.totalTxSponsored || account[11])?.toString(),
         });
+
+        console.log("✅ [SuperPaymaster] Account loaded successfully");
       }
     } catch (err: any) {
-      console.error("Failed to load account info:", err);
+      console.error("❌ [SuperPaymaster] Failed to load account info:", err);
+      console.error("Error details:", {
+        message: err.message,
+        code: err.code,
+        data: err.data
+      });
       setError(`Failed to load account: ${err.message}`);
     } finally {
       setIsLoading(false);
@@ -198,7 +225,8 @@ export function SuperPaymasterConfig() {
     return `https://sepolia.etherscan.io/address/${address}`;
   };
 
-  if (!isConnected) {
+  // If no wallet connected and no operator param, show connect screen
+  if (!isConnected && !operatorFromUrl) {
     return (
       <div className="superpaymaster-config">
         <ToastContainer
@@ -248,10 +276,27 @@ export function SuperPaymasterConfig() {
         </button>
         <h1>SuperPaymaster Configuration</h1>
         <div className="wallet-info">
-          <span className="wallet-label">Connected:</span>
-          <code className="wallet-address">
-            {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
-          </code>
+          {userAddress && (
+            <>
+              <span className="wallet-label">Connected:</span>
+              <code className="wallet-address">
+                {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
+              </code>
+            </>
+          )}
+          {operatorFromUrl && (
+            <>
+              <span className="wallet-label" style={{ marginLeft: userAddress ? '1rem' : 0 }}>
+                {userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? 'Operator:' : 'Account:'}
+              </span>
+              <code className="wallet-address" style={{
+                background: userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? '#fef3c7' : '#e0f2fe',
+                color: userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? '#92400e' : '#0c4a6e'
+              }}>
+                {operatorFromUrl.slice(0, 6)}...{operatorFromUrl.slice(-4)}
+              </code>
+            </>
+          )}
         </div>
       </div>
 

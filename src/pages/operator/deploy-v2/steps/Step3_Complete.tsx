@@ -364,19 +364,23 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const registryWrite = new ethers.Contract(registryAddress, registryWriteABI, signer);
 
       // Construct updated profile (keep existing data, only update paymasterAddress)
-      // Access fields by name (preferred) or by index (fallback)
+      // IMPORTANT: Create a new plain object, not using the Proxy result directly
       const updatedProfile = {
-        name: currentProfile.name || currentProfile[0],
-        ensName: currentProfile.ensName || currentProfile[1],
-        xPNTsToken: currentProfile.xPNTsToken || currentProfile[2],
-        supportedSBTs: currentProfile.supportedSBTs || currentProfile[3],
-        nodeType: currentProfile.nodeType ?? currentProfile[4],
-        paymasterAddress: paymasterAddress, // Update this field
-        community: currentProfile.community || currentProfile[6],
-        registeredAt: currentProfile.registeredAt || currentProfile[7],
-        lastUpdatedAt: currentProfile.lastUpdatedAt || currentProfile[8],
-        isActive: currentProfile.isActive ?? currentProfile[9],
-        allowPermissionlessMint: currentProfile.allowPermissionlessMint ?? currentProfile[10]
+        name: String(currentProfile.name || currentProfile[0] || ""),
+        ensName: String(currentProfile.ensName || currentProfile[1] || ""),
+        xPNTsToken: String(currentProfile.xPNTsToken || currentProfile[2] || ethers.ZeroAddress),
+        supportedSBTs: Array.isArray(currentProfile.supportedSBTs)
+          ? [...currentProfile.supportedSBTs]  // Copy array
+          : Array.isArray(currentProfile[3])
+            ? [...currentProfile[3]]
+            : [],
+        nodeType: Number(currentProfile.nodeType ?? currentProfile[4] ?? 0),
+        paymasterAddress: String(paymasterAddress), // Update this field
+        community: String(currentProfile.community || currentProfile[6] || ethers.ZeroAddress),
+        registeredAt: BigInt(currentProfile.registeredAt || currentProfile[7] || 0),
+        lastUpdatedAt: BigInt(currentProfile.lastUpdatedAt || currentProfile[8] || 0),
+        isActive: Boolean(currentProfile.isActive ?? currentProfile[9] ?? true),
+        allowPermissionlessMint: Boolean(currentProfile.allowPermissionlessMint ?? currentProfile[10] ?? false)
       };
 
       console.log("Registering Paymaster to Registry:", paymasterAddress);
