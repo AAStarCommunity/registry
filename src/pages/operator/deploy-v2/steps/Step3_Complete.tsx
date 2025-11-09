@@ -196,6 +196,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       // Handle specific errors
       if (err.code === "ACTION_REJECTED" || err.code === 4001) {
         setRegistrationError("Transaction cancelled by user. Please try again when ready.");
+      } else if (err.data?.startsWith("0x45ed80e9") || err.message?.includes("AlreadyRegistered")) {
+        // Already registered - this is actually success!
+        console.log("Already registered in SuperPaymaster");
+        setIsRegistered(true);
+        setRegistrationError("");
+        setIsRegistering(false);
+        // Refresh to get account info
+        await checkSuperPaymasterRegistration(communityAddress);
+        return; // Early return, don't set error
       } else if (err.data === "0xc52a9bd3" || err.message?.includes("InvalidConfiguration")) {
         setRegistrationError(
           "SuperPaymaster contract not configured. The aPNTs token address needs to be set by the contract owner. Please contact support."

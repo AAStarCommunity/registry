@@ -407,26 +407,17 @@ export function CommunityDetail() {
     try {
       const networkConfig = getCurrentNetworkConfig();
       const registryAddress = networkConfig.contracts.registry;
-      const registryInterface = new ethers.Interface(RegistryABI);
 
-      // Build updated profile tuple
-      const updatedProfile = {
-        name: community.name,
-        ensName: community.ensName,
-        xPNTsToken: community.xPNTsToken,
-        supportedSBTs: community.supportedSBTs,
-        paymasterAddress: community.paymasterAddress,
-        community: community.community,
-        nodeType: community.nodeType,
-        registeredAt: community.registeredAt,
-        lastUpdatedAt: community.lastUpdatedAt,
-        isActive: community.isActive,
-        allowPermissionlessMint: updates.allowPermissionlessMint !== undefined
-          ? updates.allowPermissionlessMint
-          : community.allowPermissionlessMint,
-      };
+      // Use dedicated setPermissionlessMint function instead of updateCommunityProfile
+      // updateCommunityProfile does NOT update allowPermissionlessMint field
+      const setPermissionlessMintABI = [
+        "function setPermissionlessMint(bool enabled) external"
+      ];
+      const registryInterface = new ethers.Interface(setPermissionlessMintABI);
 
-      const txData = registryInterface.encodeFunctionData("updateCommunityProfile", [updatedProfile]);
+      const txData = registryInterface.encodeFunctionData("setPermissionlessMint", [
+        updates.allowPermissionlessMint ?? community.allowPermissionlessMint
+      ]);
 
       const transaction: BaseTransaction = {
         to: registryAddress,
