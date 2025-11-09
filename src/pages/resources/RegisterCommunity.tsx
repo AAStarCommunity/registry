@@ -125,8 +125,8 @@ export function RegisterCommunity() {
       console.log('Shared Config:', sharedConfigVersion);
       console.log('Registry:', registryVersion || "Loading...");
       console.log('Registry Address:', REGISTRY_ADDRESS);
-      console.log('Expected Address:', '0x028aB52B4E0EF26820043ca4F1B5Fe14FfC1EF75');
-      console.log('Address Match:', REGISTRY_ADDRESS === '0x028aB52B4E0EF26820043ca4F1B5Fe14FfC1EF75' ? '✅' : '❌');
+      console.log('Expected Address:', '0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696');
+      console.log('Address Match:', REGISTRY_ADDRESS === '0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696' ? '✅' : '❌');
       console.log('Timestamp:', new Date().toISOString());
       console.log('========================');
     } catch (error) {

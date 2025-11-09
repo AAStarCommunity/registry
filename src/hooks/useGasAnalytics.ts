@@ -481,8 +481,13 @@ export async function fetchAllPaymastersAnalytics(
 
   if (maxQueriedBlock === 0) {
     // No cache: initial historical query
-    queryFromBlock =
-      fromBlock || parseInt(import.meta.env.VITE_HISTORICAL_FROM_BLOCK || "0");
+    // Default to 48 hours ago instead of from block 0
+    const BLOCKS_PER_HOUR = 300; // Sepolia average: ~12 seconds per block = 300 blocks per hour
+    const HOURS_TO_QUERY = 48; // Hardcoded 48 hours as requested
+    const blocksIn48Hours = BLOCKS_PER_HOUR * HOURS_TO_QUERY; // 14400 blocks
+    
+    const defaultFromBlock = Math.max(0, currentBlock - blocksIn48Hours);
+    queryFromBlock = fromBlock || defaultFromBlock;
 
     // Handle VITE_HISTORICAL_TO_BLOCK: if "latest" or undefined, use currentBlock
     const historicalToBlock = import.meta.env.VITE_HISTORICAL_TO_BLOCK;
@@ -495,14 +500,21 @@ export async function fetchAllPaymastersAnalytics(
     }
 
     console.log(
-      `\n🔍 Step 3: Initial cache build - querying blocks ${queryFromBlock} → ${queryToBlock}`,
+      `\n🔍 Step 3: Initial cache build - querying blocks ${queryFromBlock} → ${queryToBlock} (last ${HOURS_TO_QUERY} hours)`,
     );
   } else {
     // Has cache: incremental query from last cached block to current
-    queryFromBlock = maxQueriedBlock + 1;
+    // But limit to 48 hours maximum
+    const BLOCKS_PER_HOUR = 300; // Sepolia average: ~12 seconds per block = 300 blocks per hour
+    const HOURS_TO_QUERY = 48; // Hardcoded 48 hours as requested
+    const blocksIn48Hours = BLOCKS_PER_HOUR * HOURS_TO_QUERY; // 14400 blocks
+    const maxAllowedFromBlock = Math.max(0, currentBlock - blocksIn48Hours);
+    
+    queryFromBlock = Math.max(maxQueriedBlock + 1, maxAllowedFromBlock);
     queryToBlock = currentBlock;
+    
     console.log(
-      `\n⚡ Step 3: Incremental query - from block ${queryFromBlock} → ${queryToBlock} (${queryToBlock - queryFromBlock + 1} new blocks)`,
+      `\n⚡ Step 3: Incremental query - from block ${queryFromBlock} → ${queryToBlock} (${queryToBlock - queryFromBlock + 1} new blocks, limited to ${HOURS_TO_QUERY} hours)`,
     );
 
     // If no new blocks, skip querying
