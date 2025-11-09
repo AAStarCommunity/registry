@@ -112,9 +112,11 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         "function depositAPNTs(uint256 amount) external"
       ];
       const erc20ABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
+      const stakingABI = ["function stake(uint256 amount) external returns (uint256 shares)"];
 
       const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, signer);
-      const stGToken = new ethers.Contract(networkConfig.contracts.gToken, erc20ABI, signer);
+      const gToken = new ethers.Contract(networkConfig.contracts.gToken, erc20ABI, signer);
+      const gTokenStaking = new ethers.Contract(gTokenStakingAddress, stakingABI, signer);
       const aPNTs = new ethers.Contract(aPNTsAddress, erc20ABI, signer);
 
       // Parameters
@@ -126,14 +128,19 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       console.log("=== Starting SuperPaymaster Registration ===");
 
-      // Step 1: Approve stGToken
-      console.log("Step 1: Approving stGToken...");
-      const approveTx1 = await stGToken.approve(gTokenStakingAddress, stakeAmount);
-      await approveTx1.wait();
-      console.log("✅ stGToken approved");
+      // Step 0: Stake GT to get stGToken shares (CRITICAL STEP!)
+      console.log("Step 0: Approving GT for staking...");
+      const approveGTokenTx = await gToken.approve(gTokenStakingAddress, stakeAmount);
+      await approveGTokenTx.wait();
+      console.log("✅ GT approved for staking");
 
-      // Step 2: Register Operator
-      console.log("Step 2: Registering operator...");
+      console.log("Step 0: Staking", ethers.formatEther(stakeAmount), "GT to receive stGToken...");
+      const stakeTx = await gTokenStaking.stake(stakeAmount);
+      await stakeTx.wait();
+      console.log("✅ Staked", ethers.formatEther(stakeAmount), "GT, received stGToken shares");
+
+      // Step 1: Register Operator (will lock stGToken shares internally)
+      console.log("Step 1: Registering operator...");
       const registerTx = await superPaymaster.registerOperator(
         stakeAmount,
         supportedSBTs,
@@ -143,14 +150,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       await registerTx.wait();
       console.log("✅ Operator registered");
 
-      // Step 3: Approve aPNTs
-      console.log("Step 3: Approving aPNTs...");
+      // Step 2: Approve aPNTs
+      console.log("Step 2: Approving aPNTs...");
       const approveTx2 = await aPNTs.approve(superPaymasterAddress, initialAPNTs);
       await approveTx2.wait();
       console.log("✅ aPNTs approved");
 
-      // Step 4: Deposit aPNTs
-      console.log("Step 4: Depositing aPNTs...");
+      // Step 3: Deposit aPNTs
+      console.log("Step 3: Depositing aPNTs...");
       const depositTx = await superPaymaster.depositAPNTs(initialAPNTs);
       await depositTx.wait();
       console.log("✅ aPNTs deposited");

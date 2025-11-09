@@ -38,6 +38,15 @@ export function RegisterCommunity() {
   const [stakeAmount, setStakeAmount] = useState<string>("30");
   const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
 
+  // Update stake amount when mode changes
+  useEffect(() => {
+    if (mode === "AOA") {
+      setStakeAmount("30");
+    } else if (mode === "SUPER") {
+      setStakeAmount("50");
+    }
+  }, [mode]);
+
   // UI state
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerTxHash, setRegisterTxHash] = useState<string>("");
@@ -377,10 +386,11 @@ export function RegisterCommunity() {
         throw new Error(t('registerCommunity.errors.communityNameRequired'));
       }
 
-      // Validate stake amount (minimum 30 GToken for both modes)
+      // Validate stake amount (minimum 30 for AOA, 50 for SUPER)
+      const minStake = mode === "AOA" ? 30 : 50;
       const stakeAmountNum = parseFloat(stakeAmount || "0");
-      if (stakeAmountNum < 30) {
-        throw new Error(t('registerCommunity.form.stakeAmountHint') + ': 30 GToken');
+      if (stakeAmountNum < minStake) {
+        throw new Error(t('registerCommunity.form.stakeAmountHint') + `: ${minStake} GToken`);
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -880,7 +890,7 @@ export function RegisterCommunity() {
                   placeholder={t('registerCommunity.form.stakeAmountPlaceholder')}
                   value={stakeAmount}
                   onChange={(e) => setStakeAmount(e.target.value)}
-                  min="30"
+                  min={mode === "AOA" ? "30" : "50"}
                   step="0.01"
                 />
                 {mode === "AOA" && (
@@ -890,7 +900,7 @@ export function RegisterCommunity() {
                 )}
                 {mode === "SUPER" && (
                   <small className="helper-text">
-                    {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
+                    {t('registerCommunity.form.stakeAmountHint')}: 50 GToken (Minimum for AOA+)
                   </small>
                 )}
               </div>
@@ -951,10 +961,10 @@ export function RegisterCommunity() {
             </div>
 
             {/* Balance check warning */}
-            {parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30") && (
+            {parseFloat(gTokenBalance) < parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50")) && (
               <div className="error-box" style={{ marginTop: '16px' }}>
                 <p><strong>{t('registerCommunity.insufficientBalance.title')}</strong></p>
-                <p>{t('registerCommunity.insufficientBalance.required')} {stakeAmount || "30"} GToken</p>
+                <p>{t('registerCommunity.insufficientBalance.required')} {stakeAmount || (mode === "AOA" ? "30" : "50")} GToken</p>
                 <p>{t('registerCommunity.insufficientBalance.current')} {parseFloat(gTokenBalance).toFixed(2)} GToken</p>
                 <p style={{ marginTop: '8px' }}>
                   {t('registerCommunity.insufficientBalance.message')}
@@ -992,7 +1002,7 @@ export function RegisterCommunity() {
                 disabled={
                   isRegistering ||
                   !communityName ||
-                  parseFloat(gTokenBalance) < parseFloat(stakeAmount || "30")
+                  parseFloat(gTokenBalance) < parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50"))
                 }
               >
                 {isRegistering ? t('registerCommunity.button.registering') : t('registerCommunity.button.register')}
