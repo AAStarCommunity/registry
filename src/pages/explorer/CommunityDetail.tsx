@@ -8,6 +8,8 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ethers } from "ethers";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { getProvider } from "../../utils/rpc-provider";
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getEtherscanAddressUrl } from "../../utils/etherscan";
@@ -116,7 +118,7 @@ export function CommunityDetail() {
 
   const connectWallet = async () => {
     if (typeof window.ethereum === "undefined") {
-      alert("Please install MetaMask to edit community settings");
+      toast.error("Please install MetaMask to edit community settings");
       return;
     }
 
@@ -130,7 +132,7 @@ export function CommunityDetail() {
       }
     } catch (err: any) {
       console.error("Failed to connect wallet:", err);
-      alert(`Failed to connect wallet: ${err.message}`);
+      toast.error(`Failed to connect wallet: ${err.message}`);
     }
   };
 
@@ -242,7 +244,7 @@ export function CommunityDetail() {
 
   const handleSaveOwner = async () => {
     if (!newOwnerAddress || !ethers.isAddress(newOwnerAddress)) {
-      alert("Please enter a valid Ethereum address");
+      toast.warning("Please enter a valid Ethereum address");
       return;
     }
 
@@ -314,7 +316,16 @@ export function CommunityDetail() {
         const safeTxResult = await sdk.txs.send({ txs: [transaction] });
         console.log("Safe transaction proposed:", safeTxResult.safeTxHash);
 
-        alert(`Transaction proposed to Safe!\n\nPlease approve it in the Safe interface.\n\nTransaction Hash: ${safeTxResult.safeTxHash}`);
+        toast.success(
+          <div>
+            <strong>Ownership Transfer proposed to Safe!</strong>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please approve it in the Safe interface.</p>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+              Tx Hash: {safeTxResult.safeTxHash.slice(0,10)}...{safeTxResult.safeTxHash.slice(-8)}
+            </p>
+          </div>,
+          { autoClose: 8000 }
+        );
       } else {
         // MetaMask transaction
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -327,10 +338,19 @@ export function CommunityDetail() {
         });
 
         console.log("Transaction sent:", tx.hash);
-        alert(`Transaction submitted!\n\nPlease wait for confirmation.\n\nTx Hash: ${tx.hash}`);
+        toast.info(
+          <div>
+            <strong>Ownership Transfer submitted!</strong>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please wait for confirmation.</p>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+              Tx Hash: {tx.hash.slice(0,10)}...{tx.hash.slice(-8)}
+            </p>
+          </div>,
+          { autoClose: 5000 }
+        );
 
         await tx.wait();
-        alert("Transaction confirmed! Refreshing...");
+        toast.success("Transaction confirmed! Refreshing...");
       }
 
       // Refresh data
@@ -339,7 +359,7 @@ export function CommunityDetail() {
       setNewOwnerAddress("");
     } catch (err: any) {
       console.error("Failed to transfer ownership:", err);
-      alert(`Failed to transfer ownership: ${err.message}`);
+      toast.error(`Failed to transfer ownership: ${err.message}`);
     }
   };
 
@@ -382,7 +402,16 @@ export function CommunityDetail() {
         const safeTxResult = await sdk.txs.send({ txs: [transaction] });
         console.log("Safe transaction proposed:", safeTxResult.safeTxHash);
 
-        alert(`Transaction proposed to Safe!\n\nPlease approve it in the Safe interface.\n\nTransaction Hash: ${safeTxResult.safeTxHash}`);
+        toast.success(
+          <div>
+            <strong>Profile Update proposed to Safe!</strong>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please approve it in the Safe interface.</p>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+              Tx Hash: {safeTxResult.safeTxHash.slice(0,10)}...{safeTxResult.safeTxHash.slice(-8)}
+            </p>
+          </div>,
+          { autoClose: 8000 }
+        );
       } else {
         // MetaMask transaction
         const provider = new ethers.BrowserProvider(window.ethereum);
@@ -395,10 +424,19 @@ export function CommunityDetail() {
         });
 
         console.log("Transaction sent:", tx.hash);
-        alert(`Transaction submitted!\n\nPlease wait for confirmation.\n\nTx Hash: ${tx.hash}`);
+        toast.info(
+          <div>
+            <strong>Profile Update submitted!</strong>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please wait for confirmation.</p>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+              Tx Hash: {tx.hash.slice(0,10)}...{tx.hash.slice(-8)}
+            </p>
+          </div>,
+          { autoClose: 5000 }
+        );
 
         await tx.wait();
-        alert("Transaction confirmed! Refreshing...");
+        toast.success("Transaction confirmed! Refreshing...");
       }
 
       // Refresh data
@@ -406,14 +444,14 @@ export function CommunityDetail() {
       setEditMode({ ...editMode, permissionlessMint: false });
     } catch (err: any) {
       console.error("Failed to update profile:", err);
-      alert(`Failed to update profile: ${err.message}`);
+      toast.error(`Failed to update profile: ${err.message}`);
     }
   };
 
   const executeBatchUpdate = async () => {
     if (!community || !address) return;
     if (Object.keys(pendingChanges).length === 0) {
-      alert("No changes to submit");
+      toast.info("No changes to submit");
       return;
     }
 
@@ -462,7 +500,7 @@ export function CommunityDetail() {
       }
 
       if (transactions.length === 0) {
-        alert("No changes to submit");
+        toast.info("No changes to submit");
         return;
       }
 
@@ -472,11 +510,16 @@ export function CommunityDetail() {
         const safeTxResult = await sdk.txs.send({ txs: transactions });
         console.log("Safe batch transaction proposed:", safeTxResult.safeTxHash);
 
-        alert(
-          `Batch transaction proposed to Safe!\n\n` +
-          `Transactions: ${transactions.length}\n` +
-          `Please approve in the Safe interface.\n\n` +
-          `Transaction Hash: ${safeTxResult.safeTxHash}`
+        toast.success(
+          <div>
+            <strong>Batch Transaction proposed to Safe!</strong>
+            <p style={{margin: '0.5rem 0 0 0'}}>Transactions: {transactions.length}</p>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please approve in the Safe interface.</p>
+            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+              Tx Hash: {safeTxResult.safeTxHash.slice(0,10)}...{safeTxResult.safeTxHash.slice(-8)}
+            </p>
+          </div>,
+          { autoClose: 8000 }
         );
       } else {
         // MetaMask - execute sequentially
@@ -491,13 +534,21 @@ export function CommunityDetail() {
           });
 
           console.log(`Transaction ${i + 1}/${transactions.length} sent:`, tx.hash);
-          alert(`Transaction ${i + 1}/${transactions.length} submitted!\n\nTx Hash: ${tx.hash}`);
+          toast.info(
+            <div>
+              <strong>Transaction {i + 1}/{transactions.length} submitted!</strong>
+              <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
+                Tx Hash: {tx.hash.slice(0,10)}...{tx.hash.slice(-8)}
+              </p>
+            </div>,
+            { autoClose: 4000 }
+          );
 
           await tx.wait();
-          alert(`Transaction ${i + 1}/${transactions.length} confirmed!`);
+          toast.success(`Transaction ${i + 1}/${transactions.length} confirmed!`, { autoClose: 3000 });
         }
 
-        alert("All transactions confirmed! Refreshing...");
+        toast.success("All transactions confirmed! Refreshing...");
       }
 
       // Clear batch mode and refresh
@@ -506,7 +557,7 @@ export function CommunityDetail() {
       await fetchCommunityData();
     } catch (err: any) {
       console.error("Failed to execute batch update:", err);
-      alert(`Failed to execute batch update: ${err.message}`);
+      toast.error(`Failed to execute batch update: ${err.message}`);
     }
   };
 
@@ -541,6 +592,36 @@ export function CommunityDetail() {
 
   return (
     <div className="community-detail">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      {/* Safe Detection Banner */}
+      {isSafeApp && safe && community &&
+       community.community.toLowerCase() === safe.safeAddress.toLowerCase() &&
+       userAddress.toLowerCase() !== safe.safeAddress.toLowerCase() && (
+        <div className="safe-detection-banner">
+          <div className="banner-icon">ℹ️</div>
+          <div className="banner-content">
+            <p style={{margin: 0}}>
+              <strong>Safe Wallet Detected:</strong> This community is owned by Safe {safe.safeAddress.slice(0,6)}...{safe.safeAddress.slice(-4)}
+            </p>
+            <p style={{marginTop: '0.5rem', marginBottom: 0, fontSize: '0.9rem'}}>
+              You are currently connected with {userAddress.slice(0,6)}...{userAddress.slice(-4)}.
+              To edit community settings, ensure you're using the Safe App interface.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Registry Info Banner */}
       <div className="registry-info-banner">
         <div className="info-icon">ℹ️</div>
@@ -677,48 +758,123 @@ export function CommunityDetail() {
           </div>
         </div>
 
-        {/* Community Owner - Editable */}
-        <div className={`info-card editable ${editMode.ownerAddress || pendingChanges.ownerAddress ? 'editing' : ''}`}>
-          <h3>👤 Community Owner</h3>
-          <div className="info-rows">
-            <div className="info-row">
-              <span className="label">Owner Address:</span>
-              {editMode.ownerAddress || (batchEditMode && pendingChanges.ownerAddress) ? (
-                <div className="edit-controls-inline">
-                  <input
-                    type="text"
-                    value={newOwnerAddress}
-                    onChange={(e) => setNewOwnerAddress(e.target.value)}
-                    placeholder="0x..."
-                    className="address-input"
-                  />
-                  <button onClick={handleSaveOwner} className="save-btn">
-                    ✅
+      </div>
+
+      {/* Community Owner - Full Width Row */}
+      <div className={`info-card-full editable ${editMode.ownerAddress || pendingChanges.ownerAddress ? 'editing' : ''}`}>
+        <h3>👤 Community Owner</h3>
+        <div className="owner-content">
+          <div className="info-row">
+            <span className="label">Owner Address:</span>
+            {editMode.ownerAddress || (batchEditMode && pendingChanges.ownerAddress) ? (
+              <div className="edit-controls-inline">
+                <input
+                  type="text"
+                  value={newOwnerAddress}
+                  onChange={(e) => setNewOwnerAddress(e.target.value)}
+                  placeholder="0x..."
+                  className="address-input-full"
+                />
+                <button onClick={handleSaveOwner} className="save-btn">
+                  ✅
+                </button>
+                <button onClick={handleCancelOwnerEdit} className="cancel-btn">
+                  ❌
+                </button>
+              </div>
+            ) : (
+              <>
+                <a
+                  href={getEtherscanAddressUrl(community.community)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="address-link-full"
+                >
+                  {community.community}
+                </a>
+                {isOwner && (
+                  <button onClick={handleEditOwner} className="transfer-owner-btn">
+                    🔄 Transfer Owner
                   </button>
-                  <button onClick={handleCancelOwnerEdit} className="cancel-btn">
-                    ❌
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <a
-                    href={getEtherscanAddressUrl(community.community)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="address-link"
-                  >
-                    {community.community.slice(0, 10)}...{community.community.slice(-8)}
-                  </a>
-                  {isOwner && (
-                    <button onClick={handleEditOwner} className="edit-btn">
-                      ✏️ Edit
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
+                )}
+              </>
+            )}
           </div>
         </div>
+      </div>
+
+      {/* Permissionless Mint Configuration - Full Width Row */}
+      <div className={`info-card-full editable ${editMode.permissionlessMint || pendingChanges.permissionlessMint !== undefined ? 'editing' : ''}`}>
+        <h3>⚙️ MySBT Register Configuration</h3>
+        <div className="info-rows">
+          <div className="info-row">
+            <span className="label">Permissionless MySBT Register:</span>
+            {editMode.permissionlessMint || (batchEditMode && pendingChanges.permissionlessMint !== undefined) ? (
+              <div className="edit-controls-inline">
+                <label className="toggle-switch">
+                  <input
+                    type="checkbox"
+                    checked={newPermissionlessMint}
+                    onChange={(e) => setNewPermissionlessMint(e.target.checked)}
+                  />
+                  <span className="slider"></span>
+                </label>
+                <span className="toggle-label">
+                  {newPermissionlessMint ? 'Enabled' : 'Disabled'}
+                </span>
+                <button onClick={handleSavePermissionlessMint} className="save-btn">
+                  ✅
+                </button>
+                <button onClick={handleCancelPermissionlessMintEdit} className="cancel-btn">
+                  ❌
+                </button>
+              </div>
+            ) : (
+              <>
+                <span className={`value ${community.allowPermissionlessMint ? 'enabled' : 'disabled'}`}>
+                  {community.allowPermissionlessMint ? '✅ Enabled' : '❌ Disabled'}
+                </span>
+                {isOwner && (
+                  <button onClick={handleEditPermissionlessMint} className="edit-btn">
+                    ✏️ Edit
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* MySBT Information - Full Width Row */}
+      <div className="info-card-full">
+        <h3>🎫 MySBT Information</h3>
+        <div className="info-rows">
+          <div className="info-row">
+            <span className="label">Supported SBTs:</span>
+            <div className="sbt-list">
+              {community.supportedSBTs.length > 0 ? (
+                community.supportedSBTs.map((sbt, idx) => (
+                  <a
+                    key={idx}
+                    href={getEtherscanAddressUrl(sbt)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="sbt-badge-link"
+                  >
+                    {sbt.slice(0, 6)}...{sbt.slice(-4)}
+                  </a>
+                ))
+              ) : (
+                <span className="value empty">None</span>
+              )}
+            </div>
+            <span className="readonly-badge">Read-only</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Info Grid */}
+      <div className="info-grid">
 
         {/* Token Information - Read-only */}
         <div className="info-card">
@@ -762,76 +918,6 @@ export function CommunityDetail() {
                 <span className="value empty">Not deployed</span>
               )}
               <span className="readonly-badge">Read-only</span>
-            </div>
-          </div>
-        </div>
-
-        {/* MySBT Information - Read-only */}
-        <div className="info-card">
-          <h3>🎫 MySBT Information</h3>
-          <div className="info-rows">
-            <div className="info-row">
-              <span className="label">Supported SBTs:</span>
-              <div className="sbt-list">
-                {community.supportedSBTs.length > 0 ? (
-                  community.supportedSBTs.map((sbt, idx) => (
-                    <a
-                      key={idx}
-                      href={getEtherscanAddressUrl(sbt)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="sbt-badge-link"
-                    >
-                      {sbt.slice(0, 6)}...{sbt.slice(-4)}
-                    </a>
-                  ))
-                ) : (
-                  <span className="value empty">None</span>
-                )}
-              </div>
-              <span className="readonly-badge">Read-only</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Permissionless Mint - Editable */}
-        <div className={`info-card editable ${editMode.permissionlessMint || pendingChanges.permissionlessMint !== undefined ? 'editing' : ''}`}>
-          <h3>⚙️ MySBT Register Configuration</h3>
-          <div className="info-rows">
-            <div className="info-row">
-              <span className="label">Permissionless MySBT Register:</span>
-              {editMode.permissionlessMint || (batchEditMode && pendingChanges.permissionlessMint !== undefined) ? (
-                <div className="edit-controls-inline">
-                  <label className="toggle-switch">
-                    <input
-                      type="checkbox"
-                      checked={newPermissionlessMint}
-                      onChange={(e) => setNewPermissionlessMint(e.target.checked)}
-                    />
-                    <span className="slider"></span>
-                  </label>
-                  <span className="toggle-label">
-                    {newPermissionlessMint ? 'Enabled' : 'Disabled'}
-                  </span>
-                  <button onClick={handleSavePermissionlessMint} className="save-btn">
-                    ✅
-                  </button>
-                  <button onClick={handleCancelPermissionlessMintEdit} className="cancel-btn">
-                    ❌
-                  </button>
-                </div>
-              ) : (
-                <>
-                  <span className={`value ${community.allowPermissionlessMint ? 'enabled' : 'disabled'}`}>
-                    {community.allowPermissionlessMint ? '✅ Enabled' : '❌ Disabled'}
-                  </span>
-                  {isOwner && (
-                    <button onClick={handleEditPermissionlessMint} className="edit-btn">
-                      ✏️ Edit
-                    </button>
-                  )}
-                </>
-              )}
             </div>
           </div>
         </div>

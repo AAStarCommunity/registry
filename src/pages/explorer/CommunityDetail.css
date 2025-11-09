@@ -765,3 +765,148 @@ input:checked + .slider:before {
     width: 100%;
   }
 }
+
+/* ========================================
+   Full-Width Card Layout
+   ======================================== */
+
+/* Full-width info card */
+.info-card-full {
+  grid-column: 1 / -1; /* Span all columns */
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+}
+
+.info-card-full h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.1rem;
+  color: #111827;
+  border-bottom: 2px solid #e5e7eb;
+  padding-bottom: 0.75rem;
+}
+
+.info-card-full.editable {
+  border: 2px solid #e5e7eb;
+  transition: all 0.3s;
+}
+
+.info-card-full.editable.editing {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Full-width address input */
+.address-input-full {
+  flex: 1;
+  width: 100%;
+  max-width: 600px;
+  padding: 0.75rem;
+  border: 2px solid #3b82f6;
+  border-radius: 6px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  transition: all 0.3s;
+}
+
+.address-input-full:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Full-width address link */
+.address-link-full {
+  color: #3b82f6;
+  text-decoration: none;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+  word-break: break-all;
+  flex: 1;
+  max-width: 600px;
+}
+
+.address-link-full:hover {
+  color: #2563eb;
+  text-decoration: underline;
+}
+
+/* Transfer Owner Button */
+.transfer-owner-btn {
+  padding: 0.5rem 1rem;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+}
+
+.transfer-owner-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+/* Owner content container */
+.owner-content {
+  margin-top: 1rem;
+}
+
+/* Responsive adjustments for full-width cards */
+@media (max-width: 768px) {
+  .address-input-full,
+  .address-link-full {
+    max-width: 100%;
+  }
+
+  .transfer-owner-btn {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+}
+
+/* ========================================
+   Safe Detection Banner
+   ======================================== */
+
+.safe-detection-banner {
+  max-width: 1200px;
+  margin: 1rem auto;
+  padding: 1.25rem;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+  border: 2px solid rgba(59, 130, 246, 0.3);
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.safe-detection-banner .banner-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.safe-detection-banner .banner-content {
+  flex: 1;
+  color: var(--text-color);
+}
+
+.safe-detection-banner .banner-content p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .safe-detection-banner {
+    margin: 1rem;
+    padding: 1rem;
+  }
+}
