@@ -224,12 +224,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   // Check SuperPaymaster registration on mount (AOA+ mode only)
   useEffect(() => {
     if (mode === "aoa+" && communityAddress) {
-      checkSuperPaymasterRegistration(communityAddress).then((registered) => {
-        if (!registered && !isRegistering) {
-          // Auto-start registration
-          registerToSuperPaymaster();
-        }
-      });
+      // Only check registration status, do NOT auto-register
+      // User will manually click the register button if needed
+      checkSuperPaymasterRegistration(communityAddress);
     }
   }, [mode, communityAddress]);
 
@@ -392,6 +389,28 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                         🎛️ Manage Account
                       </a>
                     </div>
+                  </>
+                ) : !isRegistered ? (
+                  <>
+                    <p className="card-detail">⏸️ Not registered yet</p>
+                    <button
+                      onClick={registerToSuperPaymaster}
+                      className="register-btn"
+                      disabled={isRegistering}
+                      style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem 1rem',
+                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '6px',
+                        cursor: isRegistering ? 'not-allowed' : 'pointer',
+                        fontWeight: 600,
+                        opacity: isRegistering ? 0.6 : 1
+                      }}
+                    >
+                      {isRegistering ? '⏳ Registering...' : '🚀 Register to SuperPaymaster'}
+                    </button>
                   </>
                 ) : (
                   <p className="card-detail">⏸️ Checking registration status...</p>

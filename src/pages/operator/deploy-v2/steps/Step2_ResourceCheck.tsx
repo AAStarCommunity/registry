@@ -73,6 +73,7 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
         resources.isCommunityRegistered &&
         resources.hasXPNTs &&
         !resources.hasAOAPaymaster && // Must NOT have AOA Paymaster
+        !resources.hasSuperPaymasterRegistered && // Must NOT already be registered in SuperPaymaster
         resources.hasEnoughGToken &&
         resources.hasEnoughAPNTs &&
         resources.hasEnoughETH
@@ -197,28 +198,54 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
 
         {/* AOA+ Mode: Check for AOA Paymaster Conflict */}
         {mode === "aoa+" && (
-          <div className={`resource-card ${resources?.hasAOAPaymaster ? "warning" : "ready"}`}>
-            <div className="resource-icon">
-              {resources?.hasAOAPaymaster ? "⚠️" : "✅"}
-            </div>
-            <div className="resource-info">
-              <h3>AOA Paymaster Check</h3>
-              {resources?.hasAOAPaymaster ? (
-                <>
-                  <p className="status-text warning">
-                    当前账户已部署过 Paymaster (AOA 模式)
+          <>
+            <div className={`resource-card ${resources?.hasAOAPaymaster ? "warning" : "ready"}`}>
+              <div className="resource-icon">
+                {resources?.hasAOAPaymaster ? "⚠️" : "✅"}
+              </div>
+              <div className="resource-info">
+                <h3>AOA Paymaster Check</h3>
+                {resources?.hasAOAPaymaster ? (
+                  <>
+                    <p className="status-text warning">
+                      当前账户已部署过 Paymaster (AOA 模式)
+                    </p>
+                    <p className="help-text">
+                      一个账户只能选择一种模式。请使用其他账户部署 SuperPaymaster (AOA+)，或先注销 AOA Paymaster。
+                    </p>
+                  </>
+                ) : (
+                  <p className="status-text success">
+                    账户未部署 AOA Paymaster，可以继续使用 AOA+ 模式
                   </p>
-                  <p className="help-text">
-                    一个账户只能选择一种模式。请使用其他账户部署 SuperPaymaster (AOA+)，或先注销 AOA Paymaster。
-                  </p>
-                </>
-              ) : (
-                <p className="status-text success">
-                  账户未部署 AOA Paymaster，可以继续使用 AOA+ 模式
-                </p>
-              )}
+                )}
+              </div>
             </div>
-          </div>
+
+            {/* SuperPaymaster Registration Check */}
+            <div className={`resource-card ${resources?.hasSuperPaymasterRegistered ? "warning" : "ready"}`}>
+              <div className="resource-icon">
+                {resources?.hasSuperPaymasterRegistered ? "⚠️" : "✅"}
+              </div>
+              <div className="resource-info">
+                <h3>SuperPaymaster Registration Check</h3>
+                {resources?.hasSuperPaymasterRegistered ? (
+                  <>
+                    <p className="status-text warning">
+                      当前账户已注册到 SuperPaymaster
+                    </p>
+                    <p className="help-text">
+                      账户已完成 AOA+ 注册。如需重新部署，请先注销现有注册或使用其他账户。
+                    </p>
+                  </>
+                ) : (
+                  <p className="status-text success">
+                    账户未注册 SuperPaymaster，可以继续部署
+                  </p>
+                )}
+              </div>
+            </div>
+          </>
         )}
 
         {/* AOA Mode: Paymaster & SBT Binding */}

@@ -80,6 +80,9 @@ export interface ResourceStatus {
   // AOA Paymaster conflict check (AOA+ mode only)
   hasAOAPaymaster: boolean;
 
+  // SuperPaymaster registration check (AOA+ mode only)
+  hasSuperPaymasterRegistered: boolean;
+
   // MySBT binding (only check if hasPaymaster=true)
   hasSBTBinding: boolean;
   supportedSBTs?: string[];
@@ -210,6 +213,39 @@ async function checkPaymasterDeployment(
   } catch (error) {
     console.error("Failed to check paymaster deployment:", error);
     return { hasPaymaster: false };
+  }
+}
+
+/**
+ * Check SuperPaymaster registration status (AOA+ mode)
+ */
+async function checkSuperPaymasterRegistration(
+  provider: ethers.Provider,
+  address: string
+): Promise<{
+  isRegistered: boolean;
+}> {
+  try {
+    const networkConfig = getCurrentNetworkConfig();
+    const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+
+    // Use minimal ABI to check registration
+    const superPaymasterABI = [
+      "function accounts(address) external view returns (uint256, uint256 stakedAt)"
+    ];
+
+    const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, provider);
+
+    try {
+      const [, stakedAt] = await superPaymaster.accounts(address);
+      return { isRegistered: stakedAt > 0n };
+    } catch (error) {
+      // Decode error likely means not registered
+      return { isRegistered: false };
+    }
+  } catch (error) {
+    console.error("Failed to check SuperPaymaster registration:", error);
+    return { isRegistered: false };
   }
 }
 
@@ -398,6 +434,7 @@ export async function checkAOAResources(
       paymasterAddress: paymasterCheck.paymasterAddress,
 
       hasAOAPaymaster: paymasterCheck.hasPaymaster, // Same as hasPaymaster in AOA mode
+      hasSuperPaymasterRegistered: false, // AOA mode doesn't use SuperPaymaster
 
       hasSBTBinding: sbtCheck.hasSBTBinding,
       supportedSBTs: sbtCheck.supportedSBTs,
@@ -449,6 +486,7 @@ export async function checkAOAPlusResources(
       communityCheck,
       xpntsCheck,
       aoaPaymasterCheck,
+      superPaymasterCheck,
       gTokenBalance,
       aPNTsBalance,
       ethBalance
@@ -468,6 +506,12 @@ export async function checkAOAPlusResources(
         `resource_aoa_paymaster_${addr}`,
         () => checkPaymasterDeployment(provider, walletAddress),
         (result) => result.hasPaymaster === false // Only cache if no conflict
+      ),
+      // Check if account is already registered in SuperPaymaster (conflict with AOA+ mode)
+      getCachedOrFetch(
+        `resource_superpaymaster_${addr}`,
+        () => checkSuperPaymasterRegistration(provider, walletAddress),
+        (result) => result.isRegistered === false // Only cache if not registered
       ),
       getCachedOrFetch(
         `resource_gtoken_${addr}`,
@@ -513,6 +557,7 @@ export async function checkAOAPlusResources(
       paymasterAddress: undefined,
 
       hasAOAPaymaster: aoaPaymasterCheck.hasPaymaster, // Check for AOA Paymaster conflict
+      hasSuperPaymasterRegistered: superPaymasterCheck.isRegistered, // Check for SuperPaymaster registration
 
       hasSBTBinding: false, // Will be configured in SuperPaymaster
       supportedSBTs: [],
