@@ -9,6 +9,7 @@ import { CommunityDetail } from "./pages/explorer/CommunityDetail";
 import { DeployWizard } from "./pages/operator/DeployWizard";
 import { DeployWizardNew } from "./pages/operator/DeployWizardNew";
 import ManagePaymaster from "./pages/operator/ManagePaymaster";
+import { SuperPaymasterConfig } from "./pages/operator/SuperPaymasterConfig";
 import GetGToken from "./pages/resources/GetGToken";
 import GetPNTs from "./pages/resources/GetPNTs";
 import { GetSBT } from "./pages/resources/GetSBT"; // Bind MySBT page
@@ -40,6 +41,7 @@ function App() {
             <Route path="/operator/wizard" element={<DeployWizard />} />
             <Route path="/operator/wizard-new" element={<DeployWizardNew />} />
             <Route path="/operator/manage" element={<ManagePaymaster />} />
+            <Route path="/operator/superpaymaster" element={<SuperPaymasterConfig />} />
             <Route path="/launch-guide" element={<LaunchTutorial />} />
             <Route path="/launch-tutorial" element={<LaunchTutorial />} />
             <Route path="/demo" element={<Navigate to="/launch-tutorial" replace />} />

@@ -319,14 +319,25 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                     <p className="card-detail">
                       Reputation Level: {superPaymasterInfo.reputationLevel}/12
                     </p>
-                    <a
-                      href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="explorer-link"
-                    >
-                      View SuperPaymaster Contract ↗
-                    </a>
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
+                      <a
+                        href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="explorer-link"
+                      >
+                        View Contract ↗
+                      </a>
+                      <a
+                        href="/operator/superpaymaster"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="explorer-link"
+                        style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                      >
+                        🎛️ Manage Account
+                      </a>
+                    </div>
                   </>
                 ) : (
                   <p className="card-detail">⏸️ Checking registration status...</p>

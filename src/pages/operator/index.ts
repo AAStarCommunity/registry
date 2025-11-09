@@ -5,3 +5,4 @@
 // export { StakeEntryPoint } from './StakeEntryPoint';
 // export { RegisterToRegistry } from './RegisterToRegistry';
 export { default as ManagePaymaster } from './ManagePaymaster';
+export { SuperPaymasterConfig } from './SuperPaymasterConfig';
