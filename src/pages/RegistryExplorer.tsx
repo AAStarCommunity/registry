@@ -104,18 +104,24 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       const count = await registry.getCommunityCount();
       console.log(`📋 Found ${count} communities on-chain`);
 
-      // Check cache
-      const cacheKey = `registry_explorer_v2.2_${registryAddress.toLowerCase()}`;
+      // Check cache (with version suffix to invalidate old caches with duplicates)
+      const cacheKey = `registry_explorer_v2.2.1_${registryAddress.toLowerCase()}`;
       const cached = loadFromCache<CommunityProfile[]>(cacheKey);
 
       // Use cache only if count matches (ensures fresh data when new communities are registered)
       if (cached && cached.data.length === Number(count)) {
         console.log(`📦 Loaded from cache (${formatCacheAge(cached.timestamp)}), count matches`);
-        setCommunities(cached.data);
+
+        // Deduplicate cached data (in case old cache has duplicates)
+        const uniqueCached = Array.from(
+          new Map(cached.data.map(c => [c.community.toLowerCase(), c])).values()
+        );
+
+        setCommunities(uniqueCached);
         setLastUpdated(cached.timestamp);
 
         // Load registry info
-        await loadRegistryInfo(registryAddress, cached.data.length);
+        await loadRegistryInfo(registryAddress, uniqueCached.length);
         setLoading(false);
         return;
       }
@@ -272,9 +278,14 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
   // Filter communities/paymasters based on search
   const getFilteredData = () => {
-    if (!searchQuery) return communities;
+    // First, deduplicate communities by address (in case cache has duplicates)
+    const uniqueCommunities = Array.from(
+      new Map(communities.map(c => [c.community.toLowerCase(), c])).values()
+    );
 
-    return communities.filter((community) =>
+    if (!searchQuery) return uniqueCommunities;
+
+    return uniqueCommunities.filter((community) =>
       community.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       community.community.toLowerCase().includes(searchQuery.toLowerCase()) ||
       community.ensName.toLowerCase().includes(searchQuery.toLowerCase())
