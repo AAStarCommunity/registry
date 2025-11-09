@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { ethers } from "ethers";
 import type { DeployedResources } from "./Step4_DeployResources";
+import { getProvider } from "../../../../utils/rpc-provider";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { RegistryABI } from "../../../../config/abis";
 import "./Step7_Complete.css";
 
 export interface Step7Props {
@@ -19,6 +23,38 @@ export function Step7_Complete({
   registryTxHash,
   deployedResources,
 }: Step7Props) {
+  const [isRegistered, setIsRegistered] = useState<boolean | null>(null);
+  const [isCheckingRegistry, setIsCheckingRegistry] = useState(true);
+
+  // Check if paymaster is registered in Registry
+  useEffect(() => {
+    const checkRegistration = async () => {
+      try {
+        const provider = getProvider();
+        const networkConfig = getCurrentNetworkConfig();
+        const registryAddress = networkConfig.contracts.registry;
+
+        const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
+
+        // Check if owner has a registered community with this paymaster
+        const profile = await registry.getCommunityProfile(owner);
+
+        // Check if paymasterAddress matches
+        const registered = profile.paymasterAddress &&
+          profile.paymasterAddress.toLowerCase() === paymasterAddress.toLowerCase();
+
+        setIsRegistered(registered);
+      } catch (err) {
+        console.error("Failed to check Registry:", err);
+        setIsRegistered(false);
+      } finally {
+        setIsCheckingRegistry(false);
+      }
+    };
+
+    checkRegistration();
+  }, [owner, paymasterAddress]);
+
   const handleViewOnExplorer = () => {
     window.open(`/paymaster/${paymasterAddress}`, "_blank");
   };
@@ -38,6 +74,11 @@ export function Step7_Complete({
     window.location.href = "/operator";
   };
 
+  const handleRegisterToRegistry = () => {
+    // Navigate to register-community page with pre-filled data
+    window.location.href = `/register-community?paymaster=${paymasterAddress}&owner=${owner}`;
+  };
+
   return (
     <div className="step7-complete">
       {/* Success Header */}
@@ -45,10 +86,77 @@ export function Step7_Complete({
         <div className="success-icon">🎉</div>
         <h2>Paymaster Deployed Successfully!</h2>
         <p className="success-message">
-          Your community Paymaster is now live and registered on the
-          SuperPaymaster Registry.
+          Your community Paymaster is now live{isRegistered && " and registered on the SuperPaymaster Registry"}.
         </p>
       </div>
+
+      {/* Registry Warning Card - Show if not registered */}
+      {!isCheckingRegistry && isRegistered === false && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)',
+          border: '2px solid #f59e0b',
+          borderRadius: '12px',
+          padding: '1.5rem',
+          marginBottom: '2rem',
+          boxShadow: '0 4px 6px rgba(245, 158, 11, 0.1)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem' }}>
+            <div style={{ fontSize: '2.5rem', flexShrink: 0 }}>⚠️</div>
+            <div style={{ flex: 1 }}>
+              <h3 style={{ margin: 0, marginBottom: '0.5rem', color: '#92400e', fontSize: '1.25rem', fontWeight: 700 }}>
+                Registry Registration Required
+              </h3>
+              <p style={{ margin: 0, marginBottom: '1rem', color: '#b45309', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                Your Paymaster has been deployed successfully, but it's <strong>not yet registered in the Registry</strong>.
+                To make your Paymaster discoverable and enable full functionality, you need to register your community.
+              </p>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.5)',
+                borderRadius: '8px',
+                padding: '1rem',
+                marginBottom: '1rem',
+                fontSize: '0.875rem',
+                color: '#78350f'
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.5rem' }}>📋 Benefits of Registry Registration:</div>
+                <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
+                  <li>Your Paymaster appears in public explorer</li>
+                  <li>Users can discover and interact with your community</li>
+                  <li>Required for MySBT binding and xPNTs integration</li>
+                  <li>Enables reputation tracking and analytics</li>
+                </ul>
+              </div>
+              <button
+                onClick={handleRegisterToRegistry}
+                style={{
+                  background: '#f59e0b',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#d97706';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#f59e0b';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                }}
+              >
+                🚀 Register to Community Registry Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Paymaster Summary */}
       <div className="paymaster-summary">

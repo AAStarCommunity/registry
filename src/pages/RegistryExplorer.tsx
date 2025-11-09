@@ -59,6 +59,10 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
   const [currentPage, setCurrentPage] = useState(0);
   const MEMBERS_PER_PAGE = 8; // 2 rows x 4 columns
 
+  // Communities pagination state
+  const [communityPage, setCommunityPage] = useState(0);
+  const COMMUNITIES_PER_PAGE = 6; // 2 rows x 3 columns
+
   // Load registry data
   useEffect(() => {
     loadRegistryData();
@@ -94,12 +98,19 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       console.log("Registry address:", registryAddress);
       console.log("========================");
 
-      // Check cache first
+      // Query blockchain for count first
+      console.log("🔍 Checking community count...");
+      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
+      const count = await registry.getCommunityCount();
+      console.log(`📋 Found ${count} communities on-chain`);
+
+      // Check cache
       const cacheKey = `registry_explorer_v2.2_${registryAddress.toLowerCase()}`;
       const cached = loadFromCache<CommunityProfile[]>(cacheKey);
 
-      if (cached) {
-        console.log(`📦 Loaded from cache (${formatCacheAge(cached.timestamp)})`);
+      // Use cache only if count matches (ensures fresh data when new communities are registered)
+      if (cached && cached.data.length === Number(count)) {
+        console.log(`📦 Loaded from cache (${formatCacheAge(cached.timestamp)}), count matches`);
         setCommunities(cached.data);
         setLastUpdated(cached.timestamp);
 
@@ -109,13 +120,12 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
         return;
       }
 
-      // Query blockchain
-      console.log("🔍 Querying blockchain...");
-      const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
+      if (cached && cached.data.length !== Number(count)) {
+        console.log(`⚠️ Cache outdated: cached ${cached.data.length}, on-chain ${count}. Re-fetching...`);
+      }
 
-      // Get total count
-      const count = await registry.getCommunityCount();
-      console.log(`📋 Found ${count} communities`);
+      // Query blockchain for all communities
+      console.log("🔍 Querying all communities...");
 
       // Get registry info
       await loadRegistryInfo(registryAddress, Number(count));
@@ -288,6 +298,16 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       });
   };
 
+  // Get paginated communities
+  const getPaginatedCommunities = () => {
+    const filtered = getFilteredData();
+    const start = communityPage * COMMUNITIES_PER_PAGE;
+    const end = start + COMMUNITIES_PER_PAGE;
+    return filtered.slice(start, end);
+  };
+
+  const totalCommunityPages = Math.ceil(getFilteredData().length / COMMUNITIES_PER_PAGE);
+
   // Get paginated MySBT holders
   const getPaginatedHolders = () => {
     const start = currentPage * MEMBERS_PER_PAGE;
@@ -299,6 +319,14 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
   const handlePreviousPage = () => {
     setCurrentPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleCommunityPreviousPage = () => {
+    setCommunityPage((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleCommunityNextPage = () => {
+    setCommunityPage((prev) => Math.min(totalCommunityPages - 1, prev + 1));
   };
 
   const handleNextPage = () => {
@@ -331,14 +359,29 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
     switch (activeTab) {
       case "communities":
+        const filteredCommunities = getFilteredData();
+        const paginatedCommunities = getPaginatedCommunities();
+
         return (
-          <div className="community-grid">
-            {filteredData.length === 0 ? (
-              <div className="no-results">
-                <p>No communities found.</p>
+          <>
+            <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                Total: <span style={{ fontWeight: 600, color: '#111827' }}>{filteredCommunities.length}</span> communities
+                {searchQuery && ` (filtered from ${communities.length})`}
               </div>
-            ) : (
-              filteredData.map((community) => (
+              {totalCommunityPages > 1 && (
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  Page {communityPage + 1} of {totalCommunityPages}
+                </div>
+              )}
+            </div>
+            <div className="community-grid">
+              {paginatedCommunities.length === 0 ? (
+                <div className="no-results">
+                  <p>No communities found.</p>
+                </div>
+              ) : (
+                paginatedCommunities.map((community) => (
                 <div
                   key={community.community}
                   className="community-card clickable"
@@ -447,6 +490,53 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
               ))
             )}
           </div>
+
+          {/* Pagination controls */}
+          {totalCommunityPages > 1 && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              gap: '1rem',
+              marginTop: '2rem',
+              padding: '1rem'
+            }}>
+              <button
+                onClick={handleCommunityPreviousPage}
+                disabled={communityPage === 0}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: communityPage === 0 ? '#e5e7eb' : '#3b82f6',
+                  color: communityPage === 0 ? '#9ca3af' : 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: communityPage === 0 ? 'not-allowed' : 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                ← Previous
+              </button>
+              <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                Page {communityPage + 1} of {totalCommunityPages}
+              </span>
+              <button
+                onClick={handleCommunityNextPage}
+                disabled={communityPage === totalCommunityPages - 1}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: communityPage === totalCommunityPages - 1 ? '#e5e7eb' : '#3b82f6',
+                  color: communityPage === totalCommunityPages - 1 ? '#9ca3af' : 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: communityPage === totalCommunityPages - 1 ? 'not-allowed' : 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Next →
+              </button>
+            </div>
+          )}
+        </>
         );
 
       case "paymasters":
@@ -458,35 +548,50 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
                 <p>No paymasters found.</p>
               </div>
             ) : (
-              paymasters.map((community) => (
-                <div key={community.paymasterAddress} className="paymaster-card">
-                  <div className="card-header">
-                    <h3>{community.name}</h3>
-                    <span className={`badge node-type ${community.nodeType === 0 ? 'aoa' : 'super'}`}>
-                      {community.nodeType === 0 ? "AOA" : "Super"}
-                    </span>
-                  </div>
+              paymasters.map((community) => {
+                const manageUrl = community.nodeType === 0
+                  ? `/operator/manage?address=${community.paymasterAddress}`
+                  : `/operator/superpaymaster?operator=${community.community}`;
 
-                  <div className="card-body">
-                    <div className="info-row">
-                      <span className="label">Paymaster Address:</span>
-                      <code className="value">{community.paymasterAddress}</code>
-                    </div>
+                const description = community.nodeType === 0
+                  ? `Paymaster running by ${community.name}`
+                  : `SuperPaymaster running by ${community.name}`;
 
-                    <div className="info-row">
-                      <span className="label">Owner (Community):</span>
-                      <code className="value">{community.community}</code>
-                    </div>
-
-                    <div className="info-row">
-                      <span className="label">Registered:</span>
-                      <span className="value">
-                        {new Date(Number(community.registeredAt) * 1000).toLocaleDateString()}
+                return (
+                  <a
+                    key={community.paymasterAddress}
+                    href={manageUrl}
+                    className="paymaster-card"
+                    style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                  >
+                    <div className="card-header">
+                      <h3>{description}</h3>
+                      <span className={`badge node-type ${community.nodeType === 0 ? 'aoa' : 'super'}`}>
+                        {community.nodeType === 0 ? "AOA" : "Super"}
                       </span>
                     </div>
-                  </div>
-                </div>
-              ))
+
+                    <div className="card-body">
+                      <div className="info-row">
+                        <span className="label">Paymaster Address:</span>
+                        <code className="value">{community.paymasterAddress}</code>
+                      </div>
+
+                      <div className="info-row">
+                        <span className="label">Owner (Community):</span>
+                        <code className="value">{community.community}</code>
+                      </div>
+
+                      <div className="info-row">
+                        <span className="label">Registered:</span>
+                        <span className="value">
+                          {new Date(Number(community.registeredAt) * 1000).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                );
+              })
             )}
           </div>
         );
