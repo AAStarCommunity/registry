@@ -107,6 +107,11 @@
   opacity: 0.6;
 }
 
+.resource-card.warning {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, var(--card-bg) 0%, #fee2e220 100%);
+}
+
 .resource-icon {
   font-size: 2.5rem;
   line-height: 1;

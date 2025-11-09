@@ -73,9 +73,12 @@ export interface ResourceStatus {
   xPNTsAddress?: string;
   xPNTsExchangeRate?: string;
 
-  // Paymaster deployment
+  // Paymaster deployment (AOA mode)
   hasPaymaster: boolean;
   paymasterAddress?: string;
+
+  // AOA Paymaster conflict check (AOA+ mode only)
+  hasAOAPaymaster: boolean;
 
   // MySBT binding (only check if hasPaymaster=true)
   hasSBTBinding: boolean;
@@ -394,6 +397,8 @@ export async function checkAOAResources(
       hasPaymaster: paymasterCheck.hasPaymaster,
       paymasterAddress: paymasterCheck.paymasterAddress,
 
+      hasAOAPaymaster: paymasterCheck.hasPaymaster, // Same as hasPaymaster in AOA mode
+
       hasSBTBinding: sbtCheck.hasSBTBinding,
       supportedSBTs: sbtCheck.supportedSBTs,
 
@@ -443,6 +448,7 @@ export async function checkAOAPlusResources(
     const [
       communityCheck,
       xpntsCheck,
+      aoaPaymasterCheck,
       gTokenBalance,
       aPNTsBalance,
       ethBalance
@@ -456,6 +462,12 @@ export async function checkAOAPlusResources(
         `resource_xpnts_${addr}`,
         () => checkXPNTsDeployment(provider, walletAddress),
         (result) => result.hasToken === true
+      ),
+      // Check if account has deployed AOA Paymaster (conflict with AOA+ mode)
+      getCachedOrFetch(
+        `resource_aoa_paymaster_${addr}`,
+        () => checkPaymasterDeployment(provider, walletAddress),
+        (result) => result.hasPaymaster === false // Only cache if no conflict
       ),
       getCachedOrFetch(
         `resource_gtoken_${addr}`,
@@ -499,6 +511,8 @@ export async function checkAOAPlusResources(
 
       hasPaymaster: false, // AOA+ doesn't deploy individual Paymaster
       paymasterAddress: undefined,
+
+      hasAOAPaymaster: aoaPaymasterCheck.hasPaymaster, // Check for AOA Paymaster conflict
 
       hasSBTBinding: false, // Will be configured in SuperPaymaster
       supportedSBTs: [],
