@@ -36,6 +36,11 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     treasury: string;
   } | null>(null);
 
+  // Registry Paymaster registration state
+  const [isRegistryPaymasterSet, setIsRegistryPaymasterSet] = useState(false);
+  const [isRegisteringPaymaster, setIsRegisteringPaymaster] = useState(false);
+  const [paymasterRegError, setPaymasterRegError] = useState<string>("");
+
   // Get current wallet address (community owner)
   useEffect(() => {
     const getAddress = async () => {
@@ -221,14 +226,132 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     }
   };
 
+  // Check if Paymaster is registered in Registry
+  const checkRegistryPaymaster = async (address: string) => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const registryAddress = networkConfig.contracts.registry;
+
+      const registryABI = [
+        "function getCommunityProfile(address community) external view returns (string memory name, string memory ensName, address xPNTsToken, address[] memory supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint)"
+      ];
+
+      const registry = new ethers.Contract(registryAddress, registryABI, provider);
+
+      try {
+        const profile = await registry.getCommunityProfile(address);
+        const paymasterAddress = profile[5]; // paymasterAddress is 6th field (index 5)
+
+        // Check if paymaster is set (not zero address)
+        const isSet = paymasterAddress !== ethers.ZeroAddress;
+        setIsRegistryPaymasterSet(isSet);
+
+        return isSet;
+      } catch (error) {
+        // Community not registered in Registry
+        console.log("Community not registered in Registry:", error);
+        setIsRegistryPaymasterSet(false);
+        return false;
+      }
+    } catch (err) {
+      console.error("Failed to check Registry paymaster:", err);
+      setIsRegistryPaymasterSet(false);
+      return false;
+    }
+  };
+
+  // Register Paymaster to Registry
+  const registerPaymasterToRegistry = async () => {
+    if (!communityAddress) return;
+
+    setIsRegisteringPaymaster(true);
+    setPaymasterRegError("");
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const registryAddress = networkConfig.contracts.registry;
+
+      // Get current community profile first
+      const registryReadABI = [
+        "function getCommunityProfile(address community) external view returns (string memory name, string memory ensName, address xPNTsToken, address[] memory supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint)"
+      ];
+      const registryRead = new ethers.Contract(registryAddress, registryReadABI, provider);
+      const currentProfile = await registryRead.getCommunityProfile(communityAddress);
+
+      // Determine paymaster address based on mode
+      let paymasterAddress: string;
+      if (mode === "aoa") {
+        // AOA mode: Use deployed Paymaster address
+        paymasterAddress = resources.paymasterAddress || ethers.ZeroAddress;
+      } else {
+        // AOA+ mode: Use SuperPaymaster contract address
+        paymasterAddress = networkConfig.contracts.superPaymasterV2;
+      }
+
+      if (paymasterAddress === ethers.ZeroAddress) {
+        setPaymasterRegError("Paymaster not deployed yet. Please deploy first.");
+        setIsRegisteringPaymaster(false);
+        return;
+      }
+
+      // Update profile with new paymaster address
+      const registryWriteABI = [
+        "function updateCommunityProfile(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint) profile) external"
+      ];
+      const registryWrite = new ethers.Contract(registryAddress, registryWriteABI, signer);
+
+      // Construct updated profile (keep existing data, only update paymasterAddress)
+      const updatedProfile = {
+        name: currentProfile[0],
+        ensName: currentProfile[1],
+        xPNTsToken: currentProfile[2],
+        supportedSBTs: currentProfile[3],
+        nodeType: currentProfile[4],
+        paymasterAddress: paymasterAddress, // Update this field
+        community: currentProfile[6],
+        registeredAt: currentProfile[7],
+        lastUpdatedAt: currentProfile[8],
+        isActive: currentProfile[9],
+        allowPermissionlessMint: currentProfile[10]
+      };
+
+      console.log("Registering Paymaster to Registry:", paymasterAddress);
+      const tx = await registryWrite.updateCommunityProfile(updatedProfile);
+      await tx.wait();
+
+      console.log("Paymaster registered to Registry successfully!");
+      setIsRegistryPaymasterSet(true);
+      setIsRegisteringPaymaster(false);
+    } catch (err: any) {
+      console.error("Failed to register Paymaster to Registry:", err);
+
+      if (err.message?.includes("CommunityNotRegistered")) {
+        setPaymasterRegError("Community not registered in Registry. Please register your community first at /operator/register");
+      } else {
+        setPaymasterRegError(err.message || "Registration failed. Please try again.");
+      }
+
+      setIsRegisteringPaymaster(false);
+    }
+  };
+
   // Check SuperPaymaster registration on mount (AOA+ mode only)
   useEffect(() => {
     if (mode === "aoa+" && communityAddress) {
       // Only check registration status, do NOT auto-register
       // User will manually click the register button if needed
       checkSuperPaymasterRegistration(communityAddress);
+      checkRegistryPaymaster(communityAddress);
     }
   }, [mode, communityAddress]);
+
+  // Check Registry paymaster registration for both modes
+  useEffect(() => {
+    if (communityAddress) {
+      checkRegistryPaymaster(communityAddress);
+    }
+  }, [communityAddress]);
 
   return (
     <div className="step3-complete">
@@ -336,84 +459,289 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             </div>
           </div>
 
-          {/* SuperPaymaster Registration (AOA+ mode) */}
+          {/* SuperPaymaster Deployment & Registration (AOA+ mode) */}
           {mode === "aoa+" && (
             <div className="summary-card highlight">
               <div className="card-icon">🌟</div>
               <div className="card-content">
-                <h4>SuperPaymaster Registration</h4>
-                {isRegistering ? (
-                  <p className="card-detail">⏳ Registering to SuperPaymaster...</p>
-                ) : registrationError ? (
+                <h4>SuperPaymaster Management</h4>
+
+                {/* Deployment Status */}
+                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                  <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                    {isRegistered ? "✅" : "⏸️"} Deployment Status: {isRegistered ? "Deployed" : "Not Deployed"}
+                  </p>
+                  {isRegistered && superPaymasterInfo ? (
+                    <>
+                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        Staked: {superPaymasterInfo.stGTokenLocked} stGToken
+                      </p>
+                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        aPNTs Balance: {superPaymasterInfo.aPNTsBalance}
+                      </p>
+                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        Reputation: Level {superPaymasterInfo.reputationLevel}/12
+                      </p>
+                    </>
+                  ) : (
+                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      Operator not registered in SuperPaymaster contract
+                    </p>
+                  )}
+                </div>
+
+                {/* Registry Status */}
+                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
+                  <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
+                    {isRegistryPaymasterSet ? "✅" : "⏸️"} Registry Status: {isRegistryPaymasterSet ? "Registered" : "Not Registered"}
+                  </p>
+                  <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    {isRegistryPaymasterSet
+                      ? "SuperPaymaster linked to your community in Registry"
+                      : "SuperPaymaster not linked to Registry yet"}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div style={{ marginTop: '1rem' }}>
+                  {/* Deploy to SuperPaymaster */}
+                  {!isRegistered && (
+                    <>
+                      {isRegistering ? (
+                        <p className="card-detail">⏳ Deploying to SuperPaymaster...</p>
+                      ) : registrationError ? (
+                        <>
+                          <p className="card-detail error" style={{ marginBottom: '0.5rem' }}>❌ Deployment failed: {registrationError}</p>
+                          <button
+                            onClick={registerToSuperPaymaster}
+                            className="retry-btn"
+                            style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                          >
+                            Retry Deployment
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          onClick={registerToSuperPaymaster}
+                          className="register-btn"
+                          disabled={isRegistering}
+                          style={{
+                            padding: '0.75rem 1.25rem',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: isRegistering ? 'not-allowed' : 'pointer',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            opacity: isRegistering ? 0.6 : 1,
+                            width: '100%'
+                          }}
+                        >
+                          {isRegistering ? '⏳ Deploying...' : '🚀 Deploy to SuperPaymaster'}
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Register to Registry */}
+                  {isRegistered && !isRegistryPaymasterSet && (
+                    <>
+                      {isRegisteringPaymaster ? (
+                        <p className="card-detail">⏳ Registering to Registry...</p>
+                      ) : paymasterRegError ? (
+                        <>
+                          <p className="card-detail error" style={{ marginBottom: '0.5rem' }}>❌ Registration failed: {paymasterRegError}</p>
+                          {!paymasterRegError.includes("Community not registered") ? (
+                            <button
+                              onClick={registerPaymasterToRegistry}
+                              className="retry-btn"
+                              style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                            >
+                              Retry Registration
+                            </button>
+                          ) : (
+                            <a
+                              href="/operator/register?returnUrl=/operator/wizard"
+                              style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                            >
+                              Go Register Community
+                            </a>
+                          )}
+                        </>
+                      ) : (
+                        <button
+                          onClick={registerPaymasterToRegistry}
+                          className="register-btn"
+                          disabled={isRegisteringPaymaster}
+                          style={{
+                            padding: '0.75rem 1.25rem',
+                            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: isRegisteringPaymaster ? 'not-allowed' : 'pointer',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            opacity: isRegisteringPaymaster ? 0.6 : 1,
+                            width: '100%'
+                          }}
+                        >
+                          {isRegisteringPaymaster ? '⏳ Registering...' : '📝 Register to Registry'}
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* All Complete - Show Links */}
+                  {isRegistered && isRegistryPaymasterSet && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <p className="card-detail" style={{ color: '#10b981', fontWeight: 600, fontSize: '1rem' }}>
+                        ✅ All Setup Complete!
+                      </p>
+                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <a
+                          href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            flex: '1',
+                            minWidth: '140px',
+                            padding: '0.75rem 1rem',
+                            background: '#f3f4f6',
+                            color: '#1f2937',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            textAlign: 'center',
+                            border: '1px solid #e5e7eb'
+                          }}
+                        >
+                          📜 View Contract
+                        </a>
+                        <a
+                          href="/operator/superpaymaster"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            flex: '1',
+                            minWidth: '140px',
+                            padding: '0.75rem 1rem',
+                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                            color: 'white',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}
+                        >
+                          🎛️ Manage Account
+                        </a>
+                        <a
+                          href={`/explorer/community/${communityAddress}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            flex: '1',
+                            minWidth: '140px',
+                            padding: '0.75rem 1rem',
+                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                            color: 'white',
+                            borderRadius: '6px',
+                            textDecoration: 'none',
+                            fontWeight: 600,
+                            textAlign: 'center'
+                          }}
+                        >
+                          🏛️ View Community
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Registry Paymaster Registration (AOA mode only) */}
+          {mode === "aoa" && (
+            <div className="summary-card highlight">
+              <div className="card-icon">📝</div>
+              <div className="card-content">
+                <h4>Registry Paymaster Registration</h4>
+                {isRegisteringPaymaster ? (
+                  <p className="card-detail">⏳ Registering Paymaster to Registry...</p>
+                ) : paymasterRegError ? (
                   <>
                     <p className="card-detail error">❌ Registration failed</p>
-                    <p className="card-detail">{registrationError}</p>
-                    <button
-                      onClick={registerToSuperPaymaster}
-                      className="retry-btn"
-                      style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
-                    >
-                      Retry Registration
-                    </button>
+                    <p className="card-detail">{paymasterRegError}</p>
+                    {!paymasterRegError.includes("Community not registered") && (
+                      <button
+                        onClick={registerPaymasterToRegistry}
+                        className="retry-btn"
+                        style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Retry Registration
+                      </button>
+                    )}
+                    {paymasterRegError.includes("Community not registered") && (
+                      <a
+                        href="/operator/register?returnUrl=/operator/wizard"
+                        style={{ marginTop: '0.5rem', display: 'inline-block', padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                      >
+                        Go Register Community
+                      </a>
+                    )}
                   </>
-                ) : isRegistered && superPaymasterInfo ? (
+                ) : isRegistryPaymasterSet ? (
                   <>
                     <p className="card-detail">
-                      ✅ Registered
+                      ✅ Paymaster registered in Registry
                     </p>
-                    <p className="card-detail">
-                      Staked: {superPaymasterInfo.stGTokenLocked} stGToken
+                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      Your AOA Paymaster is now linked to your community in the Registry.
                     </p>
-                    <p className="card-detail">
-                      aPNTs Balance: {superPaymasterInfo.aPNTsBalance}
-                    </p>
-                    <p className="card-detail">
-                      Reputation Level: {superPaymasterInfo.reputationLevel}/12
-                    </p>
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-                      <a
-                        href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="explorer-link"
-                      >
-                        View Contract ↗
-                      </a>
-                      <a
-                        href="/operator/superpaymaster"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="explorer-link"
-                        style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
-                      >
-                        🎛️ Manage Account
-                      </a>
-                    </div>
-                  </>
-                ) : !isRegistered ? (
-                  <>
-                    <p className="card-detail">⏸️ Not registered yet</p>
-                    <button
-                      onClick={registerToSuperPaymaster}
-                      className="register-btn"
-                      disabled={isRegistering}
-                      style={{
-                        marginTop: '0.5rem',
-                        padding: '0.5rem 1rem',
-                        background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        cursor: isRegistering ? 'not-allowed' : 'pointer',
-                        fontWeight: 600,
-                        opacity: isRegistering ? 0.6 : 1
-                      }}
+                    <a
+                      href={`/explorer/community/${communityAddress}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                      style={{ marginTop: '0.5rem', display: 'inline-block', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
                     >
-                      {isRegistering ? '⏳ Registering...' : '🚀 Register to SuperPaymaster'}
-                    </button>
+                      🏛️ View Community Profile
+                    </a>
                   </>
                 ) : (
-                  <p className="card-detail">⏸️ Checking registration status...</p>
+                  <>
+                    <p className="card-detail">⏸️ Paymaster not registered to Registry yet</p>
+                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
+                      Register your deployed AOA Paymaster to your community profile in Registry.
+                    </p>
+                    {!resources.paymasterAddress && (
+                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#f59e0b', marginBottom: '0.5rem' }}>
+                        ⚠️ Please deploy AOA Paymaster first.
+                      </p>
+                    )}
+                    {resources.paymasterAddress && (
+                      <button
+                        onClick={registerPaymasterToRegistry}
+                        className="register-btn"
+                        disabled={isRegisteringPaymaster}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '6px',
+                          cursor: isRegisteringPaymaster ? 'not-allowed' : 'pointer',
+                          fontWeight: 600,
+                          opacity: isRegisteringPaymaster ? 0.6 : 1
+                        }}
+                      >
+                        {isRegisteringPaymaster ? '⏳ Registering...' : '📝 Register Paymaster to Registry'}
+                      </button>
+                    )}
+                  </>
                 )}
               </div>
             </div>
