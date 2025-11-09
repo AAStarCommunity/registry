@@ -10,6 +10,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { SuperPaymasterV2ABI } from "../../../../config/abis";
 import "./Step3_Complete.css";
 
 export interface Step3Props {
@@ -100,22 +101,30 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         if (stakedAt > 0n) {
           console.log("✅ [Step3] Account IS registered, fetching full info...");
 
-          // Get full account info - use array indices instead of named fields
-          const fullABI = [
-            "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
-          ];
-          const fullContract = new ethers.Contract(superPaymasterAddress, fullABI, provider);
+          // Use shared-config's SuperPaymasterV2ABI
+          const fullContract = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, provider);
 
           try {
             const account = await fullContract.accounts(address);
             console.log("✅ [Step3] Full account data:", account);
+            console.log("✅ [Step3] Account fields:", {
+              stGTokenLocked: account.stGTokenLocked?.toString() || account[0]?.toString(),
+              stakedAt: account.stakedAt?.toString() || account[1]?.toString(),
+              aPNTsBalance: account.aPNTsBalance?.toString() || account[2]?.toString(),
+              treasury: account.treasury || account[7],
+              reputationLevel: account.reputationLevel?.toString() || account[12]?.toString()
+            });
 
             setIsRegistered(true);
             setSuperPaymasterInfo({
-              stGTokenLocked: ethers.formatEther(account[0]), // Use index
-              aPNTsBalance: ethers.formatEther(account[2]),
-              reputationLevel: Number(account[13]),
-              treasury: account[8],
+              // ABI missing supportedSBTs field, so indices are:
+              // 0:stGTokenLocked, 1:stakedAt, 2:aPNTsBalance, 3:totalSpent, 4:lastRefillTime, 5:minBalanceThreshold
+              // 6:xPNTsToken, 7:treasury, 8:exchangeRate, 9:reputationScore, 10:consecutiveDays
+              // 11:totalTxSponsored, 12:reputationLevel, 13:lastCheckTime, 14:isPaused
+              stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
+              aPNTsBalance: ethers.formatEther(account.aPNTsBalance || account[2]),
+              reputationLevel: Number(account.reputationLevel || account[12]),
+              treasury: account.treasury || account[7],
             });
 
             console.log("✅ [Step3] Registration check complete - REGISTERED");
@@ -129,6 +138,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             });
 
             // Still set as registered since stakedAt > 0
+            console.log("⚠️ [Step3] Using minimal info since full fetch failed");
             setIsRegistered(true);
             setSuperPaymasterInfo({
               stGTokenLocked: ethers.formatEther(stGTokenLocked),

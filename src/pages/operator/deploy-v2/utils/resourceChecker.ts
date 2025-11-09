@@ -20,6 +20,7 @@ import {
   xPNTsTokenABI,
   PaymasterFactoryABI,
   PaymasterV4ABI,
+  SuperPaymasterV2ABI,
 } from "../../../../config/abis";
 
 // Cache configuration
@@ -233,12 +234,8 @@ async function checkSuperPaymasterRegistration(
 
     console.log("📍 [Step2/resourceChecker] SuperPaymaster address:", superPaymasterAddress);
 
-    // Use minimal ABI to check registration - only get first 2 fields
-    const superPaymasterABI = [
-      "function accounts(address) external view returns (uint256, uint256)"
-    ];
-
-    const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, provider);
+    // Use shared-config's SuperPaymasterV2ABI
+    const superPaymaster = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, provider);
 
     try {
       const result = await superPaymaster.accounts(address);
