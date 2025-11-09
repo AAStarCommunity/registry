@@ -8,6 +8,10 @@
 
 const CACHE_PREFIX = "spm_";
 const DEFAULT_TTL = 3600; // 1 hour in seconds
+const FORTY_EIGHT_HOURS = 172800; // 48 hours in seconds
+
+// Data freshness limit for analytics (48 hours)
+const DATA_FRESHNESS_LIMIT_MS = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
 
 export interface CachedData<T> {
   data: T;
@@ -234,3 +238,50 @@ export function formatCacheAge(timestamp: number): string {
     return `${days}d ago`;
   }
 }
+
+/**
+ * Check if data is within 48-hour freshness window
+ *
+ * @param timestamp - Data creation timestamp in milliseconds
+ * @returns True if data is fresh (within 48 hours)
+ */
+export function isDataFresh(timestamp: number): boolean {
+  return Date.now() - timestamp <= DATA_FRESHNESS_LIMIT_MS;
+}
+
+/**
+ * Filter array items by 48-hour freshness
+ *
+ * @param items - Array of items with timestamp field
+ * @param timestampField - Name of the timestamp field (default: 'timestamp')
+ * @returns Filtered array with only fresh data (within 48 hours)
+ *
+ * @example
+ * const transactions = [
+ *   { hash: '0x1', timestamp: Date.now() - 1000 * 60 * 60 }, // 1 hour ago - KEEP
+ *   { hash: '0x2', timestamp: Date.now() - 1000 * 60 * 60 * 50 }, // 50 hours ago - REMOVE
+ * ];
+ * const fresh = filterByFreshness(transactions); // Only returns first item
+ */
+export function filterByFreshness<T extends Record<string, any>>(
+  items: T[],
+  timestampField: string = 'timestamp'
+): T[] {
+  return items.filter((item) => {
+    const timestamp = item[timestampField];
+    if (typeof timestamp !== 'number') {
+      console.warn(`[Cache] Invalid timestamp field "${timestampField}" in item:`, item);
+      return false;
+    }
+    return isDataFresh(timestamp);
+  });
+}
+
+/**
+ * Export constants for external use
+ */
+export const CACHE_CONSTANTS = {
+  FORTY_EIGHT_HOURS,
+  DATA_FRESHNESS_LIMIT_MS,
+  DEFAULT_TTL,
+};
