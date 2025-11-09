@@ -140,9 +140,18 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
       // Get all communities
       const communityAddresses = await registry.getCommunities(0, count);
       const communityList: CommunityProfile[] = [];
+      const seenAddresses = new Set<string>(); // Track seen addresses to avoid duplicates
 
       for (const communityAddr of communityAddresses) {
         try {
+          // Skip if already processed (Registry may have duplicate entries)
+          const addrLower = communityAddr.toLowerCase();
+          if (seenAddresses.has(addrLower)) {
+            console.log(`⚠️ Skipping duplicate community: ${communityAddr}`);
+            continue;
+          }
+          seenAddresses.add(addrLower);
+
           // Use getCommunityProfile instead of communities mapping
           // communities(address) mapping does NOT have supportedSBTs field
           const profile = await registry.getCommunityProfile(communityAddr);

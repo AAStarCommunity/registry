@@ -417,12 +417,27 @@ export async function fetchAllPaymastersAnalytics(
 
   let paymasters: string[];
   try {
-    // ethers.js v6 returns a Result object, convert to array
-    const result = await registry.getActivePaymasters();
-    paymasters = Array.from(result);
-    console.log(`✅ Found ${paymasters.length} active Paymasters`);
-    paymasters.forEach((pm, i) => console.log(`  ${i + 1}. ${pm}`));
+    // Registry v2.2.0 doesn't have getActivePaymasters, query communities instead
+    const count = await registry.getCommunityCount();
+    console.log(`✅ Found ${count} communities in Registry`);
 
+    paymasters = [];
+    for (let i = 0; i < Number(count); i++) {
+      try {
+        const communityAddr = await registry.communityList(i);
+        const profile = await registry.getCommunityProfile(communityAddr);
+
+        // Only include communities with deployed paymasters
+        if (profile.paymasterAddress && profile.paymasterAddress !== ethers.ZeroAddress) {
+          paymasters.push(profile.paymasterAddress);
+          console.log(`  ${i + 1}. ${profile.name}: ${profile.paymasterAddress}`);
+        }
+      } catch (err) {
+        console.warn(`Failed to load community ${i}:`, err);
+      }
+    }
+
+    console.log(`✅ Total ${paymasters.length} Paymasters with addresses`);
     savePaymastersList(paymasters, REGISTRY_ADDRESS);
   } catch (error) {
     console.error("❌ Failed to query Registry, using cached list");
@@ -430,7 +445,8 @@ export async function fetchAllPaymastersAnalytics(
     paymasters = loadPaymastersList(REGISTRY_ADDRESS);
 
     if (paymasters.length === 0) {
-      throw new Error("No Paymasters available");
+      console.warn("⚠️ No Paymasters available, analytics will be limited");
+      paymasters = []; // Return empty array instead of throwing
     }
   }
 
