@@ -66,28 +66,51 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
 
-      // Simplified ABI for accounts function
+      // Use minimal ABI to avoid decoding errors with unregistered accounts
+      // We only need stakedAt to check if registered
       const abi = [
-        "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
+        "function accounts(address) external view returns (uint256, uint256 stakedAt)"
       ];
 
       const superPaymaster = new ethers.Contract(superPaymasterAddress, abi, provider);
-      const account = await superPaymaster.accounts(address);
 
-      // stakedAt > 0 means registered
-      if (account.stakedAt > 0n) {
-        setIsRegistered(true);
-        setSuperPaymasterInfo({
-          stGTokenLocked: ethers.formatEther(account.stGTokenLocked),
-          aPNTsBalance: ethers.formatEther(account.aPNTsBalance),
-          reputationLevel: Number(account.reputationLevel),
-          treasury: account.treasury,
-        });
-        return true;
+      try {
+        const [, stakedAt] = await superPaymaster.accounts(address);
+
+        // stakedAt > 0 means registered
+        if (stakedAt > 0n) {
+          // Get full account info with complete ABI
+          const fullABI = [
+            "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
+          ];
+          const fullContract = new ethers.Contract(superPaymasterAddress, fullABI, provider);
+          const account = await fullContract.accounts(address);
+
+          setIsRegistered(true);
+          setSuperPaymasterInfo({
+            stGTokenLocked: ethers.formatEther(account.stGTokenLocked),
+            aPNTsBalance: ethers.formatEther(account.aPNTsBalance),
+            reputationLevel: Number(account.reputationLevel),
+            treasury: account.treasury,
+          });
+          return true;
+        }
+
+        // Not registered (stakedAt == 0)
+        setIsRegistered(false);
+        setSuperPaymasterInfo(null);
+        return false;
+      } catch (decodeError) {
+        // Decode error likely means not registered (returns default values)
+        console.log("Account not registered in SuperPaymaster (decode error)");
+        setIsRegistered(false);
+        setSuperPaymasterInfo(null);
+        return false;
       }
-      return false;
     } catch (err) {
       console.error("Failed to check SuperPaymaster registration:", err);
+      setIsRegistered(false);
+      setSuperPaymasterInfo(null);
       return false;
     }
   };
@@ -169,7 +192,16 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       setIsRegistering(false);
     } catch (err: any) {
       console.error("Failed to register to SuperPaymaster:", err);
-      setRegistrationError(err.message || "Registration failed");
+
+      // Handle user rejection
+      if (err.code === "ACTION_REJECTED" || err.code === 4001) {
+        setRegistrationError("Transaction cancelled by user. Please try again when ready.");
+      } else if (err.message?.includes("insufficient funds")) {
+        setRegistrationError("Insufficient balance. Please ensure you have enough GT and aPNTs.");
+      } else {
+        setRegistrationError(err.message || "Registration failed. Please try again.");
+      }
+
       setIsRegistering(false);
     }
   };

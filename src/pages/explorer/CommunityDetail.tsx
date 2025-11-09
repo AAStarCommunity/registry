@@ -805,7 +805,26 @@ export function CommunityDetail() {
 
       {/* Permissionless Mint Configuration - Full Width Row */}
       <div className={`info-card-full editable ${editMode.permissionlessMint || pendingChanges.permissionlessMint !== undefined ? 'editing' : ''}`}>
-        <h3>⚙️ MySBT Register Configuration</h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3>⚙️ MySBT Register Configuration</h3>
+          <button
+            onClick={() => fetchCommunityData()}
+            className="refresh-btn"
+            style={{
+              padding: '0.5rem 1rem',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              fontWeight: 600,
+            }}
+            title="Refresh data from blockchain"
+          >
+            🔄 Refresh
+          </button>
+        </div>
         <div className="info-rows">
           <div className="info-row">
             <span className="label">Permissionless MySBT Register:</span>
