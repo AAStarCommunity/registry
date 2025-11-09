@@ -135,6 +135,58 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         </div>
       </div>
 
+      {/* Security Recommendation */}
+      {mode === "aoa" && (
+        <div className="security-recommendation">
+          <div className="recommendation-header">
+            <span className="icon">🔐</span>
+            <h3>Security Recommendation: Transfer to Multisig Account</h3>
+          </div>
+          <div className="recommendation-content">
+            <p>
+              For production use, we strongly recommend transferring community ownership to a
+              <strong> Gnosis Safe multisig wallet</strong> instead of using a single EOA account.
+            </p>
+            <div className="recommendation-benefits">
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Prevent single point of failure (lost private key)</span>
+              </div>
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Require multiple approvals for critical operations</span>
+              </div>
+              <div className="benefit-item">
+                <span className="check">✅</span>
+                <span>Enable team-based governance</span>
+              </div>
+            </div>
+            <div className="recommendation-actions">
+              <a
+                href="https://app.safe.global/new-safe"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-create-safe"
+              >
+                🛡️ Create Gnosis Safe Multisig ↗
+              </a>
+              <a
+                href="/register-community?action=transfer&returnUrl=/operator/wizard"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-transfer"
+              >
+                🔄 Transfer Community Ownership ↗
+              </a>
+            </div>
+            <div className="recommendation-note">
+              <strong>Note:</strong> After creating a Safe multisig, use the Transfer button to call
+              <code>Registry.transferCommunityOwnership(newOwner)</code> to transfer ownership.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Next Steps */}
       <div className="next-steps">
         <h3>{t('step3Complete.nextSteps.title')}</h3>
