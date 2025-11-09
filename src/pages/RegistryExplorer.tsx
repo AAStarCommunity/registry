@@ -5,6 +5,7 @@ import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
 import { RegistryABI, MySBTABI } from "../config/abis";
+import { SEPOLIA_V2_VERSIONS } from "@aastar/shared-config";
 import packageJson from "../../package.json";
 import "./RegistryExplorer.css";
 
@@ -212,9 +213,12 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
         console.warn("Failed to get deployment time:", err);
       }
 
+      // Get Registry version from shared-config
+      const registryVersion = SEPOLIA_V2_VERSIONS.core.registry.version;
+      
       setRegistryInfo({
         address,
-        version: "v2.2.0", // Registry version from shared-config
+        version: `v${registryVersion}`, // Registry version from shared-config
         deployedAt,
         sharedConfigVersion: packageJson.dependencies["@aastar/shared-config"].replace("^", ""),
         totalCommunities: totalCount,
