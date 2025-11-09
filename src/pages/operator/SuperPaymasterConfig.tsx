@@ -10,6 +10,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import "./SuperPaymasterConfig.css";
 
@@ -176,7 +178,9 @@ export function SuperPaymasterConfig() {
       // Refresh account info
       await loadAccountInfo();
       setDepositAmount("");
-      alert(`Successfully deposited ${depositAmount} aPNTs!`);
+      toast.success(`Successfully deposited ${depositAmount} aPNTs!`, {
+        autoClose: 5000,
+      });
     } catch (err: any) {
       console.error("Failed to deposit:", err);
       setDepositError(err.message || "Deposit failed");
@@ -197,6 +201,15 @@ export function SuperPaymasterConfig() {
   if (!isConnected) {
     return (
       <div className="superpaymaster-config">
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={true}
+          closeOnClick
+          pauseOnHover
+          theme="light"
+        />
         <div className="page-header">
           <button onClick={() => navigate(-1)} className="back-btn">
             ← Back
@@ -220,6 +233,15 @@ export function SuperPaymasterConfig() {
 
   return (
     <div className="superpaymaster-config">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        pauseOnHover
+        theme="light"
+      />
       <div className="page-header">
         <button onClick={() => navigate(-1)} className="back-btn">
           ← Back
