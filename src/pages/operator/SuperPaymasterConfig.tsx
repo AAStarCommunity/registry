@@ -45,6 +45,7 @@ export function SuperPaymasterConfig() {
   const [depositAmount, setDepositAmount] = useState<string>("");
   const [isDepositing, setIsDepositing] = useState(false);
   const [depositError, setDepositError] = useState<string>("");
+  const [walletAPNTsBalance, setWalletAPNTsBalance] = useState<string>("0"); // User's wallet aPNTs balance
 
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
@@ -152,6 +153,19 @@ export function SuperPaymasterConfig() {
         });
 
         console.log("✅ [SuperPaymaster] Account loaded successfully");
+
+        // Also load user's wallet aPNTs balance
+        try {
+          const aPNTsAddress = networkConfig.contracts.aPNTs;
+          const erc20ABI = ["function balanceOf(address) view returns (uint256)"];
+          const aPNTsToken = new ethers.Contract(aPNTsAddress, erc20ABI, provider);
+          const walletBalance = await aPNTsToken.balanceOf(addressToCheck);
+          setWalletAPNTsBalance(ethers.formatEther(walletBalance));
+          console.log("💰 [SuperPaymaster] Wallet aPNTs balance:", ethers.formatEther(walletBalance));
+        } catch (balanceErr) {
+          console.error("⚠️ [SuperPaymaster] Failed to load wallet aPNTs balance:", balanceErr);
+          setWalletAPNTsBalance("0");
+        }
       }
     } catch (err: any) {
       console.error("❌ [SuperPaymaster] Failed to load account info:", err);
@@ -427,15 +441,78 @@ export function SuperPaymasterConfig() {
             <div className="deposit-card">
               <p className="deposit-description">
                 Top up your aPNTs balance to sponsor more transactions.
-                Current balance: <strong>{accountInfo.aPNTsBalance} aPNTs</strong>
               </p>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+                {/* Contract Balance - Yellow if < 100 */}
+                <div style={{
+                  padding: '1rem',
+                  background: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#fef3c7' : '#f0fdf4',
+                  borderRadius: '8px',
+                  border: parseFloat(accountInfo.aPNTsBalance) < 100 ? '2px solid #f59e0b' : '1px solid #86efac',
+                  position: 'relative'
+                }}>
+                  {parseFloat(accountInfo.aPNTsBalance) < 100 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '8px',
+                      background: '#f59e0b',
+                      color: 'white',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      animation: 'pulse 2s infinite'
+                    }}>
+                      LOW
+                    </div>
+                  )}
+                  <div style={{
+                    fontSize: '0.875rem',
+                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#92400e' : '#15803d',
+                    fontWeight: 600
+                  }}>
+                    Contract Balance
+                  </div>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 700,
+                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#b45309' : '#166534',
+                    marginTop: '0.25rem'
+                  }}>
+                    {accountInfo.aPNTsBalance} aPNTs
+                  </div>
+                  <div style={{
+                    fontSize: '0.75rem',
+                    color: parseFloat(accountInfo.aPNTsBalance) < 100 ? '#f59e0b' : '#4ade80',
+                    marginTop: '0.25rem',
+                    fontWeight: parseFloat(accountInfo.aPNTsBalance) < 100 ? 600 : 400
+                  }}>
+                    {parseFloat(accountInfo.aPNTsBalance) < 100 ? '⚠️ Low balance - Please deposit!' : 'Available for sponsoring'}
+                  </div>
+                </div>
+
+                {/* Wallet Balance */}
+                <div style={{ padding: '1rem', background: '#e0f2fe', borderRadius: '8px', border: '1px solid #7dd3fc' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#0c4a6e', fontWeight: 600 }}>Wallet Balance</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0369a1', marginTop: '0.25rem' }}>
+                    {walletAPNTsBalance} aPNTs
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: '#0ea5e9', marginTop: '0.25rem' }}>Available to deposit</div>
+                </div>
+              </div>
+
               <div className="deposit-form">
-                <div className="input-group">
+                <div className="input-group" style={{ position: 'relative' }}>
                   <input
                     type="number"
                     value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
+                    onChange={(e) => {
+                      setDepositAmount(e.target.value);
+                      // Clear error when user types
+                      setDepositError("");
+                    }}
                     placeholder="Enter amount (e.g., 1000)"
                     className="deposit-input"
                     disabled={isDepositing}
@@ -443,7 +520,83 @@ export function SuperPaymasterConfig() {
                     min="0"
                   />
                   <span className="input-suffix">aPNTs</span>
+                  {parseFloat(walletAPNTsBalance) > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setDepositAmount(walletAPNTsBalance)}
+                      style={{
+                        position: 'absolute',
+                        right: '80px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        padding: '0.25rem 0.5rem',
+                        background: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '4px',
+                        fontSize: '0.75rem',
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        transition: 'background 0.2s'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = '#2563eb'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = '#3b82f6'}
+                    >
+                      MAX
+                    </button>
+                  )}
                 </div>
+
+                {/* Real-time validation warning */}
+                {depositAmount && parseFloat(depositAmount) > parseFloat(walletAPNTsBalance) && (
+                  <div style={{
+                    padding: '0.75rem',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    borderRadius: '6px',
+                    marginTop: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#dc2626', fontWeight: 600, fontSize: '0.875rem' }}>
+                        Insufficient Balance
+                      </div>
+                      <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        You're trying to deposit {depositAmount} aPNTs, but you only have {walletAPNTsBalance} aPNTs in your wallet.
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Zero balance warning */}
+                {parseFloat(walletAPNTsBalance) === 0 && (
+                  <div style={{
+                    padding: '0.75rem',
+                    background: '#fffbeb',
+                    border: '1px solid #fef08a',
+                    borderRadius: '6px',
+                    marginTop: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <span style={{ fontSize: '1.25rem' }}>💡</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ color: '#92400e', fontWeight: 600, fontSize: '0.875rem' }}>
+                        No aPNTs in Wallet
+                      </div>
+                      <div style={{ color: '#b45309', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+                        You need to acquire aPNTs tokens first. Get them at{' '}
+                        <a href="/resources/get-pnts" target="_blank" style={{ color: '#2563eb', textDecoration: 'underline' }}>
+                          Get PNTs
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {depositError && (
                   <div className="error-message">
@@ -454,16 +607,37 @@ export function SuperPaymasterConfig() {
 
                 <button
                   onClick={handleDeposit}
-                  disabled={isDepositing || !depositAmount}
+                  disabled={
+                    isDepositing ||
+                    parseFloat(walletAPNTsBalance) <= 0 ||  // Must have balance
+                    !depositAmount ||                        // Must enter amount
+                    parseFloat(depositAmount) <= 0 ||       // Must be > 0
+                    parseFloat(depositAmount) > parseFloat(walletAPNTsBalance)  // Must be <= balance
+                  }
                   className="deposit-btn"
+                  style={{
+                    opacity: (
+                      isDepositing ||
+                      parseFloat(walletAPNTsBalance) <= 0 ||
+                      !depositAmount ||
+                      parseFloat(depositAmount) <= 0 ||
+                      parseFloat(depositAmount) > parseFloat(walletAPNTsBalance)
+                    ) ? 0.5 : 1,
+                    cursor: (
+                      isDepositing ||
+                      parseFloat(walletAPNTsBalance) <= 0 ||
+                      !depositAmount ||
+                      parseFloat(depositAmount) <= 0 ||
+                      parseFloat(depositAmount) > parseFloat(walletAPNTsBalance)
+                    ) ? 'not-allowed' : 'pointer'
+                  }}
                 >
-                  {isDepositing ? "⏳ Depositing..." : "💎 Deposit aPNTs"}
+                  {isDepositing ? "⏳ Depositing..." :
+                   parseFloat(walletAPNTsBalance) <= 0 ? "❌ No aPNTs in Wallet" :
+                   !depositAmount ? "💎 Deposit aPNTs" :
+                   parseFloat(depositAmount) > parseFloat(walletAPNTsBalance) ? "⚠️ Insufficient Balance" :
+                   "💎 Deposit aPNTs"}
                 </button>
-
-                <p className="deposit-note">
-                  Note: You need to have aPNTs tokens in your wallet.
-                  Get aPNTs at <a href="/resources/get-pnts" target="_blank">Get PNTs</a>.
-                </p>
               </div>
             </div>
           </div>
