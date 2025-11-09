@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../config/networkConfig";
 import { getProvider } from "../utils/rpc-provider";
@@ -44,6 +44,7 @@ interface RegistryExplorerProps {
 
 export function RegistryExplorer({ initialTab = "communities" }: RegistryExplorerProps) {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<ExplorerTab>(initialTab);
   const [communities, setCommunities] = useState<CommunityProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -319,7 +320,11 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
               </div>
             ) : (
               filteredData.map((community) => (
-                <div key={community.community} className="community-card">
+                <div
+                  key={community.community}
+                  className="community-card clickable"
+                  onClick={() => navigate(`/explorer/community/${community.community}`)}
+                >
                   <div className="card-header">
                     <h3>{community.name}</h3>
                     <div className="badges">

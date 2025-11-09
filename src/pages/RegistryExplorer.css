@@ -315,6 +315,10 @@
     border-color: #667eea;
 }
 
+.community-card.clickable {
+    cursor: pointer;
+}
+
 .community-card .card-header {
     border-bottom: 1px solid #f3f4f6;
     padding-bottom: 1rem;

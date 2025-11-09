@@ -4,9 +4,10 @@
  * Display completion status and next steps
  */
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { ethers } from "ethers";
 import { type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import "./Step3_Complete.css";
@@ -22,6 +23,25 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const navigate = useNavigate();
   const networkConfig = getCurrentNetworkConfig();
   const mySBTAddress = networkConfig.contracts.mySBT;
+  const [communityAddress, setCommunityAddress] = useState<string>("");
+
+  // Get current wallet address (community owner)
+  useEffect(() => {
+    const getAddress = async () => {
+      if (typeof window.ethereum !== "undefined") {
+        try {
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const accounts = await provider.send("eth_accounts", []);
+          if (accounts && accounts.length > 0) {
+            setCommunityAddress(accounts[0]);
+          }
+        } catch (err) {
+          console.error("Failed to get wallet address:", err);
+        }
+      }
+    };
+    getAddress();
+  }, []);
 
   const getExplorerLink = (address: string): string => {
     return `https://sepolia.etherscan.io/address/${address}`;
@@ -163,7 +183,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             </div>
             <div className="recommendation-actions">
               <a
-                href="https://app.safe.global/new-safe"
+                href="https://app.safe.global/new-safe/create"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-create-safe"
@@ -171,17 +191,22 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 🛡️ Create Gnosis Safe Multisig ↗
               </a>
               <a
-                href="/register-community?action=transfer&returnUrl=/operator/wizard"
+                href={communityAddress ? `/explorer/community/${communityAddress}` : "/explorer"}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-transfer"
               >
-                🔄 Transfer Community Ownership ↗
+                🔄 Manage Community (Transfer Ownership) ↗
               </a>
             </div>
             <div className="recommendation-note">
-              <strong>Note:</strong> After creating a Safe multisig, use the Transfer button to call
-              <code>Registry.transferCommunityOwnership(newOwner)</code> to transfer ownership.
+              <strong>Note:</strong> After creating a Safe multisig wallet:
+              <ol style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
+                <li>Click "Manage Community" to open your community management page</li>
+                <li>Connect your current wallet (owner account)</li>
+                <li>Use the "Edit" button on "Owner Address" to transfer ownership to your Safe wallet address</li>
+                <li>The page supports both MetaMask and Safe App modes</li>
+              </ol>
             </div>
           </div>
         </div>
