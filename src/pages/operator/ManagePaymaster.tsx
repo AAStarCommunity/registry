@@ -11,9 +11,13 @@ import ManagePaymasterAOA from "./ManagePaymasterAOA";
 /**
  * 统一 Paymaster 管理页面入口
  *
- * 自动检测 Paymaster 类型并路由到对应组件：
+ * 支持两种输入：
+ * 1. Paymaster 合约地址（AOA模式）
+ * 2. Operator 账户地址（AOA/AOA+ 模式）
+ *
+ * 自动检测类型并路由：
  * - AOA (PaymasterV4): ManagePaymasterAOA
- * - AOA+ (SuperPaymaster): ManagePaymasterAOAPlus (待实现)
+ * - AOA+ (SuperPaymaster operator): 跳转到 /operator/superpaymaster
  * - UNKNOWN: 显示错误信息
  */
 export default function ManagePaymaster() {
@@ -109,20 +113,13 @@ export default function ManagePaymaster() {
 
   if (paymasterType === PaymasterType.AOA_PLUS) {
     // SuperPaymaster - 统一合约，多 operator 账户
+    // 跳转到 SuperPaymaster 管理页面
+    window.location.href = "/operator/superpaymaster";
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center max-w-md p-6 bg-yellow-50 rounded-lg">
-          <div className="text-yellow-600 text-5xl mb-4">🚧</div>
-          <h2 className="text-xl font-semibold text-yellow-800 mb-2">
-            AOA+ 管理功能开发中
-          </h2>
-          <p className="text-yellow-600 mb-4">
-            SuperPaymaster (AOA+) 管理页面即将上线
-          </p>
-          <p className="text-sm text-gray-600">
-            检测到的合约类型: AOA+ (多 operator 账户)
-          </p>
-          <p className="text-sm text-gray-600 break-all mt-2">{address}</p>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">正在跳转到 SuperPaymaster 管理页面...</p>
         </div>
       </div>
     );
