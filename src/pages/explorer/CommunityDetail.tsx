@@ -300,26 +300,60 @@ export function CommunityDetail() {
     try {
       const networkConfig = getCurrentNetworkConfig();
       const registryAddress = networkConfig.contracts.registry;
+      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
       const registryInterface = new ethers.Interface(RegistryABI);
 
-      const txData = registryInterface.encodeFunctionData("transferCommunityOwnership", [newOwner]);
+      const transactions: BaseTransaction[] = [];
 
-      const transaction: BaseTransaction = {
+      // Transaction 1: Transfer Registry ownership
+      const registryTxData = registryInterface.encodeFunctionData("transferCommunityOwnership", [newOwner]);
+      transactions.push({
         to: registryAddress,
         value: "0",
-        data: txData,
-      };
+        data: registryTxData,
+      });
+
+      // Transaction 2: Update SuperPaymaster treasury (if registered)
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const superPaymasterABI = [
+          "function accounts(address) external view returns (uint256, uint256 stakedAt)"
+        ];
+        const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, provider);
+        const [, stakedAt] = await superPaymaster.accounts(address);
+
+        if (stakedAt > 0n) {
+          console.log("Community is registered in SuperPaymaster, adding treasury update transaction");
+          const superPaymasterInterface = new ethers.Interface([
+            "function updateTreasury(address newTreasury) external"
+          ]);
+          const treasuryTxData = superPaymasterInterface.encodeFunctionData("updateTreasury", [newOwner]);
+          transactions.push({
+            to: superPaymasterAddress,
+            value: "0",
+            data: treasuryTxData,
+          });
+        }
+      } catch (superPaymasterError) {
+        console.log("SuperPaymaster check failed or not registered:", superPaymasterError);
+        // Continue with only Registry transfer
+      }
 
       if (isSafeApp && sdk && safe) {
-        // Safe transaction
-        console.log("Proposing ownership transfer to Safe...");
-        const safeTxResult = await sdk.txs.send({ txs: [transaction] });
+        // Safe batch transaction
+        console.log(`Proposing ${transactions.length} transaction(s) to Safe...`);
+        const safeTxResult = await sdk.txs.send({ txs: transactions });
         console.log("Safe transaction proposed:", safeTxResult.safeTxHash);
 
         toast.success(
           <div>
             <strong>Ownership Transfer proposed to Safe!</strong>
-            <p style={{margin: '0.5rem 0 0 0'}}>Please approve it in the Safe interface.</p>
+            <p style={{margin: '0.5rem 0 0 0'}}>Please approve {transactions.length} transaction(s) in the Safe interface.</p>
+            {transactions.length > 1 && (
+              <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem'}}>
+                Includes: Registry ownership + SuperPaymaster treasury update
+              </p>
+            )}
             <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
               Tx Hash: {safeTxResult.safeTxHash.slice(0,10)}...{safeTxResult.safeTxHash.slice(-8)}
             </p>
@@ -327,30 +361,34 @@ export function CommunityDetail() {
           { autoClose: 8000 }
         );
       } else {
-        // MetaMask transaction
+        // MetaMask - execute transactions sequentially
         const provider = new ethers.BrowserProvider(window.ethereum);
         const signer = await provider.getSigner();
 
-        const tx = await signer.sendTransaction({
-          to: transaction.to,
-          data: transaction.data,
-          value: transaction.value,
-        });
+        for (let i = 0; i < transactions.length; i++) {
+          const tx = transactions[i];
+          const txType = i === 0 ? "Registry ownership transfer" : "SuperPaymaster treasury update";
 
-        console.log("Transaction sent:", tx.hash);
-        toast.info(
-          <div>
-            <strong>Ownership Transfer submitted!</strong>
-            <p style={{margin: '0.5rem 0 0 0'}}>Please wait for confirmation.</p>
-            <p style={{margin: '0.5rem 0 0 0', fontSize: '0.85rem', fontFamily: 'monospace'}}>
-              Tx Hash: {tx.hash.slice(0,10)}...{tx.hash.slice(-8)}
-            </p>
-          </div>,
+          console.log(`Sending transaction ${i + 1}/${transactions.length}: ${txType}`);
+          toast.info(`Step ${i + 1}/${transactions.length}: ${txType}...`, { autoClose: 3000 });
+
+          const sentTx = await signer.sendTransaction({
+            to: tx.to,
+            data: tx.data,
+            value: tx.value,
+          });
+
+          console.log("Transaction sent:", sentTx.hash);
+          await sentTx.wait();
+          console.log("Transaction confirmed:", sentTx.hash);
+        }
+
+        toast.success(
+          transactions.length > 1
+            ? "All transactions confirmed! Registry and SuperPaymaster updated."
+            : "Transaction confirmed! Refreshing...",
           { autoClose: 5000 }
         );
-
-        await tx.wait();
-        toast.success("Transaction confirmed! Refreshing...");
       }
 
       // Refresh data
