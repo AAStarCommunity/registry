@@ -430,87 +430,35 @@ export function RegisterCommunity() {
 
       const gTokenAmount = ethers.parseEther(stakeAmount || "0");
 
-      // Step 1: Approve GToken to GTokenStaking and stake
-      if (gTokenAmount > 0n && GTOKEN_ADDRESS && GTOKEN_STAKING_ADDRESS) {
+      // Step 1: Approve GToken to Registry for auto-stake registration (v2.2.1)
+      // Registry will handle: transfer GT → stakeFor → lockStake → register
+      if (gTokenAmount > 0n && GTOKEN_ADDRESS) {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
           ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)", "function balanceOf(address) external view returns (uint256)"],
           signer
         );
 
-        const staking = new ethers.Contract(
-          GTOKEN_STAKING_ADDRESS,
-          GTokenStakingABI,
-          signer
-        );
-
-        // Check user's GToken balance first
+        // Check user's GToken wallet balance
         const userGTokenBalance = await gToken.balanceOf(account);
-        console.log(t('registerCommunity.balance.gtoken') + ':', ethers.formatEther(userGTokenBalance));
+        console.log('User GToken balance:', ethers.formatEther(userGTokenBalance));
 
-        // Check if user has enough AVAILABLE (unlocked) staked balance
-        const availableBalance = await staking.availableBalance(account);
-        const needToStake = gTokenAmount > availableBalance ? gTokenAmount - availableBalance : 0n;
-
-        console.log(t('registerCommunity.console.checkingStaking'),
-          t('registerCommunity.console.stakeStatus'), ethers.formatEther(gTokenAmount),
-          t('registerCommunity.console.available'), ethers.formatEther(availableBalance),
-          t('registerCommunity.console.needToStake'), ethers.formatEther(needToStake));
-
-        if (needToStake > 0n) {
-          // Check if user has enough GToken to stake
-          if (userGTokenBalance < needToStake) {
-            throw new Error(t('registerCommunity.errors.insufficientToStake', { need: ethers.formatEther(needToStake), current: ethers.formatEther(userGTokenBalance) }));
-          }
-
-          // Check and approve GToken if needed
-          const currentAllowance = await gToken.allowance(account, GTOKEN_STAKING_ADDRESS);
-          if (currentAllowance < needToStake) {
-            console.log(t('registerCommunity.console.approving'), ethers.formatEther(needToStake), 'GToken...');
-            const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, needToStake);
-            await approveTx.wait();
-            console.log(t('registerCommunity.console.approved'));
-          }
-
-          // Stake GToken
-          console.log(t('registerCommunity.console.staking'), ethers.formatEther(needToStake), 'GToken...');
-          const stakeTx = await staking.stake(needToStake);
-          await stakeTx.wait();
-          console.log(t('registerCommunity.console.staked'));
-
-          // Verify available balance after staking
-          const newAvailableBalance = await staking.availableBalance(account);
-          console.log(t('registerCommunity.console.availableAfterStake'), ethers.formatEther(newAvailableBalance));
-          if (newAvailableBalance < gTokenAmount) {
-            throw new Error(t('registerCommunity.errors.insufficientAfterStake', { expected: ethers.formatEther(gTokenAmount), actual: ethers.formatEther(newAvailableBalance) }));
-          }
+        if (userGTokenBalance < gTokenAmount) {
+          throw new Error(t('registerCommunity.errors.insufficientBalance', {
+            required: ethers.formatEther(gTokenAmount),
+            current: ethers.formatEther(userGTokenBalance)
+          }));
         }
-      }
 
-      // Step 3: Register community (Registry will call GTokenStaking.lockStake internally)
-
-      // IMPORTANT: Wait for blockchain state to sync before calling Registry
-      // Re-verify available balance right before registerCommunity to ensure state is synced
-      if (gTokenAmount > 0n && GTOKEN_STAKING_ADDRESS) {
-        console.log(t('registerCommunity.console.verifyingBalanceBeforeRegister'));
-
-        // Create a read-only staking contract to verify balance
-        const stakingContract = new ethers.Contract(
-          GTOKEN_STAKING_ADDRESS,
-          GTokenStakingABI,
-          provider
-        );
-
-        const finalAvailableBalance = await stakingContract.availableBalance(account);
-        console.log(t('registerCommunity.console.finalAvailableBalance'), ethers.formatEther(finalAvailableBalance));
-
-        if (finalAvailableBalance < gTokenAmount) {
-          throw new Error(
-            t('registerCommunity.errors.stateNotSynced', {
-              expected: ethers.formatEther(gTokenAmount),
-              actual: ethers.formatEther(finalAvailableBalance)
-            }) + ' Please wait a moment and try again.'
-          );
+        // Check and approve GToken to Registry for auto-stake
+        const currentAllowance = await gToken.allowance(account, REGISTRY_ADDRESS);
+        if (currentAllowance < gTokenAmount) {
+          console.log('Approving', ethers.formatEther(gTokenAmount), 'GToken to Registry for auto-stake...');
+          const approveTx = await gToken.approve(REGISTRY_ADDRESS, gTokenAmount);
+          await approveTx.wait();
+          console.log('✅ Approved GToken to Registry');
+        } else {
+          console.log('✅ GToken already approved to Registry');
         }
       }
 
@@ -520,10 +468,11 @@ export function RegisterCommunity() {
         signer
       );
 
-      // Use manual gasLimit to skip estimateGas which might see stale state
-      // This prevents the "InsufficientStake" error during gas estimation
-      const tx = await registry.registerCommunity(profile, gTokenAmount, {
-        gasLimit: 500000 // Manual gas limit to bypass estimateGas
+      // Step 2: Register community with auto-stake (Registry v2.2.1)
+      // This combines approve + transfer + stakeFor + lockStake + register in one transaction
+      console.log('Calling registerCommunityWithAutoStake...');
+      const tx = await registry.registerCommunityWithAutoStake(profile, gTokenAmount, {
+        gasLimit: 800000 // Increased gas limit for auto-stake transaction
       });
       setRegisterTxHash(tx.hash);
 

@@ -1,12 +1,12 @@
 /**
  * StakeToSuperPaymaster Component
  *
- * Super Mode registration flow:
- * 1. Stake GToken → get sGToken
- * 2. Register to SuperPaymasterV2 (auto-lock sGToken)
- * 3. Deposit aPNTs
- * 4. Deploy xPNTs Token (optional)
- * 5. Complete - 3 seconds to launch!
+ * Super Mode registration flow (v2.1.0 - Auto-Stake):
+ * 1. Register with auto-stake (approve GT + registerOperatorWithAutoStake)
+ *    - Combines: approve GT → stakeFor → lockStake → register → optional aPNTs deposit
+ *    - Reduces from 6+ signatures to 2 signatures!
+ * 2. Deploy xPNTs Token (optional)
+ * 3. Complete - Fast and simple!
  */
 
 import React, { useState } from "react";
@@ -33,13 +33,11 @@ const APNTS_ADDRESS = networkConfig.contracts.aPNTs;
 
 // ABIs imported from shared-config via config/abis.ts
 
-// Registration steps
+// Registration steps (v2.1.0 - simplified with auto-stake)
 const RegistrationStep = {
-  STAKE_GTOKEN: 1,
-  REGISTER_OPERATOR: 2,
-  DEPOSIT_APNTS: 3,
-  DEPLOY_XPNTS: 4,
-  COMPLETE: 5,
+  REGISTER_WITH_AUTO_STAKE: 1,  // Combines: approve GT + auto-stake + register + optional aPNTs
+  DEPLOY_XPNTS: 2,               // Optional: deploy xPNTs token
+  COMPLETE: 3,                   // Done!
 } as const;
 
 type RegistrationStepType = typeof RegistrationStep[keyof typeof RegistrationStep];
@@ -50,7 +48,7 @@ export function StakeToSuperPaymaster({
   onBack,
 }: StakeToSuperPaymasterProps) {
   const [currentStep, setCurrentStep] = useState<RegistrationStepType>(
-    RegistrationStep.STAKE_GTOKEN
+    RegistrationStep.REGISTER_WITH_AUTO_STAKE
   );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +61,7 @@ export function StakeToSuperPaymaster({
   const [xPNTsTokenAddress, setXPNTsTokenAddress] = useState("");
   const [exchangeRate, setExchangeRate] = useState("1.0");
 
-  const handleStakeGToken = async () => {
+  const handleRegisterWithAutoStake = async () => {
     setIsLoading(true);
     setError(null);
 
@@ -71,135 +69,73 @@ export function StakeToSuperPaymaster({
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
       const gToken = new ethers.Contract(GTOKEN_ADDRESS, GTokenABI, signer);
-      const gtokenStaking = new ethers.Contract(
-        GTOKEN_STAKING_ADDRESS,
-        GTokenStakingABI,
-        signer
-      );
-
-      const stakeAmount = ethers.parseEther(gTokenAmount);
-
-      console.log("Step 1/2: Approving GToken for staking...");
-
-      // 1. Approve GTokenStaking to spend GToken
-      const approveTx = await gToken.approve(GTOKEN_STAKING_ADDRESS, stakeAmount);
-      console.log("Approval tx:", approveTx.hash);
-      await approveTx.wait();
-      console.log("✅ GToken approved");
-
-      console.log("Step 2/2: Staking GToken...");
-
-      // 2. Stake GToken to get sGToken
-      const stakeTx = await gtokenStaking.stake(stakeAmount);
-      console.log("Stake tx:", stakeTx.hash);
-      setTxHash(stakeTx.hash);
-      await stakeTx.wait();
-
-      // 3. Verify sGToken balance
-      const sGTokenBalance = await gtokenStaking.balanceOf(await signer.getAddress());
-      console.log("✅ Staked! sGToken balance:", ethers.formatEther(sGTokenBalance));
-
-      setCurrentStep(RegistrationStep.REGISTER_OPERATOR);
-    } catch (err: any) {
-      console.error("GToken staking failed:", err);
-      setError(err?.message || "Failed to stake GToken");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRegisterOperator = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const gtokenStaking = new ethers.Contract(
-        GTOKEN_STAKING_ADDRESS,
-        GTokenStakingABI,
-        signer
-      );
       const superPaymaster = new ethers.Contract(
         SUPER_PAYMASTER_V2,
         SuperPaymasterV2ABI,
         signer
       );
 
-      // Calculate sGToken lock amount (minimum 30, recommended 50-100)
-      const sGTokenLockAmount = ethers.parseEther(gTokenAmount);
+      const gtAmount = ethers.parseEther(gTokenAmount);
+      const apntsAmount = ethers.parseEther(aPNTsAmount);
 
-      console.log("Step 1/2: Approving sGToken for SuperPaymaster...");
+      // Step 1: Approve GToken to SuperPaymaster for auto-stake
+      console.log("Step 1/3: Approving GToken to SuperPaymaster for auto-stake...");
+      const approveGTTx = await gToken.approve(SUPER_PAYMASTER_V2, gtAmount);
+      console.log("GToken approval tx:", approveGTTx.hash);
+      await approveGTTx.wait();
+      console.log("✅ GToken approved to SuperPaymaster");
 
-      // 1. Approve SuperPaymaster to transfer sGToken from GTokenStaking
-      const approveTx = await gtokenStaking.approve(SUPER_PAYMASTER_V2, sGTokenLockAmount);
-      console.log("Approval tx:", approveTx.hash);
-      await approveTx.wait();
-      console.log("✅ sGToken approved");
+      // Step 2: Approve aPNTs to SuperPaymaster (if depositing)
+      if (apntsAmount > 0n) {
+        console.log("Step 2/3: Approving aPNTs to SuperPaymaster...");
+        const aPNTs = new ethers.Contract(APNTS_ADDRESS, GTokenABI, signer);
+        const approveAPNTsTx = await aPNTs.approve(SUPER_PAYMASTER_V2, apntsAmount);
+        console.log("aPNTs approval tx:", approveAPNTsTx.hash);
+        await approveAPNTsTx.wait();
+        console.log("✅ aPNTs approved to SuperPaymaster");
+      }
 
-      console.log("Step 2/2: Registering operator to SuperPaymasterV2...");
+      // Step 3: Register operator with auto-stake (v2.1.0)
+      // function registerOperatorWithAutoStake(
+      //   uint256 stGTokenAmount,
+      //   uint256 aPNTsAmount,
+      //   address[] memory supportedSBTs,
+      //   address xPNTsToken,
+      //   address treasury
+      // )
+      console.log("Step 3/3: Calling registerOperatorWithAutoStake...");
+      console.log("  GT Amount:", ethers.formatEther(gtAmount));
+      console.log("  aPNTs Amount:", ethers.formatEther(apntsAmount));
+      console.log("  Treasury:", treasuryAddress);
 
-      // 2. Call registerOperator with correct parameter order
-      // function registerOperator(uint256 sGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury)
-      const tx = await superPaymaster.registerOperator(
-        sGTokenLockAmount,              // sGTokenAmount
-        [],                              // supportedSBTs - empty for now
+      const tx = await superPaymaster.registerOperatorWithAutoStake(
+        gtAmount,                          // GT to stake
+        apntsAmount,                       // aPNTs to deposit (can be 0)
+        [],                                // supportedSBTs - empty for now
         xPNTsTokenAddress || ethers.ZeroAddress,  // xPNTsToken
-        treasuryAddress                  // treasury
+        treasuryAddress,                   // treasury
+        {
+          gasLimit: 800000  // Increased gas limit for auto-stake transaction
+        }
       );
 
       setTxHash(tx.hash);
       console.log("Registration tx:", tx.hash);
 
       await tx.wait();
-      console.log("✅ Operator registered!");
+      console.log("✅ Operator registered with auto-stake!");
+      console.log("   - GT staked and locked:", ethers.formatEther(gtAmount));
+      console.log("   - aPNTs deposited:", ethers.formatEther(apntsAmount));
 
-      setCurrentStep(RegistrationStep.DEPOSIT_APNTS);
-    } catch (err: any) {
-      console.error("Operator registration failed:", err);
-      setError(err?.message || "Failed to register operator");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDepositAPNTs = async () => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-
-      // 1. Approve aPNTs
-      const aPNTsContract = new ethers.Contract(APNTS_ADDRESS, GTokenABI, signer);
-      const approvalAmount = ethers.parseUnits(aPNTsAmount, 18);
-
-      console.log("Approving aPNTs...");
-      const approveTx = await aPNTsContract.approve(SUPER_PAYMASTER_V2, approvalAmount);
-      await approveTx.wait();
-
-      // 2. Deposit aPNTs
-      const superPaymaster = new ethers.Contract(
-        SUPER_PAYMASTER_V2,
-        SuperPaymasterV2ABI,
-        signer
-      );
-
-      console.log("Depositing aPNTs...");
-      const depositTx = await superPaymaster.depositAPNTs(approvalAmount);
-      setTxHash(depositTx.hash);
-      await depositTx.wait();
-
-      console.log("aPNTs deposited!");
       setCurrentStep(RegistrationStep.DEPLOY_XPNTS);
     } catch (err: any) {
-      console.error("aPNTs deposit failed:", err);
-      setError(err?.message || "Failed to deposit aPNTs");
+      console.error("Auto-stake registration failed:", err);
+      setError(err?.message || "Failed to register with auto-stake");
     } finally {
       setIsLoading(false);
     }
   };
+
 
   const handleDeployXPNTs = async () => {
     setIsLoading(true);
@@ -229,42 +165,45 @@ export function StakeToSuperPaymaster({
 
   const renderCurrentStep = () => {
     switch (currentStep) {
-      case RegistrationStep.STAKE_GTOKEN:
+      case RegistrationStep.REGISTER_WITH_AUTO_STAKE:
         return (
           <div className="step-content">
-            <h3>Step 1: Stake GToken</h3>
-            <p>Stake GToken to receive sGToken (staked governance token).</p>
+            <h3>Step 1: Register with Auto-Stake (v2.1.0)</h3>
+            <p className="info-text">
+              ⚡ <strong>One-step registration!</strong> This combines approve GT → stakeFor → lockStake → register → deposit aPNTs.
+              <br />
+              <span style={{color: '#10b981'}}>✓ Reduces from 6+ signatures to 2-3 signatures!</span>
+            </p>
 
             <div className="form-group">
-              <label>GToken Amount</label>
+              <label>GToken Amount to Stake</label>
               <input
                 type="number"
                 value={gTokenAmount}
                 onChange={(e) => setGTokenAmount(e.target.value)}
-                placeholder="100"
-                min="100"
+                placeholder="30"
+                min="30"
                 disabled={isLoading}
               />
               <div className="form-hint">
-                Available: {walletStatus.gTokenBalance} GToken
+                Minimum: 30 GT | Available: {walletStatus.gTokenBalance} GToken
               </div>
             </div>
 
-            <button
-              className="btn-primary"
-              onClick={handleStakeGToken}
-              disabled={isLoading || parseFloat(gTokenAmount) < 100}
-            >
-              {isLoading ? "Staking..." : "Stake GToken →"}
-            </button>
-          </div>
-        );
-
-      case RegistrationStep.REGISTER_OPERATOR:
-        return (
-          <div className="step-content">
-            <h3>Step 2: Register Operator</h3>
-            <p>Register to SuperPaymasterV2 (auto-locks sGToken).</p>
+            <div className="form-group">
+              <label>aPNTs Initial Deposit (Optional)</label>
+              <input
+                type="number"
+                value={aPNTsAmount}
+                onChange={(e) => setAPNTsAmount(e.target.value)}
+                placeholder="1000"
+                min="0"
+                disabled={isLoading}
+              />
+              <div className="form-hint">
+                Available: {walletStatus.aPNTsBalance} aPNTs | Can deposit 0 and add later
+              </div>
+            </div>
 
             <div className="form-group">
               <label>Treasury Address</label>
@@ -280,58 +219,12 @@ export function StakeToSuperPaymaster({
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Exchange Rate (xPNTs:aPNTs)</label>
-              <input
-                type="number"
-                value={exchangeRate}
-                onChange={(e) => setExchangeRate(e.target.value)}
-                placeholder="1.0"
-                step="0.1"
-                disabled={isLoading}
-              />
-              <div className="form-hint">
-                1.0 means 1 xPNT = 1 aPNT
-              </div>
-            </div>
-
             <button
               className="btn-primary"
-              onClick={handleRegisterOperator}
-              disabled={isLoading || !ethers.isAddress(treasuryAddress)}
+              onClick={handleRegisterWithAutoStake}
+              disabled={isLoading || parseFloat(gTokenAmount) < 30 || !ethers.isAddress(treasuryAddress)}
             >
-              {isLoading ? "Registering..." : "Register Operator →"}
-            </button>
-          </div>
-        );
-
-      case RegistrationStep.DEPOSIT_APNTS:
-        return (
-          <div className="step-content">
-            <h3>Step 3: Deposit aPNTs</h3>
-            <p>Deposit aPNTs to back your gas sponsorship.</p>
-
-            <div className="form-group">
-              <label>aPNTs Amount</label>
-              <input
-                type="number"
-                value={aPNTsAmount}
-                onChange={(e) => setAPNTsAmount(e.target.value)}
-                placeholder="1000"
-                min="1000"
-                disabled={isLoading}
-              />
-              <div className="form-hint">
-                Available: {walletStatus.aPNTsBalance} aPNTs
-              </div>
-            </div>
-
-            <button
-              className="btn-primary"
-              onClick={handleDepositAPNTs}
-              disabled={isLoading || parseFloat(aPNTsAmount) < 1000}
-            >
-              {isLoading ? "Depositing..." : "Deposit aPNTs →"}
+              {isLoading ? "Registering with Auto-Stake..." : "Register Operator (Auto-Stake) →"}
             </button>
           </div>
         );
@@ -420,18 +313,16 @@ export function StakeToSuperPaymaster({
   return (
     <div className="stake-to-super-paymaster">
       <div className="step-header">
-        <h2>⚡ Super Mode Registration</h2>
+        <h2>⚡ Super Mode Registration (v2.1.0 - Auto-Stake)</h2>
         <p className="step-description">
-          Three seconds to launch your Paymaster - no contract deployment needed!
+          Fastest registration ever! Just 2-3 signatures to launch your Paymaster - no contract deployment needed!
         </p>
       </div>
 
       {/* Progress Indicator */}
       <div className="progress-steps">
         {[
-          { step: RegistrationStep.STAKE_GTOKEN, label: "Stake GToken" },
-          { step: RegistrationStep.REGISTER_OPERATOR, label: "Register" },
-          { step: RegistrationStep.DEPOSIT_APNTS, label: "Deposit aPNTs" },
+          { step: RegistrationStep.REGISTER_WITH_AUTO_STAKE, label: "Auto-Stake Register" },
           { step: RegistrationStep.DEPLOY_XPNTS, label: "Deploy xPNTs" },
           { step: RegistrationStep.COMPLETE, label: "Complete" },
         ].map((item) => (

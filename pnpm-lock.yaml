@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@aastar/shared-config':
-        specifier: ^0.3.1
-        version: 0.3.1
+        specifier: ^0.3.2
+        version: 0.3.2
       '@safe-global/safe-apps-react-sdk':
         specifier: ^4.7.2
         version: 4.7.2(react@19.2.0)(typescript@5.9.3)(zod@3.22.4)
@@ -38,6 +38,9 @@ importers:
       react-router-dom:
         specifier: ^7.9.4
         version: 7.9.4(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
+      react-toastify:
+        specifier: ^11.0.5
+        version: 11.0.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0)
     devDependencies:
       '@eslint/js':
         specifier: ^9.36.0
@@ -96,8 +99,8 @@ importers:
 
 packages:
 
-  '@aastar/shared-config@0.3.1':
-    resolution: {integrity: sha512-z/lUWQoBwxTpeBxrf9+FooXqudDUKdw8XRlsa3JvLtpnwqUjR8V84mhTZxpAiRUXdmnRljz4fIJZSW31kwWPMg==}
+  '@aastar/shared-config@0.3.2':
+    resolution: {integrity: sha512-9bU7WW2tMZ31KbuTPChPbpWrVaSTRzRaf8F+AtqKCsObgftoxVDwBIau6aFlVu3iXP/uGpL2I61B+Negdvacqw==}
 
   '@adraffy/ens-normalize@1.10.0':
     resolution: {integrity: sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==}
@@ -1404,6 +1407,10 @@ packages:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
 
+  clsx@2.1.1:
+    resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
+    engines: {node: '>=6'}
+
   code-block-writer@10.1.1:
     resolution: {integrity: sha512-67ueh2IRGst/51p0n6FvPrnRjAGHY5F8xdjkgrYE7DDzpJe6qA07RYQ9VcoUeo5ATOjSOiWpSL3SWBRRbempMw==}
 
@@ -2439,6 +2446,12 @@ packages:
       react-dom:
         optional: true
 
+  react-toastify@11.0.5:
+    resolution: {integrity: sha512-EpqHBGvnSTtHYhCPLxML05NLY2ZX0JURbAdNYa6BUkk+amz4wbKBQvoKQAB0ardvSarUBuY4Q4s1sluAzZwkmA==}
+    peerDependencies:
+      react: ^18 || ^19
+      react-dom: ^18 || ^19
+
   react@19.2.0:
     resolution: {integrity: sha512-tmbWg6W31tQLeB5cdIBOicJDJRR2KzXsV7uSK9iNfLWQ5bIZfxuPEHp7M8wiHyHnn0DD1i7w3Zmin0FtkrwoCQ==}
     engines: {node: '>=0.10.0'}
@@ -2902,7 +2915,7 @@ packages:
 
 snapshots:
 
-  '@aastar/shared-config@0.3.1': {}
+  '@aastar/shared-config@0.3.2': {}
 
   '@adraffy/ens-normalize@1.10.0': {}
 
@@ -4315,6 +4328,8 @@ snapshots:
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
 
+  clsx@2.1.1: {}
+
   code-block-writer@10.1.1: {}
 
   color-convert@2.0.1:
@@ -5338,6 +5353,12 @@ snapshots:
       react: 19.2.0
       set-cookie-parser: 2.7.1
     optionalDependencies:
+      react-dom: 19.2.0(react@19.2.0)
+
+  react-toastify@11.0.5(react-dom@19.2.0(react@19.2.0))(react@19.2.0):
+    dependencies:
+      clsx: 2.1.1
+      react: 19.2.0
       react-dom: 19.2.0(react@19.2.0)
 
   react@19.2.0: {}
