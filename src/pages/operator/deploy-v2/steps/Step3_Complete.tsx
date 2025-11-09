@@ -687,7 +687,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                           📜 View Contract
                         </a>
                         <a
-                          href="/operator/superpaymaster"
+                          href={`/operator/superpaymaster?operator=${communityAddress}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{

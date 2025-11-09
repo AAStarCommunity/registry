@@ -184,21 +184,51 @@ export function SuperPaymasterConfig() {
       const amount = ethers.parseEther(depositAmount);
 
       // ABIs
-      const erc20ABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
-      const superPaymasterABI = ["function depositAPNTs(uint256 amount) external"];
+      const erc20ABI = [
+        "function approve(address spender, uint256 amount) external returns (bool)",
+        "function allowance(address owner, address spender) view returns (uint256)",
+        "function balanceOf(address account) view returns (uint256)"
+      ];
 
       const aPNTs = new ethers.Contract(aPNTsAddress, erc20ABI, signer);
-      const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, signer);
+      const superPaymaster = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, signer);
 
-      // Step 1: Approve aPNTs
-      console.log("Approving aPNTs...");
-      const approveTx = await aPNTs.approve(superPaymasterAddress, amount);
-      await approveTx.wait();
-      console.log("✅ aPNTs approved");
+      const signerAddress = await signer.getAddress();
+
+      // Check balance
+      console.log("🔍 Checking aPNTs balance...");
+      const balance = await aPNTs.balanceOf(signerAddress);
+      console.log(`Balance: ${ethers.formatEther(balance)} aPNTs, Required: ${depositAmount} aPNTs`);
+
+      if (balance < amount) {
+        throw new Error(`Insufficient aPNTs balance. You have ${ethers.formatEther(balance)} aPNTs, but need ${depositAmount} aPNTs.`);
+      }
+
+      // Check allowance
+      console.log("🔍 Checking allowance...");
+      const allowance = await aPNTs.allowance(signerAddress, superPaymasterAddress);
+      console.log(`Current allowance: ${ethers.formatEther(allowance)} aPNTs`);
+
+      // Step 1: Approve aPNTs if needed
+      if (allowance < amount) {
+        console.log("⚠️ Insufficient allowance, requesting approval...");
+        toast.info("Please approve aPNTs transfer in MetaMask", { autoClose: 3000 });
+
+        const approveTx = await aPNTs.approve(superPaymasterAddress, amount);
+        console.log("⏳ Waiting for approval...");
+        await approveTx.wait();
+        console.log("✅ aPNTs approved");
+        toast.success("Approval successful!", { autoClose: 3000 });
+      } else {
+        console.log("✅ Sufficient allowance already approved");
+      }
 
       // Step 2: Deposit
-      console.log("Depositing aPNTs...");
+      console.log("💰 Depositing aPNTs...");
+      toast.info("Please confirm deposit in MetaMask", { autoClose: 3000 });
+
       const depositTx = await superPaymaster.depositAPNTs(amount);
+      console.log("⏳ Waiting for deposit transaction...");
       await depositTx.wait();
       console.log("✅ aPNTs deposited");
 
@@ -209,8 +239,23 @@ export function SuperPaymasterConfig() {
         autoClose: 5000,
       });
     } catch (err: any) {
-      console.error("Failed to deposit:", err);
-      setDepositError(err.message || "Deposit failed");
+      console.error("❌ Failed to deposit:", err);
+
+      // Better error messages
+      let errorMessage = err.message || "Deposit failed";
+
+      if (err.message?.includes("user rejected") || err.message?.includes("User denied")) {
+        errorMessage = "Transaction rejected by user";
+      } else if (err.message?.includes("Insufficient aPNTs balance")) {
+        errorMessage = err.message;  // Use our custom message
+      } else if (err.message?.includes("insufficient funds")) {
+        errorMessage = "Insufficient ETH for gas fees";
+      } else if (err.data?.startsWith("0x9996b315")) {
+        errorMessage = "aPNTs transfer failed. The token contract rejected the transfer. Please check your balance and try again.";
+      }
+
+      setDepositError(errorMessage);
+      toast.error(errorMessage, { autoClose: 7000 });
     } finally {
       setIsDepositing(false);
     }
