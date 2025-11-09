@@ -113,13 +113,15 @@ export default function ManagePaymaster() {
 
   if (paymasterType === PaymasterType.AOA_PLUS) {
     // SuperPaymaster - 统一合约，多 operator 账户
-    // 跳转到 SuperPaymaster 管理页面
-    window.location.href = "/operator/superpaymaster";
+    // 跳转到 SuperPaymaster 管理页面，传递 operator 地址
+    const operatorAddress = address; // 原始输入的地址就是 operator 地址
+    window.location.href = `/operator/superpaymaster?operator=${operatorAddress}`;
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">正在跳转到 SuperPaymaster 管理页面...</p>
+          <p className="text-xs text-gray-400 mt-2">Operator: {operatorAddress}</p>
         </div>
       </div>
     );

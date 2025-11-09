@@ -84,19 +84,19 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
         // stakedAt > 0 means registered
         if (stakedAt > 0n) {
-          // Get full account info with complete ABI
+          // Get full account info with complete ABI (returns OperatorAccount struct/tuple)
           const fullABI = [
-            "function accounts(address) external view returns (uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused)"
+            "function accounts(address) external view returns (tuple(uint256 stGTokenLocked, uint256 stakedAt, uint256 aPNTsBalance, uint256 totalSpent, uint256 lastRefillTime, uint256 minBalanceThreshold, address[] supportedSBTs, address xPNTsToken, address treasury, uint256 exchangeRate, uint256 reputationScore, uint256 consecutiveDays, uint256 totalTxSponsored, uint256 reputationLevel, uint256 lastCheckTime, bool isPaused))"
           ];
           const fullContract = new ethers.Contract(superPaymasterAddress, fullABI, provider);
           const account = await fullContract.accounts(address);
 
           setIsRegistered(true);
           setSuperPaymasterInfo({
-            stGTokenLocked: ethers.formatEther(account.stGTokenLocked),
-            aPNTsBalance: ethers.formatEther(account.aPNTsBalance),
-            reputationLevel: Number(account.reputationLevel),
-            treasury: account.treasury,
+            stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
+            aPNTsBalance: ethers.formatEther(account.aPNTsBalance || account[2]),
+            reputationLevel: Number(account.reputationLevel || account[13]),
+            treasury: account.treasury || account[8],
           });
           return true;
         }
@@ -232,15 +232,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const registryAddress = networkConfig.contracts.registry;
 
+      // Correct ABI: getCommunityProfile returns a tuple (CommunityProfile struct)
       const registryABI = [
-        "function getCommunityProfile(address community) external view returns (string memory name, string memory ensName, address xPNTsToken, address[] memory supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint)"
+        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))"
       ];
 
       const registry = new ethers.Contract(registryAddress, registryABI, provider);
 
       try {
         const profile = await registry.getCommunityProfile(address);
-        const paymasterAddress = profile[5]; // paymasterAddress is 6th field (index 5)
+        // profile is now a tuple/struct with named properties
+        const paymasterAddress = profile.paymasterAddress || profile[5];
 
         // Check if paymaster is set (not zero address)
         const isSet = paymasterAddress !== ethers.ZeroAddress;
@@ -272,9 +274,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const signer = await provider.getSigner();
       const registryAddress = networkConfig.contracts.registry;
 
-      // Get current community profile first
+      // Get current community profile first (returns a tuple/struct)
       const registryReadABI = [
-        "function getCommunityProfile(address community) external view returns (string memory name, string memory ensName, address xPNTsToken, address[] memory supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint)"
+        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))"
       ];
       const registryRead = new ethers.Contract(registryAddress, registryReadABI, provider);
       const currentProfile = await registryRead.getCommunityProfile(communityAddress);
@@ -302,18 +304,19 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const registryWrite = new ethers.Contract(registryAddress, registryWriteABI, signer);
 
       // Construct updated profile (keep existing data, only update paymasterAddress)
+      // Access fields by name (preferred) or by index (fallback)
       const updatedProfile = {
-        name: currentProfile[0],
-        ensName: currentProfile[1],
-        xPNTsToken: currentProfile[2],
-        supportedSBTs: currentProfile[3],
-        nodeType: currentProfile[4],
+        name: currentProfile.name || currentProfile[0],
+        ensName: currentProfile.ensName || currentProfile[1],
+        xPNTsToken: currentProfile.xPNTsToken || currentProfile[2],
+        supportedSBTs: currentProfile.supportedSBTs || currentProfile[3],
+        nodeType: currentProfile.nodeType ?? currentProfile[4],
         paymasterAddress: paymasterAddress, // Update this field
-        community: currentProfile[6],
-        registeredAt: currentProfile[7],
-        lastUpdatedAt: currentProfile[8],
-        isActive: currentProfile[9],
-        allowPermissionlessMint: currentProfile[10]
+        community: currentProfile.community || currentProfile[6],
+        registeredAt: currentProfile.registeredAt || currentProfile[7],
+        lastUpdatedAt: currentProfile.lastUpdatedAt || currentProfile[8],
+        isActive: currentProfile.isActive ?? currentProfile[9],
+        allowPermissionlessMint: currentProfile.allowPermissionlessMint ?? currentProfile[10]
       };
 
       console.log("Registering Paymaster to Registry:", paymasterAddress);
