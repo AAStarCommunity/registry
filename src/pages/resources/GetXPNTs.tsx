@@ -67,8 +67,21 @@ export function GetXPNTs() {
   const [deployedTokens, setDeployedTokens] = useState<DeployedToken[]>([]);
   const [isLoadingDeployedTokens, setIsLoadingDeployedTokens] = useState(false);
 
+  // Mint state
+  const [mintRecipientAddress, setMintRecipientAddress] = useState<string>("");
+  const [mintAmount, setMintAmount] = useState<string>("");
+  const [isMinting, setIsMinting] = useState(false);
+  const [mintTxHash, setMintTxHash] = useState<string>("");
+  const [mintError, setMintError] = useState<string>("");
+
   // Helper component for copyable address with Etherscan link
-  const CopyableAddress = ({ address, label }: { address: string; label?: string }) => {
+  const CopyableAddress = ({
+    address,
+    label,
+  }: {
+    address: string;
+    label?: string;
+  }) => {
     const EXPLORER_URL = getBlockExplorer("sepolia");
 
     const copyToClipboard = () => {
@@ -78,15 +91,19 @@ export function GetXPNTs() {
 
     return (
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-        {label && <span style={{ fontWeight: 500, color: "#6b7280" }}>{label}:</span>}
-        <code style={{
-          fontFamily: "Monaco, monospace",
-          fontSize: "0.875rem",
-          padding: "0.25rem 0.5rem",
-          background: "#f3f4f6",
-          borderRadius: "4px",
-          color: "#111827",
-        }}>
+        {label && (
+          <span style={{ fontWeight: 500, color: "#6b7280" }}>{label}:</span>
+        )}
+        <code
+          style={{
+            fontFamily: "Monaco, monospace",
+            fontSize: "0.875rem",
+            padding: "0.25rem 0.5rem",
+            background: "#f3f4f6",
+            borderRadius: "4px",
+            color: "#111827",
+          }}
+        >
           {address.slice(0, 6)}...{address.slice(-4)}
         </code>
         <button
@@ -130,7 +147,7 @@ export function GetXPNTs() {
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
         RegistryABI,
-        rpcProvider
+        rpcProvider,
       );
 
       const isReg = await registry.isRegisteredCommunity(address);
@@ -151,7 +168,7 @@ export function GetXPNTs() {
           name: profile.name,
           ensName: profile.ensName,
           xPNTsToken: boundToken,
-          isTokenBound: boundToken !== "" && boundToken !== ethers.ZeroAddress
+          isTokenBound: boundToken !== "" && boundToken !== ethers.ZeroAddress,
         });
       }
     } catch (err) {
@@ -186,7 +203,7 @@ export function GetXPNTs() {
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
-        rpcProvider
+        rpcProvider,
       );
 
       const hasToken = await factory.hasToken(address);
@@ -195,14 +212,18 @@ export function GetXPNTs() {
         setExistingToken(tokenAddress);
 
         // Get token details from ERC20 contract
-        const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
+        const tokenContract = new ethers.Contract(
+          tokenAddress,
+          ERC20_ABI,
+          rpcProvider,
+        );
 
         try {
           const [name, symbol, decimals, totalSupply] = await Promise.all([
             tokenContract.name(),
             tokenContract.symbol(),
             tokenContract.decimals(),
-            tokenContract.totalSupply()
+            tokenContract.totalSupply(),
           ]);
 
           setTokenName(name);
@@ -215,7 +236,7 @@ export function GetXPNTs() {
             name,
             symbol,
             decimals: Number(decimals),
-            totalSupply: ethers.formatUnits(totalSupply, decimals)
+            totalSupply: ethers.formatUnits(totalSupply, decimals),
           });
         } catch (tokenErr) {
           console.error("Failed to fetch token details:", tokenErr);
@@ -224,7 +245,7 @@ export function GetXPNTs() {
         // Try to get creation timestamp from xPNTsFactory events
         try {
           const createdFilter = factory.filters.TokenCreated(address);
-          const events = await factory.queryFilter(createdFilter, 0, 'latest');
+          const events = await factory.queryFilter(createdFilter, 0, "latest");
 
           if (events.length > 0) {
             const block = await rpcProvider.getBlock(events[0].blockNumber);
@@ -256,7 +277,11 @@ export function GetXPNTs() {
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const registry = new ethers.Contract(REGISTRY_ADDRESS, RegistryABI, signer);
+      const registry = new ethers.Contract(
+        REGISTRY_ADDRESS,
+        RegistryABI,
+        signer,
+      );
 
       // Check if community is registered
       const isRegistered = await registry.isRegisteredCommunity(account);
@@ -277,7 +302,7 @@ export function GetXPNTs() {
       const updatedProfile = {
         name: currentProfile.name,
         ensName: currentProfile.ensName,
-        xPNTsToken: tokenAddress,  // Update with new token address
+        xPNTsToken: tokenAddress, // Update with new token address
         supportedSBTs: [...currentProfile.supportedSBTs], // Create new array to avoid read-only error
         nodeType: currentProfile.nodeType,
         paymasterAddress: currentProfile.paymasterAddress,
@@ -300,7 +325,9 @@ export function GetXPNTs() {
       return true;
     } catch (err) {
       console.error("Registry update failed:", err);
-      setRegistryUpdateStatus(`更新失败: ${err instanceof Error ? err.message : "Unknown error"}`);
+      setRegistryUpdateStatus(
+        `更新失败: ${err instanceof Error ? err.message : "Unknown error"}`,
+      );
       return false;
     } finally {
       setIsUpdatingRegistry(false);
@@ -337,7 +364,11 @@ export function GetXPNTs() {
         throw new Error("Please enter token name and symbol");
       }
 
-      if (paymasterMode === "AOA" && paymasterAddress && !ethers.isAddress(paymasterAddress)) {
+      if (
+        paymasterMode === "AOA" &&
+        paymasterAddress &&
+        !ethers.isAddress(paymasterAddress)
+      ) {
         throw new Error("Invalid paymaster address");
       }
 
@@ -346,30 +377,36 @@ export function GetXPNTs() {
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
-        signer
+        signer,
       );
 
       // Calculate exchangeRate in wei (1 = 1e18)
       const exchangeRateWei = ethers.parseEther(exchangeRate || "1");
 
       // Determine paymaster address based on mode
-      const paymasterAddr = paymasterMode === "AOA+"
-        ? ethers.ZeroAddress
-        : (paymasterAddress || ethers.ZeroAddress);
+      const paymasterAddr =
+        paymasterMode === "AOA+"
+          ? ethers.ZeroAddress
+          : paymasterAddress || ethers.ZeroAddress;
 
       console.log("Deploying xPNTs token...");
       console.log("Mode:", paymasterMode);
       console.log("Paymaster:", paymasterAddr);
-      console.log("Exchange Rate:", exchangeRate, "->", exchangeRateWei.toString());
+      console.log(
+        "Exchange Rate:",
+        exchangeRate,
+        "->",
+        exchangeRateWei.toString(),
+      );
 
       // Deploy xPNTs token with community info from Registry (or manual input if not registered)
       const tx = await factory.deployxPNTsToken(
         tokenName,
         tokenSymbol,
-        communityName || tokenName,  // Use Registry community name or fallback to token name
-        communityENS || "",          // Use Registry ENS or empty
+        communityName || tokenName, // Use Registry community name or fallback to token name
+        communityENS || "", // Use Registry ENS or empty
         exchangeRateWei,
-        paymasterAddr
+        paymasterAddr,
       );
       setDeployTxHash(tx.hash);
 
@@ -382,7 +419,7 @@ export function GetXPNTs() {
       const factoryReader = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
-        new ethers.JsonRpcProvider(RPC_URL)
+        new ethers.JsonRpcProvider(RPC_URL),
       );
       const deployedTokenAddress = await factoryReader.getTokenAddress(account);
       console.log("Deployed xPNTs token address:", deployedTokenAddress);
@@ -392,16 +429,21 @@ export function GetXPNTs() {
 
       // Auto-update Registry if community is registered
       console.log("Attempting to update Registry...");
-      const registryUpdated = await updateRegistryWithToken(deployedTokenAddress);
+      const registryUpdated =
+        await updateRegistryWithToken(deployedTokenAddress);
 
       if (registryUpdated) {
         console.log("Registry updated successfully with xPNTs token");
       } else if (registryUpdateStatus === "未注册社区") {
-        console.log("Community not registered - user can register later at /register-community");
+        console.log(
+          "Community not registered - user can register later at /register-community",
+        );
       }
     } catch (err) {
       console.error("Deployment failed:", err);
-      setError(err instanceof Error ? err.message : "Failed to deploy xPNTs token");
+      setError(
+        err instanceof Error ? err.message : "Failed to deploy xPNTs token",
+      );
     } finally {
       setIsDeploying(false);
     }
@@ -415,24 +457,28 @@ export function GetXPNTs() {
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
-        rpcProvider
+        rpcProvider,
       );
 
       console.log("🔍 Querying TokenCreated events from xPNTsFactory...");
 
       // Query all TokenCreated events
       const filter = factory.filters.TokenCreated();
-      const events = await factory.queryFilter(filter, 0, 'latest');
+      const events = await factory.queryFilter(filter, 0, "latest");
 
       console.log(`📊 Found ${events.length} TokenCreated events`);
 
       // Fetch details for each token in parallel
       const tokenPromises = events.map(async (event) => {
         try {
-          const owner = event.args?.[0] as string;
-          const tokenAddress = event.args?.[1] as string;
+          const owner = (event as any).args?.[0] as string;
+          const tokenAddress = (event as any).args?.[1] as string;
 
-          const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
+          const tokenContract = new ethers.Contract(
+            tokenAddress,
+            ERC20_ABI,
+            rpcProvider,
+          );
           const block = await rpcProvider.getBlock(event.blockNumber);
 
           const [name, symbol, decimals, totalSupply] = await Promise.all([
@@ -449,20 +495,28 @@ export function GetXPNTs() {
             totalSupply: ethers.formatUnits(totalSupply, decimals),
             decimals: Number(decimals),
             owner,
-            deployedAt: block ? new Date(block.timestamp * 1000).toLocaleString() : "Unknown",
+            deployedAt: block
+              ? new Date(block.timestamp * 1000).toLocaleString()
+              : "Unknown",
           };
         } catch (err) {
-          console.error(`Failed to fetch details for token ${event.args?.[1]}:`, err);
+          console.error(
+            `Failed to fetch details for token ${(event as any).args?.[1]}:`,
+            err,
+          );
           return null;
         }
       });
 
       const tokens = (await Promise.all(tokenPromises)).filter(
-        (token): token is DeployedToken => token !== null
+        (token): token is DeployedToken => token !== null,
       );
 
       // Sort by deployment time (newest first)
-      tokens.sort((a, b) => new Date(b.deployedAt).getTime() - new Date(a.deployedAt).getTime());
+      tokens.sort(
+        (a, b) =>
+          new Date(b.deployedAt).getTime() - new Date(a.deployedAt).getTime(),
+      );
 
       console.log(`✅ Loaded ${tokens.length} deployed tokens`);
       setDeployedTokens(tokens);
@@ -473,16 +527,106 @@ export function GetXPNTs() {
     }
   };
 
+  // Mint xPNTs tokens
+  const handleMintTokens = async () => {
+    if (!account || !existingToken) {
+      setMintError("No token available for minting");
+      return;
+    }
+
+    if (!mintRecipientAddress || !ethers.isAddress(mintRecipientAddress)) {
+      setMintError("Invalid recipient address");
+      return;
+    }
+
+    if (!mintAmount || parseFloat(mintAmount) <= 0) {
+      setMintError("Invalid amount");
+      return;
+    }
+
+    try {
+      setIsMinting(true);
+      setMintError("");
+      setMintTxHash("");
+
+      if (!window.ethereum) {
+        throw new Error("MetaMask not installed");
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // Verify that connected account is token owner
+      const tokenContract = new ethers.Contract(
+        existingToken,
+        ERC20_ABI,
+        new ethers.JsonRpcProvider(RPC_URL),
+      );
+      const communityOwner = await tokenContract.communityOwner();
+
+      if (signer.address.toLowerCase() !== communityOwner.toLowerCase()) {
+        throw new Error("Only token owner can mint tokens");
+      }
+
+      // Connect to token contract with signer
+      const tokenContractWithSigner = new ethers.Contract(
+        existingToken,
+        ERC20_ABI,
+        signer,
+      );
+
+      // Parse amount to wei
+      const mintAmountWei = ethers.parseEther(mintAmount);
+
+      console.log("Minting tokens...");
+      console.log("Recipient:", mintRecipientAddress);
+      console.log("Amount:", mintAmount, "->", mintAmountWei.toString());
+
+      // Execute mint function
+      const tx = await tokenContractWithSigner.mint(
+        mintRecipientAddress,
+        mintAmountWei,
+      );
+      setMintTxHash(tx.hash);
+
+      console.log("Mint transaction submitted:", tx.hash);
+
+      // Wait for transaction confirmation
+      const receipt = await tx.wait();
+      console.log("Mint transaction confirmed:", receipt);
+
+      // Refresh token total supply
+      const [totalSupply] = await Promise.all([tokenContract.totalSupply()]);
+      setTokenTotalSupply(ethers.formatUnits(totalSupply, tokenDecimals));
+
+      // Clear form
+      setMintRecipientAddress("");
+      setMintAmount("");
+
+      toast.success("Successfully minted tokens!", { autoClose: 3000 });
+    } catch (err) {
+      console.error("Mint failed:", err);
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to mint tokens";
+      setMintError(errorMessage);
+      toast.error(errorMessage, { autoClose: 3000 });
+    } finally {
+      setIsMinting(false);
+    }
+  };
+
   // Auto-connect on mount
   useEffect(() => {
     if (window.ethereum) {
-      window.ethereum.request({ method: "eth_accounts" }).then((accounts: string[]) => {
-        if (accounts.length > 0) {
-          setAccount(accounts[0]);
-          checkExistingToken(accounts[0]);
-          checkRegistryInfo(accounts[0]);
-        }
-      });
+      window.ethereum
+        .request({ method: "eth_accounts" })
+        .then((accounts: string[]) => {
+          if (accounts.length > 0) {
+            setAccount(accounts[0]);
+            checkExistingToken(accounts[0]);
+            checkRegistryInfo(accounts[0]);
+          }
+        });
     }
 
     // Load deployed tokens list
@@ -515,25 +659,28 @@ export function GetXPNTs() {
         <div className="info-section">
           <h2>What is xPNTs?</h2>
           <p>
-            xPNTs (Extended Points Token) is a community points token designed for
-            gasless operations. It includes:
+            xPNTs (Extended Points Token) is a community points token designed
+            for gasless operations. It includes:
           </p>
           <ul className="feature-list">
             <li>
-              <strong>Auto-Approval System</strong>: Pre-approved for SuperPaymaster
-              and factory operations
+              <strong>Auto-Approval System</strong>: Pre-approved for
+              SuperPaymaster and factory operations
             </li>
             <li>
-              <strong>Gasless Support</strong>: Native integration with Account Abstraction
+              <strong>Gasless Support</strong>: Native integration with Account
+              Abstraction
             </li>
             <li>
-              <strong>Community Branding</strong>: Custom name, symbol, and community metadata
+              <strong>Community Branding</strong>: Custom name, symbol, and
+              community metadata
             </li>
             <li>
               <strong>Mint & Burn</strong>: Flexible token supply management
             </li>
             <li>
-              <strong>Rewards Integration</strong>: Compatible with staking and reward systems
+              <strong>Rewards Integration</strong>: Compatible with staking and
+              reward systems
             </li>
           </ul>
         </div>
@@ -577,7 +724,10 @@ export function GetXPNTs() {
               {/* Wallet Info */}
               <div className="wallet-info">
                 <p className="connected-account">
-                  Connected: <span className="mono">{account.slice(0, 6)}...{account.slice(-4)}</span>
+                  Connected:{" "}
+                  <span className="mono">
+                    {account.slice(0, 6)}...{account.slice(-4)}
+                  </span>
                 </p>
               </div>
 
@@ -587,18 +737,32 @@ export function GetXPNTs() {
                   <h4>Your xPNTs Token</h4>
 
                   {/* Token Details */}
-                  <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "0.75rem",
+                      marginBottom: "1rem",
+                    }}
+                  >
                     <div className="info-row">
                       <span className="label">Token Name:</span>
                       <span className="value">{tokenName || "Loading..."}</span>
                     </div>
                     <div className="info-row">
                       <span className="label">Symbol:</span>
-                      <span className="value">{tokenSymbol || "Loading..."}</span>
+                      <span className="value">
+                        {tokenSymbol || "Loading..."}
+                      </span>
                     </div>
                     <div className="info-row">
                       <span className="label">Contract Address:</span>
-                      <span className="value mono" style={{ fontSize: "0.9rem" }}>{existingToken}</span>
+                      <span
+                        className="value mono"
+                        style={{ fontSize: "0.9rem" }}
+                      >
+                        {existingToken}
+                      </span>
                     </div>
                     <div className="info-row">
                       <span className="label">Decimals:</span>
@@ -606,34 +770,62 @@ export function GetXPNTs() {
                     </div>
                     <div className="info-row">
                       <span className="label">Total Supply:</span>
-                      <span className="value">{tokenTotalSupply ? `${tokenTotalSupply} ${tokenSymbol}` : "Loading..."}</span>
+                      <span className="value">
+                        {tokenTotalSupply
+                          ? `${tokenTotalSupply} ${tokenSymbol}`
+                          : "Loading..."}
+                      </span>
                     </div>
                     {tokenCreatedAt && (
                       <div className="info-row">
                         <span className="label">Deployed:</span>
-                        <span className="value">{new Date(tokenCreatedAt).toLocaleString()}</span>
+                        <span className="value">
+                          {new Date(tokenCreatedAt).toLocaleString()}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   {/* Community Binding Status */}
                   {isRegistered && (
-                    <div style={{
-                      padding: "0.75rem",
-                      borderRadius: "8px",
-                      backgroundColor: isTokenBound ? "#d4edda" : "#fff3cd",
-                      border: `2px solid ${isTokenBound ? "#28a745" : "#ffc107"}`,
-                      marginBottom: "1rem"
-                    }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                        <span style={{ fontSize: "1.2rem" }}>{isTokenBound ? "✅" : "⚠️"}</span>
-                        <strong>{isTokenBound ? "Token Bound to Community" : "Token Not Bound"}</strong>
+                    <div
+                      style={{
+                        padding: "0.75rem",
+                        borderRadius: "8px",
+                        backgroundColor: isTokenBound ? "#d4edda" : "#fff3cd",
+                        border: `2px solid ${isTokenBound ? "#28a745" : "#ffc107"}`,
+                        marginBottom: "1rem",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
+                        <span style={{ fontSize: "1.2rem" }}>
+                          {isTokenBound ? "✅" : "⚠️"}
+                        </span>
+                        <strong>
+                          {isTokenBound
+                            ? "Token Bound to Community"
+                            : "Token Not Bound"}
+                        </strong>
                       </div>
                       <div style={{ fontSize: "0.9rem", color: "#666" }}>
                         <div>Community: {communityName}</div>
                         {isTokenBound && communityXPNTsToken && (
-                          <div className="mono" style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>
-                            Bound Address: {communityXPNTsToken.slice(0, 10)}...{communityXPNTsToken.slice(-8)}
+                          <div
+                            className="mono"
+                            style={{
+                              fontSize: "0.85rem",
+                              marginTop: "0.25rem",
+                            }}
+                          >
+                            Bound Address: {communityXPNTsToken.slice(0, 10)}...
+                            {communityXPNTsToken.slice(-8)}
                           </div>
                         )}
                         {!isTokenBound && (
@@ -644,21 +836,30 @@ export function GetXPNTs() {
                               disabled={isUpdatingRegistry}
                               style={{ width: "100%", padding: "0.5rem" }}
                             >
-                              {isUpdatingRegistry ? "Binding..." : "Bind Token to Community"}
+                              {isUpdatingRegistry
+                                ? "Binding..."
+                                : "Bind Token to Community"}
                             </button>
                             {registryUpdateStatus && (
-                              <div style={{
-                                marginTop: "0.5rem",
-                                fontSize: "0.85rem",
-                                color: registryUpdateStatus.includes("成功") ? "#28a745" : "#dc3545"
-                              }}>
+                              <div
+                                style={{
+                                  marginTop: "0.5rem",
+                                  fontSize: "0.85rem",
+                                  color: registryUpdateStatus.includes("成功")
+                                    ? "#28a745"
+                                    : "#dc3545",
+                                }}
+                              >
                                 {registryUpdateStatus}
                                 {registryTxHash && (
                                   <a
                                     href={`https://sepolia.etherscan.io/tx/${registryTxHash}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ display: "block", marginTop: "0.25rem" }}
+                                    style={{
+                                      display: "block",
+                                      marginTop: "0.25rem",
+                                    }}
                                   >
                                     View TX →
                                   </a>
@@ -667,20 +868,180 @@ export function GetXPNTs() {
                             )}
                           </div>
                         )}
+
+                        {/* Mint Section */}
+                        <div
+                          style={{
+                            marginTop: "1.5rem",
+                            padding: "1rem",
+                            border: "2px solid #e0e7ff",
+                            borderRadius: "8px",
+                            backgroundColor: "#f8faff",
+                          }}
+                        >
+                          <h4
+                            style={{
+                              margin: "0 0 1rem 0",
+                              color: "#3730a3",
+                            }}
+                          >
+                            🪙 Mint xPNTs Tokens
+                          </h4>
+
+                          <div
+                            style={{
+                              display: "flex",
+                              flexDirection: "column",
+                              gap: "1rem",
+                            }}
+                          >
+                            <div>
+                              <label
+                                style={{
+                                  display: "block",
+                                  marginBottom: "0.5rem",
+                                  fontWeight: 600,
+                                  color: "#374151",
+                                }}
+                              >
+                                Recipient Address *
+                              </label>
+                              <input
+                                type="text"
+                                value={mintRecipientAddress}
+                                onChange={(e) =>
+                                  setMintRecipientAddress(e.target.value)
+                                }
+                                placeholder="0x..."
+                                disabled={isMinting}
+                                style={{
+                                  width: "100%",
+                                  padding: "0.75rem",
+                                  borderRadius: "8px",
+                                  border: "2px solid #e5e7eb",
+                                  fontSize: "1rem",
+                                  fontFamily: "Monaco, Courier New, monospace",
+                                  backgroundColor: isMinting
+                                    ? "#f9fafb"
+                                    : "#ffffff",
+                                }}
+                              />
+                            </div>
+
+                            <div>
+                              <label
+                                style={{
+                                  display: "block",
+                                  marginBottom: "0.5rem",
+                                  fontWeight: 600,
+                                  color: "#374151",
+                                }}
+                              >
+                                Amount ({tokenSymbol}) *
+                              </label>
+                              <input
+                                type="text"
+                                value={mintAmount}
+                                onChange={(e) => setMintAmount(e.target.value)}
+                                placeholder="100"
+                                disabled={isMinting}
+                                style={{
+                                  width: "100%",
+                                  padding: "0.75rem",
+                                  borderRadius: "8px",
+                                  border: "2px solid #e5e7eb",
+                                  fontSize: "1rem",
+                                  backgroundColor: isMinting
+                                    ? "#f9fafb"
+                                    : "#ffffff",
+                                }}
+                              />
+                            </div>
+
+                            <button
+                              className="action-button primary"
+                              onClick={handleMintTokens}
+                              disabled={
+                                isMinting ||
+                                !mintRecipientAddress ||
+                                !mintAmount ||
+                                !ethers.isAddress(mintRecipientAddress)
+                              }
+                              style={{
+                                width: "100%",
+                                padding: "0.75rem",
+                                borderRadius: "8px",
+                                fontSize: "1rem",
+                                fontWeight: 600,
+                              }}
+                            >
+                              {isMinting
+                                ? "Minting..."
+                                : `Mint ${tokenSymbol} Tokens`}
+                            </button>
+
+                            {mintError && (
+                              <div
+                                style={{
+                                  padding: "0.75rem",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#fee2e2",
+                                  border: "1px solid #fca5a5",
+                                  color: "#991b1b",
+                                  fontSize: "0.9rem",
+                                }}
+                              >
+                                <strong>Error:</strong> {mintError}
+                              </div>
+                            )}
+
+                            {mintTxHash && (
+                              <div
+                                style={{
+                                  padding: "0.75rem",
+                                  borderRadius: "6px",
+                                  backgroundColor: "#d1fae5",
+                                  border: "1px solid #a7f3d0",
+                                  color: "#065f46",
+                                }}
+                              >
+                                <div style={{ marginBottom: "0.5rem" }}>
+                                  <strong>
+                                    ✅ Mint transaction submitted!
+                                  </strong>
+                                </div>
+                                <a
+                                  href={`https://sepolia.etherscan.io/tx/${mintTxHash}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    color: "#065f46",
+                                    textDecoration: "underline",
+                                    fontSize: "0.9rem",
+                                  }}
+                                >
+                                  View on Etherscan →
+                                </a>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {!isRegistered && (
-                    <div style={{
-                      padding: "0.75rem",
-                      borderRadius: "8px",
-                      backgroundColor: "#f8f9fa",
-                      border: "2px solid #dee2e6",
-                      marginBottom: "1rem",
-                      fontSize: "0.9rem",
-                      color: "#666"
-                    }}>
+                    <div
+                      style={{
+                        padding: "0.75rem",
+                        borderRadius: "8px",
+                        backgroundColor: "#f8f9fa",
+                        border: "2px solid #dee2e6",
+                        marginBottom: "1rem",
+                        fontSize: "0.9rem",
+                        color: "#666",
+                      }}
+                    >
                       ℹ️ Register as a community to bind this token
                     </div>
                   )}
@@ -701,12 +1062,27 @@ export function GetXPNTs() {
                 <div className="deploy-form">
                   <h4>Deploy New xPNTs Token</h4>
                   <p className="hint">
-                    Deploy a community points token with auto-approval for SuperPaymaster operations.
+                    Deploy a community points token with auto-approval for
+                    SuperPaymaster operations.
                   </p>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1rem", marginTop: "1rem" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "1rem",
+                      marginTop: "1rem",
+                    }}
+                  >
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
                         Token Name *
                       </label>
                       <input
@@ -725,13 +1101,22 @@ export function GetXPNTs() {
                     </div>
 
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
                         Token Symbol *
                       </label>
                       <input
                         type="text"
                         value={tokenSymbol}
-                        onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+                        onChange={(e) =>
+                          setTokenSymbol(e.target.value.toUpperCase())
+                        }
                         placeholder="e.g., MCP"
                         style={{
                           width: "100%",
@@ -745,8 +1130,20 @@ export function GetXPNTs() {
 
                     {/* Community Name - Read-only if registered */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                        Community Name {isRegistered && <span style={{ color: "#10b981" }}>(从 Registry 自动读取)</span>}
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
+                        Community Name{" "}
+                        {isRegistered && (
+                          <span style={{ color: "#10b981" }}>
+                            (从 Registry 自动读取)
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
@@ -758,7 +1155,9 @@ export function GetXPNTs() {
                           width: "100%",
                           padding: "0.75rem",
                           borderRadius: "8px",
-                          border: isRegistered ? "2px solid #10b981" : "2px solid #e5e7eb",
+                          border: isRegistered
+                            ? "2px solid #10b981"
+                            : "2px solid #e5e7eb",
                           fontSize: "1rem",
                           background: isRegistered ? "#f0fdf4" : "#ffffff",
                           color: isRegistered ? "#065f46" : "#000000",
@@ -766,28 +1165,60 @@ export function GetXPNTs() {
                         }}
                       />
                       {!isRegistered && (
-                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#f59e0b" }}>
-                          💡 建议先到 <a href="/register-community" style={{ color: "#f59e0b", textDecoration: "underline" }}>注册社区页面</a> 注册，可自动填充此字段
+                        <p
+                          style={{
+                            margin: "0.5rem 0 0",
+                            fontSize: "0.85rem",
+                            color: "#f59e0b",
+                          }}
+                        >
+                          💡 建议先到{" "}
+                          <a
+                            href="/register-community"
+                            style={{
+                              color: "#f59e0b",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            注册社区页面
+                          </a>{" "}
+                          注册，可自动填充此字段
                         </p>
                       )}
                     </div>
 
                     {/* Community ENS - Read-only if registered */}
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
-                        Community ENS (可选) {isRegistered && <span style={{ color: "#10b981" }}>(从 Registry 自动读取)</span>}
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
+                        Community ENS (可选){" "}
+                        {isRegistered && (
+                          <span style={{ color: "#10b981" }}>
+                            (从 Registry 自动读取)
+                          </span>
+                        )}
                       </label>
                       <input
                         type="text"
                         value={communityENS}
                         onChange={(e) => setCommunityENS(e.target.value)}
-                        placeholder={isRegistered ? "" : "e.g., mycommunity.aastar.eth"}
+                        placeholder={
+                          isRegistered ? "" : "e.g., mycommunity.aastar.eth"
+                        }
                         disabled={isRegistered}
                         style={{
                           width: "100%",
                           padding: "0.75rem",
                           borderRadius: "8px",
-                          border: isRegistered ? "2px solid #10b981" : "2px solid #e5e7eb",
+                          border: isRegistered
+                            ? "2px solid #10b981"
+                            : "2px solid #e5e7eb",
                           fontSize: "1rem",
                           background: isRegistered ? "#f0fdf4" : "#ffffff",
                           color: isRegistered ? "#065f46" : "#000000",
@@ -795,43 +1226,91 @@ export function GetXPNTs() {
                         }}
                       />
                       {!isRegistered && (
-                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
-                          留空将使用社区名称自动分配（如：{communityName || tokenName}.aastar.eth）
+                        <p
+                          style={{
+                            margin: "0.5rem 0 0",
+                            fontSize: "0.85rem",
+                            color: "#6b7280",
+                          }}
+                        >
+                          留空将使用社区名称自动分配（如：
+                          {communityName || tokenName}.aastar.eth）
                         </p>
                       )}
                     </div>
 
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
                         Paymaster Mode
                       </label>
                       <div style={{ display: "flex", gap: "1rem" }}>
-                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            cursor: "pointer",
+                          }}
+                        >
                           <input
                             type="radio"
                             name="paymasterMode"
                             value="AOA+"
                             checked={paymasterMode === "AOA+"}
-                            onChange={(e) => setPaymasterMode(e.target.value as "AOA+" | "AOA")}
+                            onChange={(e) =>
+                              setPaymasterMode(e.target.value as "AOA+" | "AOA")
+                            }
                           />
                           <span style={{ fontWeight: 500 }}>
-                            AOA+ <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>(共享SuperPaymaster V2)</span>
+                            AOA+{" "}
+                            <span
+                              style={{ color: "#6b7280", fontSize: "0.85rem" }}
+                            >
+                              (共享SuperPaymaster V2)
+                            </span>
                           </span>
                         </label>
-                        <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer" }}>
+                        <label
+                          style={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.5rem",
+                            cursor: "pointer",
+                          }}
+                        >
                           <input
                             type="radio"
                             name="paymasterMode"
                             value="AOA"
                             checked={paymasterMode === "AOA"}
-                            onChange={(e) => setPaymasterMode(e.target.value as "AOA+" | "AOA")}
+                            onChange={(e) =>
+                              setPaymasterMode(e.target.value as "AOA+" | "AOA")
+                            }
                           />
                           <span style={{ fontWeight: 500 }}>
-                            AOA <span style={{ color: "#6b7280", fontSize: "0.85rem" }}>(自有Paymaster)</span>
+                            AOA{" "}
+                            <span
+                              style={{ color: "#6b7280", fontSize: "0.85rem" }}
+                            >
+                              (自有Paymaster)
+                            </span>
                           </span>
                         </label>
                       </div>
-                      <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                      <p
+                        style={{
+                          margin: "0.5rem 0 0",
+                          fontSize: "0.85rem",
+                          color: "#6b7280",
+                        }}
+                      >
                         {paymasterMode === "AOA+"
                           ? "使用共享SuperPaymaster V2，无需部署自己的Paymaster"
                           : "可选：使用自己的PaymasterV4合约，留空使用零地址"}
@@ -840,7 +1319,14 @@ export function GetXPNTs() {
 
                     {paymasterMode === "AOA" && (
                       <div>
-                        <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                        <label
+                          style={{
+                            display: "block",
+                            marginBottom: "0.5rem",
+                            fontWeight: 600,
+                            color: "#374151",
+                          }}
+                        >
                           Paymaster Address (可选)
                         </label>
                         <input
@@ -857,14 +1343,27 @@ export function GetXPNTs() {
                             fontFamily: "Monaco, Courier New, monospace",
                           }}
                         />
-                        <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                        <p
+                          style={{
+                            margin: "0.5rem 0 0",
+                            fontSize: "0.85rem",
+                            color: "#6b7280",
+                          }}
+                        >
                           输入你已部署的PaymasterV4合约地址，留空将使用零地址
                         </p>
                       </div>
                     )}
 
                     <div>
-                      <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 600, color: "#374151" }}>
+                      <label
+                        style={{
+                          display: "block",
+                          marginBottom: "0.5rem",
+                          fontWeight: 600,
+                          color: "#374151",
+                        }}
+                      >
                         Exchange Rate (optional)
                       </label>
                       <input
@@ -880,7 +1379,13 @@ export function GetXPNTs() {
                           fontSize: "1rem",
                         }}
                       />
-                      <p style={{ margin: "0.5rem 0 0", fontSize: "0.85rem", color: "#6b7280" }}>
+                      <p
+                        style={{
+                          margin: "0.5rem 0 0",
+                          fontSize: "0.85rem",
+                          color: "#6b7280",
+                        }}
+                      >
                         1 aPNTs = {exchangeRate || "1"} xPNTs (默认 1:1)
                       </p>
                     </div>
@@ -889,18 +1394,12 @@ export function GetXPNTs() {
                   <button
                     className="action-button primary deploy-button"
                     onClick={handleDeployToken}
-                    disabled={
-                      isDeploying ||
-                      !tokenName ||
-                      !tokenSymbol
-                    }
+                    disabled={isDeploying || !tokenName || !tokenSymbol}
                   >
                     {isDeploying ? "Deploying..." : "Deploy xPNTs Token"}
                   </button>
 
-                  {error && (
-                    <div className="error-message">{error}</div>
-                  )}
+                  {error && <div className="error-message">{error}</div>}
 
                   {deployTxHash && (
                     <div className="tx-success">
@@ -918,31 +1417,61 @@ export function GetXPNTs() {
 
                   {/* Registry Update Status */}
                   {registryUpdateStatus && (
-                    <div style={{
-                      padding: '12px',
-                      marginTop: '12px',
-                      borderRadius: '8px',
-                      background: registryUpdateStatus.includes('成功') ? '#d1fae5' :
-                                 registryUpdateStatus.includes('失败') ? '#fee2e2' :
-                                 registryUpdateStatus === '未注册社区' ? '#fef3c7' : '#e0e7ff',
-                      border: `1px solid ${
-                        registryUpdateStatus.includes('成功') ? '#10b981' :
-                        registryUpdateStatus.includes('失败') ? '#ef4444' :
-                        registryUpdateStatus === '未注册社区' ? '#f59e0b' : '#6366f1'
-                      }`,
-                      color: registryUpdateStatus.includes('成功') ? '#065f46' :
-                             registryUpdateStatus.includes('失败') ? '#7f1d1d' :
-                             registryUpdateStatus === '未注册社区' ? '#78350f' : '#3730a3'
-                    }}>
-                      <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9em' }}>
-                        {registryUpdateStatus.includes('成功') && '✅ '}
-                        {registryUpdateStatus.includes('失败') && '❌ '}
-                        {registryUpdateStatus === '未注册社区' && '⚠️ '}
+                    <div
+                      style={{
+                        padding: "12px",
+                        marginTop: "12px",
+                        borderRadius: "8px",
+                        background: registryUpdateStatus.includes("成功")
+                          ? "#d1fae5"
+                          : registryUpdateStatus.includes("失败")
+                            ? "#fee2e2"
+                            : registryUpdateStatus === "未注册社区"
+                              ? "#fef3c7"
+                              : "#e0e7ff",
+                        border: `1px solid ${
+                          registryUpdateStatus.includes("成功")
+                            ? "#10b981"
+                            : registryUpdateStatus.includes("失败")
+                              ? "#ef4444"
+                              : registryUpdateStatus === "未注册社区"
+                                ? "#f59e0b"
+                                : "#6366f1"
+                        }`,
+                        color: registryUpdateStatus.includes("成功")
+                          ? "#065f46"
+                          : registryUpdateStatus.includes("失败")
+                            ? "#7f1d1d"
+                            : registryUpdateStatus === "未注册社区"
+                              ? "#78350f"
+                              : "#3730a3",
+                      }}
+                    >
+                      <p
+                        style={{
+                          margin: 0,
+                          fontWeight: 600,
+                          fontSize: "0.9em",
+                        }}
+                      >
+                        {registryUpdateStatus.includes("成功") && "✅ "}
+                        {registryUpdateStatus.includes("失败") && "❌ "}
+                        {registryUpdateStatus === "未注册社区" && "⚠️ "}
                         Registry 更新: {registryUpdateStatus}
                       </p>
-                      {registryUpdateStatus === '未注册社区' && (
-                        <p style={{ margin: '8px 0 0', fontSize: '0.85em' }}>
-                          💡 您可以稍后在 <a href="/register-community" style={{ color: '#f59e0b', textDecoration: 'underline' }}>注册社区页面</a> 注册后自动绑定 xPNTs Token
+                      {registryUpdateStatus === "未注册社区" && (
+                        <p style={{ margin: "8px 0 0", fontSize: "0.85em" }}>
+                          💡 您可以稍后在{" "}
+                          <a
+                            href="/register-community"
+                            style={{
+                              color: "#f59e0b",
+                              textDecoration: "underline",
+                            }}
+                          >
+                            注册社区页面
+                          </a>{" "}
+                          注册后自动绑定 xPNTs Token
                         </p>
                       )}
                       {registryTxHash && (
@@ -951,11 +1480,11 @@ export function GetXPNTs() {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            display: 'inline-block',
-                            marginTop: '8px',
-                            color: 'inherit',
-                            textDecoration: 'underline',
-                            fontSize: '0.85em'
+                            display: "inline-block",
+                            marginTop: "8px",
+                            color: "inherit",
+                            textDecoration: "underline",
+                            fontSize: "0.85em",
                           }}
                         >
                           View Registry Update TX →
@@ -978,81 +1507,180 @@ export function GetXPNTs() {
 
           {isLoadingDeployedTokens ? (
             <div style={{ textAlign: "center", padding: "2rem" }}>
-              <div className="spinner" style={{
-                width: "40px",
-                height: "40px",
-                border: "4px solid rgba(59, 130, 246, 0.2)",
-                borderTopColor: "#3b82f6",
-                borderRadius: "50%",
-                animation: "spin 0.8s linear infinite",
-                margin: "0 auto 1rem"
-              }}></div>
+              <div
+                className="spinner"
+                style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "4px solid rgba(59, 130, 246, 0.2)",
+                  borderTopColor: "#3b82f6",
+                  borderRadius: "50%",
+                  animation: "spin 0.8s linear infinite",
+                  margin: "0 auto 1rem",
+                }}
+              ></div>
               <p style={{ color: "#6b7280" }}>Loading deployed tokens...</p>
             </div>
           ) : deployedTokens.length === 0 ? (
-            <div style={{
-              textAlign: "center",
-              padding: "2rem",
-              background: "#f9fafb",
-              borderRadius: "8px",
-              border: "2px solid #e5e7eb"
-            }}>
-              <p style={{ color: "#6b7280", margin: 0 }}>No tokens deployed yet</p>
+            <div
+              style={{
+                textAlign: "center",
+                padding: "2rem",
+                background: "#f9fafb",
+                borderRadius: "8px",
+                border: "2px solid #e5e7eb",
+              }}
+            >
+              <p style={{ color: "#6b7280", margin: 0 }}>
+                No tokens deployed yet
+              </p>
             </div>
           ) : (
             <div style={{ overflowX: "auto" }}>
-              <table style={{
-                width: "100%",
-                borderCollapse: "collapse",
-                background: "white",
-                borderRadius: "8px",
-                overflow: "hidden",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
-              }}>
+              <table
+                style={{
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  background: "white",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+                }}
+              >
                 <thead>
-                  <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Token</th>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Symbol</th>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Address</th>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Total Supply</th>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Owner</th>
-                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Deployed</th>
+                  <tr
+                    style={{
+                      background: "#f9fafb",
+                      borderBottom: "2px solid #e5e7eb",
+                    }}
+                  >
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Token
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Symbol
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Address
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Total Supply
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Owner
+                    </th>
+                    <th
+                      style={{
+                        padding: "0.75rem 1rem",
+                        textAlign: "left",
+                        fontWeight: 600,
+                        color: "#374151",
+                      }}
+                    >
+                      Deployed
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {deployedTokens.map((token, index) => (
-                    <tr key={token.address} style={{
-                      borderBottom: index < deployedTokens.length - 1 ? "1px solid #e5e7eb" : "none",
-                      transition: "background 0.2s"
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
-                    onMouseLeave={(e) => e.currentTarget.style.background = "white"}
+                    <tr
+                      key={token.address}
+                      style={{
+                        borderBottom:
+                          index < deployedTokens.length - 1
+                            ? "1px solid #e5e7eb"
+                            : "none",
+                        transition: "background 0.2s",
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.background = "#f9fafb")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.background = "white")
+                      }
                     >
-                      <td style={{ padding: "0.75rem 1rem", color: "#111827", fontWeight: 500 }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          color: "#111827",
+                          fontWeight: 500,
+                        }}
+                      >
                         {token.name}
                       </td>
                       <td style={{ padding: "0.75rem 1rem" }}>
-                        <span style={{
-                          padding: "0.25rem 0.5rem",
-                          background: "#eff6ff",
-                          color: "#1e40af",
-                          borderRadius: "4px",
-                          fontSize: "0.875rem",
-                          fontWeight: 600
-                        }}>
+                        <span
+                          style={{
+                            padding: "0.25rem 0.5rem",
+                            background: "#eff6ff",
+                            color: "#1e40af",
+                            borderRadius: "4px",
+                            fontSize: "0.875rem",
+                            fontWeight: 600,
+                          }}
+                        >
                           {token.symbol}
                         </span>
                       </td>
                       <td style={{ padding: "0.75rem 1rem" }}>
                         <CopyableAddress address={token.address} />
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", fontFamily: "Monaco, monospace", fontSize: "0.875rem", color: "#374151" }}>
-                        {parseFloat(token.totalSupply).toLocaleString()} {token.symbol}
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontFamily: "Monaco, monospace",
+                          fontSize: "0.875rem",
+                          color: "#374151",
+                        }}
+                      >
+                        {parseFloat(token.totalSupply).toLocaleString()}{" "}
+                        {token.symbol}
                       </td>
                       <td style={{ padding: "0.75rem 1rem" }}>
                         <CopyableAddress address={token.owner} />
                       </td>
-                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#6b7280" }}>
+                      <td
+                        style={{
+                          padding: "0.75rem 1rem",
+                          fontSize: "0.875rem",
+                          color: "#6b7280",
+                        }}
+                      >
                         {token.deployedAt}
                       </td>
                     </tr>
@@ -1068,7 +1696,10 @@ export function GetXPNTs() {
           <a href="/get-sbt" className="action-button outline">
             Bind MySBT Token
           </a>
-          <button className="action-button secondary" onClick={() => navigate(-1)}>
+          <button
+            className="action-button secondary"
+            onClick={() => navigate(-1)}
+          >
             Back to Home
           </button>
         </div>
