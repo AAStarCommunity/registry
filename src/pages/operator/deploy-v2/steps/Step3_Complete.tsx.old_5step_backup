@@ -9,18 +9,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
-import {
-  getCoreContracts,
-  getTokenContracts,
-  getTestTokenContracts,
-  getEntryPoint,
-  getBlockExplorer,
-  SuperPaymasterV2ABI,
-  GTokenABI,
-  GTokenStakingABI,
-  RegistryABI,
-} from "@aastar/shared-config";
-import { getRpcUrl } from "../../../../config/rpc";
+import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
+import { SuperPaymasterV2ABI } from "../../../../config/abis";
 import "./Step3_Complete.css";
 
 export interface Step3Props {
@@ -32,15 +22,8 @@ export interface Step3Props {
 export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-
-  // Get contracts from shared-config
-  const core = getCoreContracts("sepolia");
-  const tokens = getTokenContracts("sepolia");
-  const testTokens = getTestTokenContracts("sepolia");
-  const ENTRY_POINT = getEntryPoint("sepolia");
-  const EXPLORER_URL = getBlockExplorer("sepolia");
-  const mySBTAddress = tokens.mySBT;
-
+  const networkConfig = getCurrentNetworkConfig();
+  const mySBTAddress = networkConfig.contracts.mySBT;
   const [communityAddress, setCommunityAddress] = useState<string>("");
 
   // AOA+ SuperPaymaster registration state
@@ -90,7 +73,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const entryPointAddress = ENTRY_POINT;
+      const entryPointAddress = networkConfig.contracts.entryPointV07;
 
       const entryPointABI = [
         "function balanceOf(address account) external view returns (uint256)",
@@ -123,7 +106,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const superPaymasterAddress = core.superPaymasterV2;
+      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
 
       console.log("📍 [Step3] SuperPaymaster address:", superPaymasterAddress);
 
@@ -269,9 +252,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const superPaymasterAddress = core.superPaymasterV2;
-      const gTokenStakingAddress = core.gTokenStaking;
-      const aPNTsAddress = testTokens.aPNTs;
+      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+      const gTokenStakingAddress = networkConfig.contracts.gTokenStaking;
+      const aPNTsAddress = networkConfig.contracts.aPNTs;
 
       // ABIs
       const superPaymasterABI = [
@@ -291,8 +274,8 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         signer,
       );
       const gToken = new ethers.Contract(
-        core.gToken,
-        GTokenABI,
+        networkConfig.contracts.gToken,
+        erc20ABI,
         signer,
       );
       const gTokenStaking = new ethers.Contract(
@@ -309,49 +292,57 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const xPNTsToken = resources.xPNTsAddress || ethers.ZeroAddress;
       const treasury = communityAddress;
 
-      console.log("=== Starting SuperPaymaster Registration (One-Step) ===");
+      console.log("=== Starting SuperPaymaster Registration ===");
 
-      // Step 1: Approve GT
-      console.log("Step 1: Approving GT for SuperPaymaster...");
+      // Step 0: Stake GT to get stGToken shares (CRITICAL STEP!)
+      console.log("Step 0: Approving GT for staking...");
       const approveGTokenTx = await gToken.approve(
-        superPaymasterAddress,
+        gTokenStakingAddress,
         stakeAmount,
       );
       await approveGTokenTx.wait();
-      console.log("✅ GT approved");
+      console.log("✅ GT approved for staking");
 
-      // Step 2: Approve aPNTs
-      console.log("Step 2: Approving aPNTs for SuperPaymaster...");
-      const approveAPNTsTx = await aPNTs.approve(
-        superPaymasterAddress,
-        initialAPNTs,
-      );
-      await approveAPNTsTx.wait();
-      console.log("✅ aPNTs approved");
-
-      // Step 3: One-step registration with auto-stake
-      console.log("Step 3: Calling registerOperatorWithAutoStake...");
       console.log(
-        `  - GT Stake: ${ethers.formatEther(stakeAmount)} GT`,
+        "Step 0: Staking",
+        ethers.formatEther(stakeAmount),
+        "GT to receive stGToken...",
       );
+      const stakeTx = await gTokenStaking.stake(stakeAmount);
+      await stakeTx.wait();
       console.log(
-        `  - aPNTs Deposit: ${ethers.formatEther(initialAPNTs)} aPNTs`,
+        "✅ Staked",
+        ethers.formatEther(stakeAmount),
+        "GT, received stGToken shares",
       );
-      console.log(`  - Supported SBTs: ${supportedSBTs.length}`);
-      console.log(`  - xPNTs Token: ${xPNTsToken}`);
-      console.log(`  - Treasury: ${treasury}`);
 
-      const registerTx = await superPaymaster.registerOperatorWithAutoStake(
+      // Step 1: Register Operator (will lock stGToken shares internally)
+      console.log("Step 1: Registering operator...");
+      const registerTx = await superPaymaster.registerOperator(
         stakeAmount,
-        initialAPNTs,
         supportedSBTs,
         xPNTsToken,
         treasury,
       );
       await registerTx.wait();
-      console.log("✅ Registration complete! (Auto-staked GT + Deposited aPNTs)");
+      console.log("✅ Operator registered");
 
-      console.log("=== One-Step Registration Complete ===");
+      // Step 2: Approve aPNTs
+      console.log("Step 2: Approving aPNTs...");
+      const approveTx2 = await aPNTs.approve(
+        superPaymasterAddress,
+        initialAPNTs,
+      );
+      await approveTx2.wait();
+      console.log("✅ aPNTs approved");
+
+      // Step 3: Deposit aPNTs
+      console.log("Step 3: Depositing aPNTs...");
+      const depositTx = await superPaymaster.depositAPNTs(initialAPNTs);
+      await depositTx.wait();
+      console.log("✅ aPNTs deposited");
+
+      console.log("=== Registration Complete ===");
 
       // Refresh SuperPaymaster info
       await checkSuperPaymasterRegistration(communityAddress);
@@ -408,7 +399,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const checkRegistryPaymaster = async (address: string) => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const registryAddress = core.registry;
+      const registryAddress = networkConfig.contracts.registry;
 
       // Correct ABI: getCommunityProfile returns a tuple (CommunityProfile struct)
       const registryABI = [
@@ -454,7 +445,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const registryAddress = core.registry;
+      const registryAddress = networkConfig.contracts.registry;
 
       // Get current community profile first (returns a tuple/struct)
       const registryReadABI = [
@@ -475,7 +466,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         paymasterAddress = resources.paymasterAddress || ethers.ZeroAddress;
       } else {
         // AOA+ mode: Use SuperPaymaster contract address
-        paymasterAddress = core.superPaymasterV2;
+        paymasterAddress = networkConfig.contracts.superPaymasterV2;
       }
 
       if (paymasterAddress === ethers.ZeroAddress) {
@@ -986,7 +977,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                       >
                         <a
                           href={getExplorerLink(
-                            core.superPaymasterV2,
+                            networkConfig.contracts.superPaymasterV2,
                           )}
                           target="_blank"
                           rel="noopener noreferrer"

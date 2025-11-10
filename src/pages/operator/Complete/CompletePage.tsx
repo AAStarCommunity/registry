@@ -19,6 +19,7 @@ import {
   PaymasterV4ABI,
   GTokenABI,
 } from "@aastar/shared-config";
+import "./CompletePage.css";
 
 // Community profile interface from Registry
 interface CommunityProfile {
@@ -79,6 +80,14 @@ export function CompletePage() {
         RegistryABI,
         provider,
       );
+
+      // First check if community is registered
+      const isRegistered = await registry.isRegistered(address);
+      if (!isRegistered) {
+        console.log("⚠️ Community not registered in Registry");
+        setCommunityProfile(null);
+        return;
+      }
 
       const profile = await registry.getCommunityProfile(address);
 
