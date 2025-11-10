@@ -2,27 +2,36 @@ import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
-import { getCoreContracts, getTokenContracts, getBlockExplorer } from "@aastar/shared-config";
+import {
+  getCoreContracts,
+  getTokenContracts,
+  getBlockExplorer,
+  RegistryABI,
+  xPNTsFactoryABI,
+  PaymasterFactoryABI,
+  GTokenStakingABI,
+} from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
-import { RegistryV2_1_4ABI, xPNTsFactoryABI, PaymasterFactoryABI, GTokenStakingABI } from "../../config/abis";
 import "./RegisterCommunity.css";
 
 export function RegisterCommunity() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Get addresses directly from shared-config
-  const core = getCoreContracts('sepolia');
-  const tokens = getTokenContracts('sepolia');
-  
-  const REGISTRY_ADDRESS = core.registry; // Registry v2.1.4
+  // Get addresses and ABIs directly from shared-config
+  const core = getCoreContracts("sepolia");
+  const tokens = getTokenContracts("sepolia");
+
+  const REGISTRY_ADDRESS = core.registry;
   const GTOKEN_ADDRESS = core.gToken;
   const GTOKEN_STAKING_ADDRESS = core.gTokenStaking;
   const XPNTS_FACTORY_ADDRESS = tokens.xPNTsFactory;
   const MYSBT_ADDRESS = tokens.mySBT; // MySBT white-label SBT
   const PAYMASTER_FACTORY_ADDRESS = core.paymasterFactory;
   const RPC_URL = getRpcUrl();
-  const EXPLORER_URL = getBlockExplorer('sepolia');
+  const EXPLORER_URL = getBlockExplorer("sepolia");
+
+  // ABIs are now directly imported from shared-config
 
   // Wallet state
   const [account, setAccount] = useState<string>("");
@@ -36,7 +45,8 @@ export function RegisterCommunity() {
   const [hasPaymaster, setHasPaymaster] = useState<boolean | null>(null); // null = not checked yet
   const [mode, setMode] = useState<"AOA" | "SUPER">("AOA");
   const [stakeAmount, setStakeAmount] = useState<string>("30");
-  const [allowPermissionlessMint, setAllowPermissionlessMint] = useState<boolean>(true);
+  const [allowPermissionlessMint, setAllowPermissionlessMint] =
+    useState<boolean>(true);
 
   // Update stake amount when mode changes
   useEffect(() => {
@@ -55,23 +65,25 @@ export function RegisterCommunity() {
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [existingCommunity, setExistingCommunity] = useState<boolean>(false);
   const [copiedAddress, setCopiedAddress] = useState(false);
-  
+
   // Version info state
   const [registryVersion, setRegistryVersion] = useState<string>("");
   const [sharedConfigVersion, setSharedConfigVersion] = useState<string>("");
 
   // Community list state
-  const [communities, setCommunities] = useState<Array<{
-    address: string;
-    name: string;
-    ensName: string;
-    xPNTsToken: string;
-    nodeType: number;
-    paymasterAddress: string;
-    registeredAt: number;
-    isActive: boolean;
-    allowPermissionlessMint: boolean;
-  }>>([]);
+  const [communities, setCommunities] = useState<
+    Array<{
+      address: string;
+      name: string;
+      ensName: string;
+      xPNTsToken: string;
+      nodeType: number;
+      paymasterAddress: string;
+      registeredAt: number;
+      isActive: boolean;
+      allowPermissionlessMint: boolean;
+    }>
+  >([]);
   const [totalCommunities, setTotalCommunities] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [loadingCommunities, setLoadingCommunities] = useState<boolean>(false);
@@ -85,7 +97,7 @@ export function RegisterCommunity() {
         setCopiedAddress(true);
         setTimeout(() => setCopiedAddress(false), 2000); // Reset after 2 seconds
       } catch (err) {
-        console.error('Failed to copy address:', err);
+        console.error("Failed to copy address:", err);
       }
     }
   };
@@ -95,11 +107,26 @@ export function RegisterCommunity() {
     fetchVersionInfo();
   }, []);
 
+  // Get shared-config version - using static version for now
+  const getSharedConfigVersion = async () => {
+    try {
+      // For now, return the known version from package.json
+      // TODO: Consider using a more robust version detection method
+      return "0.3.4";
+    } catch (error) {
+      console.warn(
+        "Could not fetch shared-config version, using default:",
+        error,
+      );
+      return "0.3.4";
+    }
+  };
+
   // Fetch version information
   const fetchVersionInfo = async () => {
     try {
-      // Get shared-config version from package.json
-      const sharedConfigVersion = "@aastar/shared-config@0.3.1"; // From package.json
+      // Get shared-config version dynamically
+      const sharedConfigVersion = `@aastar/shared-config@${await getSharedConfigVersion()}`;
       setSharedConfigVersion(sharedConfigVersion);
 
       // Get Registry version from contract
@@ -107,8 +134,11 @@ export function RegisterCommunity() {
         const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
         const registryContract = new ethers.Contract(
           REGISTRY_ADDRESS,
-          ["function VERSION() view returns (string)", "function VERSION_CODE() view returns (uint256)"],
-          rpcProvider
+          [
+            "function VERSION() view returns (string)",
+            "function VERSION_CODE() view returns (uint256)",
+          ],
+          rpcProvider,
         );
 
         try {
@@ -116,21 +146,29 @@ export function RegisterCommunity() {
           const versionCode = await registryContract.VERSION_CODE();
           setRegistryVersion(`${version} (${versionCode.toString()})`);
         } catch (err) {
-          console.error('Failed to fetch Registry version:', err);
+          console.error("Failed to fetch Registry version:", err);
           setRegistryVersion("Unknown");
         }
       }
 
-      console.log('=== Version Information ===');
-      console.log('Shared Config:', sharedConfigVersion);
-      console.log('Registry:', registryVersion || "Loading...");
-      console.log('Registry Address:', REGISTRY_ADDRESS);
-      console.log('Expected Address:', '0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696');
-      console.log('Address Match:', REGISTRY_ADDRESS === '0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696' ? '✅' : '❌');
-      console.log('Timestamp:', new Date().toISOString());
-      console.log('========================');
+      console.log("=== Version Information ===");
+      console.log("Shared Config:", sharedConfigVersion);
+      console.log("Registry:", registryVersion || "Loading...");
+      console.log("Registry Address:", REGISTRY_ADDRESS);
+      console.log(
+        "Expected Address:",
+        "0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696",
+      );
+      console.log(
+        "Address Match:",
+        REGISTRY_ADDRESS === "0x49245E1f3c2dD99b3884ffeD410d0605Cf4dC696"
+          ? "✅"
+          : "❌",
+      );
+      console.log("Timestamp:", new Date().toISOString());
+      console.log("========================");
     } catch (error) {
-      console.error('Error fetching version info:', error);
+      console.error("Error fetching version info:", error);
       setRegistryVersion("Error");
       setSharedConfigVersion("Error");
     }
@@ -144,19 +182,26 @@ export function RegisterCommunity() {
   // Fetch communities from registry
   const fetchCommunities = async () => {
     if (!window.ethereum) return;
-    
+
     try {
       setLoadingCommunities(true);
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1_4ABI, provider);
-      
+      const registryContract = new ethers.Contract(
+        REGISTRY_ADDRESS,
+        RegistryABI,
+        provider,
+      );
+
       // Get total community count
       const count = await registryContract.getCommunityCount();
       setTotalCommunities(Number(count));
-      
+
       // Fetch first 4 communities
-      const communityAddresses = await registryContract.getCommunities(0, communitiesPerPage);
-      
+      const communityAddresses = await registryContract.getCommunities(
+        0,
+        communitiesPerPage,
+      );
+
       // Fetch detailed community information for each address
       const communityData = await Promise.all(
         communityAddresses.map(async (address: string) => {
@@ -164,35 +209,42 @@ export function RegisterCommunity() {
             const communityInfo = await registryContract.communities(address);
             return {
               address,
-              name: communityInfo.name || 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
-              ensName: communityInfo.ensName || '',
-              xPNTsToken: communityInfo.xPNTsToken || '0x0000000000000000000000000000000000000000',
+              name:
+                communityInfo.name ||
+                "Community " + address.slice(0, 6) + "..." + address.slice(-4),
+              ensName: communityInfo.ensName || "",
+              xPNTsToken:
+                communityInfo.xPNTsToken ||
+                "0x0000000000000000000000000000000000000000",
               nodeType: Number(communityInfo.nodeType),
-              paymasterAddress: communityInfo.paymasterAddress || '0x0000000000000000000000000000000000000000',
+              paymasterAddress:
+                communityInfo.paymasterAddress ||
+                "0x0000000000000000000000000000000000000000",
               registeredAt: Number(communityInfo.registeredAt),
               isActive: communityInfo.isActive,
-              allowPermissionlessMint: communityInfo.allowPermissionlessMint
+              allowPermissionlessMint: communityInfo.allowPermissionlessMint,
             };
           } catch (err) {
             console.error(`Error fetching community ${address}:`, err);
             return {
               address,
-              name: 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
-              ensName: '',
-              xPNTsToken: '0x0000000000000000000000000000000000000000',
+              name:
+                "Community " + address.slice(0, 6) + "..." + address.slice(-4),
+              ensName: "",
+              xPNTsToken: "0x0000000000000000000000000000000000000000",
               nodeType: 0,
-              paymasterAddress: '0x0000000000000000000000000000000000000000',
+              paymasterAddress: "0x0000000000000000000000000000000000000000",
               registeredAt: Date.now() / 1000,
               isActive: true,
-              allowPermissionlessMint: false
+              allowPermissionlessMint: false,
             };
           }
-        })
+        }),
       );
-      
+
       setCommunities(communityData);
     } catch (error) {
-      console.error('Error fetching communities:', error);
+      console.error("Error fetching communities:", error);
     } finally {
       setLoadingCommunities(false);
     }
@@ -201,17 +253,24 @@ export function RegisterCommunity() {
   // Load more communities
   const loadMoreCommunities = async () => {
     if (!window.ethereum) return;
-    
+
     try {
       setLoadingCommunities(true);
       const nextPage = currentPage + 1;
       const offset = nextPage * communitiesPerPage;
-      
+
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const registryContract = new ethers.Contract(REGISTRY_ADDRESS, RegistryV2_1_4ABI, provider);
-      
-      const communityAddresses = await registryContract.getCommunities(offset, communitiesPerPage);
-      
+      const registryContract = new ethers.Contract(
+        REGISTRY_ADDRESS,
+        RegistryABI,
+        provider,
+      );
+
+      const communityAddresses = await registryContract.getCommunities(
+        offset,
+        communitiesPerPage,
+      );
+
       // Fetch detailed community information for each address
       const communityData = await Promise.all(
         communityAddresses.map(async (address: string) => {
@@ -219,36 +278,43 @@ export function RegisterCommunity() {
             const communityInfo = await registryContract.communities(address);
             return {
               address,
-              name: communityInfo.name || 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
-              ensName: communityInfo.ensName || '',
-              xPNTsToken: communityInfo.xPNTsToken || '0x0000000000000000000000000000000000000000',
+              name:
+                communityInfo.name ||
+                "Community " + address.slice(0, 6) + "..." + address.slice(-4),
+              ensName: communityInfo.ensName || "",
+              xPNTsToken:
+                communityInfo.xPNTsToken ||
+                "0x0000000000000000000000000000000000000000",
               nodeType: Number(communityInfo.nodeType),
-              paymasterAddress: communityInfo.paymasterAddress || '0x0000000000000000000000000000000000000000',
+              paymasterAddress:
+                communityInfo.paymasterAddress ||
+                "0x0000000000000000000000000000000000000000",
               registeredAt: Number(communityInfo.registeredAt),
               isActive: communityInfo.isActive,
-              allowPermissionlessMint: communityInfo.allowPermissionlessMint
+              allowPermissionlessMint: communityInfo.allowPermissionlessMint,
             };
           } catch (err) {
             console.error(`Error fetching community ${address}:`, err);
             return {
               address,
-              name: 'Community ' + address.slice(0, 6) + '...' + address.slice(-4),
-              ensName: '',
-              xPNTsToken: '0x0000000000000000000000000000000000000000',
+              name:
+                "Community " + address.slice(0, 6) + "..." + address.slice(-4),
+              ensName: "",
+              xPNTsToken: "0x0000000000000000000000000000000000000000",
               nodeType: 0,
-              paymasterAddress: '0x0000000000000000000000000000000000000000',
+              paymasterAddress: "0x0000000000000000000000000000000000000000",
               registeredAt: Date.now() / 1000,
               isActive: true,
-              allowPermissionlessMint: false
+              allowPermissionlessMint: false,
             };
           }
-        })
+        }),
       );
-      
-      setCommunities(prev => [...prev, ...communityData]);
+
+      setCommunities((prev) => [...prev, ...communityData]);
       setCurrentPage(nextPage);
     } catch (error) {
-      console.error('Error loading more communities:', error);
+      console.error("Error loading more communities:", error);
     } finally {
       setLoadingCommunities(false);
     }
@@ -258,7 +324,7 @@ export function RegisterCommunity() {
   const connectWallet = async () => {
     try {
       if (!window.ethereum) {
-        setError(t('registerCommunity.errors.walletNotConnected'));
+        setError(t("registerCommunity.errors.walletNotConnected"));
         return;
       }
 
@@ -271,8 +337,12 @@ export function RegisterCommunity() {
       await checkPaymasterStatus(accounts[0]);
       await loadGTokenBalance(accounts[0]);
     } catch (err: unknown) {
-      console.error(t('registerCommunity.errors.walletNotConnected'), err);
-      setError(err instanceof Error ? err.message : t('registerCommunity.errors.walletNotConnected'));
+      console.error(t("registerCommunity.errors.walletNotConnected"), err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("registerCommunity.errors.walletNotConnected"),
+      );
     }
   };
 
@@ -282,17 +352,21 @@ export function RegisterCommunity() {
       const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        RegistryV2_1_4ABI,
-        rpcProvider
+        RegistryABI,
+        rpcProvider,
       );
 
       const community = await registry.communities(address);
       if (community.registeredAt !== 0n) {
         setExistingCommunity(true);
-        setError(t('registerCommunity.errors.alreadyRegistered', { name: community.name }));
+        setError(
+          t("registerCommunity.errors.alreadyRegistered", {
+            name: community.name,
+          }),
+        );
       }
     } catch (err) {
-      console.error(t('registerCommunity.console.checking'), err);
+      console.error(t("registerCommunity.console.checking"), err);
     }
   };
 
@@ -303,7 +377,7 @@ export function RegisterCommunity() {
       const factory = new ethers.Contract(
         XPNTS_FACTORY_ADDRESS,
         xPNTsFactoryABI,
-        rpcProvider
+        rpcProvider,
       );
 
       const hasToken = await factory.hasToken(address);
@@ -312,12 +386,12 @@ export function RegisterCommunity() {
       if (hasToken) {
         const tokenAddress = await factory.getTokenAddress(address);
         setXPNTsToken(tokenAddress);
-        console.log('Detected xPNTs token:', tokenAddress);
+        console.log("Detected xPNTs token:", tokenAddress);
       } else {
-        console.log('No xPNTs token detected for this address');
+        console.log("No xPNTs token detected for this address");
       }
     } catch (err) {
-      console.error('Failed to check xPNTs status:', err);
+      console.error("Failed to check xPNTs status:", err);
       setHasXPNTs(false);
     }
   };
@@ -329,7 +403,7 @@ export function RegisterCommunity() {
       const factory = new ethers.Contract(
         PAYMASTER_FACTORY_ADDRESS,
         PaymasterFactoryABI,
-        rpcProvider
+        rpcProvider,
       );
 
       const hasPaymaster = await factory.hasPaymaster(address);
@@ -338,17 +412,15 @@ export function RegisterCommunity() {
       if (hasPaymaster) {
         const paymasterAddr = await factory.getPaymasterByOperator(address);
         setPaymasterAddress(paymasterAddr);
-        console.log('Detected Paymaster:', paymasterAddr);
+        console.log("Detected Paymaster:", paymasterAddr);
       } else {
-        console.log('No Paymaster detected for this address');
+        console.log("No Paymaster detected for this address");
       }
     } catch (err) {
-      console.error('Failed to check Paymaster status:', err);
+      console.error("Failed to check Paymaster status:", err);
       setHasPaymaster(false);
     }
   };
-
-
 
   // Load user's GToken balance
   const loadGTokenBalance = async (address: string) => {
@@ -361,13 +433,13 @@ export function RegisterCommunity() {
       const gToken = new ethers.Contract(
         GTOKEN_ADDRESS,
         ["function balanceOf(address account) external view returns (uint256)"],
-        rpcProvider
+        rpcProvider,
       );
 
       const balance = await gToken.balanceOf(address);
       setGTokenBalance(ethers.formatEther(balance));
     } catch (err) {
-      console.error(t('common.loading'), err);
+      console.error(t("common.loading"), err);
     }
   };
 
@@ -379,18 +451,20 @@ export function RegisterCommunity() {
 
     try {
       if (!window.ethereum) {
-        throw new Error(t('registerCommunity.errors.walletNotConnected'));
+        throw new Error(t("registerCommunity.errors.walletNotConnected"));
       }
 
       if (!communityName) {
-        throw new Error(t('registerCommunity.errors.communityNameRequired'));
+        throw new Error(t("registerCommunity.errors.communityNameRequired"));
       }
 
       // Validate stake amount (minimum 30 for AOA, 50 for SUPER)
       const minStake = mode === "AOA" ? 30 : 50;
       const stakeAmountNum = parseFloat(stakeAmount || "0");
       if (stakeAmountNum < minStake) {
-        throw new Error(t('registerCommunity.form.stakeAmountHint') + `: ${minStake} GToken`);
+        throw new Error(
+          t("registerCommunity.form.stakeAmountHint") + `: ${minStake} GToken`,
+        );
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -401,15 +475,23 @@ export function RegisterCommunity() {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
           ["function balanceOf(address) external view returns (uint256)"],
-          provider
+          provider,
         );
         const userBalance = await gToken.balanceOf(account);
         const userBalanceNum = parseFloat(ethers.formatEther(userBalance));
 
-        console.log(t('registerCommunity.console.currentBalance'), userBalanceNum);
+        console.log(
+          t("registerCommunity.console.currentBalance"),
+          userBalanceNum,
+        );
 
         if (userBalanceNum < stakeAmountNum) {
-          throw new Error(t('registerCommunity.errors.insufficientBalance', { required: stakeAmountNum, current: userBalanceNum.toFixed(2) }));
+          throw new Error(
+            t("registerCommunity.errors.insufficientBalance", {
+              required: stakeAmountNum,
+              current: userBalanceNum.toFixed(2),
+            }),
+          );
         }
       }
 
@@ -435,55 +517,82 @@ export function RegisterCommunity() {
       if (gTokenAmount > 0n && GTOKEN_ADDRESS) {
         const gToken = new ethers.Contract(
           GTOKEN_ADDRESS,
-          ["function approve(address spender, uint256 amount) external returns (bool)", "function allowance(address owner, address spender) external view returns (uint256)", "function balanceOf(address) external view returns (uint256)"],
-          signer
+          [
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function allowance(address owner, address spender) external view returns (uint256)",
+            "function balanceOf(address) external view returns (uint256)",
+          ],
+          signer,
         );
 
         // Check user's GToken wallet balance
         const userGTokenBalance = await gToken.balanceOf(account);
-        console.log('User GToken balance:', ethers.formatEther(userGTokenBalance));
+        console.log(
+          "User GToken balance:",
+          ethers.formatEther(userGTokenBalance),
+        );
 
         if (userGTokenBalance < gTokenAmount) {
-          throw new Error(t('registerCommunity.errors.insufficientBalance', {
-            required: ethers.formatEther(gTokenAmount),
-            current: ethers.formatEther(userGTokenBalance)
-          }));
+          throw new Error(
+            t("registerCommunity.errors.insufficientBalance", {
+              required: ethers.formatEther(gTokenAmount),
+              current: ethers.formatEther(userGTokenBalance),
+            }),
+          );
         }
 
         // Check and approve GToken to Registry for auto-stake
-        const currentAllowance = await gToken.allowance(account, REGISTRY_ADDRESS);
+        const currentAllowance = await gToken.allowance(
+          account,
+          REGISTRY_ADDRESS,
+        );
         if (currentAllowance < gTokenAmount) {
-          console.log('Approving', ethers.formatEther(gTokenAmount), 'GToken to Registry for auto-stake...');
-          const approveTx = await gToken.approve(REGISTRY_ADDRESS, gTokenAmount);
+          console.log(
+            "Approving",
+            ethers.formatEther(gTokenAmount),
+            "GToken to Registry for auto-stake...",
+          );
+          const approveTx = await gToken.approve(
+            REGISTRY_ADDRESS,
+            gTokenAmount,
+          );
           await approveTx.wait();
-          console.log('✅ Approved GToken to Registry');
+          console.log("✅ Approved GToken to Registry");
         } else {
-          console.log('✅ GToken already approved to Registry');
+          console.log("✅ GToken already approved to Registry");
         }
       }
 
       const registry = new ethers.Contract(
         REGISTRY_ADDRESS,
-        RegistryV2_1_4ABI,
-        signer
+        RegistryABI,
+        signer,
       );
 
       // Step 2: Register community with auto-stake (Registry v2.2.1)
       // This combines approve + transfer + stakeFor + lockStake + register in one transaction
-      console.log('Calling registerCommunityWithAutoStake...');
-      const tx = await registry.registerCommunityWithAutoStake(profile, gTokenAmount, {
-        gasLimit: 800000 // Increased gas limit for auto-stake transaction
-      });
+      console.log("Calling registerCommunityWithAutoStake...");
+      const tx = await registry.registerCommunityWithAutoStake(
+        profile,
+        gTokenAmount,
+        {
+          gasLimit: 800000, // Increased gas limit for auto-stake transaction
+        },
+      );
       setRegisterTxHash(tx.hash);
 
       const receipt = await tx.wait();
-      console.log(t('registerCommunity.console.registered'), receipt.hash);
+      console.log(t("registerCommunity.console.registered"), receipt.hash);
 
       // Success - show success UI with links
       setRegistrationSuccess(true);
     } catch (err: unknown) {
-      console.error(t('registerCommunity.errors.registrationFailed'), err);
-      setError(err instanceof Error ? err.message : t('registerCommunity.errors.registrationFailed'));
+      console.error(t("registerCommunity.errors.registrationFailed"), err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("registerCommunity.errors.registrationFailed"),
+      );
     } finally {
       setIsRegistering(false);
     }
@@ -494,17 +603,15 @@ export function RegisterCommunity() {
       <div className="register-community-container">
         <div className="register-community-header">
           <button className="back-button" onClick={() => navigate(-1)}>
-            ← {t('common.back')}
+            ← {t("common.back")}
           </button>
           <div className="header-content">
             <div>
-              <h1>{t('registerCommunity.title')}</h1>
-              <p className="subtitle">
-                {t('registerCommunity.subtitle')}
-              </p>
+              <h1>{t("registerCommunity.title")}</h1>
+              <p className="subtitle">{t("registerCommunity.subtitle")}</p>
             </div>
             <a href="/operator/wizard" className="wizard-link">
-              {t('header.launchPaymaster')}
+              {t("header.launchPaymaster")}
             </a>
           </div>
         </div>
@@ -513,8 +620,8 @@ export function RegisterCommunity() {
         <div className="registry-info-banner">
           <div className="info-icon">ℹ️</div>
           <div className="info-content">
-            <div style={{ marginBottom: '8px' }}>
-              <strong>Registry Contract:</strong>{' '}
+            <div style={{ marginBottom: "8px" }}>
+              <strong>Registry Contract:</strong>{" "}
               <a
                 href={`${EXPLORER_URL}/address/${REGISTRY_ADDRESS}`}
                 target="_blank"
@@ -525,13 +632,22 @@ export function RegisterCommunity() {
               </a>
               <span className="network-badge">Sepolia Testnet</span>
             </div>
-            <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "16px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
               <div>
-                <strong>Registry Version:</strong>{' '}
-                <span className="version-badge">{registryVersion || "Loading..."}</span>
+                <strong>Registry Version:</strong>{" "}
+                <span className="version-badge">
+                  {registryVersion || "Loading..."}
+                </span>
               </div>
               <div>
-                <strong>Shared Config:</strong>{' '}
+                <strong>Shared Config:</strong>{" "}
                 <span className="version-badge">{sharedConfigVersion}</span>
               </div>
             </div>
@@ -539,430 +655,619 @@ export function RegisterCommunity() {
         </div>
 
         <div className="form-container">
-        {!account ? (
-          <div className="connect-section">
-            <button className="connect-btn" onClick={connectWallet}>
-              {t('registerCommunity.connectWallet')}
-            </button>
-          </div>
-        ) : registrationSuccess ? (
-          <div className="success-box">
-            <div className="success-header">
-              <h2>🎉 {t('registerCommunity.success.title')}</h2>
-              <p>{t('registerCommunity.success.message')}</p>
+          {!account ? (
+            <div className="connect-section">
+              <button className="connect-btn" onClick={connectWallet}>
+                {t("registerCommunity.connectWallet")}
+              </button>
+            </div>
+          ) : registrationSuccess ? (
+            <div className="success-box">
+              <div className="success-header">
+                <h2>🎉 {t("registerCommunity.success.title")}</h2>
+                <p>{t("registerCommunity.success.message")}</p>
+                {registerTxHash && (
+                  <p className="tx-hash">
+                    <strong>{t("registerCommunity.success.txHash")}:</strong>{" "}
+                    <a
+                      href={`${EXPLORER_URL}/tx/${registerTxHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {registerTxHash.slice(0, 10)}...{registerTxHash.slice(-8)}
+                    </a>
+                  </p>
+                )}
+              </div>
+
+              <div className="success-actions">
+                <button
+                  className="primary-btn"
+                  onClick={() => navigate(`/explorer/community/${account}`)}
+                >
+                  🔍 {t("registerCommunity.success.viewInExplorer")}
+                </button>
+
+                <button
+                  className="secondary-btn"
+                  onClick={() => navigate("/operator/wizard")}
+                >
+                  ← {t("registerCommunity.success.backToWizard")}
+                </button>
+              </div>
+            </div>
+          ) : existingCommunity ? (
+            <div className="error-box">
+              <p>{error}</p>
+              <button
+                onClick={() => navigate(`/explorer/community/${account}`)}
+              >
+                {t("header.explorer")}
+              </button>
+            </div>
+          ) : (
+            <div className="registration-form">
+              <div className="wallet-info">
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "12px",
+                  }}
+                >
+                  <strong>{t("step1.substep3.walletConnected")}:</strong>
+                  <span
+                    style={{
+                      fontFamily: "monospace",
+                      fontSize: "0.9em",
+                      color: "#666",
+                    }}
+                  >
+                    {account.slice(0, 6)}...{account.slice(-4)}
+                  </span>
+                  <button
+                    onClick={copyAddressToClipboard}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "4px",
+                      borderRadius: "4px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#666",
+                      transition: "all 0.2s ease",
+                    }}
+                    title={copiedAddress ? "Copied!" : "Copy address"}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f0f0f0")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "transparent")
+                    }
+                  >
+                    {copiedAddress ? (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    ) : (
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <rect
+                          x="9"
+                          y="9"
+                          width="13"
+                          height="13"
+                          rx="2"
+                          ry="2"
+                        />
+                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                {GTOKEN_ADDRESS && (
+                  <>
+                    <p>
+                      <strong>GToken Contract:</strong>{" "}
+                      <a
+                        href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#2196f3",
+                          textDecoration: "underline",
+                          fontFamily: "monospace",
+                          fontSize: "0.9em",
+                        }}
+                      >
+                        {GTOKEN_ADDRESS}
+                      </a>
+                    </p>
+                    <p>
+                      <strong>{t("registerCommunity.balance.gtoken")}:</strong>{" "}
+                      {parseFloat(gTokenBalance).toFixed(2)} GToken
+                    </p>
+                  </>
+                )}
+              </div>
+
+              <div className="form-section">
+                <h2>{t("registerCommunity.form.basicInfo")}</h2>
+
+                <div
+                  className="warning-box"
+                  style={{
+                    marginBottom: "16px",
+                    padding: "12px",
+                    background: "#e3f2fd",
+                    border: "1px solid #2196f3",
+                    borderRadius: "4px",
+                  }}
+                >
+                  <strong>ℹ️ Registry v2.1.4</strong>
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    {t("registerCommunity.form.communityName")}{" "}
+                    <span className="required">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder={t(
+                      "registerCommunity.form.communityNamePlaceholder",
+                    )}
+                    value={communityName}
+                    onChange={(e) => setCommunityName(e.target.value)}
+                    maxLength={100}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>ENS</label>
+                  <input
+                    type="text"
+                    placeholder="aastar.eth"
+                    value={ensName}
+                    onChange={(e) => setEnsName(e.target.value)}
+                    maxLength={500}
+                  />
+                  <small
+                    style={{
+                      color: "#6b7280",
+                      fontSize: "0.85em",
+                      marginTop: "4px",
+                      display: "block",
+                    }}
+                  >
+                    {t("registerCommunity.form.ensHint", { communityName })}
+                  </small>
+                </div>
+              </div>
+
+              <div className="form-section">
+                <h2>{t("registerCommunity.form.tokenSection")}</h2>
+
+                <div className="form-group">
+                  <label>xPNTs Token</label>
+                  {hasXPNTs === null ? (
+                    // Checking status
+                    <div
+                      style={{
+                        padding: "12px",
+                        background: "#f3f4f6",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <p style={{ margin: 0, color: "#6b7280" }}>
+                        {t("registerCommunity.form.detectingXPNTs")}
+                      </p>
+                    </div>
+                  ) : hasXPNTs === false ? (
+                    // No xPNTs detected - show link to deploy
+                    <div
+                      className="info-box"
+                      style={{
+                        padding: "16px",
+                        background: "#fef3c7",
+                        border: "1px solid #fbbf24",
+                        borderRadius: "8px",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      <p
+                        style={{
+                          margin: "0 0 12px",
+                          fontWeight: 600,
+                          color: "#92400e",
+                        }}
+                      >
+                        {t("registerCommunity.form.noXPNTsDetected")}
+                      </p>
+                      <p
+                        style={{
+                          margin: "0 0 12px",
+                          fontSize: "0.9em",
+                          color: "#78350f",
+                        }}
+                      >
+                        {t("registerCommunity.form.deployXPNTsBenefit")}
+                      </p>
+                      <Link
+                        to="/get-xpnts"
+                        style={{
+                          display: "inline-block",
+                          padding: "8px 16px",
+                          background: "#f59e0b",
+                          color: "white",
+                          borderRadius: "6px",
+                          textDecoration: "none",
+                          fontWeight: 600,
+                          fontSize: "0.9em",
+                        }}
+                      >
+                        {t("registerCommunity.form.deployXPNTs")}
+                      </Link>
+                      <p
+                        style={{
+                          margin: "12px 0 0",
+                          fontSize: "0.85em",
+                          color: "#78350f",
+                        }}
+                      >
+                        {t("registerCommunity.form.skipDeployXPNTs")}
+                      </p>
+                    </div>
+                  ) : (
+                    // xPNTs detected - show address (read-only)
+                    <>
+                      <input
+                        type="text"
+                        value={xPNTsToken}
+                        disabled
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "4px",
+                          border: "2px solid #10b981",
+                          background: "#f0fdf4",
+                          color: "#065f46",
+                          fontFamily: "Monaco, Courier New, monospace",
+                          fontSize: "0.9em",
+                          cursor: "not-allowed",
+                        }}
+                      />
+                      <small style={{ color: "#10b981", fontWeight: 600 }}>
+                        {t("registerCommunity.form.xpNTsDetected")}
+                      </small>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-section">
+                <h2>{t("registerCommunity.form.paymasterSection")}</h2>
+
+                <div className="form-group">
+                  <label>Paymaster Address</label>
+                  {hasPaymaster === null ? (
+                    // Checking status
+                    <div
+                      style={{
+                        padding: "12px",
+                        background: "#f3f4f6",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      <p style={{ margin: 0, color: "#6b7280" }}>
+                        {t("registerCommunity.form.detectingPaymaster")}
+                      </p>
+                    </div>
+                  ) : hasPaymaster === false ? (
+                    // No Paymaster detected - show link to deploy
+                    <div
+                      className="info-box"
+                      style={{
+                        padding: "16px",
+                        background: "#fef3c7",
+                        border: "1px solid #fbbf24",
+                        borderRadius: "8px",
+                        marginBottom: "8px",
+                      }}
+                    >
+                      <p
+                        style={{
+                          margin: "0 0 12px",
+                          fontWeight: 600,
+                          color: "#92400e",
+                        }}
+                      >
+                        {t("registerCommunity.form.noPaymasterDetected")}
+                      </p>
+                      <p
+                        style={{
+                          margin: "0 0 12px",
+                          fontSize: "0.9em",
+                          color: "#78350f",
+                        }}
+                      >
+                        {t("registerCommunity.form.deployPaymasterBenefit")}
+                      </p>
+                      <Link
+                        to="/operator/wizard"
+                        style={{
+                          display: "inline-block",
+                          padding: "8px 16px",
+                          background: "#f59e0b",
+                          color: "white",
+                          borderRadius: "6px",
+                          textDecoration: "none",
+                          fontWeight: 600,
+                          fontSize: "0.9em",
+                        }}
+                      >
+                        {t("registerCommunity.form.deployPaymaster")}
+                      </Link>
+                      <p
+                        style={{
+                          margin: "12px 0 0",
+                          fontSize: "0.85em",
+                          color: "#78350f",
+                        }}
+                      >
+                        {t("registerCommunity.form.skipDeployPaymaster")}
+                      </p>
+                    </div>
+                  ) : (
+                    // Paymaster detected - show address (read-only)
+                    <>
+                      <input
+                        type="text"
+                        value={paymasterAddress}
+                        disabled
+                        style={{
+                          width: "100%",
+                          padding: "0.75rem",
+                          borderRadius: "4px",
+                          border: "2px solid #10b981",
+                          background: "#f0fdf4",
+                          color: "#065f46",
+                          fontFamily: "Monaco, Courier New, monospace",
+                          fontSize: "0.9em",
+                          cursor: "not-allowed",
+                          marginBottom: "8px",
+                        }}
+                      />
+                      <small style={{ color: "#10b981", fontWeight: 600 }}>
+                        {t("registerCommunity.form.paymasterDetected")}
+                      </small>
+                    </>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Paymaster Type</label>
+                  <div className="radio-group">
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        value="AOA"
+                        checked={mode === "AOA"}
+                        onChange={(e) =>
+                          setMode(e.target.value as "AOA" | "SUPER")
+                        }
+                      />
+                      <span>AOA</span>
+                    </label>
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        value="SUPER"
+                        checked={mode === "SUPER"}
+                        onChange={(e) =>
+                          setMode(e.target.value as "AOA" | "SUPER")
+                        }
+                      />
+                      <span>SUPER (SuperPaymaster V2)</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>
+                    {t("registerCommunity.form.stakeAmount")}
+                    {mode === "AOA" && <span className="required">*</span>}
+                  </label>
+                  <input
+                    type="number"
+                    placeholder={t(
+                      "registerCommunity.form.stakeAmountPlaceholder",
+                    )}
+                    value={stakeAmount}
+                    onChange={(e) => setStakeAmount(e.target.value)}
+                    min={mode === "AOA" ? "30" : "50"}
+                    step="0.01"
+                  />
+                  {mode === "AOA" && (
+                    <small className="required">
+                      {t("registerCommunity.form.stakeAmountHint")}: 30 GToken
+                    </small>
+                  )}
+                  {mode === "SUPER" && (
+                    <small className="helper-text">
+                      {t("registerCommunity.form.stakeAmountHint")}: 50 GToken
+                      (Minimum for AOA+)
+                    </small>
+                  )}
+                </div>
+              </div>
+
+              {/* MySBT Section */}
+              <div className="form-section">
+                <h2>{t("registerCommunity.form.sbtSection")}</h2>
+
+                {/* MySBT White-label SBT (Auto-configured) */}
+                <div className="form-group">
+                  <label>MySBT Address (AAstar White-label SBT)</label>
+                  <input
+                    type="text"
+                    value={MYSBT_ADDRESS}
+                    disabled
+                    style={{
+                      width: "100%",
+                      padding: "0.75rem",
+                      borderRadius: "4px",
+                      border: "2px solid #3b82f6",
+                      background: "#eff6ff",
+                      color: "#1e40af",
+                      fontFamily: "Monaco, Courier New, monospace",
+                      fontSize: "0.9em",
+                      cursor: "not-allowed",
+                      marginBottom: "8px",
+                    }}
+                  />
+                  <small
+                    style={{
+                      color: "#3b82f6",
+                      fontWeight: 600,
+                      display: "block",
+                      marginBottom: "4px",
+                    }}
+                  >
+                    {t("registerCommunity.form.unifiedMySBT")}
+                  </small>
+                  <small style={{ color: "#6b7280", fontSize: "0.85em" }}>
+                    {t("registerCommunity.form.autoConfigSBT")}
+                  </small>
+                </div>
+
+                {/* SBT Configuration */}
+                <div className="form-group">
+                  <label>Permissionless Mint Configuration</label>
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={allowPermissionlessMint}
+                        onChange={(e) =>
+                          setAllowPermissionlessMint(e.target.checked)
+                        }
+                      />
+                      <span>
+                        {t("registerCommunity.form.allowPermissionlessMint")}
+                      </span>
+                    </label>
+                    <small>
+                      {t("registerCommunity.form.allowPermissionlessMintHint")}
+                    </small>
+                    {!allowPermissionlessMint && (
+                      <div
+                        className="warning-box"
+                        style={{
+                          marginTop: "8px",
+                          padding: "12px",
+                          background: "#fff3cd",
+                          border: "1px solid #ffc107",
+                          borderRadius: "4px",
+                        }}
+                      >
+                        {t("registerCommunity.form.permissionlessMintWarning")}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Balance check warning */}
+              {parseFloat(gTokenBalance) <
+                parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50")) && (
+                <div className="error-box" style={{ marginTop: "16px" }}>
+                  <p>
+                    <strong>
+                      {t("registerCommunity.insufficientBalance.title")}
+                    </strong>
+                  </p>
+                  <p>
+                    {t("registerCommunity.insufficientBalance.required")}{" "}
+                    {stakeAmount || (mode === "AOA" ? "30" : "50")} GToken
+                  </p>
+                  <p>
+                    {t("registerCommunity.insufficientBalance.current")}{" "}
+                    {parseFloat(gTokenBalance).toFixed(2)} GToken
+                  </p>
+                  <p style={{ marginTop: "8px" }}>
+                    {t("registerCommunity.insufficientBalance.message")}
+                    <br />
+                    <Link
+                      to="/get-gtoken"
+                      style={{ color: "#2196f3", textDecoration: "underline" }}
+                    >
+                      {t("registerCommunity.insufficientBalance.linkText")}
+                    </Link>
+                  </p>
+                </div>
+              )}
+
+              {error && (
+                <div className="error-box">
+                  <p>{error}</p>
+                </div>
+              )}
+
               {registerTxHash && (
-                <p className="tx-hash">
-                  <strong>{t('registerCommunity.success.txHash')}:</strong>{' '}
+                <div className="success-box">
+                  <p>{t("registerCommunity.success.title")}</p>
                   <a
-                    href={`${EXPLORER_URL}/tx/${registerTxHash}`}
+                    href={`https://sepolia.etherscan.io/tx/${registerTxHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {registerTxHash.slice(0, 10)}...{registerTxHash.slice(-8)}
+                    {t("registerCommunity.success.viewTx")}
                   </a>
-                </p>
+                </div>
               )}
-            </div>
 
-            <div className="success-actions">
-              <button
-                className="primary-btn"
-                onClick={() => navigate(`/explorer/community/${account}`)}
-              >
-                🔍 {t('registerCommunity.success.viewInExplorer')}
-              </button>
-
-              <button
-                className="secondary-btn"
-                onClick={() => navigate('/operator/wizard')}
-              >
-                ← {t('registerCommunity.success.backToWizard')}
-              </button>
-            </div>
-          </div>
-        ) : existingCommunity ? (
-          <div className="error-box">
-            <p>{error}</p>
-            <button onClick={() => navigate(`/explorer/community/${account}`)}>{t('header.explorer')}</button>
-          </div>
-        ) : (
-          <div className="registration-form">
-            <div className="wallet-info">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <strong>{t('step1.substep3.walletConnected')}:</strong>
-                <span style={{ fontFamily: 'monospace', fontSize: '0.9em', color: '#666' }}>
-                  {account.slice(0, 6)}...{account.slice(-4)}
-                </span>
+              <div className="action-buttons">
                 <button
-                  onClick={copyAddressToClipboard}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: '#666',
-                    transition: 'all 0.2s ease'
-                  }}
-                  title={copiedAddress ? "Copied!" : "Copy address"}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  className="register-btn"
+                  onClick={handleRegisterCommunity}
+                  disabled={
+                    isRegistering ||
+                    !communityName ||
+                    parseFloat(gTokenBalance) <
+                      parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50"))
+                  }
                 >
-                  {copiedAddress ? (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M20 6L9 17l-5-5"/>
-                    </svg>
-                  ) : (
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
-                    </svg>
-                  )}
+                  {isRegistering
+                    ? t("registerCommunity.button.registering")
+                    : t("registerCommunity.button.register")}
                 </button>
               </div>
-              {GTOKEN_ADDRESS && (
-                <>
-                  <p>
-                    <strong>GToken Contract:</strong>{' '}
-                    <a
-                      href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: '#2196f3', textDecoration: 'underline', fontFamily: 'monospace', fontSize: '0.9em' }}
-                    >
-                      {GTOKEN_ADDRESS}
-                    </a>
-                  </p>
-                  <p>
-                    <strong>{t('registerCommunity.balance.gtoken')}:</strong> {parseFloat(gTokenBalance).toFixed(2)} GToken
-                  </p>
-                </>
-              )}
             </div>
-
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.basicInfo')}</h2>
-
-              <div className="warning-box" style={{ marginBottom: '16px', padding: '12px', background: '#e3f2fd', border: '1px solid #2196f3', borderRadius: '4px' }}>
-                <strong>ℹ️ Registry v2.1.4</strong>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  {t('registerCommunity.form.communityName')} <span className="required">*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder={t('registerCommunity.form.communityNamePlaceholder')}
-                  value={communityName}
-                  onChange={(e) => setCommunityName(e.target.value)}
-                  maxLength={100}
-                />
-              </div>
-
-              <div className="form-group">
-                <label>ENS</label>
-                <input
-                  type="text"
-                  placeholder="aastar.eth"
-                  value={ensName}
-                  onChange={(e) => setEnsName(e.target.value)}
-                  maxLength={500}
-                />
-                <small style={{ color: '#6b7280', fontSize: '0.85em', marginTop: '4px', display: 'block' }}>
-                  {t('registerCommunity.form.ensHint', { communityName })}
-                </small>
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.tokenSection')}</h2>
-
-              <div className="form-group">
-                <label>xPNTs Token</label>
-                {hasXPNTs === null ? (
-                  // Checking status
-                  <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
-                    <p style={{ margin: 0, color: '#6b7280' }}>{t('registerCommunity.form.detectingXPNTs')}</p>
-                  </div>
-                ) : hasXPNTs === false ? (
-                  // No xPNTs detected - show link to deploy
-                  <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
-                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>{t('registerCommunity.form.noXPNTsDetected')}</p>
-                    <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
-                      {t('registerCommunity.form.deployXPNTsBenefit')}
-                    </p>
-                    <Link
-                      to="/get-xpnts"
-                      style={{
-                        display: 'inline-block',
-                        padding: '8px 16px',
-                        background: '#f59e0b',
-                        color: 'white',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.9em'
-                      }}
-                    >
-                      {t('registerCommunity.form.deployXPNTs')}
-                    </Link>
-                    <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
-                      {t('registerCommunity.form.skipDeployXPNTs')}
-                    </p>
-                  </div>
-                ) : (
-                  // xPNTs detected - show address (read-only)
-                  <>
-                    <input
-                      type="text"
-                      value={xPNTsToken}
-                      disabled
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        borderRadius: '4px',
-                        border: '2px solid #10b981',
-                        background: '#f0fdf4',
-                        color: '#065f46',
-                        fontFamily: 'Monaco, Courier New, monospace',
-                        fontSize: '0.9em',
-                        cursor: 'not-allowed'
-                      }}
-                    />
-                    <small style={{ color: '#10b981', fontWeight: 600 }}>
-                      {t('registerCommunity.form.xpNTsDetected')}
-                    </small>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.paymasterSection')}</h2>
-
-              <div className="form-group">
-                <label>Paymaster Address</label>
-                {hasPaymaster === null ? (
-                  // Checking status
-                  <div style={{ padding: '12px', background: '#f3f4f6', borderRadius: '4px' }}>
-                    <p style={{ margin: 0, color: '#6b7280' }}>{t('registerCommunity.form.detectingPaymaster')}</p>
-                  </div>
-                ) : hasPaymaster === false ? (
-                  // No Paymaster detected - show link to deploy
-                  <div className="info-box" style={{ padding: '16px', background: '#fef3c7', border: '1px solid #fbbf24', borderRadius: '8px', marginBottom: '8px' }}>
-                    <p style={{ margin: '0 0 12px', fontWeight: 600, color: '#92400e' }}>{t('registerCommunity.form.noPaymasterDetected')}</p>
-                    <p style={{ margin: '0 0 12px', fontSize: '0.9em', color: '#78350f' }}>
-                      {t('registerCommunity.form.deployPaymasterBenefit')}
-                    </p>
-                    <Link
-                      to="/operator/wizard"
-                      style={{
-                        display: 'inline-block',
-                        padding: '8px 16px',
-                        background: '#f59e0b',
-                        color: 'white',
-                        borderRadius: '6px',
-                        textDecoration: 'none',
-                        fontWeight: 600,
-                        fontSize: '0.9em'
-                      }}
-                    >
-                      {t('registerCommunity.form.deployPaymaster')}
-                    </Link>
-                    <p style={{ margin: '12px 0 0', fontSize: '0.85em', color: '#78350f' }}>
-                      {t('registerCommunity.form.skipDeployPaymaster')}
-                    </p>
-                  </div>
-                ) : (
-                  // Paymaster detected - show address (read-only)
-                  <>
-                    <input
-                      type="text"
-                      value={paymasterAddress}
-                      disabled
-                      style={{
-                        width: '100%',
-                        padding: '0.75rem',
-                        borderRadius: '4px',
-                        border: '2px solid #10b981',
-                        background: '#f0fdf4',
-                        color: '#065f46',
-                        fontFamily: 'Monaco, Courier New, monospace',
-                        fontSize: '0.9em',
-                        cursor: 'not-allowed',
-                        marginBottom: '8px'
-                      }}
-                    />
-                    <small style={{ color: '#10b981', fontWeight: 600 }}>
-                      {t('registerCommunity.form.paymasterDetected')}
-                    </small>
-                  </>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>Paymaster Type</label>
-                <div className="radio-group">
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      value="AOA"
-                      checked={mode === "AOA"}
-                      onChange={(e) => setMode(e.target.value as "AOA" | "SUPER")}
-                    />
-                    <span>AOA</span>
-                  </label>
-                  <label className="radio-label">
-                    <input
-                      type="radio"
-                      value="SUPER"
-                      checked={mode === "SUPER"}
-                      onChange={(e) => setMode(e.target.value as "AOA" | "SUPER")}
-                    />
-                    <span>SUPER (SuperPaymaster V2)</span>
-                  </label>
-                </div>
-              </div>
-
-
-              <div className="form-group">
-                <label>
-                  {t('registerCommunity.form.stakeAmount')}
-                  {mode === "AOA" && <span className="required">*</span>}
-                </label>
-                <input
-                  type="number"
-                  placeholder={t('registerCommunity.form.stakeAmountPlaceholder')}
-                  value={stakeAmount}
-                  onChange={(e) => setStakeAmount(e.target.value)}
-                  min={mode === "AOA" ? "30" : "50"}
-                  step="0.01"
-                />
-                {mode === "AOA" && (
-                  <small className="required">
-                    {t('registerCommunity.form.stakeAmountHint')}: 30 GToken
-                  </small>
-                )}
-                {mode === "SUPER" && (
-                  <small className="helper-text">
-                    {t('registerCommunity.form.stakeAmountHint')}: 50 GToken (Minimum for AOA+)
-                  </small>
-                )}
-              </div>
-            </div>
-
-            {/* MySBT Section */}
-            <div className="form-section">
-              <h2>{t('registerCommunity.form.sbtSection')}</h2>
-
-              {/* MySBT White-label SBT (Auto-configured) */}
-              <div className="form-group">
-                <label>MySBT Address (AAstar White-label SBT)</label>
-                <input
-                  type="text"
-                  value={MYSBT_ADDRESS}
-                  disabled
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    borderRadius: '4px',
-                    border: '2px solid #3b82f6',
-                    background: '#eff6ff',
-                    color: '#1e40af',
-                    fontFamily: 'Monaco, Courier New, monospace',
-                    fontSize: '0.9em',
-                    cursor: 'not-allowed',
-                    marginBottom: '8px'
-                  }}
-                />
-                <small style={{ color: '#3b82f6', fontWeight: 600, display: 'block', marginBottom: '4px' }}>
-                  {t('registerCommunity.form.unifiedMySBT')}
-                </small>
-                <small style={{ color: '#6b7280', fontSize: '0.85em' }}>
-                  {t('registerCommunity.form.autoConfigSBT')}
-                </small>
-              </div>
-
-              {/* SBT Configuration */}
-              <div className="form-group">
-                <label>Permissionless Mint Configuration</label>
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={allowPermissionlessMint}
-                      onChange={(e) => setAllowPermissionlessMint(e.target.checked)}
-                    />
-                    <span>{t('registerCommunity.form.allowPermissionlessMint')}</span>
-                  </label>
-                  <small>{t('registerCommunity.form.allowPermissionlessMintHint')}</small>
-                  {!allowPermissionlessMint && (
-                    <div className="warning-box" style={{ marginTop: '8px', padding: '12px', background: '#fff3cd', border: '1px solid #ffc107', borderRadius: '4px' }}>
-                      {t('registerCommunity.form.permissionlessMintWarning')}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Balance check warning */}
-            {parseFloat(gTokenBalance) < parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50")) && (
-              <div className="error-box" style={{ marginTop: '16px' }}>
-                <p><strong>{t('registerCommunity.insufficientBalance.title')}</strong></p>
-                <p>{t('registerCommunity.insufficientBalance.required')} {stakeAmount || (mode === "AOA" ? "30" : "50")} GToken</p>
-                <p>{t('registerCommunity.insufficientBalance.current')} {parseFloat(gTokenBalance).toFixed(2)} GToken</p>
-                <p style={{ marginTop: '8px' }}>
-                  {t('registerCommunity.insufficientBalance.message')}
-                  <br />
-                  <Link to="/get-gtoken" style={{ color: '#2196f3', textDecoration: 'underline' }}>
-                    {t('registerCommunity.insufficientBalance.linkText')}
-                  </Link>
-                </p>
-              </div>
-            )}
-
-            {error && (
-              <div className="error-box">
-                <p>{error}</p>
-              </div>
-            )}
-
-            {registerTxHash && (
-              <div className="success-box">
-                <p>{t('registerCommunity.success.title')}</p>
-                <a
-                  href={`https://sepolia.etherscan.io/tx/${registerTxHash}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {t('registerCommunity.success.viewTx')}
-                </a>
-              </div>
-            )}
-
-            <div className="action-buttons">
-              <button
-                className="register-btn"
-                onClick={handleRegisterCommunity}
-                disabled={
-                  isRegistering ||
-                  !communityName ||
-                  parseFloat(gTokenBalance) < parseFloat(stakeAmount || (mode === "AOA" ? "30" : "50"))
-                }
-              >
-                {isRegistering ? t('registerCommunity.button.registering') : t('registerCommunity.button.register')}
-              </button>
-            </div>
-          </div>
-        )}
+          )}
         </div>
 
         {/* Registered Communities Section */}
-        <div className="registered-communities-section" style={{ marginTop: '40px' }}>
+        <div
+          className="registered-communities-section"
+          style={{ marginTop: "40px" }}
+        >
           <div className="section-header">
             <h2>Registered Communities</h2>
             <div className="community-count">
@@ -979,51 +1284,62 @@ export function RegisterCommunity() {
             <>
               <div className="communities-grid">
                 {communities.map((community) => (
-                  <div
-                    key={community.address}
-                    className="community-card"
-                  >
+                  <div key={community.address} className="community-card">
                     <div className="community-header">
                       <h3>{community.name}</h3>
-                      <span className={`status-badge ${community.isActive ? 'active' : 'inactive'}`}>
-                        {community.isActive ? 'Active' : 'Inactive'}
+                      <span
+                        className={`status-badge ${community.isActive ? "active" : "inactive"}`}
+                      >
+                        {community.isActive ? "Active" : "Inactive"}
                       </span>
                     </div>
 
                     <div className="community-info">
                       <div className="info-item">
                         <span className="label">ENS:</span>
-                        <span className="value">{community.ensName || 'N/A'}</span>
+                        <span className="value">
+                          {community.ensName || "N/A"}
+                        </span>
                       </div>
 
                       <div className="info-item">
                         <span className="label">Node Type:</span>
-                        <span className="value">{community.nodeType === 0 ? 'AOA' : 'SUPER'}</span>
+                        <span className="value">
+                          {community.nodeType === 0 ? "AOA" : "SUPER"}
+                        </span>
                       </div>
 
                       <div className="info-item">
                         <span className="label">xPNTs Token:</span>
                         <span className="value mono">
-                          {community.xPNTsToken.slice(0, 6)}...{community.xPNTsToken.slice(-4)}
+                          {community.xPNTsToken.slice(0, 6)}...
+                          {community.xPNTsToken.slice(-4)}
                         </span>
                       </div>
 
                       <div className="info-item">
                         <span className="label">Paymaster:</span>
                         <span className="value mono">
-                          {community.paymasterAddress.slice(0, 6)}...{community.paymasterAddress.slice(-4)}
+                          {community.paymasterAddress.slice(0, 6)}...
+                          {community.paymasterAddress.slice(-4)}
                         </span>
                       </div>
 
                       <div className="info-item">
                         <span className="label">Permissionless Mint:</span>
-                        <span className="value">{community.allowPermissionlessMint ? 'Enabled' : 'Disabled'}</span>
+                        <span className="value">
+                          {community.allowPermissionlessMint
+                            ? "Enabled"
+                            : "Disabled"}
+                        </span>
                       </div>
 
                       <div className="info-item">
                         <span className="label">Registered:</span>
                         <span className="value">
-                          {new Date(community.registeredAt * 1000).toLocaleDateString()}
+                          {new Date(
+                            community.registeredAt * 1000,
+                          ).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
@@ -1047,7 +1363,7 @@ export function RegisterCommunity() {
                     onClick={loadMoreCommunities}
                     disabled={loadingCommunities}
                   >
-                    {loadingCommunities ? 'Loading...' : 'Next →'}
+                    {loadingCommunities ? "Loading..." : "Next →"}
                   </button>
                 </div>
               )}
