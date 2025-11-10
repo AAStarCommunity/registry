@@ -1432,8 +1432,8 @@ const GetGToken: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button primary"
                 >
-                    Go to GToken Faucet →
-                  </a>
+                    Go to GToken Faucet &rarr;
+                </a>
                 ) : (
                   <p className="coming-soon">Faucet coming soon</p>
                 )}
@@ -1454,8 +1454,8 @@ const GetGToken: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button secondary"
                 >
-                    Go to Test DEX →
-                  </a>
+                    Go to Test DEX &rarr;
+                </a>
                 ) : (
                   <p className="coming-soon">DEX coming soon</p>
                 )}
