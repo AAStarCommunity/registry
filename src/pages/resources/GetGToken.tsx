@@ -451,7 +451,7 @@ const GetGToken: React.FC = () => {
 
       // Pre-flight Check 2: Check existing stake
       const stakingContract = new ethers.Contract(
-        config.contracts.gTokenStaking,
+        GTOKEN_STAKING_ADDRESS,
         GTokenStakingABI,
         provider,
       );
@@ -749,7 +749,7 @@ const GetGToken: React.FC = () => {
                     <span
                       style={{
                         color:
-                          currentNetwork?.chainId === config.chainId
+                          currentNetwork?.chainId === CHAIN_ID
                             ? "#10b981"
                             : "#ef4444",
                         fontWeight: "bold",
@@ -761,7 +761,7 @@ const GetGToken: React.FC = () => {
                     </span>
                     {currentNetwork?.chainId !== config.chainId && (
                       <span style={{ color: "#ef4444", marginLeft: "0.5rem" }}>
-                        ⚠️ Expected: {config.chainName} ({config.chainId})
+                        ⚠️ Expected: {network.name} ({CHAIN_ID})
                       </span>
                     )}
                   </p>
@@ -774,13 +774,13 @@ const GetGToken: React.FC = () => {
                   <p>
                     <strong>GToken:</strong>{" "}
                     <span className="mono" style={{ fontSize: "0.75rem" }}>
-                      {config.contracts.gToken}
+                      {GTOKEN_ADDRESS}
                     </span>
                   </p>
                   <p>
                     <strong>GTokenStaking:</strong>{" "}
                     <span className="mono" style={{ fontSize: "0.75rem" }}>
-                      {config.contracts.gTokenStaking}
+                      {GTOKEN_STAKING_ADDRESS}
                     </span>
                   </p>
                 </div>
@@ -834,7 +834,43 @@ const GetGToken: React.FC = () => {
                         flexWrap: "wrap",
                       }}
                     >
-                      {config.resources.ethFaucets.map((faucet, index) => (
+                      <>
+                        <a
+                          href="https://sepoliafaucet.com/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-block",
+                            padding: "0.25rem 0.75rem",
+                            backgroundColor: "#dc2626",
+                            color: "white",
+                            textDecoration: "none",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            fontWeight: "500",
+                          }}
+                        >
+                          🚰 Sepolia Faucet
+                        </a>
+                        <a
+                          href="https://www.infura.io/faucet/sepolia"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: "inline-block",
+                            padding: "0.25rem 0.75rem",
+                            backgroundColor: "#dc2626",
+                            color: "white",
+                            textDecoration: "none",
+                            borderRadius: "4px",
+                            fontSize: "0.8rem",
+                            fontWeight: "500",
+                            marginLeft: "0.5rem",
+                          }}
+                        >
+                          🚰 Infura Faucet
+                        </a>
+                      </>
                         <a
                           key={index}
                           href={faucet}
@@ -1240,7 +1276,7 @@ const GetGToken: React.FC = () => {
                   <div className="tx-success">
                     <p>✅ Staking successful!</p>
                     <a
-                      href={`${config.explorerUrl}/tx/${txHash}`}
+                      href={`${EXPLORER_URL}/tx/${txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="explorer-link"
@@ -1329,14 +1365,14 @@ const GetGToken: React.FC = () => {
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
-              <span className="value">{config.chainName}</span>
+              <span className="value">{network.name}</span>
             </div>
             <div className="info-row">
               <span className="label">Contract Address:</span>
               <span className="value mono">
-                {config.contracts.gToken}
+                {GTOKEN_ADDRESS}
                 <a
-                  href={`${config.explorerUrl}/address/${config.contracts.gToken}`}
+                  href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -1380,7 +1416,7 @@ const GetGToken: React.FC = () => {
                   )}
                 </div>
                 <a
-                  href={`${config.explorerUrl}/address/${contract.address}`}
+                  href={`${EXPLORER_URL}/address/${contract.address}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -1410,13 +1446,12 @@ const GetGToken: React.FC = () => {
                   <li>100 GToken per request</li>
                   <li>No gas fees required</li>
                 </ul>
-                {config.resources.gTokenFaucet ? (
-                  <a
-                    href={config.resources.gTokenFaucet}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="action-button primary"
-                  >
+                <a
+                  href="https://sepoliafaucet.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button primary"
+                >
                     Go to GToken Faucet →
                   </a>
                 ) : (
@@ -1433,13 +1468,12 @@ const GetGToken: React.FC = () => {
                   <li>Practice trading before mainnet</li>
                   <li>Use any acceptable token to swap</li>
                 </ul>
-                {config.resources.superPaymasterDex ? (
-                  <a
-                    href={config.resources.superPaymasterDex}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="action-button secondary"
-                  >
+                <a
+                  href="https://app.uniswap.org/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="action-button secondary"
+                >
                     Go to Test DEX →
                   </a>
                 ) : (
@@ -1481,7 +1515,7 @@ const GetGToken: React.FC = () => {
                   <li>Instant execution</li>
                 </ul>
                 <a
-                  href={config.resources.uniswapGToken}
+                  href="https://app.uniswap.org/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="action-button primary"
@@ -1501,7 +1535,7 @@ const GetGToken: React.FC = () => {
                   <li>Stake GToken rewards</li>
                 </ul>
                 <a
-                  href={config.resources.superPaymasterDex}
+                  href="https://app.uniswap.org/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="action-button secondary"
@@ -1565,7 +1599,7 @@ const GetGToken: React.FC = () => {
                   params: {
                     type: "ERC20",
                     options: {
-                      address: config.contracts.gToken,
+                      address: GTOKEN_ADDRESS,
                       symbol: "GToken",
                       decimals: 18,
                     },
@@ -1586,7 +1620,7 @@ const GetGToken: React.FC = () => {
               <p>Open MetaMask → Assets → Import tokens, then enter:</p>
               <ul>
                 <li>
-                  <strong>Token Address:</strong> {config.contracts.gToken}
+                  <strong>Token Address:</strong> {GTOKEN_ADDRESS}
                 </li>
                 <li>
                   <strong>Token Symbol:</strong> GToken
@@ -1607,7 +1641,7 @@ const GetGToken: React.FC = () => {
             <summary>How much GToken do I need to become an operator?</summary>
             <p>
               The minimum stake requirement is{" "}
-              <strong>{config.requirements.minGTokenStake} GToken</strong>.
+              <strong>30 GToken</strong>.
               However, staking more GToken will increase your reputation score
               and allow you to handle larger transaction volumes.
             </p>
@@ -1684,7 +1718,7 @@ const GetGToken: React.FC = () => {
             ← Back to Deployment
           </button>
           <a
-            href={`${config.explorerUrl}/address/${config.contracts.gToken}`}
+            href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
             target="_blank"
             rel="noopener noreferrer"
             className="action-button outline"
