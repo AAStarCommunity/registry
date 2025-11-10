@@ -59,16 +59,26 @@
 .user-address {
   font-size: 0.95rem;
   margin: 0.5rem 0;
-  opacity: 0.95;
+  opacity: 1;
+  color: #f0f0f0;
+}
+
+.paymaster-address strong,
+.user-address strong {
+  color: #ffffff;
+  font-weight: 600;
 }
 
 .paymaster-address code,
 .user-address code {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
   padding: 0.25rem 0.75rem;
   border-radius: 8px;
   font-family: 'Courier New', monospace;
   font-size: 0.9rem;
+  color: #ffd700;
+  font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
 .owner-badge,

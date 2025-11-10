@@ -1,9 +1,15 @@
 import { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 import { useSearchParams } from 'react-router-dom';
-import { getCurrentNetworkConfig } from '../../config/networkConfig';
+import {
+  getCoreContracts,
+  getBlockExplorer,
+  getEntryPoint,
+  PaymasterV4ABI,
+  GTokenStakingABI,
+  RegistryABI
+} from '@aastar/shared-config';
 import { getProvider } from '../../utils/rpc-provider';
-import { PaymasterV4ABI, ENTRY_POINT_ABI, RegistryV1ABI, GTokenStakingABI } from '../../config/abis';
 import './ManagePaymasterFull.css';
 
 /**
@@ -17,8 +23,15 @@ import './ManagePaymasterFull.css';
  * - Support SBT and GasToken management
  * - Pause/unpause functionality
  *
- * ABIs imported from config/abis.ts
+ * ABIs imported from @aastar/shared-config
  */
+
+// Minimal EntryPoint ABI for balance and deposit operations
+const ENTRY_POINT_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+  "function depositTo(address account) external payable",
+  "function getDepositInfo(address account) external view returns (tuple(uint256 deposit, bool staked, uint112 stake, uint32 unstakeDelaySec, uint48 withdrawTime))"
+];
 
 // PaymasterV4 uses Chainlink for price feeds (no manual gasToUSDRate/pntPriceUSD)
 interface PaymasterConfig {
@@ -54,11 +67,12 @@ export default function ManagePaymasterAOA() {
   const [searchParams] = useSearchParams();
   const paymasterAddress = searchParams.get('address') || '';
 
-  // Get addresses from config
-  const networkConfig = getCurrentNetworkConfig();
-  const ENTRY_POINT_V07 = networkConfig.contracts.entryPointV07;
-  const REGISTRY = networkConfig.contracts.registry;
-  const GTOKEN_STAKING = networkConfig.contracts.gTokenStaking;
+  // Get addresses from shared-config
+  const core = getCoreContracts('sepolia');
+  const ENTRY_POINT_V07 = getEntryPoint('sepolia');
+  const REGISTRY = core.registry;
+  const GTOKEN_STAKING = core.gTokenStaking;
+  const EXPLORER_URL = getBlockExplorer('sepolia');
 
   const [config, setConfig] = useState<PaymasterConfig | null>(null);
   const [entryPointInfo, setEntryPointInfo] = useState<EntryPointInfo | null>(null);
@@ -89,15 +103,9 @@ export default function ManagePaymasterAOA() {
   // EntryPoint deposit state
   const [depositAmount, setDepositAmount] = useState<string>('');
 
-  // Helper: Get read-only provider (Alchemy or BrowserProvider fallback)
+  // Helper: Get read-only provider
   const getReadProvider = () => {
-    const networkConfig = getCurrentNetworkConfig();
-    // Use BrowserProvider for relative URLs (like /api/rpc-proxy)
-    if (networkConfig.rpcUrl.startsWith('/')) {
-      return new ethers.BrowserProvider(window.ethereum);
-    }
-    // Use JsonRpcProvider for full URLs (Alchemy)
-    return new ethers.JsonRpcProvider(networkConfig.rpcUrl);
+    return getProvider();
   };
 
   useEffect(() => {
@@ -240,7 +248,8 @@ export default function ManagePaymasterAOA() {
 
   const handleSaveParam = async (paramName: string) => {
     if (!isOwner) {
-      alert('Only the owner can modify parameters');
+      setError('⚠️ Only the owner can modify parameters');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
@@ -253,45 +262,50 @@ export default function ManagePaymasterAOA() {
       const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
       let tx;
+      let paramLabel = '';
 
       switch (paramName) {
         case 'owner':
           tx = await paymaster.transferOwnership(editValue);
+          paramLabel = 'Owner';
           break;
         case 'treasury':
           tx = await paymaster.setTreasury(editValue);
-          break;
-        case 'gasToUSDRate':
-          tx = await paymaster.setGasToUSDRate(ethers.parseUnits(editValue, 18));
-          break;
-        case 'pntPriceUSD':
-          tx = await paymaster.setPntPriceUSD(ethers.parseUnits(editValue, 18));
+          paramLabel = 'Treasury';
           break;
         case 'serviceFeeRate':
           tx = await paymaster.setServiceFeeRate(editValue);
+          paramLabel = 'Service Fee Rate';
           break;
         case 'maxGasCostCap':
           tx = await paymaster.setMaxGasCostCap(ethers.parseEther(editValue));
+          paramLabel = 'Max Gas Cost Cap';
           break;
         case 'minTokenBalance':
           tx = await paymaster.setMinTokenBalance(ethers.parseEther(editValue));
+          paramLabel = 'Min xPNTs Balance';
           break;
         case 'registry':
           tx = await paymaster.setRegistry(editValue);
+          paramLabel = 'Registry';
           break;
         default:
           throw new Error('Unknown parameter');
       }
 
+      console.log(`📝 Updating ${paramLabel}...`);
       await tx.wait();
+      console.log(`✅ ${paramLabel} updated!`);
 
-      alert('Parameter updated successfully!');
+      setError(`✅ ${paramLabel} updated successfully!\n\nTransaction: ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}`);
+      setTimeout(() => setError(''), 5000);
+
       setEditingParam(null);
       setEditValue('');
       await loadPaymasterData();
     } catch (err: any) {
       console.error('Failed to update parameter:', err);
-      setError(err.message || 'Failed to update parameter');
+      setError(`❌ Update failed: ${err.message || 'Unknown error'}`);
     } finally {
       setTxPending(false);
     }
@@ -299,7 +313,8 @@ export default function ManagePaymasterAOA() {
 
   const handlePauseToggle = async () => {
     if (!isOwner) {
-      alert('Only the owner can pause/unpause');
+      setError('⚠️ Only the owner can pause/unpause');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
@@ -311,14 +326,22 @@ export default function ManagePaymasterAOA() {
       const signer = await provider.getSigner();
       const paymaster = new ethers.Contract(paymasterAddress, PaymasterV4ABI, signer);
 
-      const tx = config?.paused ? await paymaster.unpause() : await paymaster.pause();
-      await tx.wait();
+      const isPaused = config?.paused;
+      const action = isPaused ? 'unpausing' : 'pausing';
+      const actionPast = isPaused ? 'unpaused' : 'paused';
 
-      alert(config?.paused ? 'Paymaster unpaused!' : 'Paymaster paused!');
+      console.log(`⏸️ ${action} paymaster...`);
+      const tx = isPaused ? await paymaster.unpause() : await paymaster.pause();
+      await tx.wait();
+      console.log(`✅ Paymaster ${actionPast}!`);
+
+      setError(`✅ Paymaster ${actionPast} successfully!\n\nTransaction: ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}`);
+      setTimeout(() => setError(''), 5000);
+
       await loadPaymasterData();
     } catch (err: any) {
       console.error('Failed to toggle pause state:', err);
-      setError(err.message || 'Failed to toggle pause state');
+      setError(`❌ Pause toggle failed: ${err.message || 'Unknown error'}`);
     } finally {
       setTxPending(false);
     }
@@ -495,13 +518,18 @@ export default function ManagePaymasterAOA() {
       await tx.wait();
       console.log('✅ Deposit confirmed!');
 
-      alert(`Successfully deposited ${depositAmount} ETH to EntryPoint!`);
+      setError('');
       setDepositAmount('');
       await loadPaymasterData(); // Reload to show updated balance
+
+      // Show success message in UI instead of alert
+      const successMsg = `🎉 Successfully deposited ${depositAmount} ETH to EntryPoint!\n\nTransaction: ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}`;
+      setError(successMsg); // Temporarily use error state for success message
+      setTimeout(() => setError(''), 5000); // Clear after 5 seconds
     } catch (err: any) {
       console.error('Failed to add deposit:', err);
-      setError(err.message || 'Failed to add deposit to EntryPoint');
-      alert(`Failed to deposit: ${err.message || 'Unknown error'}`);
+      const errorMsg = err.message || 'Failed to add deposit to EntryPoint';
+      setError(`❌ Deposit failed: ${errorMsg}`);
     } finally {
       setTxPending(false);
     }
@@ -731,8 +759,8 @@ export default function ManagePaymasterAOA() {
                     placeholder="e.g., 0.1"
                   />
                   <ConfigRow
-                    label="Min Token Balance"
-                    value={`${config.minTokenBalance} tokens`}
+                    label="Min xPNTs Balance"
+                    value={`${config.minTokenBalance} xPNTs`}
                     paramName="minTokenBalance"
                     editingParam={editingParam}
                     editValue={editValue}
