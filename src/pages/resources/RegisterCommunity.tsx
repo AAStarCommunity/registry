@@ -10,6 +10,8 @@ import {
   xPNTsFactoryABI,
   PaymasterFactoryABI,
   GTokenStakingABI,
+  SEPOLIA_V2_VERSIONS,
+  getV2ContractByName,
 } from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
 import "./RegisterCommunity.css";
@@ -110,7 +112,7 @@ export function RegisterCommunity() {
   // Get shared-config version - using static version for now
   const getSharedConfigVersion = async () => {
     try {
-      // For now, return the known version from package.json
+      // For now, return known version from package.json
       // TODO: Consider using a more robust version detection method
       return "0.3.4";
     } catch (error) {
@@ -119,6 +121,20 @@ export function RegisterCommunity() {
         error,
       );
       return "0.3.4";
+    }
+  };
+
+  // Get expected registry version from shared-config
+  const getExpectedRegistryVersion = () => {
+    try {
+      const registryInfo = getV2ContractByName("registry");
+      if (registryInfo) {
+        return `${registryInfo.version} (${registryInfo.versionCode})`;
+      }
+      return "Unknown";
+    } catch (error) {
+      console.warn("Could not get expected registry version:", error);
+      return "Unknown";
     }
   };
 
@@ -134,20 +150,34 @@ export function RegisterCommunity() {
         const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
         const registryContract = new ethers.Contract(
           REGISTRY_ADDRESS,
-          [
-            "function VERSION() view returns (string)",
-            "function VERSION_CODE() view returns (uint256)",
-          ],
+          RegistryABI,
           rpcProvider,
         );
 
         try {
           const version = await registryContract.VERSION();
           const versionCode = await registryContract.VERSION_CODE();
-          setRegistryVersion(`${version} (${versionCode.toString()})`);
+          const actualVersion = `${version} (${versionCode.toString()})`;
+          setRegistryVersion(actualVersion);
+
+          // Log version comparison
+          const expectedVersion = getExpectedRegistryVersion();
+          console.log("Registry Version Check:");
+          console.log("  Expected:", expectedVersion);
+          console.log("  Actual:", actualVersion);
+          console.log(
+            "  Match:",
+            actualVersion === expectedVersion ? "✅" : "❌",
+          );
         } catch (err) {
-          console.error("Failed to fetch Registry version:", err);
-          setRegistryVersion("Unknown");
+          console.error("Failed to fetch Registry version from contract:", err);
+          // Fallback to shared-config version
+          const fallbackVersion = getExpectedRegistryVersion();
+          setRegistryVersion(fallbackVersion);
+          console.log(
+            "Using fallback version from shared-config:",
+            fallbackVersion,
+          );
         }
       }
 
