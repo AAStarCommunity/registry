@@ -11,14 +11,14 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import {
-  getCurrentNetworkConfig,
-  getExplorerLink,
-} from "../../../config/networkConfig";
-import {
+  getCoreContracts,
+  getTokenContracts,
+  getBlockExplorer,
+  getEntryPoint,
   RegistryABI,
-  ENTRY_POINT_ABI,
   PaymasterV4ABI,
-} from "../../../config/abis";
+  GTokenABI,
+} from "@aastar/shared-config";
 
 // Community profile interface from Registry
 interface CommunityProfile {
@@ -37,7 +37,12 @@ interface CommunityProfile {
 
 export function CompletePage() {
   const navigate = useNavigate();
-  const networkConfig = getCurrentNetworkConfig();
+
+  // Get addresses from shared-config
+  const core = getCoreContracts("sepolia");
+  const tokens = getTokenContracts("sepolia");
+  const ENTRY_POINT_V07 = getEntryPoint("sepolia");
+  const EXPLORER_URL = getBlockExplorer("sepolia");
 
   // State for real data
   const [loading, setLoading] = useState(true);
@@ -66,9 +71,8 @@ export function CompletePage() {
   const queryCommunityProfile = async (address: string) => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const registryAddress = networkConfig.contracts.registry;
       const registry = new ethers.Contract(
-        registryAddress,
+        core.registry,
         RegistryABI,
         provider,
       );
@@ -121,11 +125,10 @@ export function CompletePage() {
   const queryEntryPointDeposit = async (paymasterAddress: string) => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const entryPointAddress = networkConfig.contracts.entryPointV07;
 
       const entryPoint = new ethers.Contract(
-        entryPointAddress,
-        ENTRY_POINT_ABI,
+        ENTRY_POINT_V07,
+        ["function balanceOf(address account) external view returns (uint256)"],
         provider,
       );
 
@@ -159,12 +162,8 @@ export function CompletePage() {
   const queryGTokenBalance = async (address: string) => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const gTokenAddress = networkConfig.contracts.gToken;
 
-      const erc20ABI = [
-        "function balanceOf(address) external view returns (uint256)",
-      ];
-      const gToken = new ethers.Contract(gTokenAddress, erc20ABI, provider);
+      const gToken = new ethers.Contract(core.gToken, GTokenABI, provider);
 
       const balance = await gToken.balanceOf(address);
       const balanceGToken = ethers.formatEther(balance);
@@ -309,7 +308,7 @@ export function CompletePage() {
                 {communityProfile.xPNTsToken.slice(0, 10)}...
               </p>
               <a
-                href={getExplorerLink(communityProfile.xPNTsToken)}
+                href={`${EXPLORER_URL}/address/${communityProfile.xPNTsToken}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="explorer-link"
@@ -331,7 +330,7 @@ export function CompletePage() {
                 SBTs: {communityProfile.supportedSBTs.length} supported
               </p>
               <a
-                href={getExplorerLink(communityProfile.paymasterAddress)}
+                href={`${EXPLORER_URL}/address/${communityProfile.paymasterAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="explorer-link"
