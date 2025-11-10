@@ -834,63 +834,43 @@ const GetGToken: React.FC = () => {
                         flexWrap: "wrap",
                       }}
                     >
-                      <>
-                        <a
-                          href="https://sepoliafaucet.com/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: "inline-block",
-                            padding: "0.25rem 0.75rem",
-                            backgroundColor: "#dc2626",
-                            color: "white",
-                            textDecoration: "none",
-                            borderRadius: "4px",
-                            fontSize: "0.8rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          🚰 Sepolia Faucet
-                        </a>
-                        <a
-                          href="https://www.infura.io/faucet/sepolia"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: "inline-block",
-                            padding: "0.25rem 0.75rem",
-                            backgroundColor: "#dc2626",
-                            color: "white",
-                            textDecoration: "none",
-                            borderRadius: "4px",
-                            fontSize: "0.8rem",
-                            fontWeight: "500",
-                            marginLeft: "0.5rem",
-                          }}
-                        >
-                          🚰 Infura Faucet
-                        </a>
-                      </>
-                        <a
-                          key={index}
-                          href={faucet}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            display: "inline-block",
-                            padding: "0.25rem 0.75rem",
-                            backgroundColor: "#dc2626",
-                            color: "white",
-                            textDecoration: "none",
-                            borderRadius: "4px",
-                            fontSize: "0.8rem",
-                            fontWeight: "500",
-                          }}
-                        >
-                          🚰 Faucet {index + 1}
-                        </a>
-                      ))}
+                      <a
+                        href="https://sepoliafaucet.com/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-block",
+                          padding: "0.25rem 0.75rem",
+                          backgroundColor: "#dc2626",
+                          color: "white",
+                          textDecoration: "none",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          fontWeight: "500",
+                        }}
+                      >
+                        🚰 Sepolia Faucet
+                      </a>
+                      <a
+                        href="https://www.infura.io/faucet/sepolia"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          display: "inline-block",
+                          padding: "0.25rem 0.75rem",
+                          backgroundColor: "#dc2626",
+                          color: "white",
+                          textDecoration: "none",
+                          borderRadius: "4px",
+                          fontSize: "0.8rem",
+                          fontWeight: "500",
+                          marginLeft: "0.5rem",
+                        }}
+                      >
+                        🚰 Infura Faucet
+                      </a>
                     </div>
+
                   </div>
                 )}
                 <div className="balance-item">
