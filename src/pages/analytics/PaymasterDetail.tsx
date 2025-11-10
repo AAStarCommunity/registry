@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { useGasAnalytics } from "../../hooks/useGasAnalytics";
 import {
   getEtherscanAddressUrl,
@@ -8,7 +9,7 @@ import {
 } from "../../utils/etherscan";
 import { formatCacheAge } from "../../utils/cache";
 import { getProvider } from "../../utils/rpc-provider";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import { getCoreContracts } from "@aastar/shared-config";
 
 /**
  * Paymaster Detail Page

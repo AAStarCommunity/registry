@@ -8,10 +8,23 @@
  */
 
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
-import { ERC20_ABI, RegistryABI, xPNTsFactoryABI } from "../../../../config/abis";
+import {
+  getCoreContracts,
+  getTokenContracts,
+  getTestTokenContracts,
+  RegistryABI,
+  xPNTsFactoryABI,
+  xPNTsTokenABI,
+} from "@aastar/shared-config";
 import { loadFromCache, saveToCache } from "../../../../utils/cache";
+
+const ERC20_ABI = xPNTsTokenABI;
+
+// Get contract addresses from shared-config
+const core = getCoreContracts("sepolia");
+const tokens = getTokenContracts("sepolia");
+const testTokens = getTestTokenContracts("sepolia");
 
 export interface WalletStatus {
   // Connection status
@@ -181,8 +194,7 @@ async function checkTokenBalance(
 if (typeof window !== 'undefined') {
   (window as any).debugAPNTsBalance = async (address: string) => {
     console.log('=== DEBUG: Direct aPNTs balance query (NO CACHE) ===');
-    const networkConfig = getCurrentNetworkConfig();
-    const aPNTsAddress = networkConfig.contracts.aPNTs;
+    const aPNTsAddress = testTokens.aPNTs;
     console.log('aPNTs contract:', aPNTsAddress);
     console.log('User address:', address);
 
@@ -227,8 +239,7 @@ export async function isContractDeployed(address: string): Promise<boolean> {
 async function checkCommunityRegistration(
   address: string
 ): Promise<{ isRegistered: boolean; communityName?: string }> {
-  const networkConfig = getCurrentNetworkConfig();
-  const registryAddress = networkConfig.contracts.registry;
+  const registryAddress = core.registry;
 
   try {
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
@@ -263,8 +274,7 @@ async function checkXPNTsDeployment(
   address: string
 ): Promise<{ hasToken: boolean; tokenAddress?: string }> {
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const gasTokenFactoryAddress = networkConfig.contracts.xPNTsFactory;
+    const gasTokenFactoryAddress = tokens.xPNTsFactory;
     const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
     const factory = new ethers.Contract(gasTokenFactoryAddress, xPNTsFactoryABI, rpcProvider);
 
@@ -340,7 +350,6 @@ export async function checkWalletStatus(
     });
 
     // Parallel RPC calls with individual caching per resource
-    const networkConfig = getCurrentNetworkConfig();
 
     const [
       communityResult,

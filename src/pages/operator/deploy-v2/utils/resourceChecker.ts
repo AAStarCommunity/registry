@@ -10,18 +10,26 @@
  */
 
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { getRpcUrl } from "../../../../config/rpc";
 import { loadFromCache, saveToCache } from "../../../../utils/cache";
 import {
-  ERC20_ABI,
+  getCoreContracts,
+  getTokenContracts,
+  getTestTokenContracts,
   RegistryABI,
   xPNTsFactoryABI,
   xPNTsTokenABI,
   PaymasterFactoryABI,
   PaymasterV4ABI,
   SuperPaymasterV2ABI,
-} from "../../../../config/abis";
+} from "@aastar/shared-config";
+
+const ERC20_ABI = xPNTsTokenABI;
+
+// Get contract addresses from shared-config
+const core = getCoreContracts("sepolia");
+const tokens = getTokenContracts("sepolia");
+const testTokens = getTestTokenContracts("sepolia");
 
 // Cache configuration
 const CACHE_DURATION = 60 * 60 * 1000; // 60 minutes (matches walletChecker)
@@ -124,8 +132,7 @@ async function checkCommunityRegistration(
   registeredAt?: number;
 }> {
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const registryAddress = networkConfig.contracts.registry;
+    const registryAddress = core.registry;
 
     const registry = new ethers.Contract(registryAddress, RegistryABI, provider);
     const community = await registry.communities(address);
@@ -156,8 +163,7 @@ async function checkXPNTsDeployment(
   exchangeRate?: string;
 }> {
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const factoryAddress = networkConfig.contracts.xPNTsFactory;
+    const factoryAddress = tokens.xPNTsFactory;
 
     const factory = new ethers.Contract(factoryAddress, xPNTsFactoryABI, provider);
 
@@ -195,8 +201,7 @@ async function checkPaymasterDeployment(
   paymasterAddress?: string;
 }> {
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const factoryAddress = networkConfig.contracts.paymasterFactory;
+    const factoryAddress = core.paymasterFactory;
 
     const factory = new ethers.Contract(factoryAddress, PaymasterFactoryABI, provider);
 
@@ -229,8 +234,7 @@ async function checkSuperPaymasterRegistration(
   console.log("🔍 [Step2/resourceChecker] Checking SuperPaymaster registration for:", address);
 
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+    const superPaymasterAddress = core.superPaymasterV2;
 
     console.log("📍 [Step2/resourceChecker] SuperPaymaster address:", superPaymasterAddress);
 
@@ -289,9 +293,8 @@ async function checkSBTBinding(
   supportedSBTs?: string[];
 }> {
   try {
-    const networkConfig = getCurrentNetworkConfig();
-    const globalMySBT = networkConfig.contracts.mySBT;
-    const registryAddress = networkConfig.contracts.registry;
+    const globalMySBT = tokens.mySBT;
+    const registryAddress = core.registry;
 
     console.log("=== MySBT Binding Check ===");
     console.log("Community address:", communityAddress);
@@ -383,7 +386,6 @@ export async function checkAOAResources(
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const networkConfig = getCurrentNetworkConfig();
 
     const addr = walletAddress.toLowerCase();
 
@@ -413,7 +415,7 @@ export async function checkAOAResources(
       ),
       getCachedOrFetch(
         `resource_gtoken_${addr}`,
-        () => checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+        () => checkTokenBalance(provider, core.gToken, walletAddress),
         (result) => parseFloat(result) >= 0 // Always cache balance (even 0)
       ),
       getCachedOrFetch(
@@ -503,7 +505,6 @@ export async function checkAOAPlusResources(
     // Use RPC provider instead of MetaMask to avoid cache issues
     const rpcUrl = getRpcUrl();
     const provider = new ethers.JsonRpcProvider(rpcUrl);
-    const networkConfig = getCurrentNetworkConfig();
 
     const addr = walletAddress.toLowerCase();
 
@@ -541,12 +542,12 @@ export async function checkAOAPlusResources(
       ),
       getCachedOrFetch(
         `resource_gtoken_${addr}`,
-        () => checkTokenBalance(provider, networkConfig.contracts.gToken, walletAddress),
+        () => checkTokenBalance(provider, core.gToken, walletAddress),
         (result) => parseFloat(result) >= 0
       ),
       getCachedOrFetch(
         `resource_apnts_${addr}`,
-        () => checkTokenBalance(provider, networkConfig.contracts.aPNTs, walletAddress),
+        () => checkTokenBalance(provider, testTokens.aPNTs, walletAddress),
         (result) => parseFloat(result) >= 0
       ),
       getCachedOrFetch(

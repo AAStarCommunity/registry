@@ -8,12 +8,16 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ethers } from "ethers";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getProvider } from "../../utils/rpc-provider";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import {
+  getCoreContracts,
+  getChainId,
+  RegistryABI,
+} from "@aastar/shared-config";
 import { getEtherscanAddressUrl } from "../../utils/etherscan";
-import { RegistryABI } from "../../config/abis";
 import { useSafeApp } from "../../hooks/useSafeApp";
 import "./CommunityDetail.css";
 
@@ -138,11 +142,11 @@ export function CommunityDetail() {
 
   const fetchVersionInfo = async () => {
     try {
-      const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
+      const core = getCoreContracts("sepolia");
+      const registryAddress = core.registry;
       setRegistryAddress(registryAddress);
 
-      if (registryAddress && registryAddress !== "0x0") {
+      if (registryAddress && registryAddress !== ethers.ZeroAddress) {
         const provider = getProvider();
         const registryContract = new ethers.Contract(
           registryAddress,
@@ -173,8 +177,8 @@ export function CommunityDetail() {
       setError("");
 
       const provider = getProvider();
-      const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
+      const core = getCoreContracts("sepolia");
+      const registryAddress = core.registry;
 
       const registry = new ethers.Contract(
         registryAddress,
@@ -304,9 +308,9 @@ export function CommunityDetail() {
     if (!community || !address) return;
 
     try {
-      const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
-      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+      const core = getCoreContracts("sepolia");
+      const registryAddress = core.registry;
+      const superPaymasterAddress = core.superPaymasterV2;
       const registryInterface = new ethers.Interface(RegistryABI);
 
       const transactions: BaseTransaction[] = [];
@@ -688,7 +692,7 @@ export function CommunityDetail() {
             >
               {registryAddress}
             </a>
-            <span className="network-badge">{getCurrentNetworkConfig().chainName}</span>
+            <span className="network-badge">Sepolia</span>
           </div>
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap' }}>
             <div>

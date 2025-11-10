@@ -12,14 +12,76 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { ethers } from "ethers";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
-import { SuperPaymasterV2ABI } from "../../config/abis";
+import {
+  getCoreContracts,
+  getTestTokenContracts,
+  getBlockExplorer,
+  SuperPaymasterV2ABI,
+} from "@aastar/shared-config";
+import { getRpcUrl } from "../../config/rpc";
 import "./SuperPaymasterConfig.css";
+
+// Helper component for copyable address with Etherscan link
+const CopyableAddress = ({ address, label }: { address: string; label?: string }) => {
+  const EXPLORER_URL = getBlockExplorer("sepolia");
+
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(address);
+    toast.success("Address copied!", { autoClose: 1500 });
+  };
+
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      {label && <span style={{ fontWeight: 500, color: "#6b7280" }}>{label}:</span>}
+      <code style={{
+        fontFamily: "Monaco, monospace",
+        fontSize: "0.875rem",
+        padding: "0.25rem 0.5rem",
+        background: "#f3f4f6",
+        borderRadius: "4px",
+        color: "#111827",
+      }}>
+        {address.slice(0, 6)}...{address.slice(-4)}
+      </code>
+      <button
+        onClick={copyToClipboard}
+        style={{
+          padding: "0.25rem 0.5rem",
+          background: "transparent",
+          border: "1px solid #d1d5db",
+          borderRadius: "4px",
+          cursor: "pointer",
+          fontSize: "0.875rem",
+        }}
+        title="Copy address"
+      >
+        📋
+      </button>
+      <a
+        href={`${EXPLORER_URL}/address/${address}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          padding: "0.25rem 0.5rem",
+          background: "transparent",
+          border: "1px solid #d1d5db",
+          borderRadius: "4px",
+          textDecoration: "none",
+          fontSize: "0.875rem",
+        }}
+        title="View on Etherscan"
+      >
+        🔗
+      </a>
+    </div>
+  );
+};
 
 export function SuperPaymasterConfig() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const networkConfig = getCurrentNetworkConfig();
+  const core = getCoreContracts("sepolia");
+  const testTokens = getTestTokenContracts("sepolia");
 
   // Wallet state
   const [isConnected, setIsConnected] = useState(false);
@@ -131,11 +193,10 @@ export function SuperPaymasterConfig() {
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
-      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+      const superPaymasterAddress = core.superPaymasterV2;
 
       console.log("📍 [SuperPaymaster] Contract address:", superPaymasterAddress);
 
-      // Use shared-config's SuperPaymasterV2ABI
       const superPaymaster = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, provider);
       const account = await superPaymaster.accounts(addressToCheck);
 
@@ -189,7 +250,7 @@ export function SuperPaymasterConfig() {
 
         // Also load user's wallet aPNTs balance
         try {
-          const aPNTsAddress = networkConfig.contracts.aPNTs;
+          const aPNTsAddress = testTokens.aPNTs;
           const erc20ABI = ["function balanceOf(address) view returns (uint256)"];
           const aPNTsToken = new ethers.Contract(aPNTsAddress, erc20ABI, provider);
           const walletBalance = await aPNTsToken.balanceOf(addressToCheck);
@@ -225,8 +286,8 @@ export function SuperPaymasterConfig() {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
-      const aPNTsAddress = networkConfig.contracts.aPNTs;
+      const superPaymasterAddress = core.superPaymasterV2;
+      const aPNTsAddress = testTokens.aPNTs;
 
       const amount = ethers.parseEther(depositAmount);
 
@@ -363,32 +424,24 @@ export function SuperPaymasterConfig() {
         theme="light"
       />
       <div className="page-header">
-        <button onClick={() => navigate(-1)} className="back-btn">
-          ← Back
-        </button>
-        <h1>SuperPaymaster Configuration</h1>
-        <div className="wallet-info">
-          {userAddress && (
-            <>
-              <span className="wallet-label">Connected:</span>
-              <code className="wallet-address">
-                {userAddress.slice(0, 6)}...{userAddress.slice(-4)}
-              </code>
-            </>
-          )}
-          {operatorFromUrl && (
-            <>
-              <span className="wallet-label" style={{ marginLeft: userAddress ? '1rem' : 0 }}>
-                {userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? 'Operator:' : 'Account:'}
-              </span>
-              <code className="wallet-address" style={{
-                background: userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? '#fef3c7' : '#e0f2fe',
-                color: userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? '#92400e' : '#0c4a6e'
-              }}>
-                {operatorFromUrl.slice(0, 6)}...{operatorFromUrl.slice(-4)}
-              </code>
-            </>
-          )}
+        <div style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <button onClick={() => navigate(-1)} className="back-btn">
+              ← Back
+            </button>
+            <h1 style={{ margin: 0 }}>SuperPaymaster Configuration</h1>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+            {userAddress && (
+              <CopyableAddress address={userAddress} label="Connected" />
+            )}
+            {operatorFromUrl && (
+              <CopyableAddress
+                address={operatorFromUrl}
+                label={userAddress && operatorFromUrl.toLowerCase() !== userAddress.toLowerCase() ? 'Operator' : 'Account'}
+              />
+            )}
+          </div>
         </div>
       </div>
 
@@ -757,25 +810,25 @@ export function SuperPaymasterConfig() {
               <div className="detail-row">
                 <span className="detail-label">SuperPaymaster Contract:</span>
                 <a
-                  href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
+                  href={getExplorerLink(core.superPaymasterV2)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="detail-value link"
                 >
-                  {networkConfig.contracts.superPaymasterV2.slice(0, 10)}...{networkConfig.contracts.superPaymasterV2.slice(-8)}
+                  {core.superPaymasterV2.slice(0, 10)}...{core.superPaymasterV2.slice(-8)}
                 </a>
               </div>
               <div className="detail-row">
                 <span className="detail-label">aPNTs Token Address:</span>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                   <a
-                    href={getExplorerLink(networkConfig.contracts.aPNTs)}
+                    href={getExplorerLink(testTokens.aPNTs)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="detail-value link"
                     style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}
                   >
-                    {networkConfig.contracts.aPNTs}
+                    {testTokens.aPNTs}
                   </a>
                   <span style={{
                     fontSize: '0.75rem',

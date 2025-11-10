@@ -8,7 +8,9 @@ import {
   xPNTsFactoryABI,
   xPNTsTokenABI,
   RegistryABI,
+  getBlockExplorer,
 } from "@aastar/shared-config";
+import { toast } from "react-toastify";
 import "./GetXPNTs.css";
 
 const ERC20_ABI = xPNTsTokenABI;
@@ -51,6 +53,75 @@ export function GetXPNTs() {
   const [isUpdatingRegistry, setIsUpdatingRegistry] = useState(false);
   const [registryUpdateStatus, setRegistryUpdateStatus] = useState<string>("");
   const [registryTxHash, setRegistryTxHash] = useState<string>("");
+
+  // Deployed tokens list state
+  interface DeployedToken {
+    address: string;
+    name: string;
+    symbol: string;
+    totalSupply: string;
+    decimals: number;
+    owner: string;
+    deployedAt: string;
+  }
+  const [deployedTokens, setDeployedTokens] = useState<DeployedToken[]>([]);
+  const [isLoadingDeployedTokens, setIsLoadingDeployedTokens] = useState(false);
+
+  // Helper component for copyable address with Etherscan link
+  const CopyableAddress = ({ address, label }: { address: string; label?: string }) => {
+    const EXPLORER_URL = getBlockExplorer("sepolia");
+
+    const copyToClipboard = () => {
+      navigator.clipboard.writeText(address);
+      toast.success("Address copied!", { autoClose: 1500 });
+    };
+
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        {label && <span style={{ fontWeight: 500, color: "#6b7280" }}>{label}:</span>}
+        <code style={{
+          fontFamily: "Monaco, monospace",
+          fontSize: "0.875rem",
+          padding: "0.25rem 0.5rem",
+          background: "#f3f4f6",
+          borderRadius: "4px",
+          color: "#111827",
+        }}>
+          {address.slice(0, 6)}...{address.slice(-4)}
+        </code>
+        <button
+          onClick={copyToClipboard}
+          style={{
+            padding: "0.25rem 0.5rem",
+            background: "transparent",
+            border: "1px solid #d1d5db",
+            borderRadius: "4px",
+            cursor: "pointer",
+            fontSize: "0.875rem",
+          }}
+          title="Copy address"
+        >
+          📋
+        </button>
+        <a
+          href={`${EXPLORER_URL}/address/${address}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            padding: "0.25rem 0.5rem",
+            background: "transparent",
+            border: "1px solid #d1d5db",
+            borderRadius: "4px",
+            textDecoration: "none",
+            fontSize: "0.875rem",
+          }}
+          title="View on Etherscan"
+        >
+          🔗
+        </a>
+      </div>
+    );
+  };
 
   // Check if user is registered in Registry and load community info
   const checkRegistryInfo = async (address: string) => {
@@ -336,6 +407,72 @@ export function GetXPNTs() {
     }
   };
 
+  // Load all deployed xPNTs tokens from factory
+  const loadDeployedTokens = async () => {
+    setIsLoadingDeployedTokens(true);
+    try {
+      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const factory = new ethers.Contract(
+        XPNTS_FACTORY_ADDRESS,
+        xPNTsFactoryABI,
+        rpcProvider
+      );
+
+      console.log("🔍 Querying TokenCreated events from xPNTsFactory...");
+
+      // Query all TokenCreated events
+      const filter = factory.filters.TokenCreated();
+      const events = await factory.queryFilter(filter, 0, 'latest');
+
+      console.log(`📊 Found ${events.length} TokenCreated events`);
+
+      // Fetch details for each token in parallel
+      const tokenPromises = events.map(async (event) => {
+        try {
+          const owner = event.args?.[0] as string;
+          const tokenAddress = event.args?.[1] as string;
+
+          const tokenContract = new ethers.Contract(tokenAddress, ERC20_ABI, rpcProvider);
+          const block = await rpcProvider.getBlock(event.blockNumber);
+
+          const [name, symbol, decimals, totalSupply] = await Promise.all([
+            tokenContract.name(),
+            tokenContract.symbol(),
+            tokenContract.decimals(),
+            tokenContract.totalSupply(),
+          ]);
+
+          return {
+            address: tokenAddress,
+            name,
+            symbol,
+            totalSupply: ethers.formatUnits(totalSupply, decimals),
+            decimals: Number(decimals),
+            owner,
+            deployedAt: block ? new Date(block.timestamp * 1000).toLocaleString() : "Unknown",
+          };
+        } catch (err) {
+          console.error(`Failed to fetch details for token ${event.args?.[1]}:`, err);
+          return null;
+        }
+      });
+
+      const tokens = (await Promise.all(tokenPromises)).filter(
+        (token): token is DeployedToken => token !== null
+      );
+
+      // Sort by deployment time (newest first)
+      tokens.sort((a, b) => new Date(b.deployedAt).getTime() - new Date(a.deployedAt).getTime());
+
+      console.log(`✅ Loaded ${tokens.length} deployed tokens`);
+      setDeployedTokens(tokens);
+    } catch (err) {
+      console.error("Failed to load deployed tokens:", err);
+    } finally {
+      setIsLoadingDeployedTokens(false);
+    }
+  };
+
   // Auto-connect on mount
   useEffect(() => {
     if (window.ethereum) {
@@ -347,6 +484,9 @@ export function GetXPNTs() {
         }
       });
     }
+
+    // Load deployed tokens list
+    loadDeployedTokens();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -825,6 +965,100 @@ export function GetXPNTs() {
                   )}
                 </div>
               )}
+            </div>
+          )}
+        </div>
+
+        {/* Deployed Tokens List */}
+        <div className="info-section" style={{ marginTop: "3rem" }}>
+          <h2>All Deployed xPNTs Tokens</h2>
+          <p style={{ color: "#6b7280", marginBottom: "1.5rem" }}>
+            All xPNTs tokens deployed through the factory contract
+          </p>
+
+          {isLoadingDeployedTokens ? (
+            <div style={{ textAlign: "center", padding: "2rem" }}>
+              <div className="spinner" style={{
+                width: "40px",
+                height: "40px",
+                border: "4px solid rgba(59, 130, 246, 0.2)",
+                borderTopColor: "#3b82f6",
+                borderRadius: "50%",
+                animation: "spin 0.8s linear infinite",
+                margin: "0 auto 1rem"
+              }}></div>
+              <p style={{ color: "#6b7280" }}>Loading deployed tokens...</p>
+            </div>
+          ) : deployedTokens.length === 0 ? (
+            <div style={{
+              textAlign: "center",
+              padding: "2rem",
+              background: "#f9fafb",
+              borderRadius: "8px",
+              border: "2px solid #e5e7eb"
+            }}>
+              <p style={{ color: "#6b7280", margin: 0 }}>No tokens deployed yet</p>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{
+                width: "100%",
+                borderCollapse: "collapse",
+                background: "white",
+                borderRadius: "8px",
+                overflow: "hidden",
+                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)"
+              }}>
+                <thead>
+                  <tr style={{ background: "#f9fafb", borderBottom: "2px solid #e5e7eb" }}>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Token</th>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Symbol</th>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Address</th>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Total Supply</th>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Owner</th>
+                    <th style={{ padding: "0.75rem 1rem", textAlign: "left", fontWeight: 600, color: "#374151" }}>Deployed</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deployedTokens.map((token, index) => (
+                    <tr key={token.address} style={{
+                      borderBottom: index < deployedTokens.length - 1 ? "1px solid #e5e7eb" : "none",
+                      transition: "background 0.2s"
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.background = "#f9fafb"}
+                    onMouseLeave={(e) => e.currentTarget.style.background = "white"}
+                    >
+                      <td style={{ padding: "0.75rem 1rem", color: "#111827", fontWeight: 500 }}>
+                        {token.name}
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem" }}>
+                        <span style={{
+                          padding: "0.25rem 0.5rem",
+                          background: "#eff6ff",
+                          color: "#1e40af",
+                          borderRadius: "4px",
+                          fontSize: "0.875rem",
+                          fontWeight: 600
+                        }}>
+                          {token.symbol}
+                        </span>
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem" }}>
+                        <CopyableAddress address={token.address} />
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem", fontFamily: "Monaco, monospace", fontSize: "0.875rem", color: "#374151" }}>
+                        {parseFloat(token.totalSupply).toLocaleString()} {token.symbol}
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem" }}>
+                        <CopyableAddress address={token.owner} />
+                      </td>
+                      <td style={{ padding: "0.75rem 1rem", fontSize: "0.875rem", color: "#6b7280" }}>
+                        {token.deployedAt}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

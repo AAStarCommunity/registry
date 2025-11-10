@@ -1,7 +1,10 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../config/networkConfig";
+import {
+  getCoreContracts,
+  getTokenContracts,
+} from "@aastar/shared-config";
 import { getProvider } from "../utils/rpc-provider";
 import { loadFromCache, saveToCache, formatCacheAge } from "../utils/cache";
 import { RegistryABI, MySBTABI } from "../config/abis";
@@ -92,8 +95,8 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
     try {
       const provider = getProvider();
-      const networkConfig = getCurrentNetworkConfig();
-      const registryAddress = networkConfig.contracts.registry;
+      const core = getCoreContracts("sepolia");
+      const registryAddress = core.registry;
 
       console.log("=== Registry Explorer ===");
       console.log("Registry address:", registryAddress);
@@ -233,8 +236,8 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
     try {
       const provider = getProvider();
-      const networkConfig = getCurrentNetworkConfig();
-      const mySBTAddress = networkConfig.contracts.mySBT;
+      const tokens = getTokenContracts("sepolia");
+      const mySBTAddress = tokens.mySBT;
 
       console.log("🎫 Loading MySBT holders from:", mySBTAddress);
 
@@ -298,8 +301,8 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
 
   // Get paymasters from communities
   const getPaymasters = () => {
-    const networkConfig = getCurrentNetworkConfig();
-    const superPaymasterAddress = networkConfig.contracts.superPaymasterV2;
+    const core = getCoreContracts("sepolia");
+    const superPaymasterAddress = core.superPaymasterV2;
 
     return getFilteredData()
       .filter((c) => {
@@ -631,7 +634,7 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
         }
 
         const paginatedHolders = getPaginatedHolders();
-        const networkConfig = getCurrentNetworkConfig();
+        const tokens = getTokenContracts("sepolia");
 
         return (
           <div className="members-section">
@@ -643,7 +646,7 @@ export function RegistryExplorer({ initialTab = "communities" }: RegistryExplore
               <div className="card-body">
                 <div className="info-row">
                   <span className="label">Contract Address:</span>
-                  <code className="value">{networkConfig.contracts.mySBT}</code>
+                  <code className="value">{tokens.mySBT}</code>
                 </div>
                 <div className="info-row">
                   <span className="label">Total Members:</span>

@@ -2,9 +2,15 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import {
+  getCoreContracts,
+  getTokenContracts,
+  MySBTABI,
+  RegistryABI,
+  GTokenABI,
+  GTokenStakingABI,
+} from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
-import { MySBTABI, RegistryABI, GTokenABI, GTokenStakingABI } from "../../config/abis";
 import "./GetSBT.css";
 
 export function GetSBT() {
@@ -13,12 +19,13 @@ export function GetSBT() {
   const { t } = useTranslation();
   const returnUrl = searchParams.get("returnUrl");
 
-  // Get addresses from config
-  const networkConfig = getCurrentNetworkConfig();
-  const MYSBT_ADDRESS = networkConfig.contracts.mySBT;
-  const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
-  const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
-  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
+  // Get addresses from shared-config
+  const core = getCoreContracts("sepolia");
+  const tokens = getTokenContracts("sepolia");
+  const MYSBT_ADDRESS = tokens.mySBT;
+  const GTOKEN_ADDRESS = core.gToken;
+  const GTOKEN_STAKING_ADDRESS = core.gTokenStaking;
+  const REGISTRY_ADDRESS = core.registry;
   const RPC_URL = getRpcUrl();
 
   // Constants

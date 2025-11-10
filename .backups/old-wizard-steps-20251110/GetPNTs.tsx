@@ -6,13 +6,21 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
+import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import {
+  getTestTokenContracts,
+  getChainId,
+  getBlockExplorer,
+} from "@aastar/shared-config";
 import "./GetPNTs.css";
 
 const GetPNTs: React.FC = () => {
   const navigate = useNavigate();
-  const config = getCurrentNetworkConfig();
-  const isTest = isTestnet();
+  const config = getCurrentNetworkConfig(); // Keep for resources/requirements config
+  const testTokens = getTestTokenContracts("sepolia");
+  const chainId = getChainId("sepolia");
+  const explorerUrl = getBlockExplorer("sepolia");
+  const isTest = chainId !== 1;
 
   // Legacy PNT token address (deprecated, use GetXPNTs for new deployments)
   const LEGACY_PNT_TOKEN = "0xD14E87d8D8B69016Fcc08728c33799bD3F66F180";
@@ -71,14 +79,14 @@ const GetPNTs: React.FC = () => {
             </div>
             <div className="info-row">
               <span className="label">Network:</span>
-              <span className="value">{config.chainName}</span>
+              <span className="value">Sepolia Testnet</span>
             </div>
             <div className="info-row">
               <span className="label">Contract Address:</span>
               <span className="value mono">
-                {config.contracts.aPNTs}
+                {testTokens.aPNTs}
                 <a
-                  href={`${config.explorerUrl}/address/${config.contracts.aPNTs}`}
+                  href={`${explorerUrl}/address/${testTokens.aPNTs}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="explorer-link"
@@ -90,7 +98,7 @@ const GetPNTs: React.FC = () => {
             <div className="info-row">
               <span className="label">Minimum Deposit:</span>
               <span className="value highlight">
-                {config.requirements.minPntDeposit} aPNTs
+                1000 aPNTs
               </span>
             </div>
           </div>
@@ -244,7 +252,7 @@ const GetPNTs: React.FC = () => {
                   params: {
                     type: "ERC20",
                     options: {
-                      address: config.contracts.aPNTs,
+                      address: testTokens.aPNTs,
                       symbol: "aPNTs",
                       decimals: 18,
                     },

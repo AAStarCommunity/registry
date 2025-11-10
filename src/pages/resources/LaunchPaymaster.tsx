@@ -8,33 +8,36 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
-import { getRpcUrl } from "../../config/rpc";
 import {
+  getCoreContracts,
+  getTokenContracts,
+  getTestTokenContracts,
+  getPaymasterV4_1,
+  getEntryPoint,
+  getBlockExplorer,
   PaymasterFactoryABI,
   RegistryABI,
   xPNTsFactoryABI,
   xPNTsTokenABI,
   MySBTABI,
-} from "../../config/abis";
+} from "@aastar/shared-config";
+import { getRpcUrl } from "../../config/rpc";
 import "./LaunchPaymaster.css";
 
-// Get contract addresses from config
-const networkConfig = getCurrentNetworkConfig();
-const PAYMASTER_FACTORY_ADDRESS = networkConfig.contracts.paymasterFactory;
-// PaymasterV4 is the implementation used by factory (EIP-1167 minimal proxy)
-const PAYMASTER_V4_1I_IMPLEMENTATION = networkConfig.contracts.paymasterV4;
-const ENTRY_POINT_ADDRESS = networkConfig.contracts.entryPointV07;
-const REGISTRY_ADDRESS = networkConfig.contracts.registry;
-const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
+// Get contract addresses from shared-config
+const core = getCoreContracts("sepolia");
+const tokens = getTokenContracts("sepolia");
+const testTokens = getTestTokenContracts("sepolia");
+const PAYMASTER_FACTORY_ADDRESS = core.paymasterFactory;
+const PAYMASTER_V4_1I_IMPLEMENTATION = getPaymasterV4_1("sepolia");
+const ENTRY_POINT_ADDRESS = getEntryPoint("sepolia");
+const REGISTRY_ADDRESS = core.registry;
+const XPNTS_FACTORY_ADDRESS = tokens.xPNTsFactory;
 const ETH_USD_PRICE_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306"; // Chainlink Sepolia ETH/USD
 
 // Helper function to get explorer link
 const getExplorerLink = (address: string, type: 'address' | 'tx' = 'address'): string => {
-  const network = getCurrentNetworkConfig();
-  const baseUrl = network.chainId === 11155111
-    ? "https://sepolia.etherscan.io"
-    : "https://etherscan.io";
+  const baseUrl = getBlockExplorer("sepolia");
   return `${baseUrl}/${type}/${address}`;
 };
 
@@ -179,7 +182,7 @@ export function LaunchPaymaster() {
 
         // Check for SBT
         try {
-          const mySBTFactory = networkConfig.contracts.mySBT;
+          const mySBTFactory = tokens.mySBT;
           if (mySBTFactory && mySBTFactory !== ethers.ZeroAddress) {
             const sbtFactory = new ethers.Contract(mySBTFactory, MySBTABI, provider);
             if (typeof sbtFactory.hasSBT === 'function') {
@@ -282,7 +285,7 @@ export function LaunchPaymaster() {
 
         // Check for SBT (optional - may not be available for all communities)
         try {
-          const mySBTFactory = networkConfig.contracts.mySBT;
+          const mySBTFactory = tokens.mySBT;
           if (mySBTFactory && mySBTFactory !== ethers.ZeroAddress) {
             const sbtFactory = new ethers.Contract(
               mySBTFactory,

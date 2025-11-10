@@ -12,12 +12,10 @@ import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { CommunityDetail } from "./pages/explorer/CommunityDetail";
 import { DeployWizard } from "./pages/operator/DeployWizard";
-import { DeployWizardNew } from "./pages/operator/DeployWizardNew";
 import { CompletePage } from "./pages/operator/Complete/CompletePage";
 import ManagePaymaster from "./pages/operator/ManagePaymaster";
 import { SuperPaymasterConfig } from "./pages/operator/SuperPaymasterConfig";
 import GetGToken from "./pages/resources/GetGToken";
-import GetPNTs from "./pages/resources/GetPNTs";
 import { GetSBT } from "./pages/resources/GetSBT"; // Bind MySBT page
 import { MySBT } from "./pages/resources/MySBT";
 import { GetXPNTs } from "./pages/resources/GetXPNTs";
@@ -45,7 +43,6 @@ function App() {
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/operator/wizard" element={<DeployWizard />} />
-            <Route path="/operator/wizard-new" element={<DeployWizardNew />} />
             <Route path="/operator/complete" element={<CompletePage />} />
             <Route path="/operator/manage" element={<ManagePaymaster />} />
             <Route
@@ -74,7 +71,6 @@ function App() {
             <Route path="/analytics/user/:address" element={<ExplorerHub />} />
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
-            <Route path="/get-pnts" element={<GetPNTs />} />
             <Route path="/get-sbt" element={<GetSBT />} />
             <Route path="/get-sbt" element={<GetSBT />} />{" "}
             {/* Legacy redirect */}

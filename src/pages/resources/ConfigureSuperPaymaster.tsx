@@ -11,27 +11,27 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
-import { getRpcUrl } from "../../config/rpc";
 import {
+  getCoreContracts,
+  getTokenContracts,
+  getBlockExplorer,
   SuperPaymasterV2ABI,
   RegistryABI,
   GTokenStakingABI,
-} from "../../config/abis";
+} from "@aastar/shared-config";
+import { getRpcUrl } from "../../config/rpc";
 import "./ConfigureSuperPaymaster.css";
 
-// Get contract addresses from config
-const networkConfig = getCurrentNetworkConfig();
-const SUPERPAYMASTER_ADDRESS = networkConfig.contracts.superPaymasterV2;
-const REGISTRY_ADDRESS = networkConfig.contracts.registry;
-const GTOKEN_STAKING_ADDRESS = networkConfig.contracts.gTokenStaking;
+// Get contract addresses from shared-config
+const core = getCoreContracts("sepolia");
+const tokens = getTokenContracts("sepolia");
+const SUPERPAYMASTER_ADDRESS = core.superPaymasterV2;
+const REGISTRY_ADDRESS = core.registry;
+const GTOKEN_STAKING_ADDRESS = core.gTokenStaking;
 
 // Helper function to get explorer link
 const getExplorerLink = (address: string, type: 'address' | 'tx' = 'address'): string => {
-  const network = getCurrentNetworkConfig();
-  const baseUrl = network.chainId === 11155111
-    ? "https://sepolia.etherscan.io"
-    : "https://etherscan.io";
+  const baseUrl = getBlockExplorer("sepolia");
   return `${baseUrl}/${type}/${address}`;
 };
 
@@ -196,7 +196,7 @@ export function ConfigureSuperPaymaster() {
       const signer = await provider.getSigner();
 
       // Global MySBT address
-      const globalMySBT = networkConfig.contracts.mySBT;
+      const globalMySBT = tokens.mySBT;
 
       console.log("📝 Preparing SuperPaymaster registration with config:");
       const config = {

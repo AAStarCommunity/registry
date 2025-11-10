@@ -3,15 +3,20 @@ import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
 import { useSafeApp } from "../../hooks/useSafeApp";
 import type { BaseTransaction } from "@safe-global/safe-apps-sdk";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
+import {
+  getCoreContracts,
+  getTokenContracts,
+  MySBTABI,
+  GTokenABI,
+} from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
-import { MySBTABI, GTokenABI } from "../../config/abis";
 import "./MySBT.css";
 
-// Get contract addresses from shared-config via networkConfig
-const networkConfig = getCurrentNetworkConfig();
-const MYSBT_V2_3_ADDRESS = networkConfig.contracts.mySBT;
-const GTOKEN_ADDRESS = networkConfig.contracts.gToken;
+// Get contract addresses from shared-config
+const core = getCoreContracts("sepolia");
+const tokens = getTokenContracts("sepolia");
+const MYSBT_V2_3_ADDRESS = tokens.mySBT;
+const GTOKEN_ADDRESS = core.gToken;
 
 // Use /api/rpc-proxy endpoint to hide RPC keys
 const RPC_URL = getRpcUrl();
