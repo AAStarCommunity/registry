@@ -273,21 +273,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const gTokenStakingAddress = core.gTokenStaking;
       const aPNTsAddress = testTokens.aPNTs;
 
-      // ABIs
-      const superPaymasterABI = [
-        "function registerOperator(uint256 stGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
-        "function depositAPNTs(uint256 amount) external",
-      ];
+      // Use complete ABIs from shared-config
       const erc20ABI = [
         "function approve(address spender, uint256 amount) external returns (bool)",
-      ];
-      const stakingABI = [
-        "function stake(uint256 amount) external returns (uint256 shares)",
       ];
 
       const superPaymaster = new ethers.Contract(
         superPaymasterAddress,
-        superPaymasterABI,
+        SuperPaymasterV2ABI,
         signer,
       );
       const gToken = new ethers.Contract(
@@ -297,7 +290,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       );
       const gTokenStaking = new ethers.Contract(
         gTokenStakingAddress,
-        stakingABI,
+        GTokenStakingABI,
         signer,
       );
       const aPNTs = new ethers.Contract(aPNTsAddress, erc20ABI, signer);

@@ -1,18 +1,26 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig } from "../../config/networkConfig";
 import { getRpcUrl } from "../../config/rpc";
-import { xPNTsFactoryABI, RegistryABI, ERC20_ABI } from "../../config/abis";
+import {
+  getCoreContracts,
+  getTokenContracts,
+  xPNTsFactoryABI,
+  xPNTsTokenABI,
+  RegistryABI,
+} from "@aastar/shared-config";
 import "./GetXPNTs.css";
+
+const ERC20_ABI = xPNTsTokenABI;
 
 export function GetXPNTs() {
   const navigate = useNavigate();
 
-  // Get addresses from config
-  const networkConfig = getCurrentNetworkConfig();
-  const XPNTS_FACTORY_ADDRESS = networkConfig.contracts.xPNTsFactory;
-  const REGISTRY_ADDRESS = networkConfig.contracts.registry;
+  // Get addresses from shared-config
+  const core = getCoreContracts("sepolia");
+  const tokens = getTokenContracts("sepolia");
+  const XPNTS_FACTORY_ADDRESS = tokens.xPNTsFactory;
+  const REGISTRY_ADDRESS = core.registry;
   const RPC_URL = getRpcUrl();
 
   // Wallet state

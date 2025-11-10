@@ -36,9 +36,18 @@ export function SuperPaymasterConfig() {
     totalSpent: string;
     reputationLevel: number;
     reputationScore: string;
+    xPNTsToken: string;
     treasury: string;
+    exchangeRate: string;
     isPaused: boolean;
     totalTxSponsored: string;
+  } | null>(null);
+
+  // xPNTs token info
+  const [xPNTsInfo, setXPNTsInfo] = useState<{
+    name: string;
+    symbol: string;
+    address: string;
   } | null>(null);
 
   // Deposit state
@@ -140,6 +149,8 @@ export function SuperPaymasterConfig() {
         // 0:stGTokenLocked, 1:stakedAt, 2:aPNTsBalance, 3:totalSpent, 4:lastRefillTime, 5:minBalanceThreshold
         // 6:xPNTsToken, 7:treasury, 8:exchangeRate, 9:reputationScore, 10:consecutiveDays
         // 11:totalTxSponsored, 12:reputationLevel, 13:lastCheckTime, 14:isPaused
+        const xPNTsTokenAddress = account.xPNTsToken || account[6] || ethers.ZeroAddress;
+
         setAccountInfo({
           stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
           stakedAt: Number(account.stakedAt || account[1]),
@@ -147,10 +158,32 @@ export function SuperPaymasterConfig() {
           totalSpent: ethers.formatEther(account.totalSpent || account[3]),
           reputationLevel: Number(account.reputationLevel || account[12]),
           reputationScore: ethers.formatEther(account.reputationScore || account[9]),
+          xPNTsToken: xPNTsTokenAddress,
           treasury: account.treasury || account[7],
+          exchangeRate: ethers.formatEther(account.exchangeRate || account[8] || 0),
           isPaused: account.isPaused ?? account[14],
           totalTxSponsored: (account.totalTxSponsored || account[11])?.toString(),
         });
+
+        // Load xPNTs token info if available
+        if (xPNTsTokenAddress && xPNTsTokenAddress !== ethers.ZeroAddress) {
+          try {
+            const erc20ABI = [
+              "function name() view returns (string)",
+              "function symbol() view returns (string)",
+            ];
+            const xPNTsContract = new ethers.Contract(xPNTsTokenAddress, erc20ABI, provider);
+            const [name, symbol] = await Promise.all([
+              xPNTsContract.name(),
+              xPNTsContract.symbol(),
+            ]);
+            setXPNTsInfo({ name, symbol, address: xPNTsTokenAddress });
+            console.log("✅ [SuperPaymaster] xPNTs token loaded:", { name, symbol, address: xPNTsTokenAddress });
+          } catch (tokenErr) {
+            console.error("⚠️ [SuperPaymaster] Failed to load xPNTs token info:", tokenErr);
+            setXPNTsInfo({ name: "Unknown", symbol: "xPNTs", address: xPNTsTokenAddress });
+          }
+        }
 
         console.log("✅ [SuperPaymaster] Account loaded successfully");
 
@@ -432,6 +465,26 @@ export function SuperPaymasterConfig() {
                   </p>
                 </div>
               </div>
+
+              {/* xPNTs Token */}
+              {xPNTsInfo && (
+                <div className="summary-card">
+                  <div className="card-icon">🎫</div>
+                  <div className="card-content">
+                    <h3>xPNTs Token</h3>
+                    <p className="card-value">{xPNTsInfo.symbol}</p>
+                    <p className="card-detail">
+                      Name: {xPNTsInfo.name}
+                    </p>
+                    <p className="card-detail" style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                      {xPNTsInfo.address.slice(0, 10)}...{xPNTsInfo.address.slice(-8)}
+                    </p>
+                    <p className="card-detail" style={{ marginTop: '0.5rem' }}>
+                      Exchange Rate: 1 xPNTs = {accountInfo.exchangeRate} aPNTs
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
