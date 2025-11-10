@@ -133,7 +133,9 @@ const GetGToken: React.FC = () => {
   } | null>(null);
 
   // Determine if current network is testnet
-  const isTest = network.name.toLowerCase().includes('sepolia') || network.name.toLowerCase().includes('testnet');
+  const isTest =
+    network.name.toLowerCase().includes("sepolia") ||
+    network.name.toLowerCase().includes("testnet");
 
   const handleGoBack = () => {
     navigate(-1);
@@ -874,7 +876,6 @@ const GetGToken: React.FC = () => {
                         🚰 Infura Faucet
                       </a>
                     </div>
-
                   </div>
                 )}
                 <div className="balance-item">
@@ -1370,7 +1371,12 @@ const GetGToken: React.FC = () => {
 
         {/* All Deployed Contracts */}
         <section className="info-section">
-          <h2>📋 All Deployed Contracts (v0.2.26)</h2>
+          <h2>
+            📋 All Deployed Contracts (v
+            {getAllV2Contracts()[getAllV2Contracts().length - 1]?.version ||
+              "2.0.0"}
+            )
+          </h2>
           <div className="contracts-grid">
             {getAllV2Contracts().map((contract) => (
               <div key={contract.address} className="contract-card">
@@ -1436,7 +1442,7 @@ const GetGToken: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button primary"
                 >
-                    Go to GToken Faucet &rarr;
+                  Go to GToken Faucet &rarr;
                 </a>
               </div>
 
@@ -1455,7 +1461,7 @@ const GetGToken: React.FC = () => {
                   rel="noopener noreferrer"
                   className="action-button secondary"
                 >
-                    Go to Test DEX &rarr;
+                  Go to Test DEX &rarr;
                 </a>
               </div>
 
@@ -1618,8 +1624,7 @@ const GetGToken: React.FC = () => {
           <details className="faq-item">
             <summary>How much GToken do I need to become an operator?</summary>
             <p>
-              The minimum stake requirement is{" "}
-              <strong>30 GToken</strong>.
+              The minimum stake requirement is <strong>30 GToken</strong>.
               However, staking more GToken will increase your reputation score
               and allow you to handle larger transaction volumes.
             </p>

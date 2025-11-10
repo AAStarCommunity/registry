@@ -76,10 +76,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       const entryPointAddress = networkConfig.contracts.entryPointV07;
 
       const entryPointABI = [
-        "function balanceOf(address account) external view returns (uint256)"
+        "function balanceOf(address account) external view returns (uint256)",
       ];
 
-      const entryPoint = new ethers.Contract(entryPointAddress, entryPointABI, provider);
+      const entryPoint = new ethers.Contract(
+        entryPointAddress,
+        entryPointABI,
+        provider,
+      );
       const balance = await entryPoint.balanceOf(paymasterAddr);
       const balanceEth = ethers.formatEther(balance);
 
@@ -95,7 +99,10 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const checkSuperPaymasterRegistration = async (address: string) => {
     if (mode !== "aoa+") return false;
 
-    console.log("🔍 [Step3] Checking SuperPaymaster registration for:", address);
+    console.log(
+      "🔍 [Step3] Checking SuperPaymaster registration for:",
+      address,
+    );
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -106,10 +113,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       // Use minimal ABI to avoid decoding errors with unregistered accounts
       // We only need first two fields: stGTokenLocked and stakedAt
       const abi = [
-        "function accounts(address) external view returns (uint256, uint256)"
+        "function accounts(address) external view returns (uint256, uint256)",
       ];
 
-      const superPaymaster = new ethers.Contract(superPaymasterAddress, abi, provider);
+      const superPaymaster = new ethers.Contract(
+        superPaymasterAddress,
+        abi,
+        provider,
+      );
 
       try {
         const result = await superPaymaster.accounts(address);
@@ -121,25 +132,34 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         console.log("📊 [Step3] Parsed values:", {
           stGTokenLocked: stGTokenLocked.toString(),
           stakedAt: stakedAt.toString(),
-          isRegistered: stakedAt > 0n
+          isRegistered: stakedAt > 0n,
         });
 
         // stakedAt > 0 means registered
         if (stakedAt > 0n) {
-          console.log("✅ [Step3] Account IS registered, fetching full info...");
+          console.log(
+            "✅ [Step3] Account IS registered, fetching full info...",
+          );
 
           // Use shared-config's SuperPaymasterV2ABI
-          const fullContract = new ethers.Contract(superPaymasterAddress, SuperPaymasterV2ABI, provider);
+          const fullContract = new ethers.Contract(
+            superPaymasterAddress,
+            SuperPaymasterV2ABI,
+            provider,
+          );
 
           try {
             const account = await fullContract.accounts(address);
             console.log("✅ [Step3] Full account data:", account);
             console.log("✅ [Step3] Account fields:", {
-              stGTokenLocked: account.stGTokenLocked?.toString() || account[0]?.toString(),
+              stGTokenLocked:
+                account.stGTokenLocked?.toString() || account[0]?.toString(),
               stakedAt: account.stakedAt?.toString() || account[1]?.toString(),
-              aPNTsBalance: account.aPNTsBalance?.toString() || account[2]?.toString(),
+              aPNTsBalance:
+                account.aPNTsBalance?.toString() || account[2]?.toString(),
               treasury: account.treasury || account[7],
-              reputationLevel: account.reputationLevel?.toString() || account[12]?.toString()
+              reputationLevel:
+                account.reputationLevel?.toString() || account[12]?.toString(),
             });
 
             setIsRegistered(true);
@@ -148,8 +168,12 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               // 0:stGTokenLocked, 1:stakedAt, 2:aPNTsBalance, 3:totalSpent, 4:lastRefillTime, 5:minBalanceThreshold
               // 6:xPNTsToken, 7:treasury, 8:exchangeRate, 9:reputationScore, 10:consecutiveDays
               // 11:totalTxSponsored, 12:reputationLevel, 13:lastCheckTime, 14:isPaused
-              stGTokenLocked: ethers.formatEther(account.stGTokenLocked || account[0]),
-              aPNTsBalance: ethers.formatEther(account.aPNTsBalance || account[2]),
+              stGTokenLocked: ethers.formatEther(
+                account.stGTokenLocked || account[0],
+              ),
+              aPNTsBalance: ethers.formatEther(
+                account.aPNTsBalance || account[2],
+              ),
               reputationLevel: Number(account.reputationLevel || account[12]),
               treasury: account.treasury || account[7],
             });
@@ -157,15 +181,20 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             console.log("✅ [Step3] Registration check complete - REGISTERED");
             return true;
           } catch (fullError: any) {
-            console.error("❌ [Step3] Failed to get full account info:", fullError);
+            console.error(
+              "❌ [Step3] Failed to get full account info:",
+              fullError,
+            );
             console.error("Error details:", {
               message: fullError.message,
               code: fullError.code,
-              data: fullError.data
+              data: fullError.data,
             });
 
             // Still set as registered since stakedAt > 0
-            console.log("⚠️ [Step3] Using minimal info since full fetch failed");
+            console.log(
+              "⚠️ [Step3] Using minimal info since full fetch failed",
+            );
             setIsRegistered(true);
             setSuperPaymasterInfo({
               stGTokenLocked: ethers.formatEther(stGTokenLocked),
@@ -184,22 +213,28 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         return false;
       } catch (decodeError: any) {
         // Decode error likely means not registered (returns default values)
-        console.error("❌ [Step3] Decode error when checking registration:", decodeError);
+        console.error(
+          "❌ [Step3] Decode error when checking registration:",
+          decodeError,
+        );
         console.error("Error details:", {
           message: decodeError.message,
           code: decodeError.code,
-          data: decodeError.data
+          data: decodeError.data,
         });
         setIsRegistered(false);
         setSuperPaymasterInfo(null);
         return false;
       }
     } catch (err: any) {
-      console.error("❌ [Step3] Failed to check SuperPaymaster registration:", err);
+      console.error(
+        "❌ [Step3] Failed to check SuperPaymaster registration:",
+        err,
+      );
       console.error("Error details:", {
         message: err.message,
         code: err.code,
-        data: err.data
+        data: err.data,
       });
       setIsRegistered(false);
       setSuperPaymasterInfo(null);
@@ -224,14 +259,30 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       // ABIs
       const superPaymasterABI = [
         "function registerOperator(uint256 stGTokenAmount, address[] memory supportedSBTs, address xPNTsToken, address treasury) external",
-        "function depositAPNTs(uint256 amount) external"
+        "function depositAPNTs(uint256 amount) external",
       ];
-      const erc20ABI = ["function approve(address spender, uint256 amount) external returns (bool)"];
-      const stakingABI = ["function stake(uint256 amount) external returns (uint256 shares)"];
+      const erc20ABI = [
+        "function approve(address spender, uint256 amount) external returns (bool)",
+      ];
+      const stakingABI = [
+        "function stake(uint256 amount) external returns (uint256 shares)",
+      ];
 
-      const superPaymaster = new ethers.Contract(superPaymasterAddress, superPaymasterABI, signer);
-      const gToken = new ethers.Contract(networkConfig.contracts.gToken, erc20ABI, signer);
-      const gTokenStaking = new ethers.Contract(gTokenStakingAddress, stakingABI, signer);
+      const superPaymaster = new ethers.Contract(
+        superPaymasterAddress,
+        superPaymasterABI,
+        signer,
+      );
+      const gToken = new ethers.Contract(
+        networkConfig.contracts.gToken,
+        erc20ABI,
+        signer,
+      );
+      const gTokenStaking = new ethers.Contract(
+        gTokenStakingAddress,
+        stakingABI,
+        signer,
+      );
       const aPNTs = new ethers.Contract(aPNTsAddress, erc20ABI, signer);
 
       // Parameters
@@ -245,14 +296,25 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       // Step 0: Stake GT to get stGToken shares (CRITICAL STEP!)
       console.log("Step 0: Approving GT for staking...");
-      const approveGTokenTx = await gToken.approve(gTokenStakingAddress, stakeAmount);
+      const approveGTokenTx = await gToken.approve(
+        gTokenStakingAddress,
+        stakeAmount,
+      );
       await approveGTokenTx.wait();
       console.log("✅ GT approved for staking");
 
-      console.log("Step 0: Staking", ethers.formatEther(stakeAmount), "GT to receive stGToken...");
+      console.log(
+        "Step 0: Staking",
+        ethers.formatEther(stakeAmount),
+        "GT to receive stGToken...",
+      );
       const stakeTx = await gTokenStaking.stake(stakeAmount);
       await stakeTx.wait();
-      console.log("✅ Staked", ethers.formatEther(stakeAmount), "GT, received stGToken shares");
+      console.log(
+        "✅ Staked",
+        ethers.formatEther(stakeAmount),
+        "GT, received stGToken shares",
+      );
 
       // Step 1: Register Operator (will lock stGToken shares internally)
       console.log("Step 1: Registering operator...");
@@ -260,14 +322,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         stakeAmount,
         supportedSBTs,
         xPNTsToken,
-        treasury
+        treasury,
       );
       await registerTx.wait();
       console.log("✅ Operator registered");
 
       // Step 2: Approve aPNTs
       console.log("Step 2: Approving aPNTs...");
-      const approveTx2 = await aPNTs.approve(superPaymasterAddress, initialAPNTs);
+      const approveTx2 = await aPNTs.approve(
+        superPaymasterAddress,
+        initialAPNTs,
+      );
       await approveTx2.wait();
       console.log("✅ aPNTs approved");
 
@@ -287,8 +352,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       // Handle specific errors
       if (err.code === "ACTION_REJECTED" || err.code === 4001) {
-        setRegistrationError("Transaction cancelled by user. Please try again when ready.");
-      } else if (err.data?.startsWith("0x45ed80e9") || err.message?.includes("AlreadyRegistered")) {
+        setRegistrationError(
+          "Transaction cancelled by user. Please try again when ready.",
+        );
+      } else if (
+        err.data?.startsWith("0x45ed80e9") ||
+        err.message?.includes("AlreadyRegistered")
+      ) {
         // Already registered - this is actually success!
         console.log("Already registered in SuperPaymaster");
         setIsRegistered(true);
@@ -297,16 +367,28 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
         // Refresh to get account info
         await checkSuperPaymasterRegistration(communityAddress);
         return; // Early return, don't set error
-      } else if (err.data === "0xc52a9bd3" || err.message?.includes("InvalidConfiguration")) {
+      } else if (
+        err.data === "0xc52a9bd3" ||
+        err.message?.includes("InvalidConfiguration")
+      ) {
         setRegistrationError(
-          "SuperPaymaster contract not configured. The aPNTs token address needs to be set by the contract owner. Please contact support."
+          "SuperPaymaster contract not configured. The aPNTs token address needs to be set by the contract owner. Please contact support.",
         );
       } else if (err.message?.includes("insufficient funds")) {
-        setRegistrationError("Insufficient balance. Please ensure you have enough GT and aPNTs.");
-      } else if (err.data === "0xadb9e043" || err.message?.includes("InsufficientAvailableBalance")) {
-        setRegistrationError("Insufficient stGToken balance. Please ensure you have staked enough GT first.");
+        setRegistrationError(
+          "Insufficient balance. Please ensure you have enough GT and aPNTs.",
+        );
+      } else if (
+        err.data === "0xadb9e043" ||
+        err.message?.includes("InsufficientAvailableBalance")
+      ) {
+        setRegistrationError(
+          "Insufficient stGToken balance. Please ensure you have staked enough GT first.",
+        );
       } else {
-        setRegistrationError(err.message || "Registration failed. Please try again.");
+        setRegistrationError(
+          err.message || "Registration failed. Please try again.",
+        );
       }
 
       setIsRegistering(false);
@@ -321,10 +403,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       // Correct ABI: getCommunityProfile returns a tuple (CommunityProfile struct)
       const registryABI = [
-        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))"
+        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
       ];
 
-      const registry = new ethers.Contract(registryAddress, registryABI, provider);
+      const registry = new ethers.Contract(
+        registryAddress,
+        registryABI,
+        provider,
+      );
 
       try {
         const profile = await registry.getCommunityProfile(address);
@@ -363,10 +449,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       // Get current community profile first (returns a tuple/struct)
       const registryReadABI = [
-        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))"
+        "function getCommunityProfile(address) external view returns (tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint))",
       ];
-      const registryRead = new ethers.Contract(registryAddress, registryReadABI, provider);
-      const currentProfile = await registryRead.getCommunityProfile(communityAddress);
+      const registryRead = new ethers.Contract(
+        registryAddress,
+        registryReadABI,
+        provider,
+      );
+      const currentProfile =
+        await registryRead.getCommunityProfile(communityAddress);
 
       // Determine paymaster address based on mode
       let paymasterAddress: string;
@@ -379,35 +470,51 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       }
 
       if (paymasterAddress === ethers.ZeroAddress) {
-        setPaymasterRegError("Paymaster not deployed yet. Please deploy first.");
+        setPaymasterRegError(
+          "Paymaster not deployed yet. Please deploy first.",
+        );
         setIsRegisteringPaymaster(false);
         return;
       }
 
       // Update profile with new paymaster address
       const registryWriteABI = [
-        "function updateCommunityProfile(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint) profile) external"
+        "function updateCommunityProfile(tuple(string name, string ensName, address xPNTsToken, address[] supportedSBTs, uint8 nodeType, address paymasterAddress, address community, uint256 registeredAt, uint256 lastUpdatedAt, bool isActive, bool allowPermissionlessMint) profile) external",
       ];
-      const registryWrite = new ethers.Contract(registryAddress, registryWriteABI, signer);
+      const registryWrite = new ethers.Contract(
+        registryAddress,
+        registryWriteABI,
+        signer,
+      );
 
       // Construct updated profile (keep existing data, only update paymasterAddress)
       // IMPORTANT: Create a new plain object, not using the Proxy result directly
       const updatedProfile = {
         name: String(currentProfile.name || currentProfile[0] || ""),
         ensName: String(currentProfile.ensName || currentProfile[1] || ""),
-        xPNTsToken: String(currentProfile.xPNTsToken || currentProfile[2] || ethers.ZeroAddress),
+        xPNTsToken: String(
+          currentProfile.xPNTsToken || currentProfile[2] || ethers.ZeroAddress,
+        ),
         supportedSBTs: Array.isArray(currentProfile.supportedSBTs)
-          ? [...currentProfile.supportedSBTs]  // Copy array
+          ? [...currentProfile.supportedSBTs] // Copy array
           : Array.isArray(currentProfile[3])
             ? [...currentProfile[3]]
             : [],
         nodeType: Number(currentProfile.nodeType ?? currentProfile[4] ?? 0),
         paymasterAddress: String(paymasterAddress), // Update this field
-        community: String(currentProfile.community || currentProfile[6] || ethers.ZeroAddress),
-        registeredAt: BigInt(currentProfile.registeredAt || currentProfile[7] || 0),
-        lastUpdatedAt: BigInt(currentProfile.lastUpdatedAt || currentProfile[8] || 0),
+        community: String(
+          currentProfile.community || currentProfile[6] || ethers.ZeroAddress,
+        ),
+        registeredAt: BigInt(
+          currentProfile.registeredAt || currentProfile[7] || 0,
+        ),
+        lastUpdatedAt: BigInt(
+          currentProfile.lastUpdatedAt || currentProfile[8] || 0,
+        ),
         isActive: Boolean(currentProfile.isActive ?? currentProfile[9] ?? true),
-        allowPermissionlessMint: Boolean(currentProfile.allowPermissionlessMint ?? currentProfile[10] ?? false)
+        allowPermissionlessMint: Boolean(
+          currentProfile.allowPermissionlessMint ?? currentProfile[10] ?? false,
+        ),
       };
 
       console.log("Registering Paymaster to Registry:", paymasterAddress);
@@ -421,9 +528,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       console.error("Failed to register Paymaster to Registry:", err);
 
       if (err.message?.includes("CommunityNotRegistered")) {
-        setPaymasterRegError("Community not registered in Registry. Please register your community first at /operator/register");
+        setPaymasterRegError(
+          "Community not registered in Registry. Please register your community first at /operator/register",
+        );
       } else {
-        setPaymasterRegError(err.message || "Registration failed. Please try again.");
+        setPaymasterRegError(
+          err.message || "Registration failed. Please try again.",
+        );
       }
 
       setIsRegisteringPaymaster(false);
@@ -458,25 +569,31 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     <div className="step3-complete">
       <div className="completion-header">
         <div className="success-icon">🎉</div>
-        <h2>{t('step3Complete.header.title')}</h2>
+        <h2>{t("step3Complete.header.title")}</h2>
         <p className="subtitle">
-          {t('step3Complete.header.subtitle')} {mode === "aoa" ? t('step3Complete.header.aoaMode') : t('step3Complete.header.aoaPlusMode')}
+          {t("step3Complete.header.subtitle")}{" "}
+          {mode === "aoa"
+            ? t("step3Complete.header.aoaMode")
+            : t("step3Complete.header.aoaPlusMode")}
         </p>
       </div>
 
       {/* Deployment Summary */}
       <div className="deployment-summary">
-        <h3>{t('step3Complete.summary.title')}</h3>
+        <h3>{t("step3Complete.summary.title")}</h3>
 
         <div className="summary-grid">
           {/* Community */}
           <div className="summary-card">
             <div className="card-icon">🏛️</div>
             <div className="card-content">
-              <h4>{t('step3Complete.summary.community.title')}</h4>
+              <h4>{t("step3Complete.summary.community.title")}</h4>
               <p className="card-value">{resources.communityName}</p>
               <p className="card-detail">
-                {t('step3Complete.summary.community.registered')} {new Date(resources.communityRegisteredAt! * 1000).toLocaleDateString()}
+                {t("step3Complete.summary.community.registered")}{" "}
+                {new Date(
+                  resources.communityRegisteredAt! * 1000,
+                ).toLocaleDateString()}
               </p>
             </div>
           </div>
@@ -486,10 +603,14 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             <div className="card-icon">💎</div>
             <div className="card-content">
               <h4>xPNTs Token</h4>
-              <p className="card-value mono">{resources.xPNTsAddress?.slice(0, 10)}...</p>
+              <p className="card-value mono">
+                {resources.xPNTsAddress?.slice(0, 10)}...
+              </p>
               {resources.xPNTsExchangeRate && (
                 <p className="card-detail">
-                  {t('step3Complete.summary.xpnts.rate')} {resources.xPNTsExchangeRate} {t('step3Complete.summary.xpnts.rateSuffix')}
+                  {t("step3Complete.summary.xpnts.rate")}{" "}
+                  {resources.xPNTsExchangeRate}{" "}
+                  {t("step3Complete.summary.xpnts.rateSuffix")}
                 </p>
               )}
               <a
@@ -498,7 +619,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 rel="noopener noreferrer"
                 className="explorer-link"
               >
-                {t('step3Complete.summary.xpnts.viewExplorer')}
+                {t("step3Complete.summary.xpnts.viewExplorer")}
               </a>
             </div>
           </div>
@@ -509,9 +630,12 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="card-icon">🚀</div>
               <div className="card-content">
                 <h4>Paymaster</h4>
-                <p className="card-value mono">{resources.paymasterAddress.slice(0, 10)}...</p>
+                <p className="card-value mono">
+                  {resources.paymasterAddress.slice(0, 10)}...
+                </p>
                 <p className="card-detail">
-                  {t('step3Complete.summary.paymaster.sbtBound')} {resources.hasSBTBinding ? "✅" : "❌"}
+                  {t("step3Complete.summary.paymaster.sbtBound")}{" "}
+                  {resources.hasSBTBinding ? "✅" : "❌"}
                 </p>
                 <a
                   href={getExplorerLink(resources.paymasterAddress)}
@@ -519,7 +643,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                   rel="noopener noreferrer"
                   className="explorer-link"
                 >
-                  {t('step3Complete.summary.paymaster.viewExplorer')}
+                  {t("step3Complete.summary.paymaster.viewExplorer")}
                 </a>
               </div>
             </div>
@@ -531,9 +655,12 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="card-icon">🎫</div>
               <div className="card-content">
                 <h4>MySBT Contract</h4>
-                <p className="card-value mono">{mySBTAddress.slice(0, 10)}...</p>
+                <p className="card-value mono">
+                  {mySBTAddress.slice(0, 10)}...
+                </p>
                 <p className="card-detail">
-                  Binding Status: {resources.hasSBTBinding ? "✅ Bound" : "❌ Not Bound"}
+                  Binding Status:{" "}
+                  {resources.hasSBTBinding ? "✅ Bound" : "❌ Not Bound"}
                 </p>
                 <a
                   href={getExplorerLink(mySBTAddress)}
@@ -551,22 +678,38 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
           <div className="summary-card">
             <div className="card-icon">💰</div>
             <div className="card-content">
-              <h4>{t('step3Complete.summary.balances.title')}</h4>
-              <p className="card-detail">{t('step3Complete.summary.balances.gtoken')} {resources.gTokenBalance} GT</p>
+              <h4>{t("step3Complete.summary.balances.title")}</h4>
+              <p className="card-detail">
+                {t("step3Complete.summary.balances.gtoken")}{" "}
+                {resources.gTokenBalance} GT
+              </p>
               {mode === "aoa+" && (
-                <p className="card-detail">{t('step3Complete.summary.balances.apnts')} {resources.aPNTsBalance} aPNTs</p>
+                <p className="card-detail">
+                  {t("step3Complete.summary.balances.apnts")}{" "}
+                  {resources.aPNTsBalance} aPNTs
+                </p>
               )}
-              <p className="card-detail">{t('step3Complete.summary.balances.eth')} {resources.ethBalance} ETH</p>
+              <p className="card-detail">
+                {t("step3Complete.summary.balances.eth")} {resources.ethBalance}{" "}
+                ETH
+              </p>
               {mode === "aoa" && resources.paymasterAddress && (
                 <>
-                  <p className="card-detail" style={{
-                    marginTop: '0.75rem',
-                    paddingTop: '0.75rem',
-                    borderTop: '1px solid #e5e7eb',
-                    fontWeight: parseFloat(entryPointDeposit) > 0 ? 600 : 400,
-                    color: parseFloat(entryPointDeposit) > 0 ? '#10b981' : '#ef4444'
-                  }}>
-                    {parseFloat(entryPointDeposit) > 0 ? '✅' : '⚠️'} EntryPoint Deposit: {parseFloat(entryPointDeposit).toFixed(4)} ETH
+                  <p
+                    className="card-detail"
+                    style={{
+                      marginTop: "0.75rem",
+                      paddingTop: "0.75rem",
+                      borderTop: "1px solid #e5e7eb",
+                      fontWeight: parseFloat(entryPointDeposit) > 0 ? 600 : 400,
+                      color:
+                        parseFloat(entryPointDeposit) > 0
+                          ? "#10b981"
+                          : "#ef4444",
+                    }}
+                  >
+                    {parseFloat(entryPointDeposit) > 0 ? "✅" : "⚠️"} EntryPoint
+                    Deposit: {parseFloat(entryPointDeposit).toFixed(4)} ETH
                   </p>
                   {parseFloat(entryPointDeposit) === 0 && (
                     <a
@@ -574,7 +717,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="explorer-link"
-                      style={{ marginTop: '0.5rem', display: 'inline-block' }}
+                      style={{ marginTop: "0.5rem", display: "inline-block" }}
                     >
                       Add Deposit to EntryPoint →
                     </a>
@@ -592,35 +735,75 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <h4>SuperPaymaster Management</h4>
 
                 {/* Deployment Status */}
-                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-                  <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                    {isRegistered ? "✅" : "⏸️"} Deployment Status: {isRegistered ? "Deployed" : "Not Deployed"}
+                <div
+                  style={{
+                    marginBottom: "1rem",
+                    padding: "0.75rem",
+                    background: "#f9fafb",
+                    borderRadius: "6px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  <p
+                    className="card-detail"
+                    style={{ fontWeight: 600, marginBottom: "0.5rem" }}
+                  >
+                    {isRegistered ? "✅" : "⏸️"} Deployment Status:{" "}
+                    {isRegistered ? "Deployed" : "Not Deployed"}
                   </p>
                   {isRegistered && superPaymasterInfo ? (
                     <>
-                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      <p
+                        className="card-detail"
+                        style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                      >
                         Staked: {superPaymasterInfo.stGTokenLocked} stGToken
                       </p>
-                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                      <p
+                        className="card-detail"
+                        style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                      >
                         aPNTs Balance: {superPaymasterInfo.aPNTsBalance}
                       </p>
-                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                        Reputation: Level {superPaymasterInfo.reputationLevel}/12
+                      <p
+                        className="card-detail"
+                        style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                      >
+                        Reputation: Level {superPaymasterInfo.reputationLevel}
+                        /12
                       </p>
                     </>
                   ) : (
-                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    <p
+                      className="card-detail"
+                      style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                    >
                       Operator not registered in SuperPaymaster contract
                     </p>
                   )}
                 </div>
 
                 {/* Registry Status */}
-                <div style={{ marginBottom: '1rem', padding: '0.75rem', background: '#f9fafb', borderRadius: '6px', border: '1px solid #e5e7eb' }}>
-                  <p className="card-detail" style={{ fontWeight: 600, marginBottom: '0.5rem' }}>
-                    {isRegistryPaymasterSet ? "✅" : "⏸️"} Registry Status: {isRegistryPaymasterSet ? "Registered" : "Not Registered"}
+                <div
+                  style={{
+                    marginBottom: "1rem",
+                    padding: "0.75rem",
+                    background: "#f9fafb",
+                    borderRadius: "6px",
+                    border: "1px solid #e5e7eb",
+                  }}
+                >
+                  <p
+                    className="card-detail"
+                    style={{ fontWeight: 600, marginBottom: "0.5rem" }}
+                  >
+                    {isRegistryPaymasterSet ? "✅" : "⏸️"} Registry Status:{" "}
+                    {isRegistryPaymasterSet ? "Registered" : "Not Registered"}
                   </p>
-                  <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  <p
+                    className="card-detail"
+                    style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                  >
                     {isRegistryPaymasterSet
                       ? "SuperPaymaster linked to your community in Registry"
                       : "SuperPaymaster not linked to Registry yet"}
@@ -628,19 +811,34 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 </div>
 
                 {/* Actions */}
-                <div style={{ marginTop: '1rem' }}>
+                <div style={{ marginTop: "1rem" }}>
                   {/* Deploy to SuperPaymaster */}
                   {!isRegistered && (
                     <>
                       {isRegistering ? (
-                        <p className="card-detail">⏳ Deploying to SuperPaymaster...</p>
+                        <p className="card-detail">
+                          ⏳ Deploying to SuperPaymaster...
+                        </p>
                       ) : registrationError ? (
                         <>
-                          <p className="card-detail error" style={{ marginBottom: '0.5rem' }}>❌ Deployment failed: {registrationError}</p>
+                          <p
+                            className="card-detail error"
+                            style={{ marginBottom: "0.5rem" }}
+                          >
+                            ❌ Deployment failed: {registrationError}
+                          </p>
                           <button
                             onClick={registerToSuperPaymaster}
                             className="retry-btn"
-                            style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                            style={{
+                              padding: "0.5rem 1rem",
+                              background: "#3b82f6",
+                              color: "white",
+                              border: "none",
+                              borderRadius: "6px",
+                              cursor: "pointer",
+                              fontWeight: 600,
+                            }}
                           >
                             Retry Deployment
                           </button>
@@ -651,19 +849,22 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                           className="register-btn"
                           disabled={isRegistering}
                           style={{
-                            padding: '0.75rem 1.25rem',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: isRegistering ? 'not-allowed' : 'pointer',
+                            padding: "0.75rem 1.25rem",
+                            background:
+                              "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: isRegistering ? "not-allowed" : "pointer",
                             fontWeight: 600,
-                            fontSize: '1rem',
+                            fontSize: "1rem",
                             opacity: isRegistering ? 0.6 : 1,
-                            width: '100%'
+                            width: "100%",
                           }}
                         >
-                          {isRegistering ? '⏳ Deploying...' : '🚀 Deploy to SuperPaymaster'}
+                          {isRegistering
+                            ? "⏳ Deploying..."
+                            : "🚀 Deploy to SuperPaymaster"}
                         </button>
                       )}
                     </>
@@ -673,22 +874,47 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                   {isRegistered && !isRegistryPaymasterSet && (
                     <>
                       {isRegisteringPaymaster ? (
-                        <p className="card-detail">⏳ Registering to Registry...</p>
+                        <p className="card-detail">
+                          ⏳ Registering to Registry...
+                        </p>
                       ) : paymasterRegError ? (
                         <>
-                          <p className="card-detail error" style={{ marginBottom: '0.5rem' }}>❌ Registration failed: {paymasterRegError}</p>
-                          {!paymasterRegError.includes("Community not registered") ? (
+                          <p
+                            className="card-detail error"
+                            style={{ marginBottom: "0.5rem" }}
+                          >
+                            ❌ Registration failed: {paymasterRegError}
+                          </p>
+                          {!paymasterRegError.includes(
+                            "Community not registered",
+                          ) ? (
                             <button
                               onClick={registerPaymasterToRegistry}
                               className="retry-btn"
-                              style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                              style={{
+                                padding: "0.5rem 1rem",
+                                background: "#3b82f6",
+                                color: "white",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontWeight: 600,
+                              }}
                             >
                               Retry Registration
                             </button>
                           ) : (
                             <a
                               href="/operator/register?returnUrl=/operator/wizard"
-                              style={{ display: 'inline-block', padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                              style={{
+                                display: "inline-block",
+                                padding: "0.5rem 1rem",
+                                background: "#10b981",
+                                color: "white",
+                                borderRadius: "6px",
+                                textDecoration: "none",
+                                fontWeight: 600,
+                              }}
                             >
                               Go Register Community
                             </a>
@@ -700,19 +926,24 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                           className="register-btn"
                           disabled={isRegisteringPaymaster}
                           style={{
-                            padding: '0.75rem 1.25rem',
-                            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '6px',
-                            cursor: isRegisteringPaymaster ? 'not-allowed' : 'pointer',
+                            padding: "0.75rem 1.25rem",
+                            background:
+                              "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                            color: "white",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: isRegisteringPaymaster
+                              ? "not-allowed"
+                              : "pointer",
                             fontWeight: 600,
-                            fontSize: '1rem',
+                            fontSize: "1rem",
                             opacity: isRegisteringPaymaster ? 0.6 : 1,
-                            width: '100%'
+                            width: "100%",
                           }}
                         >
-                          {isRegisteringPaymaster ? '⏳ Registering...' : '📝 Register to Registry'}
+                          {isRegisteringPaymaster
+                            ? "⏳ Registering..."
+                            : "📝 Register to Registry"}
                         </button>
                       )}
                     </>
@@ -720,26 +951,47 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
                   {/* All Complete - Show Links */}
                   {isRegistered && isRegistryPaymasterSet && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <p className="card-detail" style={{ color: '#10b981', fontWeight: 600, fontSize: '1rem' }}>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "0.75rem",
+                      }}
+                    >
+                      <p
+                        className="card-detail"
+                        style={{
+                          color: "#10b981",
+                          fontWeight: 600,
+                          fontSize: "1rem",
+                        }}
+                      >
                         ✅ All Setup Complete!
                       </p>
-                      <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "0.75rem",
+                          flexWrap: "wrap",
+                        }}
+                      >
                         <a
-                          href={getExplorerLink(networkConfig.contracts.superPaymasterV2)}
+                          href={getExplorerLink(
+                            networkConfig.contracts.superPaymasterV2,
+                          )}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            flex: '1',
-                            minWidth: '140px',
-                            padding: '0.75rem 1rem',
-                            background: '#f3f4f6',
-                            color: '#1f2937',
-                            borderRadius: '6px',
-                            textDecoration: 'none',
+                            flex: "1",
+                            minWidth: "140px",
+                            padding: "0.75rem 1rem",
+                            background: "#f3f4f6",
+                            color: "#1f2937",
+                            borderRadius: "6px",
+                            textDecoration: "none",
                             fontWeight: 600,
-                            textAlign: 'center',
-                            border: '1px solid #e5e7eb'
+                            textAlign: "center",
+                            border: "1px solid #e5e7eb",
                           }}
                         >
                           📜 View Contract
@@ -749,15 +1001,16 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            flex: '1',
-                            minWidth: '140px',
-                            padding: '0.75rem 1rem',
-                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                            color: 'white',
-                            borderRadius: '6px',
-                            textDecoration: 'none',
+                            flex: "1",
+                            minWidth: "140px",
+                            padding: "0.75rem 1rem",
+                            background:
+                              "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                            color: "white",
+                            borderRadius: "6px",
+                            textDecoration: "none",
                             fontWeight: 600,
-                            textAlign: 'center'
+                            textAlign: "center",
                           }}
                         >
                           🎛️ Manage Account
@@ -767,15 +1020,16 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
-                            flex: '1',
-                            minWidth: '140px',
-                            padding: '0.75rem 1rem',
-                            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-                            color: 'white',
-                            borderRadius: '6px',
-                            textDecoration: 'none',
+                            flex: "1",
+                            minWidth: "140px",
+                            padding: "0.75rem 1rem",
+                            background:
+                              "linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)",
+                            color: "white",
+                            borderRadius: "6px",
+                            textDecoration: "none",
                             fontWeight: 600,
-                            textAlign: 'center'
+                            textAlign: "center",
                           }}
                         >
                           🏛️ View Community
@@ -795,16 +1049,29 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="card-content">
                 <h4>Registry Paymaster Registration</h4>
                 {isRegisteringPaymaster ? (
-                  <p className="card-detail">⏳ Registering Paymaster to Registry...</p>
+                  <p className="card-detail">
+                    ⏳ Registering Paymaster to Registry...
+                  </p>
                 ) : paymasterRegError ? (
                   <>
                     <p className="card-detail error">❌ Registration failed</p>
                     <p className="card-detail">{paymasterRegError}</p>
-                    {!paymasterRegError.includes("Community not registered") && (
+                    {!paymasterRegError.includes(
+                      "Community not registered",
+                    ) && (
                       <button
                         onClick={registerPaymasterToRegistry}
                         className="retry-btn"
-                        style={{ marginTop: '0.5rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}
+                        style={{
+                          marginTop: "0.5rem",
+                          padding: "0.5rem 1rem",
+                          background: "#3b82f6",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontWeight: 600,
+                        }}
                       >
                         Retry Registration
                       </button>
@@ -812,7 +1079,16 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                     {paymasterRegError.includes("Community not registered") && (
                       <a
                         href="/operator/register?returnUrl=/operator/wizard"
-                        style={{ marginTop: '0.5rem', display: 'inline-block', padding: '0.5rem 1rem', background: '#10b981', color: 'white', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                        style={{
+                          marginTop: "0.5rem",
+                          display: "inline-block",
+                          padding: "0.5rem 1rem",
+                          background: "#10b981",
+                          color: "white",
+                          borderRadius: "6px",
+                          textDecoration: "none",
+                          fontWeight: 600,
+                        }}
                       >
                         Go Register Community
                       </a>
@@ -823,27 +1099,58 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                     <p className="card-detail">
                       ✅ Paymaster registered in Registry
                     </p>
-                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-                      Your AOA Paymaster is now linked to your community in the Registry.
+                    <p
+                      className="card-detail"
+                      style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                    >
+                      Your AOA Paymaster is now linked to your community in the
+                      Registry.
                     </p>
                     <a
                       href={`/explorer/community/${communityAddress}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="explorer-link"
-                      style={{ marginTop: '0.5rem', display: 'inline-block', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', color: 'white', padding: '0.5rem 1rem', borderRadius: '6px', textDecoration: 'none', fontWeight: 600 }}
+                      style={{
+                        marginTop: "0.5rem",
+                        display: "inline-block",
+                        background:
+                          "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                        color: "white",
+                        padding: "0.5rem 1rem",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
                     >
                       🏛️ View Community Profile
                     </a>
                   </>
                 ) : (
                   <>
-                    <p className="card-detail">⏸️ Paymaster not registered to Registry yet</p>
-                    <p className="card-detail" style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-                      Register your deployed AOA Paymaster to your community profile in Registry.
+                    <p className="card-detail">
+                      ⏸️ Paymaster not registered to Registry yet
+                    </p>
+                    <p
+                      className="card-detail"
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#6b7280",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      Register your deployed AOA Paymaster to your community
+                      profile in Registry.
                     </p>
                     {!resources.paymasterAddress && (
-                      <p className="card-detail" style={{ fontSize: '0.875rem', color: '#f59e0b', marginBottom: '0.5rem' }}>
+                      <p
+                        className="card-detail"
+                        style={{
+                          fontSize: "0.875rem",
+                          color: "#f59e0b",
+                          marginBottom: "0.5rem",
+                        }}
+                      >
                         ⚠️ Please deploy AOA Paymaster first.
                       </p>
                     )}
@@ -853,17 +1160,22 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                         className="register-btn"
                         disabled={isRegisteringPaymaster}
                         style={{
-                          padding: '0.5rem 1rem',
-                          background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-                          color: 'white',
-                          border: 'none',
-                          borderRadius: '6px',
-                          cursor: isRegisteringPaymaster ? 'not-allowed' : 'pointer',
+                          padding: "0.5rem 1rem",
+                          background:
+                            "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: isRegisteringPaymaster
+                            ? "not-allowed"
+                            : "pointer",
                           fontWeight: 600,
-                          opacity: isRegisteringPaymaster ? 0.6 : 1
+                          opacity: isRegisteringPaymaster ? 0.6 : 1,
                         }}
                       >
-                        {isRegisteringPaymaster ? '⏳ Registering...' : '📝 Register Paymaster to Registry'}
+                        {isRegisteringPaymaster
+                          ? "⏳ Registering..."
+                          : "📝 Register Paymaster to Registry"}
                       </button>
                     )}
                   </>
@@ -871,6 +1183,106 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Community Resources */}
+      <div className="community-resources">
+        <div className="resource-section">
+          <h3>👥 For Community Members</h3>
+          <div className="resource-grid">
+            <div className="resource-card">
+              <h4>🏆 Mint MySBT as a protocol credential</h4>
+              <p>
+                Need 0.4 GToken to mint your MySBT and become a recognized
+                community member
+              </p>
+              <a
+                href="/get-sbt"
+                className="action-button primary"
+                style={{
+                  display: "inline-block",
+                  marginTop: "10px",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  fontSize: "14px",
+                }}
+              >
+                Mint MySBT →
+              </a>
+            </div>
+            <div className="resource-card">
+              <h4>🎯 Get xPNTs from Community Task Square</h4>
+              <p>
+                Complete community tasks and earn xPNTs for gas fee discounts
+              </p>
+              <a
+                href="https://tasks.aastar.io"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-button secondary"
+                style={{
+                  display: "inline-block",
+                  marginTop: "10px",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  fontSize: "14px",
+                }}
+              >
+                Go to Task Square →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="resource-section">
+          <h3>⚡ For DApps or Developers</h3>
+          <div className="resource-grid">
+            <div className="resource-card">
+              <h4>🔧 Support standard ERC-4337 Transaction</h4>
+              <p>PaymasterAndData = Paymaster address:xPNTs address</p>
+              <div
+                className="code-block"
+                style={{
+                  background: "#f5f5f5",
+                  padding: "10px",
+                  borderRadius: "4px",
+                  fontFamily: "monospace",
+                  fontSize: "12px",
+                  margin: "10px 0",
+                  color: "#00C851",
+                }}
+              >
+                Paymaster address: {resources.paymasterAddress || "Loading..."}
+                :xPNTs address: {resources.xPNTsAddress || "Loading..."}
+              </div>
+            </div>
+            <div className="resource-card">
+              <h4>⚠️ Important User Notifications</h4>
+              <ul style={{ margin: "10px 0", paddingLeft: "20px" }}>
+                <li>Get a MySBT credential</li>
+                <li>Get about 100 xPNTs</li>
+              </ul>
+              <a
+                href={`http://localhost:5173/operator/manage?address=${resources.xPNTsAddress || ""}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="action-button info"
+                style={{
+                  display: "inline-block",
+                  marginTop: "10px",
+                  padding: "8px 16px",
+                  borderRadius: "6px",
+                  textDecoration: "none",
+                  fontSize: "14px",
+                }}
+              >
+                Paymaster Config →
+              </a>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -883,8 +1295,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
           </div>
           <div className="recommendation-content">
             <p>
-              For production use, we strongly recommend transferring community ownership to a
-              <strong> Gnosis Safe multisig wallet</strong> instead of using a single EOA account.
+              For production use, we strongly recommend transferring community
+              ownership to a<strong> Gnosis Safe multisig wallet</strong>{" "}
+              instead of using a single EOA account.
             </p>
             <div className="recommendation-benefits">
               <div className="benefit-item">
@@ -910,7 +1323,11 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 🛡️ Create Gnosis Safe Multisig ↗
               </a>
               <a
-                href={communityAddress ? `/explorer/community/${communityAddress}` : "/explorer"}
+                href={
+                  communityAddress
+                    ? `/explorer/community/${communityAddress}`
+                    : "/explorer"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-transfer"
@@ -920,10 +1337,22 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             </div>
             <div className="recommendation-note">
               <strong>Note:</strong> After creating a Safe multisig wallet:
-              <ol style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
-                <li>Click "Manage Community" to open your community management page</li>
+              <ol
+                style={{
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                  paddingLeft: "1.5rem",
+                }}
+              >
+                <li>
+                  Click "Manage Community" to open your community management
+                  page
+                </li>
                 <li>Connect your current wallet (owner account)</li>
-                <li>Use the "Edit" button on "Owner Address" to transfer ownership to your Safe wallet address</li>
+                <li>
+                  Use the "Edit" button on "Owner Address" to transfer ownership
+                  to your Safe wallet address
+                </li>
                 <li>The page supports both MetaMask and Safe App modes</li>
               </ol>
             </div>
@@ -940,7 +1369,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
           </div>
           <div className="recommendation-content">
             <p>
-              For production use, we recommend creating a <strong>Gnosis Safe multisig wallet</strong> to manage your community resources securely.
+              For production use, we recommend creating a{" "}
+              <strong>Gnosis Safe multisig wallet</strong> to manage your
+              community resources securely.
             </p>
             <div className="recommendation-benefits">
               <div className="benefit-item">
@@ -966,7 +1397,11 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 🛡️ Create Gnosis Safe Multisig ↗
               </a>
               <a
-                href={communityAddress ? `/explorer/community/${communityAddress}` : "/explorer"}
+                href={
+                  communityAddress
+                    ? `/explorer/community/${communityAddress}`
+                    : "/explorer"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-transfer"
@@ -976,10 +1411,22 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
             </div>
             <div className="recommendation-note">
               <strong>Note:</strong> After creating a Safe multisig wallet:
-              <ol style={{ marginTop: '0.5rem', marginBottom: 0, paddingLeft: '1.5rem' }}>
-                <li>Click "Manage Community" to open your community management page</li>
+              <ol
+                style={{
+                  marginTop: "0.5rem",
+                  marginBottom: 0,
+                  paddingLeft: "1.5rem",
+                }}
+              >
+                <li>
+                  Click "Manage Community" to open your community management
+                  page
+                </li>
                 <li>Connect your current wallet (owner account)</li>
-                <li>Use the "Edit" button on "Owner Address" to transfer ownership to your Safe wallet address</li>
+                <li>
+                  Use the "Edit" button on "Owner Address" to transfer ownership
+                  to your Safe wallet address
+                </li>
                 <li>The page supports both MetaMask and Safe App modes</li>
               </ol>
             </div>
@@ -989,7 +1436,7 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
       {/* Next Steps */}
       <div className="next-steps">
-        <h3>{t('step3Complete.nextSteps.title')}</h3>
+        <h3>{t("step3Complete.nextSteps.title")}</h3>
         <div className="steps-list">
           {mode === "aoa" ? (
             <>
@@ -997,7 +1444,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <div className="step-number">1</div>
                 <div className="step-content">
                   <h4>更新 Registry 社区信息</h4>
-                  <p>将新部署的 Paymaster 地址更新到 Registry，确保社区信息完整</p>
+                  <p>
+                    将新部署的 Paymaster 地址更新到 Registry，确保社区信息完整
+                  </p>
                   <a
                     href="/register-community?returnUrl=/operator/wizard"
                     target="_blank"
@@ -1012,15 +1461,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoa.step1.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoa.step1.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoa.step1.title")}</h4>
+                  <p>{t("step3Complete.nextSteps.aoa.step1.description")}</p>
                   <a
                     href={`/operator/manage?address=${resources.paymasterAddress}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoa.step1.action')} ↗
+                    {t("step3Complete.nextSteps.aoa.step1.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1028,15 +1477,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoa.step2.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoa.step2.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoa.step2.title")}</h4>
+                  <p>{t("step3Complete.nextSteps.aoa.step2.description")}</p>
                   <a
                     href="https://demo.aastar.io"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoa.step2.action')} ↗
+                    {t("step3Complete.nextSteps.aoa.step2.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1044,15 +1493,15 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">4</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoa.step3.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoa.step3.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoa.step3.title")}</h4>
+                  <p>{t("step3Complete.nextSteps.aoa.step3.description")}</p>
                   <a
                     href="/developer"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoa.step3.action')} ↗
+                    {t("step3Complete.nextSteps.aoa.step3.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1062,15 +1511,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">1</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoaPlus.step1.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoaPlus.step1.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoaPlus.step1.title")}</h4>
+                  <p>
+                    {t("step3Complete.nextSteps.aoaPlus.step1.description")}
+                  </p>
                   <a
                     href="/get-pnts"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step1.action')} ↗
+                    {t("step3Complete.nextSteps.aoaPlus.step1.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1078,15 +1529,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">2</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoaPlus.step2.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoaPlus.step2.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoaPlus.step2.title")}</h4>
+                  <p>
+                    {t("step3Complete.nextSteps.aoaPlus.step2.description")}
+                  </p>
                   <a
                     href="https://demo.aastar.io"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step2.action')} ↗
+                    {t("step3Complete.nextSteps.aoaPlus.step2.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1094,15 +1547,17 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
               <div className="step-item">
                 <div className="step-number">3</div>
                 <div className="step-content">
-                  <h4>{t('step3Complete.nextSteps.aoaPlus.step3.title')}</h4>
-                  <p>{t('step3Complete.nextSteps.aoaPlus.step3.description')}</p>
+                  <h4>{t("step3Complete.nextSteps.aoaPlus.step3.title")}</h4>
+                  <p>
+                    {t("step3Complete.nextSteps.aoaPlus.step3.description")}
+                  </p>
                   <a
                     href="/explorer"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="step-action"
                   >
-                    {t('step3Complete.nextSteps.aoaPlus.step3.action')} ↗
+                    {t("step3Complete.nextSteps.aoaPlus.step3.action")} ↗
                   </a>
                 </div>
               </div>
@@ -1114,13 +1569,10 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
       {/* Actions */}
       <div className="completion-actions">
         <button className="btn-secondary" onClick={onRestart}>
-          {t('step3Complete.actions.restart')}
+          {t("step3Complete.actions.restart")}
         </button>
-        <button
-          className="btn-primary"
-          onClick={() => navigate("/")}
-        >
-          {t('step3Complete.actions.goHome')}
+        <button className="btn-primary" onClick={() => navigate("/")}>
+          {t("step3Complete.actions.goHome")}
         </button>
       </div>
     </div>
