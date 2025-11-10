@@ -30,7 +30,7 @@ export function RegisterCommunity() {
   const XPNTS_FACTORY_ADDRESS = tokens.xPNTsFactory;
   const MYSBT_ADDRESS = tokens.mySBT; // MySBT white-label SBT
   const PAYMASTER_FACTORY_ADDRESS = core.paymasterFactory;
-  const RPC_URL = getRpcUrl();
+  const RPC_URL = getRpcUrl(); // Use local env config with API keys
   const EXPLORER_URL = getBlockExplorer("sepolia");
 
   // ABIs are now directly imported from shared-config

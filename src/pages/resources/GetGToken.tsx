@@ -14,12 +14,12 @@ import {
   getBlockExplorer,
   SEPOLIA_V2_VERSIONS,
   getV2ContractByName,
-  getRpcUrl,
   getChainId,
   getNetwork,
   GTokenABI,
   GTokenStakingABI,
 } from "@aastar/shared-config";
+import { getRpcUrl } from "../../config/rpc";
 import "./GetGToken.css";
 
 const GetGToken: React.FC = () => {
@@ -29,7 +29,7 @@ const GetGToken: React.FC = () => {
   const network = getNetwork("sepolia");
   const core = getCoreContracts("sepolia");
   const tokens = getTokenContracts("sepolia");
-  const RPC_URL = getRpcUrl("sepolia");
+  const RPC_URL = getRpcUrl(); // Use local env config with API keys
   const EXPLORER_URL = getBlockExplorer("sepolia");
   const CHAIN_ID = getChainId("sepolia");
 
@@ -131,6 +131,9 @@ const GetGToken: React.FC = () => {
     timestamp: number;
     canComplete: boolean;
   } | null>(null);
+
+  // Determine if current network is testnet
+  const isTest = network.name.toLowerCase().includes('sepolia') || network.name.toLowerCase().includes('testnet');
 
   const handleGoBack = () => {
     navigate(-1);
@@ -555,6 +558,20 @@ const GetGToken: React.FC = () => {
     }
   };
 
+  // Set network info helper
+  const setNetworkInfo = useCallback(async () => {
+    if (window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const chainId = Number((await provider.getNetwork()).chainId);
+      const networkInfo = {
+        chainId,
+        name: network.name || `Chain ${chainId}`,
+      };
+      setCurrentNetwork(networkInfo);
+      console.log("🌐 Current network detected:", networkInfo);
+    }
+  }, [network.name]);
+
   // Load balances on account change
   useEffect(() => {
     if (account) {
@@ -564,21 +581,8 @@ const GetGToken: React.FC = () => {
 
   // Set current network info on component mount
   useEffect(() => {
-    const setNetworkInfo = async () => {
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const chainId = Number((await provider.getNetwork()).chainId);
-        const networkInfo = {
-          chainId,
-          name: network.name || `Chain ${chainId}`,
-        };
-        setCurrentNetwork(networkInfo);
-        console.log("🌐 Current network detected:", networkInfo);
-      }
-    };
-
     setNetworkInfo();
-  }, []);
+  }, [setNetworkInfo]);
 
   // Listen for account changes
   useEffect(() => {
@@ -759,7 +763,7 @@ const GetGToken: React.FC = () => {
                         ? `${currentNetwork.name} (${currentNetwork.chainId})`
                         : "Unknown"}
                     </span>
-                    {currentNetwork?.chainId !== config.chainId && (
+                    {currentNetwork?.chainId !== CHAIN_ID && (
                       <span style={{ color: "#ef4444", marginLeft: "0.5rem" }}>
                         ⚠️ Expected: {network.name} ({CHAIN_ID})
                       </span>
@@ -1434,9 +1438,6 @@ const GetGToken: React.FC = () => {
                 >
                     Go to GToken Faucet &rarr;
                 </a>
-                ) : (
-                  <p className="coming-soon">Faucet coming soon</p>
-                )}
               </div>
 
               <div className="method-card">
@@ -1456,9 +1457,6 @@ const GetGToken: React.FC = () => {
                 >
                     Go to Test DEX &rarr;
                 </a>
-                ) : (
-                  <p className="coming-soon">DEX coming soon</p>
-                )}
               </div>
 
               <div className="method-card">
