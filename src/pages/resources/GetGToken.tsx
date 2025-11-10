@@ -7,8 +7,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ethers } from "ethers";
-import { getCurrentNetworkConfig, isTestnet } from "../../config/networkConfig";
-import { ERC20_ABI, GTokenStakingABI } from "../../config/abis";
 import {
   getAllV2Contracts,
   getCoreContracts,
@@ -16,20 +14,28 @@ import {
   getBlockExplorer,
   SEPOLIA_V2_VERSIONS,
   getV2ContractByName,
+  getRpcUrl,
+  getChainId,
+  getNetwork,
+  GTokenABI,
+  GTokenStakingABI,
 } from "@aastar/shared-config";
 import "./GetGToken.css";
 
 const GetGToken: React.FC = () => {
   const navigate = useNavigate();
-  const config = getCurrentNetworkConfig();
-  const isTest = isTestnet();
 
-  // Get contract addresses and versions from shared-config
+  // Get all config from shared-config
+  const network = getNetwork("sepolia");
   const core = getCoreContracts("sepolia");
   const tokens = getTokenContracts("sepolia");
+  const RPC_URL = getRpcUrl("sepolia");
+  const EXPLORER_URL = getBlockExplorer("sepolia");
+  const CHAIN_ID = getChainId("sepolia");
+
+  // Get contract addresses from shared-config
   const GTOKEN_ADDRESS = core.gToken;
   const GTOKEN_STAKING_ADDRESS = core.gTokenStaking;
-  const EXPLORER_URL = getBlockExplorer("sepolia");
 
   // Version info state
   const [gtokenVersion, setGtokenVersion] = useState<string>("");
@@ -130,26 +136,6 @@ const GetGToken: React.FC = () => {
     navigate(-1);
   };
 
-  // Check current network
-  const checkCurrentNetwork = async () => {
-    try {
-      if (window.ethereum) {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const network = await provider.getNetwork();
-        const networkInfo = {
-          chainId: Number(network.chainId),
-          name: network.name || `Chain ${Number(network.chainId)}`,
-        };
-        setCurrentNetwork(networkInfo);
-        console.log("🌐 Current network detected:", networkInfo);
-        return networkInfo;
-      }
-    } catch (error) {
-      console.error("Failed to check network:", error);
-      return null;
-    }
-  };
-
   // Connect wallet
   const connectWallet = async () => {
     try {
@@ -163,13 +149,21 @@ const GetGToken: React.FC = () => {
       const provider = new ethers.BrowserProvider(window.ethereum);
 
       // Check network
-      const network = await provider.getNetwork();
+      const chainId = Number((await provider.getNetwork()).chainId);
 
-      if (Number(network.chainId) !== config.chainId) {
+      // Set current network info
+      const networkInfo = {
+        chainId,
+        name: network.name || `Chain ${chainId}`,
+      };
+      setCurrentNetwork(networkInfo);
+      console.log("🌐 Current network detected:", networkInfo);
+
+      if (chainId !== CHAIN_ID) {
         try {
           await window.ethereum.request({
             method: "wallet_switchEthereumChain",
-            params: [{ chainId: `0x${config.chainId.toString(16)}` }],
+            params: [{ chainId: `0x${CHAIN_ID.toString(16)}` }],
           });
         } catch (switchError: unknown) {
           if ((switchError as { code?: number }).code === 4902) {
@@ -178,22 +172,22 @@ const GetGToken: React.FC = () => {
                 method: "wallet_addEthereumChain",
                 params: [
                   {
-                    chainId: `0x${config.chainId.toString(16)}`,
-                    chainName: config.chainName,
-                    rpcUrls: [config.rpcUrl],
-                    blockExplorerUrls: [config.explorerUrl],
+                    chainId: `0x${CHAIN_ID.toString(16)}`,
+                    chainName: network.name,
+                    rpcUrls: [network.rpcUrl],
+                    blockExplorerUrls: [network.blockExplorer],
                   },
                 ],
               });
             } catch {
               alert(
-                `Failed to add ${config.chainName} network. Please add it manually.`,
+                `Failed to add ${network.name} network. Please add it manually.`,
               );
               return;
             }
           } else {
             alert(
-              `Failed to switch to ${config.chainName}. Please switch manually.`,
+              `Failed to switch to ${network.name}. Please switch manually.`,
             );
             return;
           }
@@ -223,8 +217,8 @@ const GetGToken: React.FC = () => {
 
         // Load GToken balance
         const gTokenContract = new ethers.Contract(
-          config.contracts.gToken,
-          ERC20_ABI,
+          GTOKEN_ADDRESS,
+          GTokenABI,
           provider,
         );
         const gTokenBalanceWei = await gTokenContract.balanceOf(userAddress);
@@ -233,7 +227,7 @@ const GetGToken: React.FC = () => {
 
         // Load stGToken balance
         const stakingContract = new ethers.Contract(
-          config.contracts.gTokenStaking,
+          GTOKEN_STAKING_ADDRESS,
           GTokenStakingABI,
           provider,
         );
@@ -290,8 +284,8 @@ const GetGToken: React.FC = () => {
         console.error("❌ === Balance Loading Failed ===");
         console.error("Error details:", error);
         console.error("User address:", userAddress);
-        console.error("GToken contract:", config.contracts.gToken);
-        console.error("Network:", config.chainName);
+        console.error("GToken contract:", GTOKEN_ADDRESS);
+        console.error("Network:", network.name);
 
         // Try to get more specific error info
         if ((error as { code?: string }).code) {
@@ -308,7 +302,7 @@ const GetGToken: React.FC = () => {
         }
       }
     },
-    [config.contracts.gToken, config.contracts.gTokenStaking, config.chainName],
+    [GTOKEN_ADDRESS, GTOKEN_STAKING_ADDRESS, network.name],
   );
 
   // Handle complete unstake
@@ -326,7 +320,7 @@ const GetGToken: React.FC = () => {
       const signer = await provider.getSigner();
 
       const stakingContract = new ethers.Contract(
-        config.contracts.gTokenStaking,
+        GTOKEN_STAKING_ADDRESS,
         GTokenStakingABI,
         signer,
       );
@@ -411,10 +405,9 @@ const GetGToken: React.FC = () => {
       setError(
         `⚠️ INSUFFICIENT ETH FOR GAS FEES\n\n` +
           `Your ETH balance is 0. You need ETH to pay for gas fees when staking GToken.\n\n` +
-          `Please get free testnet ETH from these faucets:\n` +
-          config.resources.ethFaucets
-            .map((faucet, index) => `• Faucet ${index + 1}: ${faucet}`)
-            .join("\n") +
+          `Please get free testnet ETH from faucet:\n` +
+          `• https://sepoliafaucet.com/\n` +
+          `• https://www.infura.io/faucet/sepolia\n` +
           `\n\nAfter getting ETH, your balance will update automatically.`,
       );
       return;
@@ -433,13 +426,13 @@ const GetGToken: React.FC = () => {
       console.log("=== Staking Pre-flight Checks ===");
       console.log("User address:", account);
       console.log("Stake amount:", stakeAmount, "GT");
-      console.log("GToken contract:", config.contracts.gToken);
-      console.log("GTokenStaking contract:", config.contracts.gTokenStaking);
+      console.log("GToken contract:", GTOKEN_ADDRESS);
+      console.log("GTokenStaking contract:", GTOKEN_STAKING_ADDRESS);
 
       // Pre-flight Check 1: Verify GToken balance
       const gtokenContract = new ethers.Contract(
-        config.contracts.gToken,
-        ERC20_ABI,
+        GTOKEN_ADDRESS,
+        GTokenABI,
         provider,
       );
       const gTokenBalance = await gtokenContract.balanceOf(account);
@@ -450,7 +443,7 @@ const GetGToken: React.FC = () => {
           `Insufficient GToken balance!\n\n` +
             `You have: ${ethers.formatEther(gTokenBalance)} GT\n` +
             `Required: ${stakeAmount} GT\n\n` +
-            `GToken contract: ${config.contracts.gToken}`,
+            `GToken contract: ${GTOKEN_ADDRESS}`,
         );
         return;
       }
@@ -489,20 +482,20 @@ const GetGToken: React.FC = () => {
 
       // Step 1: Approve GToken
       const gtokenContractSigner = new ethers.Contract(
-        config.contracts.gToken,
-        ERC20_ABI,
+        GTOKEN_ADDRESS,
+        GTokenABI,
         signer,
       );
 
       const currentAllowance = await gtokenContractSigner.allowance(
         account,
-        config.contracts.gTokenStaking,
+        GTOKEN_STAKING_ADDRESS,
       );
 
       if (currentAllowance < amountWei) {
         console.log("📝 Approving GToken...");
         const approveTx = await gtokenContractSigner.approve(
-          config.contracts.gTokenStaking,
+          GTOKEN_STAKING_ADDRESS,
           amountWei,
         );
         await approveTx.wait();
@@ -513,7 +506,7 @@ const GetGToken: React.FC = () => {
 
       // Step 2: Stake
       const stakingContractSigner = new ethers.Contract(
-        config.contracts.gTokenStaking,
+        GTOKEN_STAKING_ADDRESS,
         GTokenStakingABI,
         signer,
       );
@@ -547,8 +540,8 @@ const GetGToken: React.FC = () => {
         errorMsg += `• Pending unstake request\n`;
         errorMsg += `• Contract interaction issue\n\n`;
         errorMsg += `Contract addresses:\n`;
-        errorMsg += `GToken: ${config.contracts.gToken}\n`;
-        errorMsg += `GTokenStaking: ${config.contracts.gTokenStaking}\n\n`;
+        errorMsg += `GToken: ${GTOKEN_ADDRESS}\n`;
+        errorMsg += `GTokenStaking: ${GTOKEN_STAKING_ADDRESS}\n\n`;
         errorMsg += `Please check browser console for details.`;
       } else if ((error as { code?: string }).code === "ACTION_REJECTED") {
         errorMsg = "Transaction cancelled by user.";
@@ -569,9 +562,22 @@ const GetGToken: React.FC = () => {
     }
   }, [account, loadBalances]);
 
-  // Check network on component mount
+  // Set current network info on component mount
   useEffect(() => {
-    checkCurrentNetwork();
+    const setNetworkInfo = async () => {
+      if (window.ethereum) {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const chainId = Number((await provider.getNetwork()).chainId);
+        const networkInfo = {
+          chainId,
+          name: network.name || `Chain ${chainId}`,
+        };
+        setCurrentNetwork(networkInfo);
+        console.log("🌐 Current network detected:", networkInfo);
+      }
+    };
+
+    setNetworkInfo();
   }, []);
 
   // Listen for account changes
@@ -603,11 +609,12 @@ const GetGToken: React.FC = () => {
       window.ethereum.on("chainChanged", (chainId: string) => {
         console.log("🌐 === DEBUG: Network Changed ===");
         console.log("New chain ID:", chainId);
-        console.log("Expected chain ID:", `0x${config.chainId.toString(16)}`);
+        console.log("Expected chain ID:", `0x${CHAIN_ID.toString(16)}`);
 
         // Update network state
         setTimeout(() => {
-          checkCurrentNetwork();
+          // Re-check network info after change
+          setNetworkInfo();
         }, 1000); // Delay to ensure MetaMask has updated
 
         // Reload balances if account is connected
@@ -617,7 +624,7 @@ const GetGToken: React.FC = () => {
         }
       });
     }
-  }, [account, config.chainId, loadBalances]);
+  }, [account, CHAIN_ID, loadBalances]);
 
   return (
     <div className="get-gtoken-page">
