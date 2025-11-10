@@ -468,28 +468,25 @@ export default function ManagePaymasterAOA() {
     setError('');
 
     try {
-      // Use Alchemy for estimation, MetaMask for signing
-      const readProvider = getReadProvider();
       const browserProvider = new ethers.BrowserProvider(window.ethereum);
       const signer = await browserProvider.getSigner();
-
-      // Create contract with read provider for gas estimation
-      const entryPointRead = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, readProvider);
 
       console.log('💰 Adding deposit to EntryPoint...');
       console.log('Amount:', depositAmount, 'ETH');
       console.log('Paymaster:', paymasterAddress);
+      console.log('EntryPoint:', ENTRY_POINT_V07);
 
-      // Estimate gas using Alchemy (more reliable)
-      const gasLimit = await entryPointRead.addDeposit.estimateGas(paymasterAddress, {
+      // Create contract with signer
+      const entryPointContract = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
+
+      // Estimate gas
+      const gasLimit = await entryPointContract.depositTo.estimateGas(paymasterAddress, {
         value: ethers.parseEther(depositAmount),
-        from: await signer.getAddress(),
       });
       console.log('⛽ Estimated gas:', gasLimit.toString());
 
-      // Send transaction with MetaMask
-      const entryPointWrite = new ethers.Contract(ENTRY_POINT_V07, ENTRY_POINT_ABI, signer);
-      const tx = await entryPointWrite.addDeposit(paymasterAddress, {
+      // Send transaction
+      const tx = await entryPointContract.depositTo(paymasterAddress, {
         value: ethers.parseEther(depositAmount),
         gasLimit: gasLimit * 120n / 100n, // Add 20% buffer
       });

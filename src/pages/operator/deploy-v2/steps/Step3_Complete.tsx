@@ -42,6 +42,9 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
   const [isRegisteringPaymaster, setIsRegisteringPaymaster] = useState(false);
   const [paymasterRegError, setPaymasterRegError] = useState<string>("");
 
+  // EntryPoint deposit balance (AOA mode only)
+  const [entryPointDeposit, setEntryPointDeposit] = useState<string>("0");
+
   // Get current wallet address (community owner)
   useEffect(() => {
     const getAddress = async () => {
@@ -62,6 +65,30 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
 
   const getExplorerLink = (address: string): string => {
     return `https://sepolia.etherscan.io/address/${address}`;
+  };
+
+  // Check EntryPoint deposit balance (AOA mode only)
+  const checkEntryPointDeposit = async (paymasterAddr: string) => {
+    if (mode !== "aoa" || !paymasterAddr) return;
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const entryPointAddress = networkConfig.contracts.entryPointV07;
+
+      const entryPointABI = [
+        "function balanceOf(address account) external view returns (uint256)"
+      ];
+
+      const entryPoint = new ethers.Contract(entryPointAddress, entryPointABI, provider);
+      const balance = await entryPoint.balanceOf(paymasterAddr);
+      const balanceEth = ethers.formatEther(balance);
+
+      console.log("💰 EntryPoint deposit for paymaster:", balanceEth, "ETH");
+      setEntryPointDeposit(balanceEth);
+    } catch (err) {
+      console.error("Failed to check EntryPoint deposit:", err);
+      setEntryPointDeposit("0");
+    }
   };
 
   // Check if already registered in SuperPaymaster (AOA+ mode)
@@ -420,6 +447,13 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
     }
   }, [communityAddress]);
 
+  // Check EntryPoint deposit balance for AOA mode
+  useEffect(() => {
+    if (mode === "aoa" && resources.paymasterAddress) {
+      checkEntryPointDeposit(resources.paymasterAddress);
+    }
+  }, [mode, resources.paymasterAddress]);
+
   return (
     <div className="step3-complete">
       <div className="completion-header">
@@ -523,6 +557,30 @@ export function Step3_Complete({ mode, resources, onRestart }: Step3Props) {
                 <p className="card-detail">{t('step3Complete.summary.balances.apnts')} {resources.aPNTsBalance} aPNTs</p>
               )}
               <p className="card-detail">{t('step3Complete.summary.balances.eth')} {resources.ethBalance} ETH</p>
+              {mode === "aoa" && resources.paymasterAddress && (
+                <>
+                  <p className="card-detail" style={{
+                    marginTop: '0.75rem',
+                    paddingTop: '0.75rem',
+                    borderTop: '1px solid #e5e7eb',
+                    fontWeight: parseFloat(entryPointDeposit) > 0 ? 600 : 400,
+                    color: parseFloat(entryPointDeposit) > 0 ? '#10b981' : '#ef4444'
+                  }}>
+                    {parseFloat(entryPointDeposit) > 0 ? '✅' : '⚠️'} EntryPoint Deposit: {parseFloat(entryPointDeposit).toFixed(4)} ETH
+                  </p>
+                  {parseFloat(entryPointDeposit) === 0 && (
+                    <a
+                      href={`/operator/manage?address=${resources.paymasterAddress}#entrypoint`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                      style={{ marginTop: '0.5rem', display: 'inline-block' }}
+                    >
+                      Add Deposit to EntryPoint →
+                    </a>
+                  )}
+                </>
+              )}
             </div>
           </div>
 
