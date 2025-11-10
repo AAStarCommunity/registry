@@ -53,6 +53,9 @@ export function CompletePage() {
   const [paymasterBalance, setPaymasterBalance] = useState<string>("0");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [ethBalance, setEthBalance] = useState<string>("0");
+  const [isRegistryPaymasterSet, setIsRegistryPaymasterSet] = useState(false);
+  const [isRegisteringPaymaster, setIsRegisteringPaymaster] = useState(false);
+  const [paymasterRegError, setPaymasterRegError] = useState<string>("");
 
   // Get current wallet address
   const getWalletAddress = async () => {
@@ -199,6 +202,79 @@ export function CompletePage() {
     ]);
   };
 
+  // Check if paymaster is registered in Registry
+  const checkRegistryPaymaster = async (communityAddr: string) => {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const registry = new ethers.Contract(
+        core.registry,
+        RegistryABI,
+        provider,
+      );
+
+      const profile = await registry.getCommunityProfile(communityAddr);
+      const registryPaymaster = String(
+        profile.paymasterAddress || profile[5] || ethers.ZeroAddress,
+      );
+
+      // Check if registry paymaster matches our deployed paymaster
+      if (
+        communityProfile?.paymasterAddress &&
+        registryPaymaster.toLowerCase() ===
+          communityProfile.paymasterAddress.toLowerCase() &&
+        registryPaymaster !== ethers.ZeroAddress
+      ) {
+        setIsRegistryPaymasterSet(true);
+        console.log("✅ Paymaster registered in Registry");
+      } else {
+        setIsRegistryPaymasterSet(false);
+        console.log("⏸️ Paymaster not registered in Registry");
+      }
+    } catch (error) {
+      console.error("Failed to check registry paymaster:", error);
+      setIsRegistryPaymasterSet(false);
+    }
+  };
+
+  // Register paymaster to Registry
+  const registerPaymasterToRegistry = async () => {
+    if (!walletAddress || !communityProfile?.paymasterAddress) {
+      setPaymasterRegError("Missing wallet or paymaster address");
+      return;
+    }
+
+    setIsRegisteringPaymaster(true);
+    setPaymasterRegError("");
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const registry = new ethers.Contract(core.registry, RegistryABI, signer);
+
+      console.log("📝 Registering paymaster to Registry...");
+      console.log("Community:", walletAddress);
+      console.log("Paymaster:", communityProfile.paymasterAddress);
+
+      const tx = await registry.setPaymaster(
+        communityProfile.paymasterAddress,
+      );
+      console.log("⏳ Transaction sent:", tx.hash);
+
+      await tx.wait();
+      console.log("✅ Paymaster registered successfully!");
+
+      setIsRegistryPaymasterSet(true);
+      setPaymasterRegError("");
+    } catch (error: any) {
+      console.error("Failed to register paymaster:", error);
+      const errorMsg =
+        error?.reason || error?.message || "Unknown error occurred";
+      setPaymasterRegError(errorMsg);
+    } finally {
+      setIsRegisteringPaymaster(false);
+    }
+  };
+
   // Initialize data
   useEffect(() => {
     const initializeData = async () => {
@@ -223,6 +299,13 @@ export function CompletePage() {
 
     initializeData();
   }, []);
+
+  // Check Registry paymaster registration after community profile is loaded
+  useEffect(() => {
+    if (walletAddress && communityProfile?.paymasterAddress) {
+      checkRegistryPaymaster(walletAddress);
+    }
+  }, [walletAddress, communityProfile?.paymasterAddress]);
 
   const handleGoBack = () => {
     navigate(-1);
@@ -346,33 +429,180 @@ export function CompletePage() {
             <div className="card-content">
               <h4>Account Balances</h4>
               <p className="card-detail">GToken: {gTokenBalance} GT</p>
-              <p className="card-detail">
-                EntryPoint Deposit:{" "}
-                <span
-                  style={{
-                    color:
-                      parseFloat(entryPointDeposit) > 0 ? "#10b981" : "#ef4444",
-                    fontWeight: parseFloat(entryPointDeposit) > 0 ? 600 : 400,
-                  }}
-                >
-                  {parseFloat(entryPointDeposit) > 0 ? "✅" : "⚠️"}{" "}
-                  {parseFloat(entryPointDeposit).toFixed(4)} ETH
-                </span>
-              </p>
-              <p className="card-detail">
-                Paymaster ETH: {paymasterBalance} ETH
-              </p>
-              <p className="card-detail">Wallet ETH: {ethBalance} ETH</p>
-              {parseFloat(entryPointDeposit) === 0 && (
-                <a
-                  href={`/operator/manage?address=${communityProfile.paymasterAddress}#entrypoint`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="explorer-link"
-                  style={{ marginTop: "0.5rem", display: "inline-block" }}
-                >
-                  Add Deposit to EntryPoint →
-                </a>
+              <p className="card-detail">ETH: {ethBalance} ETH</p>
+              {communityProfile.paymasterAddress && (
+                <>
+                  <p
+                    className="card-detail"
+                    style={{
+                      marginTop: "0.75rem",
+                      paddingTop: "0.75rem",
+                      borderTop: "1px solid #e5e7eb",
+                      fontWeight: parseFloat(entryPointDeposit) > 0 ? 600 : 400,
+                      color:
+                        parseFloat(entryPointDeposit) > 0
+                          ? "#10b981"
+                          : "#ef4444",
+                    }}
+                  >
+                    {parseFloat(entryPointDeposit) > 0 ? "✅" : "⚠️"} EntryPoint
+                    Deposit: {parseFloat(entryPointDeposit).toFixed(4)} ETH
+                  </p>
+                  {parseFloat(entryPointDeposit) === 0 && (
+                    <a
+                      href={`/operator/manage?address=${communityProfile.paymasterAddress}#entrypoint`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="explorer-link"
+                      style={{ marginTop: "0.5rem", display: "inline-block" }}
+                    >
+                      Add Deposit to EntryPoint →
+                    </a>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Registry Paymaster Registration */}
+          <div className="summary-card highlight">
+            <div className="card-icon">📝</div>
+            <div className="card-content">
+              <h4>Registry Paymaster Registration</h4>
+              {isRegisteringPaymaster ? (
+                <p className="card-detail">
+                  ⏳ Registering Paymaster to Registry...
+                </p>
+              ) : paymasterRegError ? (
+                <>
+                  <p className="card-detail" style={{ color: "#ef4444" }}>
+                    ❌ Registration failed
+                  </p>
+                  <p
+                    className="card-detail"
+                    style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                  >
+                    {paymasterRegError}
+                  </p>
+                  {!paymasterRegError.includes("Community not registered") && (
+                    <button
+                      onClick={registerPaymasterToRegistry}
+                      className="retry-btn"
+                      style={{
+                        marginTop: "0.5rem",
+                        padding: "0.5rem 1rem",
+                        background: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Retry Registration
+                    </button>
+                  )}
+                  {paymasterRegError.includes("Community not registered") && (
+                    <a
+                      href="/operator/register?returnUrl=/operator/complete"
+                      style={{
+                        marginTop: "0.5rem",
+                        display: "inline-block",
+                        padding: "0.5rem 1rem",
+                        background: "#10b981",
+                        color: "white",
+                        borderRadius: "6px",
+                        textDecoration: "none",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Go Register Community
+                    </a>
+                  )}
+                </>
+              ) : isRegistryPaymasterSet ? (
+                <>
+                  <p className="card-detail">
+                    ✅ Paymaster registered in Registry
+                  </p>
+                  <p
+                    className="card-detail"
+                    style={{ fontSize: "0.875rem", color: "#6b7280" }}
+                  >
+                    Your AOA Paymaster is now linked to your community in the
+                    Registry.
+                  </p>
+                  <a
+                    href={`/explorer/community/${walletAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="explorer-link"
+                    style={{
+                      marginTop: "0.5rem",
+                      display: "inline-block",
+                      background:
+                        "linear-gradient(135deg, #10b981 0%, #059669 100%)",
+                      color: "white",
+                      padding: "0.5rem 1rem",
+                      borderRadius: "6px",
+                      textDecoration: "none",
+                      fontWeight: 600,
+                    }}
+                  >
+                    🏛️ View Community Profile
+                  </a>
+                </>
+              ) : (
+                <>
+                  <p className="card-detail">
+                    ⏸️ Paymaster not registered to Registry yet
+                  </p>
+                  <p
+                    className="card-detail"
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#6b7280",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    Register your deployed AOA Paymaster to your community
+                    profile in Registry.
+                  </p>
+                  {!communityProfile.paymasterAddress && (
+                    <p
+                      className="card-detail"
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#f59e0b",
+                        marginBottom: "0.5rem",
+                      }}
+                    >
+                      ⚠️ Please deploy AOA Paymaster first.
+                    </p>
+                  )}
+                  {communityProfile.paymasterAddress && (
+                    <button
+                      onClick={registerPaymasterToRegistry}
+                      className="register-btn"
+                      disabled={isRegisteringPaymaster}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        background:
+                          "linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        cursor: isRegisteringPaymaster
+                          ? "not-allowed"
+                          : "pointer",
+                        fontWeight: 600,
+                        opacity: isRegisteringPaymaster ? 0.6 : 1,
+                      }}
+                    >
+                      📝 Register to Registry
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
