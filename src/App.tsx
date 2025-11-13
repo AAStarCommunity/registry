@@ -7,7 +7,7 @@ import {
 import { LandingPage } from "./pages/LandingPage";
 import { DeveloperPortal } from "./pages/DeveloperPortal";
 import { OperatorsPortal } from "./pages/OperatorsPortal";
-import { LaunchTutorial } from "./pages/LaunchTutorial";
+import { OperationGuide } from "./pages/OperationGuide";
 import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { CommunityDetail } from "./pages/explorer/CommunityDetail";
@@ -42,6 +42,7 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
+            <Route path="/operation-guide" element={<OperationGuide />} />
             <Route path="/operator/wizard" element={<DeployWizard />} />
             <Route path="/operator/complete" element={<CompletePage />} />
             <Route path="/operator/manage" element={<ManagePaymaster />} />
@@ -49,11 +50,9 @@ function App() {
               path="/operator/superpaymaster"
               element={<SuperPaymasterConfig />}
             />
-            <Route path="/launch-guide" element={<LaunchTutorial />} />
-            <Route path="/launch-tutorial" element={<LaunchTutorial />} />
             <Route
               path="/demo"
-              element={<Navigate to="/launch-tutorial" replace />}
+              element={<Navigate to="/operator" replace />}
             />
             {/* Explorer Hub - with 3 sub-views */}
             <Route path="/explorer" element={<ExplorerHub />} />

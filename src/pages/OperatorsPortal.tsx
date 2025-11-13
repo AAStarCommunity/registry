@@ -64,8 +64,8 @@ export function OperatorsPortal() {
             <a href="#manage-existing" className="cta-button secondary" onClick={handleManageClick}>
               ⚙️ Manage Existing
             </a>
-            <a href="/launch-tutorial" className="cta-button secondary">
-              📖 Launch Tutorial
+            <a href="/operation-guide" className="cta-button secondary">
+              📖 Operation Guide
             </a>
           </div>
         </div>
