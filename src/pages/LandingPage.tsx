@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { LanguageToggle } from "../components/LanguageToggle";
 import "./LandingPage.css";
 
 export function LandingPage() {
@@ -45,10 +44,6 @@ export function LandingPage() {
 
   return (
     <div className="landing-page">
-      {/* Language Toggle */}
-      <div className="language-toggle-container">
-        <LanguageToggle />
-      </div>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">

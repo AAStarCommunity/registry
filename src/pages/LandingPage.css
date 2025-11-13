@@ -383,14 +383,6 @@
     }
 }
 
-/* Language Toggle Container */
-.language-toggle-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .hero-content {
