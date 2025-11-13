@@ -629,5 +629,209 @@
       "mintSuccess": "铸造成功！",
       "mintFailed": "铸造失败"
     }
+  },
+  "operationGuide": {
+    "title": "社区运营商指南",
+    "subtitle": "掌握SuperPaymaster生态，构建繁荣的Web3社区经济",
+    "tabs": {
+      "overview": "概览",
+      "gasToken": "Gas代币",
+      "revenue": "收入模型",
+      "tasks": "任务系统",
+      "events": "活动运营",
+      "analytics": "数据分析"
+    },
+    "overview": {
+      "title": "社区运营商指南",
+      "description": "SuperPaymaster为社区运营商提供完整的工具栈，帮助您构建繁荣的Web3社区经济。通过Gas代付、积分系统和任务平台，将成本转化为价值，实现社区可持续发展。",
+      "stats": {
+        "lowerBarrier": {
+          "title": "降低参与门槛",
+          "description": "成员无需持有ETH即可参与链上活动，提升社区活跃度"
+        },
+        "createValue": {
+          "title": "创造经济价值",
+          "description": "将Gas成本转化为社区收入，构建可持续经济模型"
+        },
+        "positiveCycle": {
+          "title": "形成正循环",
+          "description": "任务-积分-消费闭环，激励成员持续贡献"
+        }
+      },
+      "quickStart": {
+        "title": "🚀 快速开始",
+        "steps": {
+          "register": {
+            "title": "注册社区",
+            "description": "在链上注册您的社区，配置基本信息和治理代币",
+            "link": "立即注册 →"
+          },
+          "deploy": {
+            "title": "部署代币",
+            "description": "发行社区专属的xPNTs积分代币和MySBT身份代币",
+            "link": "发行代币 →"
+          },
+          "launch": {
+            "title": "启动Paymaster",
+            "description": "一键部署Gas赞助合约，配置赞助规则",
+            "link": "启动服务 →"
+          }
+        }
+      }
+    },
+    "gasToken": {
+      "title": "⛽ Gas代币管理",
+      "description": "xPNTs是您社区的专属积分代币，用于支付Gas费用和社区内部经济活动。它将原本的纯成本支出转化为社区价值流通的媒介。",
+      "features": {
+        "gasPayment": {
+          "title": "💸 Gas支付",
+          "description": "成员使用xPNTs支付链上交易Gas，实现真正的'无感'体验"
+        },
+        "taskRewards": {
+          "title": "🎁 任务奖励",
+          "description": "完成社区任务获得xPNTs奖励，激励成员参与"
+        },
+        "shopConsumption": {
+          "title": "🛒 商店消费",
+          "description": "在社区商店兑换独家周边、限量版NFT、服务折扣券"
+        },
+        "valueStorage": {
+          "title": "📊 价值储存",
+          "description": "作为社区价值凭证，可设计通缩机制提升价值"
+        }
+      },
+      "economyModel": {
+        "title": "代币经济模型",
+        "issuance": {
+          "title": "📈 发行机制",
+          "items": [
+            "固定总量：推荐100万-1000万枚",
+            "增发规则：可设计社区投票增发机制",
+            "初始分配：40%财库+30%任务奖励+20%团队+10%生态"
+          ]
+        },
+        "consumption": {
+          "title": "🔥 消耗场景",
+          "items": [
+            "Gas支付：主要消耗场景，按实际Gas消耗",
+            "商店兑换：兑换独家NFT、周边商品、服务",
+            "特权服务：VIP身份、专属功能解锁"
+          ]
+        },
+        "support": {
+          "title": "💰 价值支撑",
+          "items": [
+            "社区财库：定期回购销毁，支撑代币价值",
+            "服务收入：Paymaster服务费收入注入财库",
+            "生态合作：与外部项目合作，提供兑换场景"
+          ]
+        }
+      },
+      "actionBox": {
+        "title": "🎯 操作建议",
+        "items": [
+          "合理设计总量：根据社区规模设定代币总量，避免通胀",
+          "多场景消耗：创造丰富的消耗场景，维持代币需求",
+          "定期回购：将部分收入用于回购销毁，支撑代币价值",
+          "透明治理：建立社区治理机制，让成员参与代币经济决策"
+        ],
+        "button": "立即发行xPNTs"
+      }
+    },
+    "revenue": {
+      "title": "💰 收入模型分析",
+      "description": "基于链上数据分析，典型L2活跃用户月度Gas成本约$1.95。通过SuperPaymaster，社区可以将这笔纯成本转化为稳定收入。",
+      "costAnalysis": {
+        "title": "📊 用户行为成本分析",
+        "table": {
+          "type": "行为类型",
+          "frequency": "月频次",
+          "cost": "单次成本",
+          "total": "月度成本"
+        },
+        "rows": {
+          "transfer": {
+            "type": "代币转账",
+            "frequency": "10次",
+            "cost": "$0.05",
+            "total": "$0.50"
+          },
+          "dapp": {
+            "type": "DApp交互",
+            "frequency": "10次",
+            "cost": "$0.10",
+            "total": "$1.00"
+          },
+          "mint": {
+            "type": "铸造/领取",
+            "frequency": "3次",
+            "cost": "$0.15",
+            "total": "$0.45"
+          },
+          "total": {
+            "type": "总计",
+            "frequency": "23次",
+            "cost": "-",
+            "total": "$1.95"
+          }
+        }
+      },
+      "revenueProjection": {
+        "title": "收入潜力测算",
+        "small": {
+          "title": "小型社区 (30人)",
+          "gasConsumption": "$58.5",
+          "serviceFee": "$1.17",
+          "yearlyRevenue": "$14.04"
+        },
+        "medium": {
+          "title": "中型社区 (50人)",
+          "gasConsumption": "$97.5",
+          "serviceFee": "$1.95",
+          "yearlyRevenue": "$23.40"
+        },
+        "large": {
+          "title": "大型社区 (120人)",
+          "gasConsumption": "$234.0",
+          "serviceFee": "$4.68",
+          "yearlyRevenue": "$56.16"
+        }
+      },
+      "revenueSources": {
+        "title": "收入来源多样化",
+        "gasService": {
+          "title": "💸 Gas服务费",
+          "description": "收取2-5%的Gas服务费，这是最直接的收入来源"
+        },
+        "shopRevenue": {
+          "title": "🏪 商店收入",
+          "description": "社区商店销售NFT、周边商品、服务的收入"
+        },
+        "cooperationRevenue": {
+          "title": "🤝 合作收入",
+          "description": "与外部项目合作，提供推广服务的收入"
+        },
+        "dataService": {
+          "title": "📊 数据服务",
+          "description": "为研究机构提供匿名化社区数据分析服务"
+        }
+      },
+      "actionBox": {
+        "title": "🎯 收入优化策略",
+        "items": [
+          "分层服务：为不同等级用户提供差异化服务",
+          "动态费率：根据网络拥堵情况调整服务费率",
+          "增值服务：提供优先处理、专属支持等增值服务",
+          "生态扩展：接入更多DApp，扩大服务范围"
+        ],
+        "button": "开始创收"
+      }
+    },
+    "footer": {
+      "title": "需要更多帮助？",
+      "description": "联系我们的技术支持团队，获取专业的社区运营指导",
+      "contactSupport": "联系支持",
+      "viewDocs": "查看文档"
+    }
   }
 }

@@ -5,10 +5,29 @@
 }
 
 .guide-header {
-  text-align: center;
   padding: 60px 20px 40px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-text {
+  flex: 1;
+  text-align: center;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .guide-header h1 {

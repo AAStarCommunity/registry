@@ -629,5 +629,209 @@
       "mintSuccess": "Mint successful!",
       "mintFailed": "Mint failed"
     }
+  },
+  "operationGuide": {
+    "title": "Community Operator Guide",
+    "subtitle": "Master the SuperPaymaster ecosystem and build a thriving Web3 community economy",
+    "tabs": {
+      "overview": "Overview",
+      "gasToken": "Gas Token",
+      "revenue": "Revenue Model",
+      "tasks": "Task System",
+      "events": "Event Operations",
+      "analytics": "Data Analytics"
+    },
+    "overview": {
+      "title": "Community Operator Guide",
+      "description": "SuperPaymaster provides a complete toolset for community operators to build a prosperous Web3 community economy. Through gas sponsorship, points systems, and task platforms, transform costs into value and achieve sustainable community development.",
+      "stats": {
+        "lowerBarrier": {
+          "title": "Lower Participation Barrier",
+          "description": "Members don't need to hold ETH to participate in on-chain activities, increasing community engagement"
+        },
+        "createValue": {
+          "title": "Create Economic Value",
+          "description": "Transform gas costs into community revenue, building a sustainable economic model"
+        },
+        "positiveCycle": {
+          "title": "Form Positive Cycle",
+          "description": "Task-points-consumption loop incentivizes continuous member contributions"
+        }
+      },
+      "quickStart": {
+        "title": "🚀 Quick Start",
+        "steps": {
+          "register": {
+            "title": "Register Community",
+            "description": "Register your community on-chain with basic information and governance tokens",
+            "link": "Register Now →"
+          },
+          "deploy": {
+            "title": "Deploy Tokens",
+            "description": "Issue community-exclusive xPNTs points tokens and MySBT identity tokens",
+            "link": "Issue Tokens →"
+          },
+          "launch": {
+            "title": "Launch Paymaster",
+            "description": "One-click deploy gas sponsorship contract and configure sponsorship rules",
+            "link": "Start Service →"
+          }
+        }
+      }
+    },
+    "gasToken": {
+      "title": "⛽ Gas Token Management",
+      "description": "xPNTs are your community's exclusive points tokens for paying gas fees and internal economic activities. They transform pure cost expenditure into a medium for community value circulation.",
+      "features": {
+        "gasPayment": {
+          "title": "💸 Gas Payment",
+          "description": "Members use xPNTs to pay for on-chain transaction gas, achieving true 'seamless' experience"
+        },
+        "taskRewards": {
+          "title": "🎁 Task Rewards",
+          "description": "Complete community tasks to earn xPNTs rewards, incentivizing member participation"
+        },
+        "shopConsumption": {
+          "title": "🛒 Shop Consumption",
+          "description": "Exchange for exclusive merchandise, limited edition NFTs, service discount coupons in community shop"
+        },
+        "valueStorage": {
+          "title": "📊 Value Storage",
+          "description": "As community value certificate, deflation mechanism can be designed to increase value"
+        }
+      },
+      "economyModel": {
+        "title": "Token Economy Model",
+        "issuance": {
+          "title": "📈 Issuance Mechanism",
+          "items": [
+            "Fixed total supply: Recommended 1M-10M tokens",
+            "Inflation rules: Community voting for inflation mechanism can be designed",
+            "Initial distribution: 40% treasury + 30% task rewards + 20% team + 10% ecosystem"
+          ]
+        },
+        "consumption": {
+          "title": "🔥 Consumption Scenarios",
+          "items": [
+            "Gas payment: Main consumption scenario, based on actual gas consumption",
+            "Shop exchange: Exchange for exclusive NFTs, merchandise, services",
+            "Privilege services: VIP identity, exclusive feature unlocking"
+          ]
+        },
+        "support": {
+          "title": "💰 Value Support",
+          "items": [
+            "Community treasury: Regular buyback and burn to support token value",
+            "Service revenue: Paymaster service fee revenue injected into treasury",
+            "Ecosystem cooperation: Cooperate with external projects to provide exchange scenarios"
+          ]
+        }
+      },
+      "actionBox": {
+        "title": "🎯 Operation Suggestions",
+        "items": [
+          "Reasonable total supply: Set token total supply based on community scale, avoid inflation",
+          "Multiple consumption scenarios: Create rich consumption scenarios, maintain token demand",
+          "Regular buyback: Use part of revenue for buyback and burn, support token value",
+          "Transparent governance: Establish community governance mechanism, let members participate in token economic decisions"
+        ],
+        "button": "Issue xPNTs Now"
+      }
+    },
+    "revenue": {
+      "title": "💰 Revenue Model Analysis",
+      "description": "Based on on-chain data analysis, typical L2 active users' monthly gas cost is about $1.95. Through SuperPaymaster, communities can transform this pure cost into stable revenue.",
+      "costAnalysis": {
+        "title": "📊 User Behavior Cost Analysis",
+        "table": {
+          "type": "Behavior Type",
+          "frequency": "Monthly Frequency",
+          "cost": "Single Cost",
+          "total": "Monthly Cost"
+        },
+        "rows": {
+          "transfer": {
+            "type": "Token Transfer",
+            "frequency": "10 times",
+            "cost": "$0.05",
+            "total": "$0.50"
+          },
+          "dapp": {
+            "type": "DApp Interaction",
+            "frequency": "10 times",
+            "cost": "$0.10",
+            "total": "$1.00"
+          },
+          "mint": {
+            "type": "Mint/Claim",
+            "frequency": "3 times",
+            "cost": "$0.15",
+            "total": "$0.45"
+          },
+          "total": {
+            "type": "Total",
+            "frequency": "23 times",
+            "cost": "-",
+            "total": "$1.95"
+          }
+        }
+      },
+      "revenueProjection": {
+        "title": "Revenue Potential Projection",
+        "small": {
+          "title": "Small Community (30 people)",
+          "gasConsumption": "$58.5",
+          "serviceFee": "$1.17",
+          "yearlyRevenue": "$14.04"
+        },
+        "medium": {
+          "title": "Medium Community (50 people)",
+          "gasConsumption": "$97.5",
+          "serviceFee": "$1.95",
+          "yearlyRevenue": "$23.40"
+        },
+        "large": {
+          "title": "Large Community (120 people)",
+          "gasConsumption": "$234.0",
+          "serviceFee": "$4.68",
+          "yearlyRevenue": "$56.16"
+        }
+      },
+      "revenueSources": {
+        "title": "Diversified Revenue Sources",
+        "gasService": {
+          "title": "💸 Gas Service Fee",
+          "description": "Charge 2-5% gas service fee, this is the most direct revenue source"
+        },
+        "shopRevenue": {
+          "title": "🏪 Shop Revenue",
+          "description": "Revenue from selling NFTs, merchandise, services in community shop"
+        },
+        "cooperationRevenue": {
+          "title": "🤝 Cooperation Revenue",
+          "description": "Revenue from cooperating with external projects to provide promotion services"
+        },
+        "dataService": {
+          "title": "📊 Data Service",
+          "description": "Provide anonymous community data analysis services to research institutions"
+        }
+      },
+      "actionBox": {
+        "title": "🎯 Revenue Optimization Strategy",
+        "items": [
+          "Tiered services: Provide differentiated services for different user levels",
+          "Dynamic rates: Adjust service fee rates based on network congestion",
+          "Value-added services: Provide priority processing, exclusive support and other value-added services",
+          "Ecosystem expansion: Connect more DApps to expand service scope"
+        ],
+        "button": "Start Earning"
+      }
+    },
+    "footer": {
+      "title": "Need More Help?",
+      "description": "Contact our technical support team for professional community operation guidance",
+      "contactSupport": "Contact Support",
+      "viewDocs": "View Documentation"
+    }
   }
 }

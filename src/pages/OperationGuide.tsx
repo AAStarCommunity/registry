@@ -1,26 +1,29 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
+import { LanguageToggle } from "../components/LanguageToggle";
 import "react-toastify/dist/ReactToastify.css";
 import "./OperationGuide.css";
 
 interface TabContent {
   id: string;
-  title: string;
+  titleKey: string;
   icon: string;
 }
 
 export const OperationGuide = () => {
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   const tabs: TabContent[] = [
-    { id: "overview", title: "概览", icon: "📊" },
-    { id: "gas-token", title: "Gas代币", icon: "⛽" },
-    { id: "revenue", title: "收入模型", icon: "💰" },
-    { id: "tasks", title: "任务系统", icon: "✅" },
-    { id: "events", title: "活动运营", icon: "🎯" },
-    { id: "analytics", title: "数据分析", icon: "📈" },
+    { id: "overview", titleKey: "operationGuide.tabs.overview", icon: "📊" },
+    { id: "gas-token", titleKey: "operationGuide.tabs.gasToken", icon: "⛽" },
+    { id: "revenue", titleKey: "operationGuide.tabs.revenue", icon: "💰" },
+    { id: "tasks", titleKey: "operationGuide.tabs.tasks", icon: "✅" },
+    { id: "events", titleKey: "operationGuide.tabs.events", icon: "🎯" },
+    { id: "analytics", titleKey: "operationGuide.tabs.analytics", icon: "📈" },
   ];
 
   const renderTabContent = () => {
@@ -28,55 +31,54 @@ export const OperationGuide = () => {
       case "overview":
         return (
           <div className="tab-content">
-            <h2>社区运营商操作指南</h2>
+            <h2>{t('operationGuide.overview.title')}</h2>
             <p className="intro">
-              SuperPaymaster为社区运营商提供完整的工具栈，帮助您构建繁荣的Web3社区经济生态。
-              通过Gas代付、积分系统和任务平台，将成本转化为价值，实现社区可持续发展。
+              {t('operationGuide.overview.description')}
             </p>
 
             <div className="stats-grid">
               <div className="stat-card">
                 <div className="stat-icon">👥</div>
-                <h3>降低参与门槛</h3>
-                <p>成员无需持有ETH即可参与链上活动，提升社区活跃度</p>
+                <h3>{t('operationGuide.overview.stats.lowerBarrier.title')}</h3>
+                <p>{t('operationGuide.overview.stats.lowerBarrier.description')}</p>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">💎</div>
-                <h3>创造经济价值</h3>
-                <p>将Gas成本转化为社区收入，构建可持续经济模型</p>
+                <h3>{t('operationGuide.overview.stats.createValue.title')}</h3>
+                <p>{t('operationGuide.overview.stats.createValue.description')}</p>
               </div>
               <div className="stat-card">
                 <div className="stat-icon">🔄</div>
-                <h3>形成正循环</h3>
-                <p>任务-积分-消费闭环，激励成员持续贡献</p>
+                <h3>{t('operationGuide.overview.stats.positiveCycle.title')}</h3>
+                <p>{t('operationGuide.overview.stats.positiveCycle.description')}</p>
               </div>
             </div>
 
             <div className="quick-start">
-              <h3>🚀 快速开始</h3>
+              <h3>{t('operationGuide.overview.quickStart.title')}</h3>
               <div className="steps">
                 <div className="step">
                   <div className="step-number">1</div>
                   <div className="step-content">
-                    <h4>注册社区</h4>
-                    <p>在链上注册您的社区，配置基本信息和治理代币</p>
-                    <Link to="/register-community" className="step-link">立即注册 →</Link>
+                    <h4>{t('operationGuide.overview.quickStart.steps.register.title')}</h4>
+                    <p>{t('operationGuide.overview.quickStart.steps.register.description')}</p>
+                    <Link to="/register-community" className="step-link">{t('operationGuide.overview.quickStart.steps.register.link')}</Link>
                   </div>
                 </div>
                 <div className="step">
                   <div className="step-number">2</div>
                   <div className="step-content">
-                    <h4>部署代币</h4>
-                    <p>发行社区专属的xPNTs积分代币和MySBT身份代币</p>
-                    <Link to="/get-xpnts" className="step-link">发行代币 →</Link>
+                    <h4>{t('operationGuide.overview.quickStart.steps.deploy.title')}</h4>
+                    <p>{t('operationGuide.overview.quickStart.steps.deploy.description')}</p>
+                    <Link to="/get-xpnts" className="step-link">{t('operationGuide.overview.quickStart.steps.deploy.link')}</Link>
                   </div>
                 </div>
                 <div className="step">
                   <div className="step-number">3</div>
                   <div className="step-content">
-                    <h4>启动Paymaster</h4>
-                    <p>一键部署Gas赞助合约，配置赞助规则</p>
-                    <Link to="/launch-paymaster" className="step-link">启动服务 →</Link>
+                    <h4>{t('operationGuide.overview.quickStart.steps.launch.title')}</h4>
+                    <p>{t('operationGuide.overview.quickStart.steps.launch.description')}</p>
+                    <Link to="/launch-paymaster" className="step-link">{t('operationGuide.overview.quickStart.steps.launch.link')}</Link>
                   </div>
                 </div>
               </div>
@@ -721,8 +723,15 @@ export const OperationGuide = () => {
       <ToastContainer />
       
       <header className="guide-header">
-        <h1>🚀 社区运营商指南</h1>
-        <p>掌握SuperPaymaster生态，构建繁荣的Web3社区经济</p>
+        <div className="header-content">
+          <div className="header-text">
+            <h1>🚀 {t('operationGuide.title')}</h1>
+            <p>{t('operationGuide.subtitle')}</p>
+          </div>
+          <div className="header-actions">
+            <LanguageToggle />
+          </div>
+        </div>
       </header>
 
       <div className="guide-content">
@@ -734,7 +743,7 @@ export const OperationGuide = () => {
               onClick={() => setActiveTab(tab.id)}
             >
               <span className="tab-icon">{tab.icon}</span>
-              <span className="tab-title">{tab.title}</span>
+              <span className="tab-title">{t(tab.titleKey)}</span>
             </button>
           ))}
         </nav>
@@ -746,17 +755,17 @@ export const OperationGuide = () => {
 
       <footer className="guide-footer">
         <div className="footer-content">
-          <h3>需要更多帮助？</h3>
-          <p>联系我们的技术支持团队，获取专业的社区运营指导</p>
+          <h3>{t('operationGuide.footer.title')}</h3>
+          <p>{t('operationGuide.footer.description')}</p>
           <div className="footer-actions">
-            <Link to="/contact" className="footer-button">联系支持</Link>
+            <Link to="/contact" className="footer-button">{t('operationGuide.footer.contactSupport')}</Link>
             <a 
               href="https://docs.superpaymaster.io" 
               target="_blank" 
               rel="noopener noreferrer"
               className="footer-button secondary"
             >
-              查看文档
+              {t('operationGuide.footer.viewDocs')}
             </a>
           </div>
         </div>
