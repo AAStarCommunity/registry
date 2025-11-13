@@ -188,7 +188,7 @@
 }
 
 .landing-page .section-title {
-    font-size: 5rem !important;
+    font-size: 3.5rem !important;
     font-weight: 800 !important;
     text-align: center;
     margin-bottom: 4rem;
@@ -383,6 +383,14 @@
     }
 }
 
+/* Language Toggle Container */
+.language-toggle-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .hero-content {
@@ -399,7 +407,7 @@
     }
 
     .landing-page .section-title {
-        font-size: 2.75rem;
+        font-size: 2.25rem;
     }
 
     .cta-title {

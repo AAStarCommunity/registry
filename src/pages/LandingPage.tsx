@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { LanguageToggle } from "../components/LanguageToggle";
 import "./LandingPage.css";
 
 export function LandingPage() {
@@ -44,6 +45,10 @@ export function LandingPage() {
 
   return (
     <div className="landing-page">
+      {/* Language Toggle */}
+      <div className="language-toggle-container">
+        <LanguageToggle />
+      </div>
       {/* Hero Section */}
       <section className="hero-section">
         <div className="hero-content">
@@ -107,60 +112,57 @@ export function LandingPage() {
 
       {/* Features Cards */}
       <section className="features-section">
-        <h1 className="section-title">Why SuperPaymaster?</h1>
+        <h1 className="section-title">{t('landing.whySuperPaymaster')}</h1>
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon">🎯</div>
-            <h3 className="feature-title">True Decentralization</h3>
+            <h3 className="feature-title">{t('landing.trueDecentralization')}</h3>
             <p className="feature-description">
-              No censorship. No single point of failure. Community-operated Paymasters
-              registered on-chain. Anyone can launch, anyone can use.
+              {t('landing.trueDecentralizationDesc')}
             </p>
             <ul className="feature-list">
-              <li>✓ No tx censorship in gas payment</li>
-              <li>✓ On-chain verification</li>
-              <li>✓ Community governance</li>
+              <li>{t('landing.noTxCensorship')}</li>
+              <li>{t('landing.onChainVerification')}</li>
+              <li>{t('landing.communityGovernance')}</li>
             </ul>
           </div>
 
           <div className="feature-card">
             <div className="feature-icon">🌱</div>
-            <h3 className="feature-title">Community Sustainability</h3>
+            <h3 className="feature-title">{t('landing.communitySustainability')}</h3>
             <p className="feature-description">
-              Any community can provide gasless services based on their own services or products, get liquidity and long term revenue.
+              {t('landing.communitySustainabilityDesc')}
             </p>
             <ul className="feature-list">
-              <li>✓ Community-owned services</li>
-              <li>✓ Sustainable revenue streams</li>
-              <li>✓ Long-term liquidity</li>
+              <li>{t('landing.communityOwnedServices')}</li>
+              <li>{t('landing.sustainableRevenueStreams')}</li>
+              <li>{t('landing.longTermLiquidity')}</li>
             </ul>
           </div>
 
           <div className="feature-card highlight">
             <div className="feature-icon">💎</div>
-            <h3 className="feature-title">Flexible Payment Models</h3>
+            <h3 className="feature-title">{t('landing.flexiblePaymentModels')}</h3>
             <p className="feature-description">
-              Pay with any ERC-20 token via PNT (Paymaster Native Token).
-              Operators earn fees, users enjoy gasless transactions.
+              {t('landing.flexiblePaymentModelsDesc')}
             </p>
             <ul className="feature-list">
-              <li>✓ Direct payment mode (pay-per-tx)</li>
-              <li>✓ Staking mode (deposit once, use many)</li>
-              <li>✓ Custom token support</li>
+              <li>{t('landing.directPaymentMode')}</li>
+              <li>{t('landing.stakingMode')}</li>
+              <li>{t('landing.customTokenSupport')}</li>
             </ul>
           </div>
 
           <div className="feature-card">
             <div className="feature-icon">🚀</div>
-            <h3 className="feature-title">Developer Friendly</h3>
+            <h3 className="feature-title">{t('landing.developerFriendly')}</h3>
             <p className="feature-description">
-              ERC-4337 compliant with simple integration. Drop-in solution for
-              any dApp. Full TypeScript SDK and React hooks.
+              {t('landing.developerFriendlyDesc')}
             </p>
             <ul className="feature-list">
-              <li>✓ 5-minute integration</li>
-              <li>✓ UserOp v0.7 compatible</li>
-              <li>✓ Comprehensive documentation</li>
+              <li>{t('landing.fiveMinuteIntegration')}</li>
+              <li>{t('landing.userOpCompatible')}</li>
+              <li>{t('landing.comprehensiveDocumentation')}</li>
             </ul>
           </div>
         </div>
@@ -168,13 +170,13 @@ export function LandingPage() {
 
       {/* How to Launch Paymaster Flow */}
       <section className="launch-flow-section">
-        <h1 className="section-title">How to Launch Paymaster</h1>
+        <h1 className="section-title">{t('landing.howToLaunch')}</h1>
         <p className="section-subtitle">
-          Use Launch Wizard to organize these steps to deploy your community Paymaster
+          {t('landing.useLaunchWizard')}
         </p>
         <div className="wizard-cta">
           <a href="/operator/wizard" className="wizard-launch-btn">
-            🚀 Launch Your Paymaster
+            {t('landing.launchYourPaymaster')}
           </a>
         </div>
 
@@ -237,8 +239,8 @@ export function LandingPage() {
 
         <div className="flow-note">
           <p>
-            <strong>💡 Quick Start:</strong> Already have GToken and resources?
-            Use the <a href="/operator/wizard">Deployment Wizard</a> for guided setup.
+            <strong>{t('landing.quickStart')}</strong> {t('landing.quickStartText')}
+            <a href="/operator/wizard">{t('landing.deploymentWizard')}</a> {t('landing.deploymentWizardText')}
           </p>
         </div>
       </section>

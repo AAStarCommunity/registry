@@ -508,9 +508,39 @@
     "action": "Deploy"
   },
   "launchPaymaster": {
-    "title": "Launch Paymaster",
-    "description": "Deploy your Paymaster via factory with one-click configuration",
-    "action": "Launch"
+    "action": "Launch Paymaster →",
+    "description": "Deploy your Paymaster contract and start serving gasless transactions to your community",
+    "title": "Launch Paymaster"
+  },
+  "landing": {
+    "whySuperPaymaster": "Why SuperPaymaster?",
+    "howToLaunch": "How to Launch Paymaster",
+    "useLaunchWizard": "Use Launch Wizard to organize these steps to deploy your community Paymaster",
+    "launchYourPaymaster": "🚀 Launch Your Paymaster",
+    "quickStart": "💡 Quick Start:",
+    "quickStartText": "Already have GToken and resources? Use the",
+    "deploymentWizard": "Deployment Wizard",
+    "deploymentWizardText": "for guided setup.",
+    "trueDecentralization": "True Decentralization",
+    "trueDecentralizationDesc": "No censorship. No single point of failure. Community-operated Paymasters registered on-chain. Anyone can launch, anyone can use.",
+    "noTxCensorship": "No tx censorship in gas payment",
+    "onChainVerification": "On-chain verification",
+    "communityGovernance": "Community governance",
+    "communitySustainability": "Community Sustainability",
+    "communitySustainabilityDesc": "Any community can provide gasless services based on their own services or products, get liquidity and long term revenue.",
+    "communityOwnedServices": "Community-owned services",
+    "sustainableRevenueStreams": "Sustainable revenue streams",
+    "longTermLiquidity": "Long-term liquidity",
+    "flexiblePaymentModels": "Flexible Payment Models",
+    "flexiblePaymentModelsDesc": "Pay with any ERC-20 token via PNT (Paymaster Native Token). Operators earn fees, users enjoy gasless transactions.",
+    "directPaymentMode": "Direct payment mode (pay-per-tx)",
+    "stakingMode": "Staking mode (deposit once, use many)",
+    "customTokenSupport": "Custom token support",
+    "developerFriendly": "Developer Friendly",
+    "developerFriendlyDesc": "ERC-4337 compliant with simple integration. Drop-in solution for any dApp. Full TypeScript SDK and React hooks.",
+    "fiveMinuteIntegration": "5-minute integration",
+    "userOpCompatible": "UserOp v0.7 compatible",
+    "comprehensiveDocumentation": "Comprehensive documentation"
   },
   "getSBT": {
     "title": "Mint My MySBT",

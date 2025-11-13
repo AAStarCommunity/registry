@@ -508,9 +508,39 @@
     "action": "部署"
   },
   "launchPaymaster": {
-    "title": "启动 Paymaster",
-    "description": "通过工厂一键配置部署您的Paymaster",
-    "action": "启动"
+    "action": "启动 Paymaster →",
+    "description": "部署您的 Paymaster 合约并开始为您的社区提供无 Gas 交易服务",
+    "title": "启动 Paymaster"
+  },
+  "landing": {
+    "whySuperPaymaster": "为什么选择 SuperPaymaster？",
+    "howToLaunch": "如何启动 Paymaster",
+    "useLaunchWizard": "使用启动向导来组织这些步骤以部署您的社区 Paymaster",
+    "launchYourPaymaster": "🚀 启动您的 Paymaster",
+    "quickStart": "💡 快速开始：",
+    "quickStartText": "已有 GToken 和资源？使用",
+    "deploymentWizard": "部署向导",
+    "deploymentWizardText": "进行引导设置。",
+    "trueDecentralization": "真正的去中心化",
+    "trueDecentralizationDesc": "无审查。无单点故障。在链上注册的社区运营 Paymaster。任何人都可以启动，任何人都可以使用。",
+    "noTxCensorship": "✓ Gas 支付中无交易审查",
+    "onChainVerification": "✓ 链上验证",
+    "communityGovernance": "✓ 社区治理",
+    "communitySustainability": "社区可持续性",
+    "communitySustainabilityDesc": "任何社区都可以基于自己的服务或产品提供无 Gas 服务，获得流动性和长期收入。",
+    "communityOwnedServices": "✓ 社区拥有的服务",
+    "sustainableRevenueStreams": "✓ 可持续的收入流",
+    "longTermLiquidity": "✓ 长期流动性",
+    "flexiblePaymentModels": "灵活的支付模式",
+    "flexiblePaymentModelsDesc": "通过 PNT（Paymaster 原生代币）使用任何 ERC-20 代币支付。运营商赚取费用，用户享受无 Gas 交易。",
+    "directPaymentMode": "✓ 直接支付模式（按次付费）",
+    "stakingMode": "✓ 质押模式（一次存入，多次使用）",
+    "customTokenSupport": "✓ 自定义代币支持",
+    "developerFriendly": "开发者友好",
+    "developerFriendlyDesc": "符合 ERC-4337 标准，集成简单。适用于任何 dApp 的即插即用解决方案。完整的 TypeScript SDK 和 React hooks。",
+    "fiveMinuteIntegration": "✓ 5 分钟集成",
+    "userOpCompatible": "✓ UserOp v0.7 兼容",
+    "comprehensiveDocumentation": "✓ 全面的文档"
   },
   "getSBT": {
     "title": "铸造我的 MySBT",
