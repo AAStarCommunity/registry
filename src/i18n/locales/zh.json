@@ -771,6 +771,10 @@
     "revenue": {
       "title": "💰 收入模型分析",
       "description": "基于链上数据分析，典型L2活跃用户月度Gas成本约$1.95。通过SuperPaymaster，社区可以将这笔纯成本转化为稳定收入。",
+      "gasFeePhilosophy": {
+        "title": "Gas费用理念",
+        "description": "当然，gas费用只是一个门槛，我们不能依靠它去产生收入，而是通过消除门槛带来更大的便利性，从而让用户扫除体验你社区和服务价值的障碍，踏上增长之路。"
+      },
       "costAnalysis": {
         "title": "📊 用户行为成本分析",
         "table": {

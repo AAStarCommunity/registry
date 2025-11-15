@@ -14,7 +14,7 @@ interface TabContent {
 }
 
 export const OperationGuide = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<string>("overview");
 
   const tabs: TabContent[] = [
@@ -164,8 +164,15 @@ export const OperationGuide = () => {
       case "revenue":
         return (
           <div className="tab-content">
-            <h2>💰 收入模型分析</h2>
+            <h2>{t('operationGuide.revenue.title')}</h2>
             
+            <div className="section">
+              <h3>{t('operationGuide.revenue.gasFeePhilosophy.title')}</h3>
+              <p>
+                {t('operationGuide.revenue.gasFeePhilosophy.description')}
+              </p>
+            </div>
+
             <div className="section">
               <h3>成本转收入的机会</h3>
               <p>

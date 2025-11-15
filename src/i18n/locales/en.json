@@ -771,6 +771,10 @@
     "revenue": {
       "title": "💰 Revenue Model Analysis",
       "description": "Based on on-chain data analysis, typical L2 active users' monthly gas cost is about $1.95. Through SuperPaymaster, communities can transform this pure cost into stable revenue.",
+      "gasFeePhilosophy": {
+        "title": "Gas Fee Philosophy",
+        "description": "Of course, gas fees are just a threshold. We cannot rely on them to generate revenue, but by eliminating this threshold, we bring greater convenience, allowing users to remove barriers to experiencing your community and service value, and embark on the path to growth."
+      },
       "costAnalysis": {
         "title": "📊 User Behavior Cost Analysis",
         "table": {
