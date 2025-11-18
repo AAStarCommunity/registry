@@ -22,6 +22,7 @@ import { GetXPNTs } from "./pages/resources/GetXPNTs";
 import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
 import { LaunchPaymaster } from "./pages/resources/LaunchPaymaster";
 import { ConfigureSuperPaymaster } from "./pages/resources/ConfigureSuperPaymaster";
+import { AdminBatchMint } from "./pages/admin/AdminBatchMint";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -71,6 +72,7 @@ function App() {
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
             <Route path="/get-gtoken" element={<GetGToken />} />
             <Route path="/get-sbt" element={<GetSBT />} />
+            <Route path="/admin-batch-mint" element={<AdminBatchMint />} />
             <Route path="/get-sbt" element={<GetSBT />} />{" "}
             {/* Legacy redirect */}
             <Route path="/my-sbt" element={<MySBT />} />

@@ -1,0 +1,87 @@
+export interface ParameterConfig {
+  name: string;
+  type: string;
+  label: string;
+  required: boolean;
+  placeholder?: string;
+  validation?: RegExp;
+  defaultValue?: any;
+  isAddress?: boolean;
+  isArray?: boolean;
+  description?: string;
+}
+
+export interface BatchMethod {
+  name: string;
+  displayName: string;
+  parameters: ParameterConfig[];
+  gasEstimate: number; // gas per item
+  description: string;
+}
+
+export interface ContractConfig {
+  id: string;
+  name: string;
+  type: 'SBT' | 'NFT' | 'FT' | 'CUSTOM';
+  address: string;
+  abi: any[];
+  icon: string;
+  network: string;
+  description: string;
+
+  // Batch operations
+  batchMethods: BatchMethod[];
+
+  // Default parameters
+  defaultParams: {
+    [key: string]: any;
+  };
+
+  // Permission requirements
+  permissions: {
+    requireOperator: boolean;
+    requireOwner: boolean;
+  };
+
+  // Metadata
+  chainId: number;
+  version?: string;
+  deployedAt?: string;
+}
+
+export interface AddressValidationResult {
+  isValid: boolean;
+  address: string;
+  error?: string;
+  hasSBT?: boolean;
+  hasNFT?: boolean;
+  balance?: string;
+}
+
+export interface BatchOperationConfig {
+  contractId: string;
+  method: string;
+  parameters: {
+    [key: string]: any;
+  };
+  addresses: string[];
+  estimatedGas: number;
+  estimatedCost: {
+    eth: string;
+    usd: string;
+  };
+}
+
+export interface GasEstimate {
+  gasPerItem: number;
+  totalGas: number;
+  gasPrice: {
+    gwei: string;
+    wei: string;
+  };
+  estimatedCost: {
+    eth: string;
+    usd: string;
+  };
+  ethPrice: number;
+}

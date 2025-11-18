@@ -11,6 +11,9 @@ import {
   GTokenStakingABI,
 } from "@aastar/shared-config";
 import { getRpcUrl } from "../../config/rpc";
+import { useOperatorPermissions } from "../../hooks/useOperatorPermissions";
+import { AdminEntryButton } from "../../components/AdminEntryButton";
+import "../../components/AdminEntryButton.css";
 import "./GetSBT.css";
 
 export function GetSBT() {
@@ -37,6 +40,9 @@ export function GetSBT() {
   const [account, setAccount] = useState<string>("");
   const [gTokenBalance, setGTokenBalance] = useState<string>("0");
   const [stakedBalance, setStakedBalance] = useState<string>("0");
+
+  // Admin permissions check
+  const operatorPermissions = useOperatorPermissions(account);
 
   // Community selection state
   const [communities, setCommunities] = useState<{
@@ -783,6 +789,22 @@ export function GetSBT() {
               <div className="community-selection-section">
                 <h3>{t("getSBT.communitySelect.title")}</h3>
                 <p className="section-hint">{t("getSBT.communitySelect.hint")}</p>
+
+                {/* Registry Contract Address */}
+                <div className="registry-info">
+                  <span className="registry-label">Registry Contract:</span>
+                  <span className="registry-address mono">
+                    {REGISTRY_ADDRESS}
+                  </span>
+                  <a
+                    href={`https://sepolia.etherscan.io/address/${REGISTRY_ADDRESS}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="etherscan-link"
+                  >
+                    🔍 View on Etherscan
+                  </a>
+                </div>
                 <select
                   className="community-select"
                   value={selectedCommunity}
@@ -915,6 +937,9 @@ export function GetSBT() {
           </button>
         </div>
       </div>
+
+      {/* Admin Entry Button - Only visible to operators/owners */}
+      <AdminEntryButton permissions={operatorPermissions} />
     </div>
   );
 }

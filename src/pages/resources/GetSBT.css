@@ -715,6 +715,52 @@
   margin: 0 0 1rem;
 }
 
+.registry-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.registry-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.registry-address {
+  font-size: 0.85rem;
+  background: #e0e7ff;
+  color: #3730a3;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  flex: 1;
+  min-width: 200px;
+  text-align: center;
+}
+
+.etherscan-link {
+  font-size: 0.85rem;
+  color: #4f46e5;
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(79, 70, 229, 0.1);
+  transition: all 0.3s ease;
+}
+
+.etherscan-link:hover {
+  background: rgba(79, 70, 229, 0.2);
+  color: #3730a3;
+  text-decoration: none;
+}
+
 .community-select {
   width: 100%;
   padding: 0.75rem 1rem;
