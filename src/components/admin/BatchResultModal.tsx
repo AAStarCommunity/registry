@@ -1,5 +1,6 @@
 import React from 'react';
 import type { BatchMintResult } from '../../services/BatchContractService';
+import { ResultStatistics } from './ResultStatistics';
 import './BatchResultModal.css';
 
 interface BatchResultModalProps {
@@ -7,13 +8,23 @@ interface BatchResultModalProps {
   isVisible: boolean;
   onClose: () => void;
   onConfirm?: () => void;
+  startTime?: Date;
+  endTime?: Date;
+  gasEstimate?: {
+    totalGas: number;
+    totalCost: string;
+    gasPrice: string;
+  };
 }
 
 export const BatchResultModal: React.FC<BatchResultModalProps> = ({
   result,
   isVisible,
   onClose,
-  onConfirm
+  onConfirm,
+  startTime,
+  endTime,
+  gasEstimate
 }) => {
   if (!isVisible) return null;
 
@@ -65,7 +76,7 @@ export const BatchResultModal: React.FC<BatchResultModalProps> = ({
   const display = getStatusDisplay();
 
   return (
-    <div className="batch-result-modal">
+    <div className="batch-result-modal" style={{ maxWidth: '800px' }}>
       <div className="result-header">
         <h2>{display.title}</h2>
         <button
@@ -76,35 +87,15 @@ export const BatchResultModal: React.FC<BatchResultModalProps> = ({
         </button>
       </div>
 
-      <div className="result-stats">
-        <div className="stats-grid">
-          <div className="stat-item success">
-            <span className="stat-value">{display.success.count}</span>
-            <span className="stat-label">成功</span>
-          </div>
-          <div className="stat-item error">
-            <span className="stat-value">{display.error.count}</span>
-            <span className="stat-label">失败</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{display.totalGasUsed.toLocaleString()}</span>
-            <span className="stat-label">Gas 使用</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">{display.totalCost}</span>
-            <span className="stat-label">总花费</span>
-          </div>
-          {result.txHash && (
-            <div className="stat-item">
-              <span className="stat-label">交易哈希</span>
-              <span className="stat-value mono">
-                {result.txHash.slice(0, 10)}...{result.txHash.slice(-8)}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
+      {/* New Enhanced Statistics */}
+      <ResultStatistics
+        result={result}
+        startTime={startTime}
+        endTime={endTime}
+        gasEstimate={gasEstimate}
+      />
 
+      {/* Legacy Summary Section */}
       <div className="result-summary">
         <p className="summary-text">{display.message}</p>
         {display.errors.length > 0 && (
@@ -137,7 +128,10 @@ export const BatchResultModal: React.FC<BatchResultModalProps> = ({
 
           <button
             className="result-button outline"
-            onClick={handleConfirm}
+            onClick={() => {
+              // Open detailed view in new tab or modal
+              window.open(`https://sepolia.etherscan.io/tx/${result.txHash}`, '_blank');
+            }}
           >
             查看详情
           </button>

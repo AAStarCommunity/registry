@@ -16,6 +16,8 @@ import type { BatchExecutionProgress, BatchMintResult } from '../../services/Bat
 import { BatchContractService } from '../../services/BatchContractService';
 import { BatchExecutionProgressModal } from '../../components/admin/BatchExecutionProgress';
 import { BatchResultModal } from '../../components/admin/BatchResultModal';
+import { MultiConfirmModal } from '../../components/admin/MultiConfirmModal';
+import { operationLogService } from '../../services/OperationLogService';
 import './AdminBatchMint.css';
 
 export const AdminBatchMint: React.FC = () => {
@@ -42,6 +44,10 @@ export const AdminBatchMint: React.FC = () => {
   const [executionResult, setExecutionResult] = useState<BatchMintResult | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [currentOperationId, setCurrentOperationId] = useState<string>('');
+  const [executionStartTime, setExecutionStartTime] = useState<Date | null>(null);
+  const [executionEndTime, setExecutionEndTime] = useState<Date | null>(null);
   const [batchService] = useState(() => new BatchContractService());
 
   // Load available contracts
@@ -120,22 +126,62 @@ export const AdminBatchMint: React.FC = () => {
     }
   }, [operatorPermissions, account, navigate]);
 
-  // Execute batch operation
-  const handleExecuteBatch = async () => {
+  // Handle execution with confirmation modal
+  const handleExecuteBatch = () => {
     if (!selectedContract || !selectedMethod || addresses.length === 0) {
       alert('请先选择合约、方法和地址');
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  // Execute batch operation after confirmation
+  const executeConfirmedBatch = async () => {
+    if (!selectedContract || !selectedMethod || addresses.length === 0) {
+      return;
+    }
+
     try {
       setIsExecuting(true);
-      setShowProgressModal(true);
+      setExecutionStartTime(new Date());
+
+      // Log the operation
+      const operationId = operationLogService.logOperation({
+        operator: account,
+        operation: 'batch_mint',
+        status: 'pending',
+        contractAddress: selectedContract.address,
+        contractName: selectedContract.name,
+        method: selectedMethod.name,
+        targetAddresses: addresses,
+        parameters,
+        gasEstimate: gasEstimate ? {
+          totalGas: gasEstimate.totalGas,
+          totalCost: gasEstimate.estimatedCost.eth,
+          gasPrice: gasEstimate.gasPrice.gwei
+        } : undefined,
+        securityLevel: addresses.length > 50 ? 'high' : addresses.length > 10 ? 'medium' : 'low',
+        confirmationSteps: [
+          'Verify addresses',
+          'Confirm parameters',
+          'Accept risks',
+          'Manual confirmation',
+          'Final signature'
+        ]
+      });
+
+      setCurrentOperationId(operationId);
 
       // Connect wallet for signing
       const connected = await batchService.connectWallet();
       if (!connected) {
         throw new Error('Failed to connect wallet');
       }
+
+      // Show progress modal and hide confirmation modal
+      setShowConfirmModal(false);
+      setShowProgressModal(true);
 
       // Execute batch operation
       const result = await batchService.executeBatchMint(
@@ -148,16 +194,40 @@ export const AdminBatchMint: React.FC = () => {
         }
       );
 
+      // Update operation log with results
+      operationLogService.updateOperation(operationId, {
+        status: result.success ? 'completed' : 'failed',
+        executionResult: {
+          txHash: result.txHash,
+          successCount: result.results.filter(r => r.success).length,
+          failCount: result.results.filter(r => !r.success).length,
+          totalGasUsed: result.totalGasUsed,
+          totalCost: result.totalCost,
+          errors: result.results.filter(r => !r.success).map(r => r.error || 'Unknown error')
+        }
+      });
+
       setExecutionResult(result);
+      setExecutionEndTime(new Date());
       setShowProgressModal(false);
       setShowResultModal(true);
 
     } catch (error: any) {
       console.error('Batch execution failed:', error);
+
+      // Update operation log with failure
+      if (currentOperationId) {
+        operationLogService.updateOperation(currentOperationId, {
+          status: 'failed',
+          notes: error.message
+        });
+      }
+
       alert(`批量操作失败: ${error.message}`);
       setShowProgressModal(false);
     } finally {
       setIsExecuting(false);
+      setCurrentOperationId('');
     }
   };
 
@@ -480,12 +550,39 @@ export const AdminBatchMint: React.FC = () => {
         </div>
       )}
 
+      {/* Multi-Confirmation Modal */}
+      {showConfirmModal && selectedContract && selectedMethod && (
+        <MultiConfirmModal
+          isVisible={showConfirmModal}
+          contractConfig={selectedContract}
+          selectedMethod={selectedMethod}
+          addresses={addresses}
+          parameters={parameters}
+          gasEstimate={gasEstimate ? {
+            totalGas: gasEstimate.totalGas,
+            totalCost: gasEstimate.estimatedCost.eth,
+            gasPrice: gasEstimate.gasPrice.gwei
+          } : undefined}
+          onConfirm={executeConfirmedBatch}
+          onCancel={() => {
+            setShowConfirmModal(false);
+          }}
+        />
+      )}
+
       {/* Result Modal */}
       {showResultModal && executionResult && (
         <div className="modal-overlay">
           <BatchResultModal
             result={executionResult}
             isVisible={showResultModal}
+            startTime={executionStartTime || undefined}
+            endTime={executionEndTime || undefined}
+            gasEstimate={gasEstimate ? {
+              totalGas: gasEstimate.totalGas,
+              totalCost: gasEstimate.estimatedCost.eth,
+              gasPrice: gasEstimate.gasPrice.gwei
+            } : undefined}
             onClose={() => {
               setShowResultModal(false);
             }}
