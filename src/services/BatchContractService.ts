@@ -276,7 +276,7 @@ export class BatchContractService {
     const args: any[] = [];
 
     method.parameters.forEach(param => {
-      if (param.name === 'users' || param.name === 'to' || param.name === 'recipients') {
+      if (param.name === 'user' || param.name === 'users' || param.name === 'to' || param.name === 'recipients') {
         // Use the current address for single mint, or all addresses for batch mint
         if (param.isArray) {
           args.push(addresses);

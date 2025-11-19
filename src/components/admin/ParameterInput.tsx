@@ -220,7 +220,9 @@ export const DynamicParameters: React.FC<DynamicParametersProps> = ({
       <div className="parameters-summary">
         <h4>📋 参数摘要</h4>
         <div className="summary-grid">
-          {parameters.map((param) => (
+          {parameters
+            .filter(param => !param.isAddress || param.isArray)
+            .map((param) => (
             <div key={param.name} className="summary-item">
               <span className="param-name">{param.label}:</span>
               <span className="param-value">
