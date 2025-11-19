@@ -262,12 +262,11 @@ export const AdminBatchMint: React.FC = () => {
       setShowConfirmModal(false);
       setShowProgressModal(true);
 
-      // Execute batch operation
-      const result = await batchService.executeBatchMint(
-        selectedContract,
-        selectedMethod,
+      // Execute batch operation (Airdrop Mode - Operator-paid)
+      const result = await batchService.executeBatchAirdrop(
+        selectedContract.address,
         addresses,
-        parameters,
+        communityMetadata,
         (progress) => {
           setExecutionProgress(progress);
         }

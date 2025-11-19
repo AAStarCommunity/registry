@@ -33,11 +33,11 @@ export const PreMintCheckModal: React.FC<PreMintCheckModalProps> = ({
     setIsChecking(true);
     try {
       const checkService = new PreMintCheckService();
-      const results = await checkService.runPreMintChecks(
+      // Use airdrop mode checks (operator-paid, no user approval needed)
+      const results = await checkService.runAirdropPreChecks(
         operatorAddress,
         addresses,
-        contractConfig.address,
-        contractConfig.abi
+        contractConfig.address
       );
       setCheckResults(results);
     } catch (error) {
