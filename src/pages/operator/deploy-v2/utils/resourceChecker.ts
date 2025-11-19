@@ -363,6 +363,43 @@ async function checkETHBalance(
 }
 
 // ====================================
+// Cache Management Functions
+// ====================================
+
+/**
+ * Clear all resource caches for a specific wallet address
+ * Use this when user clicks refresh button to force reload all resources
+ */
+export function clearResourceCaches(walletAddress: string): void {
+  const addr = walletAddress.toLowerCase();
+  const cacheKeys = [
+    `resource_community_${addr}`,
+    `resource_xpnts_${addr}`,
+    `resource_paymaster_${addr}`,
+    `resource_aoa_paymaster_${addr}`,
+    `resource_superpaymaster_${addr}`,
+    `resource_sbt_binding_${addr}`,
+    `resource_gtoken_${addr}`,
+    `resource_apnts_${addr}`,
+    `resource_eth_${addr}`,
+  ];
+
+  console.log("🗑️ Clearing resource caches for:", addr);
+
+  // Clear each cache key
+  cacheKeys.forEach(key => {
+    try {
+      localStorage.removeItem(`spm_${key}`);
+      console.log(`  ✅ Cleared: ${key}`);
+    } catch (error) {
+      console.error(`  ❌ Failed to clear ${key}:`, error);
+    }
+  });
+
+  console.log("✅ All resource caches cleared");
+}
+
+// ====================================
 // Main Functions
 // ====================================
 

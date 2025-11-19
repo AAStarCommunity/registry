@@ -13,7 +13,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { checkResources, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
+import { checkResources, clearResourceCaches, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
 import { getCurrentNetworkConfig, isTestnet, getExplorerLink } from "../../../../config/networkConfig";
 import "./Step2_ResourceCheck.css";
 
@@ -38,11 +38,17 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
     checkResourcesStatus();
   }, [walletAddress, mode]);
 
-  const checkResourcesStatus = async () => {
+  const checkResourcesStatus = async (clearCache: boolean = false) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Clear cache if requested (when user clicks refresh button)
+      if (clearCache) {
+        console.log("🔄 Refresh button clicked - clearing all caches");
+        clearResourceCaches(walletAddress);
+      }
+
       const status = await checkResources(walletAddress, mode);
       setResources(status);
     } catch (err: any) {
@@ -110,7 +116,7 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
         </div>
         <div className="error-box">
           <p>{error}</p>
-          <button className="btn-primary" onClick={checkResourcesStatus}>
+          <button className="btn-primary" onClick={() => checkResourcesStatus(true)}>
             {t('step2ResourceCheck.error.button')}
           </button>
         </div>
@@ -473,7 +479,7 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
           </div>
         )}
 
-        <button className="btn-refresh" onClick={checkResourcesStatus}>
+        <button className="btn-refresh" onClick={() => checkResourcesStatus(true)}>
           {t('step2ResourceCheck.actions.recheck')}
         </button>
       </div>
