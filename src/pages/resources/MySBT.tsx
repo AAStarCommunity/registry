@@ -9,7 +9,7 @@ import {
   MySBTABI,
   GTokenABI,
 } from "@aastar/shared-config";
-import { getRpcUrl } from "../../config/rpc";
+import { getProvider } from "../../utils/rpc-provider";
 import "./MySBT.css";
 
 // Get contract addresses from shared-config
@@ -17,9 +17,6 @@ const core = getCoreContracts("sepolia");
 const tokens = getTokenContracts("sepolia");
 const MYSBT_V2_3_ADDRESS = tokens.mySBT;
 const GTOKEN_ADDRESS = core.gToken;
-
-// Use /api/rpc-proxy endpoint to hide RPC keys
-const RPC_URL = getRpcUrl();
 
 export function MySBT() {
   const navigate = useNavigate();
@@ -78,8 +75,9 @@ export function MySBT() {
 
   // Load all data
   const loadData = async (address: string) => {
+    setError(""); // Clear previous errors
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const rpcProvider = getProvider();
 
       // Load MySBT contract info
       const sbtContract = new ethers.Contract(
@@ -94,7 +92,7 @@ export function MySBT() {
 
       // For now, assume tokenId 1 if they have balance
       // TODO: Add proper tokenId enumeration
-      if (balance > 0n) {
+      if (balance.gt(0)) {
         setMyTokenId("1"); // Placeholder
       }
 
@@ -102,7 +100,7 @@ export function MySBT() {
       const ver = await sbtContract.VERSION();
       const fee = await sbtContract.mintFee();
       setVersion(ver);
-      setMintFeeAmount(ethers.formatEther(fee));
+      setMintFeeAmount(ethers.utils.formatEther(fee));
 
       // Load GToken balance
       const gtokenContract = new ethers.Contract(
@@ -111,9 +109,12 @@ export function MySBT() {
         rpcProvider,
       );
       const gtBalance = await gtokenContract.balanceOf(address);
-      setGtokenBalance(ethers.formatEther(gtBalance));
-    } catch (err) {
+      setGtokenBalance(ethers.utils.formatEther(gtBalance));
+    } catch (err: any) {
       console.error("Failed to load data:", err);
+      setError(
+        `Failed to load blockchain data. Please check your network connection. Error: ${err.message}`,
+      );
     }
   };
 
@@ -122,7 +123,7 @@ export function MySBT() {
     if (!queryAddress || !account) return;
 
     try {
-      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const rpcProvider = getProvider();
       const sbtContract = new ethers.Contract(
         MYSBT_V2_3_ADDRESS,
         MySBTABI,
@@ -158,7 +159,7 @@ export function MySBT() {
 
     try {
       // Use RPC provider to check current state
-      const rpcProvider = new ethers.JsonRpcProvider(RPC_URL);
+      const rpcProvider = getProvider();
       const gtokenContract = new ethers.Contract(
         GTOKEN_ADDRESS,
         GTokenABI,
@@ -169,17 +170,17 @@ export function MySBT() {
         account,
         MYSBT_V2_3_ADDRESS,
       );
-      const feeAmount = ethers.parseEther(mintFeeAmount);
+      const feeAmount = ethers.utils.parseEther(mintFeeAmount);
 
       // Prepare transactions
       const transactions: BaseTransaction[] = [];
 
       // Add approve transaction if needed
-      if (allowance < feeAmount) {
-        const gtokenInterface = new ethers.Interface(GTokenABI);
+      if (allowance.lt(feeAmount)) {
+        const gtokenInterface = new ethers.utils.Interface(GTokenABI);
         const approveData = gtokenInterface.encodeFunctionData("approve", [
           MYSBT_V2_3_ADDRESS,
-          ethers.parseEther("1000"), // Approve more for multiple mints
+          ethers.utils.parseEther("1000"), // Approve more for multiple mints
         ]);
 
         transactions.push({
@@ -190,7 +191,7 @@ export function MySBT() {
       }
 
       // Add mint transaction
-      const sbtInterface = new ethers.Interface(MySBTABI);
+      const sbtInterface = new ethers.utils.Interface(MySBTABI);
       const mintData = sbtInterface.encodeFunctionData("mintOrAddMembership", [
         account,
         metadata,
@@ -222,8 +223,8 @@ export function MySBT() {
           throw new Error("MetaMask not installed");
         }
 
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const signer = await provider.getSigner();
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        const signer = provider.getSigner();
 
         // Execute approve if needed
         if (transactions.length === 2) {
@@ -235,7 +236,7 @@ export function MySBT() {
           );
           const approveTx = await gtokenContractWithSigner.approve(
             MYSBT_V2_3_ADDRESS,
-            ethers.parseEther("1000"),
+            ethers.utils.parseEther("1000"),
           );
           await approveTx.wait();
           console.log("GToken approved!");

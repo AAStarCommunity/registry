@@ -1,109 +1,74 @@
-import { ethers } from "ethers";
+import * as ethers from "ethers";
 
 /**
- * Public RPC endpoints for Sepolia (no API key required)
- * These are free but have rate limits
+ * A custom RPC provider that proxies requests through a backend endpoint
+ * and overrides the internal _send method to prevent infinite retries on network failure.
  */
-const SEPOLIA_PUBLIC_RPCS = [
-  "https://rpc.sepolia.org",
-  "https://ethereum-sepolia.publicnode.com",
-  "https://sepolia.drpc.org",
-  "https://rpc2.sepolia.org",
-  "https://eth-sepolia.public.blastapi.io",
-] as const;
+class SafeProxyRpcProvider extends ethers.JsonRpcProvider {
+  private _proxyUrl: string;
 
-/**
- * Backend Proxy RPC Provider
- * Uses fetch to call backend /api/rpc-proxy which handles private RPC + fallback
- */
-class ProxyRpcProvider extends ethers.JsonRpcProvider {
   constructor(proxyUrl: string) {
-    // Use a dummy URL for ethers, we'll override _send
+    // Initialize with a dummy URL; we override the sending mechanism.
     super("http://localhost");
     this._proxyUrl = proxyUrl;
   }
 
-  private _proxyUrl: string;
+  /**
+   * Overridden _send method to handle network errors gracefully without retrying.
+   */
+  async _send(payload: any): Promise<any> {
+    try {
+      const response = await fetch(this._proxyUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-  async _send(payload: any | any[]): Promise<any[]> {
-    // ethers.js v6 _send method signature:
-    // _send(payload: JsonRpcPayload | Array<JsonRpcPayload>): Promise<Array<JsonRpcResult>>
+      if (!response.ok) {
+        // Instead of throwing, which triggers a retry, return a JSON-RPC error.
+        return {
+          jsonrpc: "2.0",
+          id: payload.id,
+          error: {
+            code: -32000,
+            message: `RPC Proxy Error: ${response.status} ${response.statusText}`,
+          },
+        };
+      }
 
-    const response = await fetch(this._proxyUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      return response.json();
+    } catch (error: any) {
+      console.error("Fetch error in SafeProxyRpcProvider:", error.message);
+      // On a complete network failure, also return a JSON-RPC error.
+      return {
+        jsonrpc: "2.0",
+        id: payload.id,
+        error: {
+          code: -32000,
+          message: error.message || "Network request failed",
+        },
+      };
     }
-
-    const jsonResponse = await response.json();
-
-    // JSON-RPC response format: { jsonrpc: "2.0", id: 1, result: ... } or { error: ... }
-    // ethers.js v6 expects an array of results, even for single requests
-    if (Array.isArray(jsonResponse)) {
-      return jsonResponse;
-    }
-
-    // Single response, wrap in array
-    return [jsonResponse];
   }
 }
 
 /**
- * Create a fallback provider with multiple public RPC endpoints
- * This provides better reliability and helps avoid rate limits
- */
-export function createSepoliaProvider(): ethers.FallbackProvider {
-  const providers = SEPOLIA_PUBLIC_RPCS.map((rpc, index) => ({
-    provider: new ethers.JsonRpcProvider(rpc),
-    priority: index, // Lower priority = tried first
-    weight: 1,
-    stallTimeout: 2000, // 2 seconds
-  }));
-
-  return new ethers.FallbackProvider(providers);
-}
-
-/**
- * Create a basic provider (for development with API key)
- */
-export function createBasicProvider(rpcUrl: string): ethers.JsonRpcProvider {
-  return new ethers.JsonRpcProvider(rpcUrl);
-}
-
-/**
- * Get the appropriate provider based on environment
+ * Get the appropriate provider based on environment.
+ * This now returns our custom provider that does not retry on failure.
  */
 export function getProvider(): ethers.Provider {
-  const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL;
+  const rpcUrl = import.meta.env.VITE_SEPOLIA_RPC_URL || "/api/rpc-proxy";
 
-  // If using backend proxy (starts with /api/)
-  if (rpcUrl?.startsWith("/api/")) {
-    console.info("🔒 Using backend proxy RPC provider:", rpcUrl);
-    return new ProxyRpcProvider(rpcUrl);
+  // Always use the proxy in this setup for security and reliability.
+  if (rpcUrl.startsWith("/api/")) {
+    console.info("✅ Using SafeProxyRpcProvider to prevent retries:", rpcUrl);
+    return new SafeProxyRpcProvider(rpcUrl);
   }
 
-  // If RPC URL contains an API key (has /v2/ pattern), warn in development
-  if (import.meta.env.DEV && rpcUrl?.includes("/v2/")) {
-    console.warn(
-      "⚠️ WARNING: Using RPC URL with API key in frontend! " +
-        "This exposes your API key to all users. " +
-        "Consider using a backend proxy or public RPC endpoints.",
-    );
-  }
-
-  // If no RPC URL configured, use fallback provider
-  if (!rpcUrl || rpcUrl.includes("/v2/")) {
-    console.info(
-      "🌐 Using fallback provider with multiple public RPC endpoints",
-    );
-    return createSepoliaProvider();
-  }
-
-  return createBasicProvider(rpcUrl);
+  // Fallback for other cases, though proxy is recommended.
+  console.warn(
+    "⚠️ Using standard JsonRpcProvider. This may not be ideal for production.",
+    rpcUrl,
+  );
+  return new ethers.JsonRpcProvider(rpcUrl);
 }
