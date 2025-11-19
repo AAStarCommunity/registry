@@ -322,8 +322,9 @@ async function queryPaymasterRange(
     // Query batch in parallel
     const batchResults = await Promise.allSettled(
       batch.map(async ({ start, end }) => {
-        // ethers v6: use event name directly
-        const eventsResult = await contract.queryFilter("GasPaymentProcessed", start, end);
+        // ethers v6: use getEvent to get event fragment
+        const eventFragment = contract.interface.getEvent("GasPaymentProcessed");
+        const eventsResult = await contract.queryFilter(eventFragment, start, end);
         // ethers.js v6 returns Result object, convert to array
         const events = Array.from(eventsResult);
         return { start, end, events };

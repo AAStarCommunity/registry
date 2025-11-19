@@ -68,8 +68,9 @@ export default async function handler(req: any, res: any) {
 
     for (const chunk of chunks) {
       try {
-        // ethers v6: query all events then filter manually if needed
-        const allChunkEvents = await contract.queryFilter("GasPaymentProcessed", chunk.from, chunk.to);
+        // ethers v6: use getEvent to get event fragment
+        const eventFragment = contract.interface.getEvent("GasPaymentProcessed");
+        const allChunkEvents = await contract.queryFilter(eventFragment, chunk.from, chunk.to);
 
         const events = userAddress
           ? allChunkEvents.filter((event: any) =>
