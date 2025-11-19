@@ -512,49 +512,52 @@ export const AdminBatchMint: React.FC = () => {
           )}
         </div>
 
-          {/* Method Selection */}
+          {/* Method Selection and Address Input - Two columns */}
           {selectedContract && (
-            <div className="method-selection-section">
-            <h3>🔧 选择批量方法</h3>
-            <div className="method-options">
-              {selectedContract.batchMethods.map((method) => (
-                <button
-                  key={method.name}
-                  className={`method-option ${selectedMethod?.name === method.name ? 'selected' : ''}`}
-                  onClick={() => {
-                    setSelectedMethod(method);
-                    // Reset parameters when method changes
-                    const defaultParams: { [key: string]: any } = {};
-                    method.parameters.forEach(param => {
-                      if (param.defaultValue !== undefined) {
-                        defaultParams[param.name] = param.defaultValue;
-                      }
-                    });
-                    setParameters(defaultParams);
+            <div className="batch-config-grid">
+              {/* Method Selection */}
+              <div className="method-selection-section">
+                <h3>🔧 选择批量方法</h3>
+                <div className="method-options">
+                  {selectedContract.batchMethods.map((method) => (
+                    <button
+                      key={method.name}
+                      className={`method-option ${selectedMethod?.name === method.name ? 'selected' : ''}`}
+                      onClick={() => {
+                        setSelectedMethod(method);
+                        // Reset parameters when method changes
+                        const defaultParams: { [key: string]: any } = {};
+                        method.parameters.forEach(param => {
+                          if (param.defaultValue !== undefined) {
+                            defaultParams[param.name] = param.defaultValue;
+                          }
+                        });
+                        setParameters(defaultParams);
+                      }}
+                      disabled={!operatorPermissions.isOperator && !operatorPermissions.isOwner}
+                    >
+                      <div className="method-option-header">
+                        <span className="method-name">{method.displayName}</span>
+                        <span className="method-gas">~{method.gasEstimate.toLocaleString()} gas/item</span>
+                      </div>
+                      <p className="method-description">{method.description}</p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Address Input */}
+              {selectedMethod && (
+                <BatchAddressInput
+                  onAddressesChange={(addrs, results) => {
+                    setAddresses(addrs);
+                    setValidationResults(results);
                   }}
                   disabled={!operatorPermissions.isOperator && !operatorPermissions.isOwner}
-                >
-                  <div className="method-option-header">
-                    <span className="method-name">{method.displayName}</span>
-                    <span className="method-gas">~{method.gasEstimate.toLocaleString()} gas/item</span>
-                  </div>
-                  <p className="method-description">{method.description}</p>
-                </button>
-              ))}
+                />
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Address Input */}
-        {selectedMethod && (
-          <BatchAddressInput
-            onAddressesChange={(addrs, results) => {
-              setAddresses(addrs);
-              setValidationResults(results);
-            }}
-            disabled={!operatorPermissions.isOperator && !operatorPermissions.isOwner}
-          />
-        )}
+          )}
 
         {/* Parameters Configuration */}
         {selectedMethod && addresses.length > 0 && (
@@ -649,16 +652,16 @@ export const AdminBatchMint: React.FC = () => {
         {/* Next Steps Section */}
         {!selectedContract && (
           <div className="coming-soon-section">
-            <h2>📋 接下来的步骤</h2>
-            <p>选择合约后，你将能够:</p>
-            <ul>
-              <li>🔧 选择批量操作方法</li>
-              <li>📋 输入地址列表（CSV/JSON）</li>
-              <li>📝 配置批量操作参数</li>
-              <li>⛽ 预估 Gas 费用</li>
-              <li>🔒 多重确认执行</li>
-              <li>📊 查看操作结果</li>
-            </ul>
+            <h3>📋 接下来的步骤</h3>
+            <p className="next-steps-hint">选择合约后可进行:</p>
+            <div className="next-steps-grid">
+              <span className="step-item">🔧 选择方法</span>
+              <span className="step-item">📋 输入地址</span>
+              <span className="step-item">📝 配置参数</span>
+              <span className="step-item">⛽ 预估费用</span>
+              <span className="step-item">🔒 确认执行</span>
+              <span className="step-item">📊 查看结果</span>
+            </div>
           </div>
         )}
 
