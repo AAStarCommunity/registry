@@ -1336,39 +1336,6 @@ const GetGToken: React.FC = () => {
           </ul>
         </section>
 
-        {/* Contract Information */}
-        <section className="info-section">
-          <h2>📋 Contract Information</h2>
-          <div className="contract-info">
-            <div className="info-row">
-              <span className="label">Token Name:</span>
-              <span className="value">GToken (Governance Token)</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Symbol:</span>
-              <span className="value">GToken</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Network:</span>
-              <span className="value">{network.name}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Contract Address:</span>
-              <span className="value mono">
-                {GTOKEN_ADDRESS}
-                <a
-                  href={`${EXPLORER_URL}/address/${GTOKEN_ADDRESS}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="explorer-link"
-                >
-                  View on Explorer →
-                </a>
-              </span>
-            </div>
-          </div>
-        </section>
-
         {/* All Deployed Contracts */}
         <section className="info-section">
           <h2>

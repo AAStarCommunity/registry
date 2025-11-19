@@ -242,27 +242,9 @@ export function GetXPNTs() {
           console.error("Failed to fetch token details:", tokenErr);
         }
 
-        // Try to get creation timestamp from xPNTsFactory events
-        try {
-          // Query xPNTsTokenDeployed events with block range limit
-          const currentBlock = await rpcProvider.getBlockNumber();
-          const maxBlockRange = 50000;
-          const fromBlock = Math.max(0, currentBlock - maxBlockRange);
-
-          const filter = factory.filters.xPNTsTokenDeployed(null, address);
-          const events = await factory.queryFilter(filter, fromBlock, currentBlock);
-
-          if (events.length > 0) {
-            const block = await rpcProvider.getBlock(events[0].blockNumber);
-            if (block) {
-              const createdDate = new Date(block.timestamp * 1000);
-              setTokenCreatedAt(createdDate.toISOString());
-              console.log("Token created at:", createdDate.toISOString());
-            }
-          }
-        } catch (eventErr) {
-          console.error("Failed to fetch creation timestamp:", eventErr);
-        }
+        // Note: Creation timestamp not available without event queries
+        // (event queries have block range limitations on RPC providers)
+        setTokenCreatedAt(""); // Leave empty to avoid RPC errors
       }
     } catch (err) {
       console.error("Failed to check existing token:", err);
@@ -465,38 +447,28 @@ export function GetXPNTs() {
         rpcProvider,
       );
 
-      console.log("🔍 Querying xPNTsTokenDeployed events from xPNTsFactory...");
+      console.log("🔍 Getting all deployed tokens from xPNTsFactory...");
 
-      // Query xPNTsTokenDeployed events with block range limit (RPC provider restriction)
-      const currentBlock = await rpcProvider.getBlockNumber();
-      const maxBlockRange = 50000; // Maximum range to avoid RPC errors
-      const fromBlock = Math.max(0, currentBlock - maxBlockRange);
+      // Use getAllTokens() instead of event queries (no block range limits!)
+      const tokenAddresses = await factory.getAllTokens();
 
-      console.log(`Querying from block ${fromBlock} to ${currentBlock}`);
-
-      const filter = factory.filters.xPNTsTokenDeployed();
-      const events = await factory.queryFilter(filter, fromBlock, currentBlock);
-
-      console.log(`📊 Found ${events.length} xPNTsTokenDeployed events`);
+      console.log(`📊 Found ${tokenAddresses.length} deployed tokens`);
 
       // Fetch details for each token in parallel
-      const tokenPromises = events.map(async (event) => {
+      const tokenPromises = tokenAddresses.map(async (tokenAddress: string) => {
         try {
-          const owner = (event as any).args?.[0] as string;
-          const tokenAddress = (event as any).args?.[1] as string;
-
           const tokenContract = new ethers.Contract(
             tokenAddress,
             ERC20_ABI,
             rpcProvider,
           );
-          const block = await rpcProvider.getBlock(event.blockNumber);
 
-          const [name, symbol, decimals, totalSupply] = await Promise.all([
+          const [name, symbol, decimals, totalSupply, communityOwner] = await Promise.all([
             tokenContract.name(),
             tokenContract.symbol(),
             tokenContract.decimals(),
             tokenContract.totalSupply(),
+            tokenContract.communityOwner(), // Get owner from token contract
           ]);
 
           return {
@@ -505,14 +477,12 @@ export function GetXPNTs() {
             symbol,
             totalSupply: ethers.formatUnits(totalSupply, decimals),
             decimals: Number(decimals),
-            owner,
-            deployedAt: block
-              ? new Date(block.timestamp * 1000).toLocaleString()
-              : "Unknown",
+            owner: communityOwner,
+            deployedAt: "N/A", // We don't have deployment time without events
           };
         } catch (err) {
           console.error(
-            `Failed to fetch details for token ${(event as any).args?.[1]}:`,
+            `Failed to fetch details for token ${tokenAddress}:`,
             err,
           );
           return null;
@@ -521,12 +491,6 @@ export function GetXPNTs() {
 
       const tokens = (await Promise.all(tokenPromises)).filter(
         (token): token is DeployedToken => token !== null,
-      );
-
-      // Sort by deployment time (newest first)
-      tokens.sort(
-        (a, b) =>
-          new Date(b.deployedAt).getTime() - new Date(a.deployedAt).getTime(),
       );
 
       console.log(`✅ Loaded ${tokens.length} deployed tokens`);
@@ -694,29 +658,6 @@ export function GetXPNTs() {
               reward systems
             </li>
           </ul>
-        </div>
-
-        {/* Contract Info */}
-        <div className="info-section">
-          <h2>Contract Information</h2>
-          <div className="contract-info">
-            <div className="info-row">
-              <span className="label">Factory Address</span>
-              <span className="value mono">{XPNTS_FACTORY_ADDRESS}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Network</span>
-              <span className="value">Sepolia Testnet</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Deploy Fee</span>
-              <span className="value highlight">Free (Gas Only)</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Token Standard</span>
-              <span className="value">ERC-20 Extended</span>
-            </div>
-          </div>
         </div>
 
         {/* Deploy Section */}

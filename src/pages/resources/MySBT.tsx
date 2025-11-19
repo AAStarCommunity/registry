@@ -359,48 +359,6 @@ export function MySBT() {
           </ul>
         </div>
 
-        {/* Contract Info */}
-        <div className="info-section">
-          <h2>Contract Information</h2>
-          <div className="contract-info">
-            <div className="info-row">
-              <span className="label">Contract Address</span>
-              <span className="value mono">{MYSBT_V2_3_ADDRESS}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Version</span>
-              <span className="value">{version || "v2.3.0"}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Network</span>
-              <span className="value">Sepolia Testnet</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Mint Fee</span>
-              <span className="value highlight">
-                {mintFeeAmount} GT (burned)
-              </span>
-            </div>
-            <div className="info-row">
-              <span className="label">Rate Limit</span>
-              <span className="value">5 minutes between activities</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Subgraph</span>
-              <span className="value">
-                <a
-                  href="https://thegraph.com/studio/subgraph/mysbt-v-2-3"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="link"
-                >
-                  View on The Graph Studio →
-                </a>
-              </span>
-            </div>
-          </div>
-        </div>
-
         {!account ? (
           <div className="wallet-connect-section">
             <div className="connect-prompt">
