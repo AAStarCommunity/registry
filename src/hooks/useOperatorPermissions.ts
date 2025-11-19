@@ -36,51 +36,39 @@ export function useOperatorPermissions(account?: string): OperatorPermissions {
       const tokens = getTokenContracts('sepolia');
       const mySBT = new ethers.Contract(tokens.mySBT, MySBTABI, rpcProvider);
 
-      // Check if the address is the contract owner
+      // Check if the address is the contract owner (MySBT uses daoMultisig instead of owner)
       let isOwner = false;
       let isOperator = false;
 
       try {
-        const owner = await mySBT.owner();
-        isOwner = owner.toLowerCase() === address.toLowerCase();
+        // MySBT v2.3+ uses daoMultisig instead of owner()
+        if (typeof mySBT.daoMultisig === 'function') {
+          const daoMultisig = await mySBT.daoMultisig();
+          isOwner = daoMultisig.toLowerCase() === address.toLowerCase();
+        }
       } catch (err) {
         console.warn('Could not check owner permissions:', err);
       }
 
       // Check if the address has operator permissions
-      // This depends on the specific MySBT implementation
-      // Common patterns include:
-      // 1. hasRole() function for role-based access
-      // 2. isOperator() function
-      // 3. Mapping-based operator check
+      // MySBT v2.3 does not have explicit operator role
+      // Operator permissions are typically granted to:
+      // 1. The DAO multisig (owner)
+      // 2. Registry contract
+      // For now, we'll consider only the DAO multisig as having operator permissions
 
       try {
-        // Try different common operator checking methods
-        if (typeof mySBT.hasRole === 'function') {
-          // Try with OPERATOR_ROLE (common in OpenZeppelin AccessControl)
-          const OPERATOR_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000';
-          isOperator = await mySBT.hasRole(OPERATOR_ROLE, address);
-        } else if (typeof mySBT.isOperator === 'function') {
-          isOperator = await mySBT.isOperator(address);
+        // In MySBT v2.3, the main admin is the daoMultisig
+        // Registry contract can also call certain functions
+        if (isOwner) {
+          // If user is owner (daoMultisig), they have operator permissions
+          isOperator = true;
+        } else if (address.toLowerCase() === core.registry.toLowerCase()) {
+          // Registry contract is also considered an operator
+          isOperator = true;
         } else {
-          // Try calling a known operator-only function to check permissions
-          // This is a fallback method - it might fail but we catch the error
-          try {
-            // We don't actually execute, just try to estimate gas to check permissions
-            await mySBT.mintFor.estimateGas(address, core.registry, '{}');
-            isOperator = true;
-          } catch (gasError: any) {
-            // If it fails with "not operator" or similar, we know they're not an operator
-            if (gasError.message?.toLowerCase().includes('operator') ||
-                gasError.message?.toLowerCase().includes('unauthorized') ||
-                gasError.message?.toLowerCase().includes('permission')) {
-              isOperator = false;
-            } else {
-              // If it fails for other reasons (like insufficient balance), they might still be an operator
-              isOperator = false;
-              console.log('Gas estimate failed for non-permission reasons:', gasError.message);
-            }
-          }
+          // Regular users don't have operator permissions in MySBT v2.3
+          isOperator = false;
         }
       } catch (err) {
         console.warn('Could not check operator permissions:', err);
