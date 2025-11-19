@@ -7,8 +7,8 @@ import { ethers } from 'ethers';
 import { getCoreContracts, MySBTABI, RegistryABI } from '@aastar/shared-config';
 import { getRpcUrl } from '../config/rpc';
 
-// GToken address on Sepolia
-const GTOKEN_ADDRESS_SEPOLIA = '0x7D49e4E72887fAaBA8e49fE7e49b5F02b04d2028';
+// GToken address on Sepolia (normalized with correct checksum)
+const GTOKEN_ADDRESS_SEPOLIA = ethers.getAddress('0x7d49e4e72887faaba8e49fe7e49b5f02b04d2028');
 
 export interface CheckResult {
   passed: boolean;
