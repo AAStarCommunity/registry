@@ -743,7 +743,7 @@ export function GetSBT() {
                   <div className="card-value">{parseFloat(gTokenBalance).toFixed(2)} GT</div>
                   <div className="card-sublabel">Wallet Balance</div>
                 </div>
-                
+
                 <div className="balance-card">
                   <div className="card-label">Staked GToken</div>
                   <div className="card-value">{parseFloat(stakedBalance).toFixed(2)} GT</div>
@@ -783,6 +783,9 @@ export function GetSBT() {
                     </div>
                   </div>
                 </div>
+
+                {/* Admin Entry Card */}
+                <AdminEntryButton permissions={operatorPermissions} className="balance-card-style" />
               </div>
 
               {/* Community Selection */}
@@ -914,9 +917,6 @@ export function GetSBT() {
           </button>
         </div>
       </div>
-
-      {/* Admin Entry Button - Only visible to operators/owners */}
-      <AdminEntryButton permissions={operatorPermissions} />
     </div>
   );
 }

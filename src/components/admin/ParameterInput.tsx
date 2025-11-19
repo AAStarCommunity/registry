@@ -203,8 +203,13 @@ export const DynamicParameters: React.FC<DynamicParametersProps> = ({
               config={param}
               value={values[param.name]}
               onChange={(value) => handleParameterChange(param.name, value)}
-              disabled={disabled}
+              disabled={disabled || param.name === 'metadata' || param.name === 'metas'}
             />
+            {(param.name === 'metadata' || param.name === 'metas') && (
+              <div className="parameter-readonly-hint">
+                🔒 Auto-filled with your community information (read-only)
+              </div>
+            )}
           </div>
         ))}
       </div>

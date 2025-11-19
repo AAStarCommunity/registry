@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { ethers } from 'ethers';
 import { useOperatorPermissions } from '../../hooks/useOperatorPermissions';
 import { ContractSelector } from '../../components/admin/ContractSelector';
 import { BatchAddressInput } from '../../components/admin/BatchAddressInput';
@@ -18,6 +19,8 @@ import { BatchExecutionProgressModal } from '../../components/admin/BatchExecuti
 import { BatchResultModal } from '../../components/admin/BatchResultModal';
 import { MultiConfirmModal } from '../../components/admin/MultiConfirmModal';
 import { operationLogService } from '../../services/OperationLogService';
+import { getCoreContracts, RegistryABI } from '@aastar/shared-config';
+import { getRpcUrl } from '../../config/rpc';
 import './AdminBatchMint.css';
 
 export const AdminBatchMint: React.FC = () => {
@@ -49,6 +52,42 @@ export const AdminBatchMint: React.FC = () => {
   const [executionStartTime, setExecutionStartTime] = useState<Date | null>(null);
   const [executionEndTime, setExecutionEndTime] = useState<Date | null>(null);
   const [batchService] = useState(() => new BatchContractService());
+  const [communityMetadata, setCommunityMetadata] = useState<string>('{}');
+
+  // Load operator's community metadata
+  useEffect(() => {
+    const loadCommunityMetadata = async () => {
+      if (!account || !operatorPermissions.isOperator) return;
+
+      try {
+        const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
+        const core = getCoreContracts('sepolia');
+        const registry = new ethers.Contract(
+          core.registry,
+          RegistryABI,
+          rpcProvider
+        );
+
+        // Get community profile for this operator
+        const profile = await registry.getCommunityProfile(account);
+
+        // Create metadata JSON with community info
+        const metadata = {
+          communityAddress: account,
+          communityName: profile.name || 'Unknown Community',
+          registeredAt: new Date(Number(profile.registeredAt) * 1000).toISOString(),
+          nodeType: ['PAYMASTER_AOA', 'PAYMASTER_SUPER', 'ANODE', 'KMS'][profile.nodeType] || 'Unknown'
+        };
+
+        setCommunityMetadata(JSON.stringify(metadata, null, 2));
+      } catch (error) {
+        console.error('Failed to load community metadata:', error);
+        setCommunityMetadata(JSON.stringify({ communityAddress: account }, null, 2));
+      }
+    };
+
+    loadCommunityMetadata();
+  }, [account, operatorPermissions.isOperator]);
 
   // Load available contracts
   useEffect(() => {
@@ -84,13 +123,16 @@ export const AdminBatchMint: React.FC = () => {
       // Set default parameters
       const defaultParams: { [key: string]: any } = {};
       selectedContract.batchMethods[0].parameters.forEach(param => {
-        if (param.defaultValue !== undefined) {
+        // Auto-fill metadata with community info
+        if (param.name === 'metadata' || param.name === 'metas') {
+          defaultParams[param.name] = communityMetadata;
+        } else if (param.defaultValue !== undefined) {
           defaultParams[param.name] = param.defaultValue;
         }
       });
       setParameters(defaultParams);
     }
-  }, [selectedContract]);
+  }, [selectedContract, communityMetadata]);
 
   // Check wallet connection and permissions
   useEffect(() => {

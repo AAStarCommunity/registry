@@ -27,6 +27,27 @@ export const AdminEntryButton: React.FC<AdminEntryButtonProps> = ({
     return null;
   }
 
+  // Render as balance card if className includes 'balance-card-style'
+  if (className.includes('balance-card-style')) {
+    return (
+      <div className="balance-card admin-balance-card" onClick={handleClick}>
+        <div className="card-label">
+          {permissions.isOwner ? "🎯 Admin Panel" : "⚡ Batch Mint"}
+        </div>
+        <div className="card-value admin-card-value">
+          <span className="admin-icon-large">🔧</span>
+        </div>
+        <div className="card-status admin-status">
+          {permissions.isOwner ? "👑 OWNER" : "⚡ OPERATOR"}
+        </div>
+        <div className="card-sublabel admin-sublabel">
+          Click to access admin panel
+        </div>
+      </div>
+    );
+  }
+
+  // Default button style
   return (
     <div className={`admin-entry-container ${className}`}>
       <button

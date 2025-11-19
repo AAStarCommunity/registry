@@ -166,3 +166,57 @@
     background: linear-gradient(135deg, #5b21b6 0%, #4c1d95 100%);
   }
 }
+/* Admin Balance Card Style */
+.admin-balance-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: 2px solid transparent !important;
+}
+
+.admin-balance-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.admin-balance-card .card-label {
+  color: white;
+  font-weight: 600;
+}
+
+.admin-card-value {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.admin-icon-large {
+  font-size: 3rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.admin-status {
+  color: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 6px 12px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.admin-sublabel {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin-top: 8px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
