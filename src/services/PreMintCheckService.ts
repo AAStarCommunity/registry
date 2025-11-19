@@ -4,11 +4,11 @@
  */
 
 import { ethers } from 'ethers';
-import { getCoreContracts, MySBTABI, RegistryABI } from '@aastar/shared-config';
+import { getCoreContracts, MySBTABI, RegistryABI, CORE_ADDRESSES } from '@aastar/shared-config';
 import { getRpcUrl } from '../config/rpc';
 
-// GToken address on Sepolia (normalized with correct checksum)
-const GTOKEN_ADDRESS_SEPOLIA = ethers.getAddress('0x7d49e4e72887faaba8e49fe7e49b5f02b04d2028');
+// Get GToken address from shared-config
+const GTOKEN_ADDRESS = CORE_ADDRESSES.gToken;
 
 export interface CheckResult {
   passed: boolean;
@@ -57,11 +57,18 @@ export class PreMintCheckService {
 
     // Get GToken contract for balance checks
     const gtokenContract = new ethers.Contract(
-      GTOKEN_ADDRESS_SEPOLIA,
+      GTOKEN_ADDRESS,
       ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'],
       this.provider
     );
-    const decimals = await gtokenContract.decimals();
+
+    // Try to get decimals, fallback to 18 if it fails
+    let decimals = 18;
+    try {
+      decimals = await gtokenContract.decimals();
+    } catch (error) {
+      console.warn('[GToken] Failed to get decimals, using default 18:', error);
+    }
 
     for (const address of addresses) {
       try {
@@ -84,9 +91,15 @@ export class PreMintCheckService {
         }
 
         // Check GToken balance
-        const gtBalance = await gtokenContract.balanceOf(address);
-        const gtBalanceFormatted = ethers.formatUnits(gtBalance, decimals);
-        const hasEnoughGToken = Number(gtBalanceFormatted) >= 0.4;
+        let gtBalanceFormatted = '0';
+        let hasEnoughGToken = false;
+        try {
+          const gtBalance = await gtokenContract.balanceOf(address);
+          gtBalanceFormatted = ethers.formatUnits(gtBalance, decimals);
+          hasEnoughGToken = Number(gtBalanceFormatted) >= 0.4;
+        } catch (error) {
+          console.warn(`[GToken] Failed to check balance for ${address}:`, error);
+        }
 
         results.push({
           address,
@@ -167,12 +180,19 @@ export class PreMintCheckService {
   async checkOperatorGTokenBalance(operatorAddress: string): Promise<CheckResult> {
     try {
       const gtokenContract = new ethers.Contract(
-        GTOKEN_ADDRESS_SEPOLIA,
+        GTOKEN_ADDRESS,
         ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'],
         this.provider
       );
 
-      const decimals = await gtokenContract.decimals();
+      // Try to get decimals, fallback to 18 if it fails
+      let decimals = 18;
+      try {
+        decimals = await gtokenContract.decimals();
+      } catch (error) {
+        console.warn('[GToken] Failed to get decimals, using default 18:', error);
+      }
+
       const balance = await gtokenContract.balanceOf(operatorAddress);
       const balanceFormatted = ethers.formatUnits(balance, decimals);
 
