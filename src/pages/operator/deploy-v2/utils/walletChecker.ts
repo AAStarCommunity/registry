@@ -99,6 +99,36 @@ async function getCachedOrFetch<T>(
   return result;
 }
 
+/**
+ * Clear all wallet caches for a specific wallet address
+ * Use this when user clicks refresh button to force reload all wallet data
+ */
+export function clearWalletCaches(walletAddress: string): void {
+  const addr = walletAddress.toLowerCase();
+  const cacheKeys = [
+    `wallet_community_${addr}`,
+    `wallet_eth_${addr}`,
+    `wallet_gtoken_${addr}`,
+    `wallet_apnts_${addr}`,
+    `wallet_apnts_v2_${addr}`,
+    `wallet_xpnts_${addr}`,
+  ];
+
+  console.log("🗑️ Clearing wallet caches for:", addr);
+
+  // Clear each cache key
+  cacheKeys.forEach(key => {
+    try {
+      localStorage.removeItem(`spm_${key}`);
+      console.log(`  ✅ Cleared: ${key}`);
+    } catch (error) {
+      console.error(`  ❌ Failed to clear ${key}:`, error);
+    }
+  });
+
+  console.log("✅ All wallet caches cleared");
+}
+
 // ====================================
 // Helper Functions
 // ====================================

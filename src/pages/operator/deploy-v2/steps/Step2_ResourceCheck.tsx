@@ -14,6 +14,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { checkResources, clearResourceCaches, type ResourceStatus, type StakeMode } from "../utils/resourceChecker";
+import { clearWalletCaches } from "../utils/walletChecker";
 import { getCurrentNetworkConfig, isTestnet, getExplorerLink } from "../../../../config/networkConfig";
 import "./Step2_ResourceCheck.css";
 
@@ -46,7 +47,9 @@ export function Step2_ResourceCheck({ walletAddress, mode, onNext, onBack }: Ste
       // Clear cache if requested (when user clicks refresh button)
       if (clearCache) {
         console.log("🔄 Refresh button clicked - clearing all caches");
+        // Clear both resource caches and wallet caches
         clearResourceCaches(walletAddress);
+        clearWalletCaches(walletAddress);
       }
 
       const status = await checkResources(walletAddress, mode);
