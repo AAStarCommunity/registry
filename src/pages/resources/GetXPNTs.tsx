@@ -244,12 +244,10 @@ export function GetXPNTs() {
 
         // Try to get creation timestamp from xPNTsFactory events
         try {
-          // Query all xPNTsTokenDeployed events and filter for this address (ethers v6)
-          const eventFragment = factory.interface.getEvent("xPNTsTokenDeployed");
-          const allEvents = await factory.queryFilter(eventFragment, 0, "latest");
-          const events = allEvents.filter(
-            (event: any) => event.args?.[1]?.toLowerCase() === address.toLowerCase() // arg[1] is token address
-          );
+          // Query xPNTsTokenDeployed events filtered by token address (ethers v6)
+          // Filter by the second parameter (tokenAddress)
+          const filter = factory.filters.xPNTsTokenDeployed(null, address);
+          const events = await factory.queryFilter(filter, 0, "latest");
 
           if (events.length > 0) {
             const block = await rpcProvider.getBlock(events[0].blockNumber);
@@ -466,9 +464,10 @@ export function GetXPNTs() {
 
       console.log("🔍 Querying xPNTsTokenDeployed events from xPNTsFactory...");
 
-      // Query all xPNTsTokenDeployed events (ethers v6: use getEvent)
-      const eventFragment = factory.interface.getEvent("xPNTsTokenDeployed");
-      const events = await factory.queryFilter(eventFragment, 0, "latest");
+      // Query all xPNTsTokenDeployed events (ethers v6: create filter using contract.filters)
+      // In ethers v6, contract.filters is still available as a getter
+      const filter = factory.filters.xPNTsTokenDeployed();
+      const events = await factory.queryFilter(filter, 0, "latest");
 
       console.log(`📊 Found ${events.length} xPNTsTokenDeployed events`);
 
