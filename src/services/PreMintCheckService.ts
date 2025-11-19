@@ -35,6 +35,8 @@ export interface AddressMintStatus {
   tokenIds: string[];
   gtokenBalance: string;
   hasEnoughGToken: boolean;
+  gtokenAllowance: string;
+  hasEnoughAllowance: boolean;
 }
 
 export class PreMintCheckService {
@@ -55,10 +57,14 @@ export class PreMintCheckService {
     const contract = new ethers.Contract(contractAddress, abi, this.provider);
     const results: AddressMintStatus[] = [];
 
-    // Get GToken contract for balance checks
+    // Get GToken contract for balance and allowance checks
     const gtokenContract = new ethers.Contract(
       GTOKEN_ADDRESS,
-      ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'],
+      [
+        'function balanceOf(address) view returns (uint256)',
+        'function decimals() view returns (uint8)',
+        'function allowance(address owner, address spender) view returns (uint256)'
+      ],
       this.provider
     );
 
@@ -101,13 +107,26 @@ export class PreMintCheckService {
           console.warn(`[GToken] Failed to check balance for ${address}:`, error);
         }
 
+        // Check GToken allowance to MySBT contract
+        let gtAllowanceFormatted = '0';
+        let hasEnoughAllowance = false;
+        try {
+          const allowance = await gtokenContract.allowance(address, contractAddress);
+          gtAllowanceFormatted = ethers.formatUnits(allowance, decimals);
+          hasEnoughAllowance = Number(gtAllowanceFormatted) >= 0.4; // mintFee (0.1) + minLockAmount (0.3)
+        } catch (error) {
+          console.warn(`[GToken] Failed to check allowance for ${address}:`, error);
+        }
+
         results.push({
           address,
           hasSBT,
           sbtBalance: Number(balance),
           tokenIds,
           gtokenBalance: gtBalanceFormatted,
-          hasEnoughGToken
+          hasEnoughGToken,
+          gtokenAllowance: gtAllowanceFormatted,
+          hasEnoughAllowance
         });
       } catch (error) {
         console.error(`Failed to check status for ${address}:`, error);
@@ -117,7 +136,9 @@ export class PreMintCheckService {
           sbtBalance: 0,
           tokenIds: [],
           gtokenBalance: '0',
-          hasEnoughGToken: false
+          hasEnoughGToken: false,
+          gtokenAllowance: '0',
+          hasEnoughAllowance: false
         });
       }
     }
@@ -283,6 +304,28 @@ export class PreMintCheckService {
         passed: true,
         title: 'GToken 余额检查',
         description: '所有目标地址 GToken 余额充足 (≥ 0.4 GT)',
+        severity: 'info'
+      });
+    }
+
+    // 5. Check target addresses GToken allowance to MySBT contract
+    const addressesWithoutEnoughAllowance = addressStatuses.filter(s => !s.hasEnoughAllowance);
+    if (addressesWithoutEnoughAllowance.length > 0) {
+      checks.push({
+        passed: false,
+        title: '部分地址未授权 GToken',
+        description: `${addressesWithoutEnoughAllowance.length} 个地址未授权 GToken 给 MySBT 合约`,
+        severity: 'critical',
+        details: addressesWithoutEnoughAllowance.map(s =>
+          `${s.address.slice(0, 8)}...${s.address.slice(-6)} (授权额度: ${Number(s.gtokenAllowance).toFixed(2)} GT, 需要: 0.4 GT)\n` +
+          `需要先执行: GToken.approve("${contractAddress}", "0.4 GT")`
+        ).join('\n\n')
+      });
+    } else {
+      checks.push({
+        passed: true,
+        title: 'GToken 授权检查',
+        description: '所有目标地址已授权足够的 GToken (≥ 0.4 GT)',
         severity: 'info'
       });
     }
