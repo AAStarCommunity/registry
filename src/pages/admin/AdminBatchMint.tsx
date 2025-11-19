@@ -57,7 +57,17 @@ export const AdminBatchMint: React.FC = () => {
   // Load operator's community metadata
   useEffect(() => {
     const loadCommunityMetadata = async () => {
-      if (!account || !operatorPermissions.isOperator) return;
+      if (!account) {
+        console.log('[Community Metadata] No account connected');
+        return;
+      }
+
+      if (!operatorPermissions.isOperator) {
+        console.log('[Community Metadata] Not an operator');
+        return;
+      }
+
+      console.log('[Community Metadata] Loading for account:', account);
 
       try {
         const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
@@ -69,20 +79,29 @@ export const AdminBatchMint: React.FC = () => {
         );
 
         // Get community profile for this operator
+        console.log('[Community Metadata] Calling getCommunityProfile...');
         const profile = await registry.getCommunityProfile(account);
+        console.log('[Community Metadata] Profile received:', profile);
 
         // Create metadata JSON with community info
         const metadata = {
           communityAddress: account,
           communityName: profile.name || 'Unknown Community',
-          registeredAt: new Date(Number(profile.registeredAt) * 1000).toISOString(),
-          nodeType: ['PAYMASTER_AOA', 'PAYMASTER_SUPER', 'ANODE', 'KMS'][profile.nodeType] || 'Unknown'
+          registeredAt: profile.registeredAt ? new Date(Number(profile.registeredAt) * 1000).toISOString() : 'Unknown',
+          nodeType: ['PAYMASTER_AOA', 'PAYMASTER_SUPER', 'ANODE', 'KMS'][Number(profile.nodeType)] || 'Unknown',
+          isActive: profile.isActive || false
         };
 
-        setCommunityMetadata(JSON.stringify(metadata, null, 2));
+        const metadataString = JSON.stringify(metadata, null, 2);
+        console.log('[Community Metadata] Generated metadata:', metadataString);
+        setCommunityMetadata(metadataString);
       } catch (error) {
-        console.error('Failed to load community metadata:', error);
-        setCommunityMetadata(JSON.stringify({ communityAddress: account }, null, 2));
+        console.error('[Community Metadata] Failed to load:', error);
+        const fallbackMetadata = {
+          communityAddress: account,
+          error: 'Failed to load community data'
+        };
+        setCommunityMetadata(JSON.stringify(fallbackMetadata, null, 2));
       }
     };
 
@@ -132,7 +151,24 @@ export const AdminBatchMint: React.FC = () => {
       });
       setParameters(defaultParams);
     }
-  }, [selectedContract, communityMetadata]);
+  }, [selectedContract]);
+
+  // Update metadata parameter when communityMetadata changes
+  useEffect(() => {
+    if (selectedMethod && communityMetadata !== '{}') {
+      console.log('[Metadata Update] Updating parameters with new metadata:', communityMetadata);
+      setParameters(prev => {
+        const updated = { ...prev };
+        selectedMethod.parameters.forEach(param => {
+          if (param.name === 'metadata' || param.name === 'metas') {
+            updated[param.name] = communityMetadata;
+            console.log(`[Metadata Update] Set ${param.name} to:`, communityMetadata);
+          }
+        });
+        return updated;
+      });
+    }
+  }, [communityMetadata, selectedMethod]);
 
   // Check wallet connection and permissions
   useEffect(() => {
@@ -408,20 +444,6 @@ export const AdminBatchMint: React.FC = () => {
       </div>
 
       <div className="admin-content">
-        <div className="welcome-section">
-          <h2>Welcome to Batch Minting Admin Panel</h2>
-          <p>This is a powerful tool for batch minting tokens and NFTs.</p>
-
-          <div className="permission-info">
-            <h3>Your Permissions:</h3>
-            <ul>
-              <li>✅ Connected as: {account.slice(0, 6)}...{account.slice(-4)}</li>
-              <li>{operatorPermissions.isOperator ? '✅' : '❌'} Can batch mint tokens</li>
-              <li>{operatorPermissions.isOwner ? '✅' : '❌'} Contract owner privileges</li>
-            </ul>
-          </div>
-        </div>
-
         {/* Contract Selection Section */}
         <div className="contract-selection-section">
           <h2>🎯 选择合约</h2>
@@ -482,9 +504,9 @@ export const AdminBatchMint: React.FC = () => {
           )}
         </div>
 
-        {/* Method Selection */}
-        {selectedContract && (
-          <div className="method-selection-section">
+          {/* Method Selection */}
+          {selectedContract && (
+            <div className="method-selection-section">
             <h3>🔧 选择批量方法</h3>
             <div className="method-options">
               {selectedContract.batchMethods.map((method) => (

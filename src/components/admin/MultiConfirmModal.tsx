@@ -128,6 +128,9 @@ export const MultiConfirmModal: React.FC<MultiConfirmModalProps> = ({
     setIsConfirming(true);
     try {
       await onConfirm();
+      // Reset state after successful confirmation
+      // Note: The parent component will close the modal via setShowConfirmModal(false)
+      setIsConfirming(false);
     } catch (error) {
       console.error('Confirmation failed:', error);
       setIsConfirming(false);
@@ -137,6 +140,11 @@ export const MultiConfirmModal: React.FC<MultiConfirmModalProps> = ({
   const canProceed = () => {
     const currentStep = steps[currentStepIndex];
     if (!currentStep) return false;
+
+    // Special handling for specific steps
+    if (currentStep.id === 'accept-risks') {
+      return acceptRisks; // Must check the risk acceptance checkbox
+    }
 
     switch (currentStep.type) {
       case 'check':

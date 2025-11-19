@@ -197,7 +197,9 @@ export const DynamicParameters: React.FC<DynamicParametersProps> = ({
       </div>
 
       <div className="parameters-grid">
-        {parameters.map((param) => (
+        {parameters
+          .filter(param => !param.isAddress || param.isArray) // Filter out single address params (provided by BatchAddressInput)
+          .map((param) => (
           <div key={param.name} className="parameter-section">
             <ParameterInput
               config={param}
