@@ -10,7 +10,8 @@
     "dev:vercel": "vercel dev --listen 3000 --yes",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:mint": "node --env-file=.env scripts/test-mint.js"
   },
   "dependencies": {
     "@aastar/shared-config": "^0.3.4",

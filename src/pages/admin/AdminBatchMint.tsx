@@ -18,6 +18,7 @@ import { BatchContractService } from '../../services/BatchContractService';
 import { BatchExecutionProgressModal } from '../../components/admin/BatchExecutionProgress';
 import { BatchResultModal } from '../../components/admin/BatchResultModal';
 import { MultiConfirmModal } from '../../components/admin/MultiConfirmModal';
+import { PreMintCheckModal } from '../../components/admin/PreMintCheckModal';
 import { operationLogService } from '../../services/OperationLogService';
 import { getCoreContracts, RegistryABI } from '@aastar/shared-config';
 import { getRpcUrl } from '../../config/rpc';
@@ -47,6 +48,7 @@ export const AdminBatchMint: React.FC = () => {
   const [executionResult, setExecutionResult] = useState<BatchMintResult | null>(null);
   const [showProgressModal, setShowProgressModal] = useState(false);
   const [showResultModal, setShowResultModal] = useState(false);
+  const [showPreCheckModal, setShowPreCheckModal] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [currentOperationId, setCurrentOperationId] = useState<string>('');
   const [executionStartTime, setExecutionStartTime] = useState<Date | null>(null);
@@ -196,13 +198,20 @@ export const AdminBatchMint: React.FC = () => {
   // Check permissions but don't auto-redirect
   const hasPermissions = operatorPermissions.isOperator || operatorPermissions.isOwner;
 
-  // Handle execution with confirmation modal
+  // Handle execution with pre-check modal
   const handleExecuteBatch = () => {
     if (!selectedContract || !selectedMethod || addresses.length === 0) {
       alert('请先选择合约、方法和地址');
       return;
     }
 
+    // Show pre-check modal first
+    setShowPreCheckModal(true);
+  };
+
+  // Proceed to confirmation modal after pre-checks pass
+  const handlePreCheckComplete = () => {
+    setShowPreCheckModal(false);
     setShowConfirmModal(true);
   };
 
@@ -678,6 +687,20 @@ export const AdminBatchMint: React.FC = () => {
             isVisible={showProgressModal}
           />
         </div>
+      )}
+
+      {/* Pre-Mint Check Modal */}
+      {showPreCheckModal && selectedContract && account && (
+        <PreMintCheckModal
+          isVisible={showPreCheckModal}
+          operatorAddress={account}
+          addresses={addresses}
+          contractConfig={selectedContract}
+          onProceed={handlePreCheckComplete}
+          onCancel={() => {
+            setShowPreCheckModal(false);
+          }}
+        />
       )}
 
       {/* Multi-Confirmation Modal */}
