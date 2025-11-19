@@ -115,16 +115,8 @@ export const AdminBatchMint: React.FC = () => {
     checkWallet();
   }, []);
 
-  // Redirect if not operator
-  useEffect(() => {
-    if (!operatorPermissions.isLoading &&
-        !operatorPermissions.isOperator &&
-        !operatorPermissions.isOwner &&
-        account) {
-      alert('You do not have operator permissions to access this page');
-      navigate('/get-sbt');
-    }
-  }, [operatorPermissions, account, navigate]);
+  // Check permissions but don't auto-redirect
+  const hasPermissions = operatorPermissions.isOperator || operatorPermissions.isOwner;
 
   // Handle execution with confirmation modal
   const handleExecuteBatch = () => {
@@ -277,6 +269,80 @@ export const AdminBatchMint: React.FC = () => {
         >
           Connect Wallet
         </button>
+      </div>
+    );
+  }
+
+  // Show graceful no-permission page
+  if (!operatorPermissions.isLoading && !hasPermissions && account) {
+    return (
+      <div className="admin-batch-mint-page">
+        <div className="admin-header">
+          <button className="back-button" onClick={() => navigate('/get-sbt')}>
+            ← Back to Get SBT
+          </button>
+          <h1>🔧 Batch Minting Admin Panel</h1>
+          <div className="permission-badge">
+            <span className="badge no-access">❌ NO ACCESS</span>
+          </div>
+        </div>
+
+        <div className="admin-content">
+          <div className="no-permission-message">
+            <div className="message-icon">🚫</div>
+            <h2>Access Restricted</h2>
+            <p className="message-description">
+              You do not have permission to access the Batch Minting Admin Panel.
+            </p>
+
+            <div className="permission-requirements">
+              <h3>Required Permissions:</h3>
+              <ul>
+                <li>
+                  <span className="requirement-icon">✓</span>
+                  <span>Register a community in the Registry contract</span>
+                </li>
+                <li>
+                  <span className="requirement-icon">✓</span>
+                  <span>Or be the Registry contract owner (DAO Multisig)</span>
+                </li>
+              </ul>
+            </div>
+
+            <div className="current-account-info">
+              <p className="account-label">Current Account:</p>
+              <p className="account-address">{account}</p>
+              <p className="account-status">
+                <span className="status-icon">❌</span>
+                Not registered as a community owner
+              </p>
+            </div>
+
+            <div className="help-section">
+              <h3>How to Get Access:</h3>
+              <ol>
+                <li>Visit the operator deployment wizard to register a community</li>
+                <li>Stake the required GToken amount</li>
+                <li>Complete the community registration process</li>
+              </ol>
+              <button
+                className="navigate-button"
+                onClick={() => navigate('/operator/wizard')}
+              >
+                🚀 Go to Operator Wizard
+              </button>
+            </div>
+
+            <div className="action-buttons">
+              <button
+                className="secondary-button"
+                onClick={() => navigate('/get-sbt')}
+              >
+                ← Back to Get SBT
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

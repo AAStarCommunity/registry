@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
-import { MySBTABI } from '@aastar/shared-config';
+import { MySBTABI, RegistryABI } from '@aastar/shared-config';
 import { getCoreContracts, getTokenContracts } from '@aastar/shared-config';
 import { getRpcUrl } from '../config/rpc';
 
@@ -12,7 +12,7 @@ export interface OperatorPermissions {
 }
 
 /**
- * Hook to check if the connected wallet has Operator permissions for MySBT contract
+ * Hook to check if the connected wallet is a registered community owner in Registry
  */
 export function useOperatorPermissions(account?: string): OperatorPermissions {
   const [permissions, setPermissions] = useState<OperatorPermissions>({
@@ -34,44 +34,35 @@ export function useOperatorPermissions(account?: string): OperatorPermissions {
       const rpcProvider = new ethers.JsonRpcProvider(getRpcUrl());
       const core = getCoreContracts('sepolia');
       const tokens = getTokenContracts('sepolia');
-      const mySBT = new ethers.Contract(tokens.mySBT, MySBTABI, rpcProvider);
 
-      // Check if the address is the contract owner (MySBT uses daoMultisig instead of owner)
-      let isOwner = false;
+      // Check if the address is a registered community in Registry
+      const registry = new ethers.Contract(core.registry, RegistryABI, rpcProvider);
+
       let isOperator = false;
+      let isOwner = false;
 
       try {
-        // MySBT v2.3+ uses daoMultisig instead of owner()
-        if (typeof mySBT.daoMultisig === 'function') {
-          const daoMultisig = await mySBT.daoMultisig();
-          isOwner = daoMultisig.toLowerCase() === address.toLowerCase();
+        // Check if this address has registered a community in Registry
+        // If registeredAt != 0, this address is a community owner
+        const isRegisteredCommunity = await registry.isRegisteredCommunity(address);
+
+        console.log(`[useOperatorPermissions] Checking ${address}`);
+        console.log(`[useOperatorPermissions] isRegisteredCommunity: ${isRegisteredCommunity}`);
+
+        if (isRegisteredCommunity) {
+          // This address is a registered community owner
+          isOperator = true;
+
+          // Also check if this is the Registry contract owner (DAO multisig)
+          try {
+            const registryOwner = await registry.owner();
+            isOwner = registryOwner.toLowerCase() === address.toLowerCase();
+          } catch (err) {
+            console.warn('Could not check registry owner:', err);
+          }
         }
       } catch (err) {
-        console.warn('Could not check owner permissions:', err);
-      }
-
-      // Check if the address has operator permissions
-      // MySBT v2.3 does not have explicit operator role
-      // Operator permissions are typically granted to:
-      // 1. The DAO multisig (owner)
-      // 2. Registry contract
-      // For now, we'll consider only the DAO multisig as having operator permissions
-
-      try {
-        // In MySBT v2.3, the main admin is the daoMultisig
-        // Registry contract can also call certain functions
-        if (isOwner) {
-          // If user is owner (daoMultisig), they have operator permissions
-          isOperator = true;
-        } else if (address.toLowerCase() === core.registry.toLowerCase()) {
-          // Registry contract is also considered an operator
-          isOperator = true;
-        } else {
-          // Regular users don't have operator permissions in MySBT v2.3
-          isOperator = false;
-        }
-      } catch (err) {
-        console.warn('Could not check operator permissions:', err);
+        console.warn('Could not check registry permissions:', err);
         isOperator = false;
       }
 
