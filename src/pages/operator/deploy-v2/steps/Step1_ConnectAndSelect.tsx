@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { ethers } from "ethers";
 import { getCurrentNetworkConfig } from "../../../../config/networkConfig";
 import { WalletStatus } from "../components/WalletStatus";
-import { checkWalletStatus, getCurrentNetwork } from "../utils/walletChecker";
+import { checkWalletStatus, getCurrentNetwork, clearWalletCaches } from "../utils/walletChecker";
 import type { WalletStatus as WalletStatusType } from "../utils/walletChecker";
 import {
   StakeOptionCard,
@@ -194,11 +194,16 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
   };
 
   // SubStep 3: Check Resources (conditional based on option)
-  const checkResourcesForOption = async (option: StakeOptionType) => {
+  const checkResourcesForOption = async (option: StakeOptionType, clearCache: boolean = false) => {
     setIsLoading(true);
     setError(null);
 
     try {
+      // Clear cache if requested (when user clicks refresh button)
+      if (clearCache && walletStatus?.address) {
+        console.log("🔄 Refresh button clicked - clearing wallet caches");
+        clearWalletCaches(walletStatus.address);
+      }
       // Define different requirements based on option
       const requirements = option === 'aoa'
         ? {
@@ -231,7 +236,7 @@ export function Step1_ConnectAndSelect({ onNext, isTestMode = false }: Step1Prop
 
   const handleRefreshResources = () => {
     if (selectedOption) {
-      checkResourcesForOption(selectedOption);
+      checkResourcesForOption(selectedOption, true); // Pass true to clear cache
     }
   };
 
