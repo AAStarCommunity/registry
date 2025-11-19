@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@aastar/shared-config':
-        specifier: ^0.3.4
-        version: 0.3.4
+        specifier: ^0.3.5
+        version: 0.3.5
       '@safe-global/safe-apps-react-sdk':
         specifier: ^4.7.2
         version: 4.7.2(react@19.2.0)(typescript@5.9.3)(zod@3.22.4)
@@ -99,8 +99,8 @@ importers:
 
 packages:
 
-  '@aastar/shared-config@0.3.4':
-    resolution: {integrity: sha512-EMjb4q6zdlW8csq9ZbJfNf4U+OLupGGd+mj1fiZ8Ha3yAkFpgA0momP5mTMmj9gDstvvT2msoirqTvdPFjj05g==}
+  '@aastar/shared-config@0.3.5':
+    resolution: {integrity: sha512-EBtqlTjZDA5L7ldudFp+HPM5o2LCKiaQUvDuNj5FHLYDf4sielU1UxFZwCXkMTVkfxvkMA/vJYEVJlAAFwA8Fw==}
 
   '@adraffy/ens-normalize@1.10.0':
     resolution: {integrity: sha512-nA9XHtlAkYfJxY7bce8DcN7eKxWWCWkU+1GR9d+U6MbNpfwQp8TI7vqOsBsMcHoT4mBu2kypKoSKnghEzOOq5Q==}
@@ -2915,7 +2915,7 @@ packages:
 
 snapshots:
 
-  '@aastar/shared-config@0.3.4': {}
+  '@aastar/shared-config@0.3.5': {}
 
   '@adraffy/ens-normalize@1.10.0': {}
 
