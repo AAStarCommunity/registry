@@ -17,6 +17,8 @@ export interface BatchMethod {
   parameters: ParameterConfig[];
   gasEstimate: number; // gas per item
   description: string;
+  requiresGTokenCheck?: boolean; // 是否需要检查GToken余额
+  requiredGTokenAmount?: string; // 需要的GToken数量（如"0.4"）
 }
 
 export interface ContractConfig {

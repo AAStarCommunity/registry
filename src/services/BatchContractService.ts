@@ -26,6 +26,10 @@ export interface BatchExecutionProgress {
   totalItems: number;
   currentAddress: string;
   status: 'pending' | 'executing' | 'completed' | 'failed';
+  currentStep?: 'checking_gtoken' | 'transferring_gtoken' | 'minting';
+  currentStepDescription?: string;
+  gTokenTransferred?: boolean;
+  gTokenAmount?: string;
   results: BatchMintResult['results'];
 }
 
@@ -98,7 +102,7 @@ export class BatchContractService {
       for (let i = 0; i < addresses.length; i++) {
         const address = addresses[i];
 
-        // Update progress
+        // Update progress - starting
         if (onProgress) {
           onProgress({
             currentIndex: i,
@@ -110,10 +114,79 @@ export class BatchContractService {
         }
 
         try {
-          // Prepare method arguments
+          // Step 1: Check and ensure GToken balance if required
+          if (method.requiresGTokenCheck) {
+            const requiredAmount = method.requiredGTokenAmount || '0.4';
+
+            // Update progress - checking GToken
+            if (onProgress) {
+              onProgress({
+                currentIndex: i,
+                totalItems,
+                currentAddress: address,
+                status: 'executing',
+                currentStep: 'checking_gtoken',
+                currentStepDescription: `Checking GToken balance (required: ${requiredAmount} GT)`,
+                results: [...results]
+              });
+            }
+
+            console.log(`[${i + 1}/${totalItems}] Checking GToken balance for ${address}...`);
+
+            const { balance, hasEnough } = await this.checkGTokenBalance(address);
+
+            if (!hasEnough) {
+              const toTransfer = (parseFloat(requiredAmount) - parseFloat(balance)).toFixed(4);
+
+              // Update progress - transferring GToken
+              if (onProgress) {
+                onProgress({
+                  currentIndex: i,
+                  totalItems,
+                  currentAddress: address,
+                  status: 'executing',
+                  currentStep: 'transferring_gtoken',
+                  currentStepDescription: `Transferring ${toTransfer} GT (current: ${balance} GT)`,
+                  gTokenAmount: toTransfer,
+                  results: [...results]
+                });
+              }
+
+              console.log(`[${i + 1}/${totalItems}] Insufficient GToken (${balance} < ${requiredAmount}), transferring ${toTransfer} GT...`);
+
+              const gTokenResult = await this.ensureGTokenBalance(address, requiredAmount);
+
+              if (!gTokenResult.success) {
+                throw new Error(`GToken transfer failed: ${gTokenResult.error}`);
+              }
+
+              console.log(`[${i + 1}/${totalItems}] GToken transferred successfully (txHash: ${gTokenResult.txHash})`);
+
+              // Small delay after GToken transfer
+              await this.delay(500);
+            } else {
+              console.log(`[${i + 1}/${totalItems}] GToken balance sufficient (${balance} >= ${requiredAmount})`);
+            }
+          }
+
+          // Step 2: Update progress - minting
+          if (onProgress) {
+            onProgress({
+              currentIndex: i,
+              totalItems,
+              currentAddress: address,
+              status: 'executing',
+              currentStep: 'minting',
+              currentStepDescription: `Minting SBT for ${address.slice(0, 6)}...${address.slice(-4)}`,
+              results: [...results]
+            });
+          }
+
+          // Step 3: Prepare method arguments
           const args = this.prepareMethodArguments(method, parameters, i, addresses);
 
-          // Execute transaction
+          // Step 4: Execute mint transaction
+          console.log(`[${i + 1}/${totalItems}] Executing mint for ${address}...`);
           const tx = await contract[method.name](...args);
           currentTxHash = tx.hash;
 
@@ -131,7 +204,9 @@ export class BatchContractService {
             error: undefined
           });
 
-          // Update progress
+          console.log(`[${i + 1}/${totalItems}] ✅ Mint successful for ${address} (tokenId: ${result.tokenId || 'N/A'})`);
+
+          // Update progress - completed
           if (onProgress) {
             onProgress({
               currentIndex: i + 1,
@@ -148,7 +223,7 @@ export class BatchContractService {
           }
 
         } catch (error: any) {
-          console.error(`Failed to mint for address ${address}:`, error);
+          console.error(`[${i + 1}/${totalItems}] ❌ Failed to mint for address ${address}:`, error);
 
           results.push({
             address,
@@ -334,5 +409,117 @@ export class BatchContractService {
       console.error('Failed to check balance:', error);
       return false;
     }
+  }
+
+  // Check GToken balance for a specific address
+  async checkGTokenBalance(address: string): Promise<{ balance: string; hasEnough: boolean }> {
+    try {
+      const core = getCoreContracts(this.network);
+      const gTokenContract = new ethers.Contract(
+        core.gToken,
+        ['function balanceOf(address) view returns (uint256)'],
+        this.provider
+      );
+
+      const balance = await gTokenContract.balanceOf(address);
+      const balanceInEther = ethers.formatEther(balance);
+      const hasEnough = parseFloat(balanceInEther) >= 0.4;
+
+      return {
+        balance: balanceInEther,
+        hasEnough
+      };
+    } catch (error) {
+      console.error(`Failed to check GToken balance for ${address}:`, error);
+      return { balance: '0', hasEnough: false };
+    }
+  }
+
+  // Transfer GToken to address if balance is insufficient
+  async ensureGTokenBalance(
+    targetAddress: string,
+    requiredAmount: string = '0.4'
+  ): Promise<{ success: boolean; txHash?: string; error?: string }> {
+    if (!this.signer) {
+      return { success: false, error: 'Wallet not connected' };
+    }
+
+    try {
+      // Check current balance
+      const { balance, hasEnough } = await this.checkGTokenBalance(targetAddress);
+
+      if (hasEnough) {
+        return { success: true };
+      }
+
+      // Calculate how much to transfer
+      const currentBalance = parseFloat(balance);
+      const required = parseFloat(requiredAmount);
+      const toTransfer = required - currentBalance;
+
+      if (toTransfer <= 0) {
+        return { success: true };
+      }
+
+      // Transfer GToken from operator to target address
+      const core = getCoreContracts(this.network);
+      const gTokenContract = new ethers.Contract(
+        core.gToken,
+        ['function transfer(address to, uint256 amount) returns (bool)'],
+        this.signer
+      );
+
+      const transferAmount = ethers.parseEther(toTransfer.toFixed(18));
+      const tx = await gTokenContract.transfer(targetAddress, transferAmount);
+      await tx.wait();
+
+      return { success: true, txHash: tx.hash };
+    } catch (error: any) {
+      console.error(`Failed to ensure GToken balance for ${targetAddress}:`, error);
+      return { success: false, error: error.message || 'Transfer failed' };
+    }
+  }
+
+  // Batch ensure GToken balances for multiple addresses
+  async batchEnsureGTokenBalances(
+    addresses: string[],
+    requiredAmount: string = '0.4',
+    onProgress?: (current: number, total: number, address: string, status: string) => void
+  ): Promise<{
+    success: boolean;
+    results: { address: string; success: boolean; error?: string; transferred?: boolean }[];
+  }> {
+    const results: { address: string; success: boolean; error?: string; transferred?: boolean }[] = [];
+
+    for (let i = 0; i < addresses.length; i++) {
+      const address = addresses[i];
+
+      if (onProgress) {
+        onProgress(i + 1, addresses.length, address, 'Checking GToken balance...');
+      }
+
+      const result = await this.ensureGTokenBalance(address, requiredAmount);
+
+      results.push({
+        address,
+        success: result.success,
+        error: result.error,
+        transferred: result.txHash !== undefined
+      });
+
+      if (!result.success) {
+        console.error(`Failed to ensure GToken for ${address}:`, result.error);
+      }
+
+      // Small delay between transfers
+      if (i < addresses.length - 1 && result.txHash) {
+        await this.delay(1000);
+      }
+    }
+
+    return {
+      success: results.every(r => r.success),
+      results
+    };
   }
 }

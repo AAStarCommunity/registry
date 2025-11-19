@@ -902,29 +902,6 @@ export function GetSBT() {
           </div>
         )}
 
-        {/* Contract Info */}
-        <div className="info-section contract-info-section">
-          <h3>{t("getSBT.contractInfo.title")}</h3>
-          <div className="contract-info">
-            <div className="info-row">
-              <span className="label">{t("getSBT.contractInfo.mySBTAddress")}</span>
-              <span className="value mono">{MYSBT_ADDRESS}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">{t("getSBT.contractInfo.gTokenAddress")}</span>
-              <span className="value mono">{GTOKEN_ADDRESS}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">{t("getSBT.contractInfo.network")}</span>
-              <span className="value">{t("getSBT.contractInfo.sepolia")}</span>
-            </div>
-            <div className="info-row">
-              <span className="label">Personal Mint Minimum Stake:</span>
-              <span className="value highlight">{REQUIRED_GTOKEN} GT</span>
-            </div>
-          </div>
-        </div>
-
         {/* Action Footer */}
         <div className="action-footer">
           {account && !existingSBT && (

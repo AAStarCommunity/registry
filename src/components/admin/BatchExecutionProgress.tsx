@@ -101,6 +101,40 @@ export const BatchExecutionProgressModal: React.FC<BatchExecutionProgressProps> 
             {progress.status === 'failed' && `❌ ${progress.currentAddress.slice(0, 8)}...${progress.currentAddress.slice(-6)}`}
           </span>
         </div>
+
+        {/* Current Step Details */}
+        {progress.currentStep && progress.status === 'executing' && (
+          <div className="current-step-details">
+            <div className="step-indicator">
+              {progress.currentStep === 'checking_gtoken' && (
+                <>
+                  <span className="step-icon">🔍</span>
+                  <span className="step-text">检查 GToken 余额</span>
+                </>
+              )}
+              {progress.currentStep === 'transferring_gtoken' && (
+                <>
+                  <span className="step-icon">💸</span>
+                  <span className="step-text">转账 GToken</span>
+                  {progress.gTokenAmount && (
+                    <span className="step-amount">({progress.gTokenAmount} GT)</span>
+                  )}
+                </>
+              )}
+              {progress.currentStep === 'minting' && (
+                <>
+                  <span className="step-icon">⚡</span>
+                  <span className="step-text">铸造 SBT</span>
+                </>
+              )}
+            </div>
+            {progress.currentStepDescription && (
+              <div className="step-description">
+                {progress.currentStepDescription}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Results List */}

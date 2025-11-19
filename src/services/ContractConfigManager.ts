@@ -30,77 +30,32 @@ export class ContractConfigManager {
 
       batchMethods: [
         {
-          name: 'batchMintFor',
-          displayName: 'Batch Mint SBT',
-          parameters: [
-            {
-              name: 'users',
-              type: 'address[]',
-              label: '用户地址列表',
-              required: true,
-              isAddress: true,
-              isArray: true,
-              placeholder: '0x1234...5678,0xabcd...efgh',
-              description: '要铸造 SBT 的用户地址，支持批量输入'
-            },
-            {
-              name: 'comms',
-              type: 'address[]',
-              label: '社区地址列表',
-              required: true,
-              isAddress: true,
-              isArray: true,
-              placeholder: '0x1111...2222',
-              description: '用户所属的社区地址'
-            },
-            {
-              name: 'metas',
-              type: 'string[]',
-              label: '元数据列表',
-              required: true,
-              isArray: true,
-              defaultValue: ['{}'],
-              placeholder: '[{"key": "value"}]',
-              description: '每个 SBT 的元数据，JSON 格式'
-            }
-          ],
-          gasEstimate: 85000,
-          description: '批量铸造 SBT 代币，为指定用户列表分配身份'
-        },
-        {
-          name: 'mintFor',
-          displayName: 'Single Mint SBT',
+          name: 'mintOrAddMembership',
+          displayName: 'Mint SBT for Address',
           parameters: [
             {
               name: 'user',
               type: 'address',
-              label: '用户地址',
+              label: '目标地址 (EOA或合约)',
               required: true,
               isAddress: true,
               placeholder: '0x1234...5678',
-              description: '要铸造 SBT 的单个用户地址'
+              description: '要铸造SBT的目标地址，可以是EOA或合约账户地址'
             },
             {
-              name: 'comm',
-              type: 'address',
-              label: '社区地址',
-              required: true,
-              isAddress: true,
-              placeholder: '0x1111...2222',
-              description: '用户所属的社区地址'
-            },
-            {
-              name: 'meta',
+              name: 'metadata',
               type: 'string',
               label: '元数据',
               required: true,
               defaultValue: '{}',
               placeholder: '{"role": "member", "joined": "2024-01-01"}',
-              description: 'SBT 的元数据，JSON 格式'
+              description: '社区成员元数据，JSON格式'
             }
           ],
-          gasEstimate: 65000,
-          description: '为单个用户铸造 SBT 代币'
+          gasEstimate: 150000,
+          description: '为指定地址铸造SBT并添加到你的社区（需要目标地址有0.4 GT余额）',
+          requiresGTokenCheck: true,
+          requiredGTokenAmount: '0.4'
         }
       ],
 
