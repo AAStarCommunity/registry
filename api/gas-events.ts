@@ -68,11 +68,15 @@ export default async function handler(req: any, res: any) {
 
     for (const chunk of chunks) {
       try {
-        const filter = userAddress
-          ? contract.filters.GasPaymentProcessed(userAddress)
-          : contract.filters.GasPaymentProcessed();
+        // ethers v6: query all events then filter manually if needed
+        const allChunkEvents = await contract.queryFilter("GasPaymentProcessed", chunk.from, chunk.to);
 
-        const events = await contract.queryFilter(filter, chunk.from, chunk.to);
+        const events = userAddress
+          ? allChunkEvents.filter((event: any) =>
+              event.args?.[0]?.toLowerCase() === userAddress.toLowerCase()
+            )
+          : allChunkEvents;
+
         allEvents.push(...events);
 
         console.log(`Chunk [${chunk.from}, ${chunk.to}]: found ${events.length} events`);

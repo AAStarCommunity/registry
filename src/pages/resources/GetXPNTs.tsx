@@ -244,8 +244,11 @@ export function GetXPNTs() {
 
         // Try to get creation timestamp from xPNTsFactory events
         try {
-          const createdFilter = factory.filters.TokenCreated(address);
-          const events = await factory.queryFilter(createdFilter, 0, "latest");
+          // Query all TokenCreated events and filter for this address (ethers v6)
+          const allEvents = await factory.queryFilter("TokenCreated", 0, "latest");
+          const events = allEvents.filter(
+            (event: any) => event.args?.[0]?.toLowerCase() === address.toLowerCase()
+          );
 
           if (events.length > 0) {
             const block = await rpcProvider.getBlock(events[0].blockNumber);
@@ -462,9 +465,8 @@ export function GetXPNTs() {
 
       console.log("🔍 Querying TokenCreated events from xPNTsFactory...");
 
-      // Query all TokenCreated events
-      const filter = factory.filters.TokenCreated();
-      const events = await factory.queryFilter(filter, 0, "latest");
+      // Query all TokenCreated events (ethers v6: use event name directly)
+      const events = await factory.queryFilter("TokenCreated", 0, "latest");
 
       console.log(`📊 Found ${events.length} TokenCreated events`);
 
