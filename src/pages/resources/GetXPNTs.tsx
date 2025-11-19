@@ -244,11 +244,11 @@ export function GetXPNTs() {
 
         // Try to get creation timestamp from xPNTsFactory events
         try {
-          // Query all TokenCreated events and filter for this address (ethers v6)
-          const eventFragment = factory.interface.getEvent("TokenCreated");
+          // Query all xPNTsTokenDeployed events and filter for this address (ethers v6)
+          const eventFragment = factory.interface.getEvent("xPNTsTokenDeployed");
           const allEvents = await factory.queryFilter(eventFragment, 0, "latest");
           const events = allEvents.filter(
-            (event: any) => event.args?.[0]?.toLowerCase() === address.toLowerCase()
+            (event: any) => event.args?.[1]?.toLowerCase() === address.toLowerCase() // arg[1] is token address
           );
 
           if (events.length > 0) {
@@ -464,24 +464,13 @@ export function GetXPNTs() {
         rpcProvider,
       );
 
-      console.log("🔍 Querying TokenCreated events from xPNTsFactory...");
+      console.log("🔍 Querying xPNTsTokenDeployed events from xPNTsFactory...");
 
-      // Query all TokenCreated events (ethers v6: use getEvent)
-      // First, try to get the event from the contract's interface
-      let events;
-      try {
-        const eventFragment = factory.interface.getEvent("TokenCreated");
-        events = await factory.queryFilter(eventFragment, 0, "latest");
-      } catch (e) {
-        console.warn("TokenCreated event not found, trying alternative names...");
-        // If TokenCreated doesn't exist, it might be named differently
-        // Try to find any event that looks like a token creation event
-        const allEvents = factory.interface.fragments.filter((f: any) => f.type === "event");
-        console.log("Available events:", allEvents.map((e: any) => e.name));
-        throw new Error("TokenCreated event not found in contract ABI. Please check the ABI configuration.");
-      }
+      // Query all xPNTsTokenDeployed events (ethers v6: use getEvent)
+      const eventFragment = factory.interface.getEvent("xPNTsTokenDeployed");
+      const events = await factory.queryFilter(eventFragment, 0, "latest");
 
-      console.log(`📊 Found ${events.length} TokenCreated events`);
+      console.log(`📊 Found ${events.length} xPNTsTokenDeployed events`);
 
       // Fetch details for each token in parallel
       const tokenPromises = events.map(async (event) => {
