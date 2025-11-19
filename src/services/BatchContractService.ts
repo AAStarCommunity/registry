@@ -522,4 +522,182 @@ export class BatchContractService {
       results
     };
   }
+
+  /**
+   * Execute batch airdrop minting (Operator-paid mode)
+   * No user approval needed - Operator pays all fees
+   */
+  async executeBatchAirdrop(
+    contractAddress: string,
+    addresses: string[],
+    metadata: string,
+    onProgress?: (progress: BatchExecutionProgress) => void
+  ): Promise<BatchMintResult> {
+    if (!this.signer) {
+      throw new Error('Wallet not connected. Please connect wallet first.');
+    }
+
+    const results: BatchMintResult['results'] = [];
+    let totalGasUsed = 0;
+    let currentTxHash = '';
+
+    try {
+      // Calculate total GToken needed for airdrop
+      const totalGTokenNeeded = ethers.parseEther('0.4') * BigInt(addresses.length);
+
+      // Get GToken contract
+      const core = getCoreContracts(this.network);
+      const gTokenContract = new ethers.Contract(
+        core.gToken,
+        [
+          'function approve(address, uint256) returns (bool)',
+          'function balanceOf(address) view returns (uint256)',
+          'function allowance(address, address) view returns (uint256)'
+        ],
+        this.signer
+      );
+
+      // Check operator's GToken balance
+      const operatorBalance = await gTokenContract.balanceOf(this.signer.address);
+      if (operatorBalance < totalGTokenNeeded) {
+        throw new Error(
+          `Insufficient GToken. Need ${ethers.formatEther(totalGTokenNeeded)} GT, have ${ethers.formatEther(operatorBalance)} GT`
+        );
+      }
+
+      // Check and approve if needed
+      const currentAllowance = await gTokenContract.allowance(this.signer.address, contractAddress);
+      if (currentAllowance < totalGTokenNeeded) {
+        console.log(`Approving ${ethers.formatEther(totalGTokenNeeded)} GT for batch airdrop...`);
+        const approveTx = await gTokenContract.approve(contractAddress, totalGTokenNeeded);
+        await approveTx.wait();
+        console.log('✅ Approval successful');
+      }
+
+      // Get MySBT contract with airdropMint function
+      const mySBT = new ethers.Contract(
+        contractAddress,
+        [
+          'function airdropMint(address user, string memory metadata) returns (uint256, bool)'
+        ],
+        this.signer
+      );
+
+      const totalItems = addresses.length;
+
+      // Execute airdrop for each address
+      for (let i = 0; i < addresses.length; i++) {
+        const address = addresses[i];
+
+        // Update progress - starting
+        if (onProgress) {
+          onProgress({
+            currentIndex: i,
+            totalItems,
+            currentAddress: address,
+            status: 'executing',
+            currentStep: 'minting',
+            currentStepDescription: `Airdropping SBT to ${address.slice(0, 6)}...${address.slice(-4)}`,
+            results: [...results]
+          });
+        }
+
+        try {
+          console.log(`[${i + 1}/${totalItems}] Airdropping SBT to ${address}...`);
+
+          // Execute airdrop mint
+          const tx = await mySBT.airdropMint(address, metadata);
+          currentTxHash = tx.hash;
+
+          // Wait for confirmation
+          const receipt = await tx.wait();
+          totalGasUsed += Number(receipt.gasUsed);
+
+          // Try to extract tokenId from events
+          let tokenId: string | undefined;
+          try {
+            const mintEvent = receipt.logs.find((log: any) => {
+              try {
+                const parsed = mySBT.interface.parseLog(log);
+                return parsed?.name === 'SBTMinted';
+              } catch {
+                return false;
+              }
+            });
+            if (mintEvent) {
+              const parsed = mySBT.interface.parseLog(mintEvent);
+              tokenId = parsed?.args?.tokenId?.toString();
+            }
+          } catch (error) {
+            console.warn('Could not parse tokenId from events:', error);
+          }
+
+          results.push({
+            address,
+            success: true,
+            tokenId,
+            error: undefined
+          });
+
+          console.log(`[${i + 1}/${totalItems}] ✅ Airdrop successful for ${address} (tokenId: ${tokenId || 'N/A'})`);
+
+          // Update progress - completed
+          if (onProgress) {
+            onProgress({
+              currentIndex: i + 1,
+              totalItems,
+              currentAddress: address,
+              status: 'completed',
+              results: [...results]
+            });
+          }
+
+          // Add delay between transactions
+          if (i < addresses.length - 1) {
+            await this.delay(1000);
+          }
+
+        } catch (error: any) {
+          console.error(`[${i + 1}/${totalItems}] ❌ Failed to airdrop to ${address}:`, error);
+
+          results.push({
+            address,
+            success: false,
+            error: error.message || 'Airdrop transaction failed'
+          });
+
+          // Continue with next address
+          continue;
+        }
+      }
+
+      // Get gas price
+      const gasPrice = await this.provider.getFeeData();
+      const gasPriceValue = gasPrice.gasPrice || BigInt(0);
+      const totalCost = ethers.formatEther(
+        BigInt(totalGasUsed) * gasPriceValue
+      );
+
+      return {
+        success: results.every(r => r.success),
+        txHash: currentTxHash,
+        results,
+        totalGasUsed,
+        gasPrice: ethers.formatUnits(gasPriceValue, 'gwei'),
+        totalCost
+      };
+
+    } catch (error: any) {
+      console.error('Batch airdrop failed:', error);
+
+      return {
+        success: false,
+        txHash: '',
+        results,
+        totalGasUsed,
+        gasPrice: '0',
+        totalCost: '0'
+      };
+    }
+  }
 }

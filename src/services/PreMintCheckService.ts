@@ -341,4 +341,123 @@ export class PreMintCheckService {
       summary: { critical, warnings, passed }
     };
   }
+
+  /**
+   * Run pre-checks for Airdrop mode (Operator-paid)
+   * Only checks operator, not target addresses
+   */
+  async runAirdropPreChecks(
+    operatorAddress: string,
+    addresses: string[],
+    contractAddress: string
+  ): Promise<PreMintCheckResults> {
+    const checks: CheckResult[] = [];
+
+    // 1. Check community registration
+    const communityCheck = await this.checkCommunityRegistration(operatorAddress);
+    checks.push(communityCheck);
+
+    // 2. Check operator GToken balance (needs 0.4 GT × number of addresses)
+    const requiredGToken = addresses.length * 0.4;
+    try {
+      const gtokenContract = new ethers.Contract(
+        GTOKEN_ADDRESS,
+        ['function balanceOf(address) view returns (uint256)', 'function decimals() view returns (uint8)'],
+        this.provider
+      );
+
+      let decimals = 18;
+      try {
+        decimals = await gtokenContract.decimals();
+      } catch (error) {
+        console.warn('[GToken] Failed to get decimals, using default 18:', error);
+      }
+
+      const balance = await gtokenContract.balanceOf(operatorAddress);
+      const balanceFormatted = ethers.formatUnits(balance, decimals);
+      const hasEnough = Number(balanceFormatted) >= requiredGToken;
+
+      if (!hasEnough) {
+        checks.push({
+          passed: false,
+          title: 'Operator GToken 余额不足',
+          description: `需要 ${requiredGToken.toFixed(1)} GT，当前余额 ${Number(balanceFormatted).toFixed(2)} GT`,
+          severity: 'critical',
+          details: `空投模式需要 Operator 支付所有费用 (0.4 GT × ${addresses.length} 地址)`
+        });
+      } else {
+        checks.push({
+          passed: true,
+          title: 'Operator GToken 余额',
+          description: `余额充足: ${Number(balanceFormatted).toFixed(2)} GT (需要: ${requiredGToken.toFixed(1)} GT)`,
+          severity: 'info'
+        });
+      }
+    } catch (error: any) {
+      checks.push({
+        passed: false,
+        title: 'GToken 余额检查失败',
+        description: '无法获取 Operator GToken 余额',
+        severity: 'critical',
+        details: error.message
+      });
+    }
+
+    // 3. Check if target addresses already have SBT
+    try {
+      const contract = new ethers.Contract(contractAddress, MySBTABI, this.provider);
+      const addressStatuses: { address: string; hasSBT: boolean }[] = [];
+
+      for (const address of addresses) {
+        try {
+          const balance = await contract.balanceOf(address);
+          addressStatuses.push({
+            address,
+            hasSBT: balance > 0n
+          });
+        } catch (error) {
+          console.error(`Failed to check SBT status for ${address}:`, error);
+        }
+      }
+
+      const addressesWithSBT = addressStatuses.filter(s => s.hasSBT);
+      if (addressesWithSBT.length > 0) {
+        checks.push({
+          passed: false,
+          title: '部分地址已有 SBT',
+          description: `${addressesWithSBT.length} 个地址已经铸造过 SBT`,
+          severity: 'warning',
+          details: addressesWithSBT.map(s =>
+            `${s.address.slice(0, 8)}...${s.address.slice(-6)}`
+          ).join('\n') + '\n\n注意：已有 SBT 的地址将添加社区成员资格（不收费）'
+        });
+      } else {
+        checks.push({
+          passed: true,
+          title: 'SBT 状态检查',
+          description: '所有目标地址均未铸造 SBT',
+          severity: 'info'
+        });
+      }
+    } catch (error: any) {
+      checks.push({
+        passed: false,
+        title: 'SBT 状态检查失败',
+        description: '无法验证目标地址 SBT 状态',
+        severity: 'warning',
+        details: error.message
+      });
+    }
+
+    // Calculate summary
+    const critical = checks.filter(c => !c.passed && c.severity === 'critical').length;
+    const warnings = checks.filter(c => !c.passed && c.severity === 'warning').length;
+    const passed = checks.filter(c => c.passed).length;
+
+    return {
+      allPassed: critical === 0,
+      checks,
+      summary: { critical, warnings, passed }
+    };
+  }
 }
