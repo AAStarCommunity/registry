@@ -1,115 +1,293 @@
-.sp-admin {
-  max-width: 900px;
+.superpaymaster-admin {
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 24px;
 }
 
-.sp-admin h1 {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.superpaymaster-admin h1 {
   margin-bottom: 8px;
 }
 
-.tab-nav {
-  display: flex;
-  gap: 8px;
+.page-description {
+  color: var(--text-secondary);
   margin-bottom: 24px;
-  background: var(--bg-secondary);
-  padding: 4px;
-  border-radius: 12px;
 }
 
-.tab-nav button {
-  flex: 1;
-  padding: 12px 16px;
+/* Status Banner */
+.status-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 2px solid;
+}
+
+.status-banner.active {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: #10b981;
+}
+
+.status-banner.inactive {
+  background: rgba(107, 114, 128, 0.1);
+  border-color: #6b7280;
+}
+
+.status-icon {
+  font-size: 2rem;
+}
+
+.status-banner strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 4px;
+}
+
+.status-banner p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-color);
+  margin-bottom: 24px;
+}
+
+.tab {
+  padding: 12px 24px;
   background: transparent;
   border: none;
-  border-radius: 8px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  border-bottom: 3px solid transparent;
   cursor: pointer;
+  font-weight: 600;
+  color: var(--text-secondary);
   transition: all 0.2s;
 }
 
-.tab-nav button:hover {
+.tab:hover:not(:disabled) {
   color: var(--text-primary);
+  background: var(--bg-tertiary);
 }
 
-.tab-nav button.active {
-  background: var(--card-bg);
-  color: var(--text-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+.tab.active {
+  color: var(--accent-primary);
+  border-bottom-color: var(--accent-primary);
 }
 
-.config-form.horizontal {
-  flex-direction: row;
-  align-items: flex-end;
-}
-
-.btn-secondary {
-  padding: 14px 24px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.btn-secondary:disabled {
+.tab:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.hint {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+/* Tab Content */
+.tab-content {
+  animation: fadeIn 0.3s ease-in;
 }
 
-.status-active {
-  color: #10b981 !important;
-  font-weight: 600;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* Exit Steps */
-.exit-steps {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 20px;
+/* Info Boxes */
+.info-box {
+  background: rgba(59, 130, 246, 0.1);
+  border-left: 4px solid #3b82f6;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
 }
 
-.step {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
-}
-
-.step-num {
-  width: 32px;
-  height: 32px;
-  background: var(--bg-secondary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.step-content {
-  flex: 1;
-}
-
-.step-content h3 {
+.info-box h3 {
+  margin: 0 0 12px 0;
   font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 4px;
 }
 
-.step-content p {
-  font-size: 0.875rem;
+.info-box ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.info-box li {
+  margin: 8px 0;
+}
+
+.warning-box {
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid #ef4444;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+}
+
+.warning-box h3 {
+  margin: 0 0 12px 0;
+  color: #ef4444;
+  font-size: 1rem;
+}
+
+.warning-box ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.warning-box li {
+  margin: 8px 0;
+}
+
+.info-text {
   color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 12px;
+}
+
+/* Form Elements */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.form-group input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Buttons */
+.btn-primary, .btn-danger {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.btn-danger:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Messages */
+.error {
+  color: #ef4444;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+  margin: 16px 0;
+}
+
+.success {
+  color: #10b981;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
+  margin: 16px 0;
+}
+
+.tx-link {
+  margin: 8px 0;
+}
+
+.tx-link a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tx-link a:hover {
+  text-decoration: underline;
+}
+
+/* Admin Section */
+.admin-section {
+  background: var(--bg-secondary);
+  padding: 24px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.admin-section h2 {
+  margin-top: 0;
   margin-bottom: 12px;
+}
+
+.admin-section > p:first-of-type {
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+}
+
+.danger-zone {
+  border-color: #ef4444;
+}
+
+/* Connect Prompt */
+.connect-prompt {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.connect-prompt h2 {
+  margin-bottom: 12px;
+}
+
+.connect-prompt p {
+  color: var(--text-secondary);
 }

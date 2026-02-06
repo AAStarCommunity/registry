@@ -1,30 +1,192 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '../../contexts/WalletContext';
+import { useRegistry } from '../../hooks/useRegistry';
+import { parseEther, formatEther, type Address, type Hex } from 'viem';
 import './SuperPaymasterAdminPage.css';
 
+type Tab = 'register' | 'manage' | 'exit';
+
 /**
- * SuperPaymaster Admin Page
+ * SuperPaymaster Admin Page - REAL Implementation
  * 
- * SDK APIs used:
- * - @aastar/operator → PaymasterOperatorClient
- *   - registerAsSuperPaymasterOperator()
- *   - configureOperator()
- *   - depositCollateral()
- *   - withdrawCollateral()
- *   - addGasToken()
- *   - getOperatorDetails()
- * - @aastar/operator → OperatorLifecycle
- *   - checkReadiness()
- *   - initiateExit()
- *   - withdrawAllFunds()
+ * 功能:
+ * - Tab 1: 注册成为 Operator（质押 GToken + registerRoleSelf）
+ * - Tab 2: 管理 Operator 配置（修改 aPNTs 余额限制）
+ * - Tab 3: 退出 Operator（unstake + 扣除 exit fee）
  */
 export const SuperPaymasterAdminPage: React.FC = () => {
   const { address, isConnected, chainId, network } = useWallet();
-  const [activeTab, setActiveTab] = useState<'register' | 'manage' | 'exit'>('register');
+  const registry = useRegistry();
+  
+  const [activeTab, setActiveTab] = useState<Tab>('register');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [txHash, setTxHash] = useState<string | null>(null);
+  
+  // Operator 状态
+  const [isOperator, setIsOperator] = useState(false);
+  const [roleConfig, setRoleConfig] = useState<any>(null);
+  
+  // Register Tab 状态
+  const [stakeAmount, setStakeAmount] = useState('50');
+  
+  // Manage Tab 状态
+  const [operatorAddress, setOperatorAddress] = useState('');
+  const [newBalance, setNewBalance] = useState('');
+  
+  const explorerUrl = network === 'sepolia' 
+    ? 'https://sepolia.etherscan.io'
+    : 'https://etherscan.io';
+
+  // 检查用户是否已是 Operator
+  useEffect(() => {
+    if (!isConnected || !address || !network) return;
+
+    const checkOperatorStatus = async () => {
+      try {
+        const ids = await registry.getRoleIds();
+        const hasRole = await registry.hasRole(ids.ROLE_PAYMASTER_SUPER, address as Address);
+        setIsOperator(hasRole);
+        
+        if (hasRole) {
+          const config = await registry.getRoleConfig(ids.ROLE_PAYMASTER_SUPER);
+          setRoleConfig(config);
+        }
+      } catch (err) {
+        console.error('Failed to check operator status:', err);
+      }
+    };
+
+    checkOperatorStatus();
+  }, [isConnected, address, network]);
+
+  // 注册成为 Operator
+  const handleRegister = async () => {
+    if (!address) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      setTxHash(null);
+
+      // 获取 Role ID
+      const ids = await registry.getRoleIds();
+      
+      // 导入必要模块
+      const { createPublicClient, createWalletClient, custom, http } = await import('viem');
+      const { sepolia } = await import('viem/chains');
+      const { registryActions, gTokenActions } = await import('@aastar/core');
+      
+      const contracts = await registry.getContractAddresses();
+      
+      // 创建 clients
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http('https://rpc.sepolia.org'),
+      });
+      
+      const walletClient = createWalletClient({
+        account: address as Address,
+        chain: sepolia,
+        transport: custom(window.ethereum!),
+      });
+
+      // Step 1: Approve GToken Staking Contract
+      console.log('Step 1: Approving GToken...');
+      const gToken = gTokenActions()(walletClient);
+      const approveTx = await gToken.approve({
+        token: contracts.core.gtoken,
+        spender: contracts.core.gTokenStaking,
+        amount: parseEther(stakeAmount),
+        account: address as Address,
+      });
+      
+      await publicClient.waitForTransactionReceipt({ hash: approveTx });
+      console.log('✅ GToken approved');
+
+      // Step 2: Register Role (which auto-stakes)
+      console.log('Step 2: Registering as Operator...');
+      const registerTx = await registryActions(contracts.core.registry)(walletClient).registerRoleSelf({
+        roleId: ids.ROLE_PAYMASTER_SUPER,
+        data: '0x' as Hex, // 可选 metadata
+        account: address as Address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: registerTx });
+      
+      setTxHash(registerTx);
+      setSuccess(`Successfully registered as Operator! You are now ROLE_PAYMASTER_SUPER.`);
+      setIsOperator(true);
+
+      // 重新加载配置
+      const config = await registry.getRoleConfig(ids.ROLE_PAYMASTER_SUPER);
+      setRoleConfig(config);
+
+    } catch (err) {
+      console.error('Failed to register:', err);
+      setError(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 退出 Operator
+  const handleExit = async () => {
+    if (!address) return;
+
+    if (!confirm('⚠️ WARNING: Exiting will unstake your GToken and burn your Operator role. An exit fee will be deducted. Continue?')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      setTxHash(null);
+
+      const ids = await registry.getRoleIds();
+      const contracts = await registry.getContractAddresses();
+      
+      const { createPublicClient, createWalletClient, custom, http } = await import('viem');
+      const { sepolia } = await import('viem/chains');
+      const { registryActions } = await import('@aastar/core');
+      
+      const publicClient = createPublicClient({
+        chain: sepolia,
+        transport: http('https://rpc.sepolia.org'),
+      });
+      
+      const walletClient = createWalletClient({
+        account: address as Address,
+        chain: sepolia,
+        transport: custom(window.ethereum!),
+      });
+
+      // Call exitRole (auto-unstakes and deducts fee)
+      const exitTx = await registryActions(contracts.core.registry)(walletClient).exitRole({
+        roleId: ids.ROLE_PAYMASTER_SUPER,
+        account: address as Address,
+      });
+
+      await publicClient.waitForTransactionReceipt({ hash: exitTx });
+      
+      setTxHash(exitTx);
+      setSuccess(`Successfully exited Operator role! Stake has been returned (minus exit fee).`);
+      setIsOperator(false);
+
+    } catch (err) {
+      console.error('Failed to exit:', err);
+      setError(err instanceof Error ? err.message : 'Exit failed');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!isConnected) {
     return (
-      <div className="sp-admin">
+      <div className="superpaymaster-admin">
         <div className="connect-prompt">
           <h2>🔌 Connect Wallet</h2>
           <p>Please connect your wallet to access SuperPaymaster Admin functions.</p>
@@ -34,141 +196,159 @@ export const SuperPaymasterAdminPage: React.FC = () => {
   }
 
   return (
-    <div className="sp-admin">
-      <h1>💎 SuperPaymaster Admin</h1>
+    <div className="superpaymaster-admin">
+      <h1>⚡ SuperPaymaster Admin</h1>
       <p className="page-description">
-        Register, manage, and operate your SuperPaymaster node.
+        Manage your Operator lifecycle: Register, configure, and exit.
       </p>
 
+      {/* Status Banner */}
+      <div className={`status-banner ${isOperator ? 'active' : 'inactive'}`}>
+        {isOperator ? (
+          <>
+            <span className="status-icon">✅</span>
+            <div>
+              <strong>Operator Status: Active</strong>
+              <p>You are registered as ROLE_PAYMASTER_SUPER</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <span className="status-icon">⚪</span>
+            <div>
+              <strong>Operator Status: Not Registered</strong>
+              <p>Register below to become an Operator</p>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Messages */}
+      {error && <p className="error">❌ {error}</p>}
+      {success && <p className="success">✅ {success}</p>}
+      {txHash && (
+        <p className="tx-link">
+          <a href={`${explorerUrl}/tx/${txHash}`} target="_blank" rel="noopener noreferrer">
+            View Transaction ↗
+          </a>
+        </p>
+      )}
+
       {/* Tab Navigation */}
-      <div className="tab-nav">
-        <button 
-          className={activeTab === 'register' ? 'active' : ''} 
+      <div className="tabs">
+        <button
+          className={`tab ${activeTab === 'register' ? 'active' : ''}`}
           onClick={() => setActiveTab('register')}
         >
           📝 Register
         </button>
-        <button 
-          className={activeTab === 'manage' ? 'active' : ''} 
+        <button
+          className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
           onClick={() => setActiveTab('manage')}
+          disabled={!isOperator}
         >
           ⚙️ Manage
         </button>
-        <button 
-          className={activeTab === 'exit' ? 'active' : ''} 
+        <button
+          className={`tab ${activeTab === 'exit' ? 'active' : ''}`}
           onClick={() => setActiveTab('exit')}
+          disabled={!isOperator}
         >
           🚪 Exit
         </button>
       </div>
 
-      {/* Register Tab */}
-      {activeTab === 'register' && (
-        <section className="admin-section">
-          <h2>Register as SuperPaymaster Operator</h2>
-          <p>Stake GToken and register to become a SuperPaymaster node operator.</p>
-          
-          <div className="config-form">
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'register' && (
+          <section className="admin-section">
+            <h2>📝 Register as Operator</h2>
+            <p>Stake GToken to register as a SuperPaymaster Operator (ROLE_PAYMASTER_SUPER).</p>
+            
+            {roleConfig && (
+              <div className="info-box">
+                <h3>Requirements</h3>
+                <ul>
+                  <li><strong>Min Stake:</strong> {formatEther(roleConfig.minStake)} GToken</li>
+                  <li><strong>Entry Burn:</strong> {formatEther(roleConfig.entryBurn)} GToken (burned on registration)</li>
+                  <li><strong>Exit Fee:</strong> {roleConfig.exitFeePercent}% (deducted when exiting)</li>
+                </ul>
+              </div>
+            )}
+
             <div className="form-group">
               <label>Stake Amount (GToken)</label>
-              <input type="number" placeholder="50" defaultValue="50" />
-              <span className="hint">Minimum required: 50 GToken</span>
+              <input
+                type="number"
+                step="0.01"
+                value={stakeAmount}
+                onChange={(e) => setStakeAmount(e.target.value)}
+                placeholder="50"
+                disabled={loading || isOperator}
+              />
+              <small>
+                {roleConfig && `Minimum: ${formatEther(roleConfig.minStake)} GToken`}
+              </small>
             </div>
-            <div className="form-group">
-              <label>Initial Deposit (aPNTs, optional)</label>
-              <input type="number" placeholder="0" />
-            </div>
-            <button className="btn-primary">
-              Register as Operator
+
+            <button
+              className="btn-primary"
+              onClick={handleRegister}
+              disabled={loading || isOperator || !stakeAmount}
+            >
+              {loading ? 'Registering...' : isOperator ? 'Already Registered' : 'Register as Operator'}
             </button>
-          </div>
-        </section>
-      )}
 
-      {/* Manage Tab */}
-      {activeTab === 'manage' && (
-        <>
+            {isOperator && (
+              <p className="info-text">✅ You are already registered. Switch to Manage or Exit tabs.</p>
+            )}
+          </section>
+        )}
+
+        {activeTab === 'manage' && (
           <section className="admin-section">
-            <h2>Operator Status</h2>
-            <div className="status-grid">
-              <div className="status-item">
-                <label>Status</label>
-                <span className="value status-active">Active</span>
-              </div>
-              <div className="status-item">
-                <label>Collateral Balance</label>
-                <span className="value">0 aPNTs</span>
-              </div>
-              <div className="status-item">
-                <label>xPNTs Token</label>
-                <span className="value">Not Configured</span>
-              </div>
+            <h2>⚙️ Manage Operator Configuration</h2>
+            <p><em>Coming soon: Manage aPNTs balance limits, oracle settings, etc.</em></p>
+            
+            <div className="info-box">
+              <p>💡 This feature will allow you to modify your Operator configuration in SuperPaymaster contract.</p>
+              <p>Available actions:</p>
+              <ul>
+                <li>Update aPNTs balance limits</li>
+                <li>Configure price oracle</li>
+                <li>Modify operator parameters</li>
+              </ul>
             </div>
           </section>
+        )}
 
-          <section className="admin-section">
-            <h2>Collateral Management</h2>
-            <div className="config-form horizontal">
-              <div className="form-group">
-                <label>Amount</label>
-                <input type="number" placeholder="100" />
+        {activeTab === 'exit' && (
+          <section className="admin-section danger-zone">
+            <h2>🚪 Exit Operator Role</h2>
+            <p><strong>DANGER ZONE:</strong> Exiting will unstake your GToken and burn your Operator role SBT.</p>
+            
+            {roleConfig && (
+              <div className="warning-box">
+                <h3>⚠️ Exit Consequences</h3>
+                <ul>
+                  <li><strong>Exit Fee:</strong> {roleConfig.exitFeePercent}% will be deducted from your stake</li>
+                  <li><strong>Min Exit Fee:</strong> At least {formatEther(roleConfig.minExitFee)} GToken</li>
+                  <li><strong>Role SBT:</strong> Will be burned (irreversible)</li>
+                  <li><strong>Lock Period:</strong> May apply (check roleLockDuration)</li>
+                </ul>
               </div>
-              <button className="btn-primary">Deposit</button>
-              <button className="btn-secondary">Withdraw</button>
-            </div>
+            )}
+
+            <button
+              className="btn-danger"
+              onClick={handleExit}
+              disabled={loading || !isOperator}
+            >
+              {loading ? 'Exiting...' : 'Exit Operator Role'}
+            </button>
           </section>
-
-          <section className="admin-section">
-            <h2>Gas Token Configuration</h2>
-            <p>Add tokens that users can use to pay for gas.</p>
-            <div className="config-form">
-              <div className="form-group">
-                <label>Token Address</label>
-                <input type="text" placeholder="0x..." />
-              </div>
-              <div className="form-group">
-                <label>Price (USD)</label>
-                <input type="number" placeholder="1" />
-              </div>
-              <button className="btn-primary">Add Gas Token</button>
-            </div>
-          </section>
-        </>
-      )}
-
-      {/* Exit Tab */}
-      {activeTab === 'exit' && (
-        <section className="admin-section danger-zone">
-          <h2>⚠️ Exit Operator</h2>
-          <p>Initiate the exit process to unstake and withdraw all funds.</p>
-          
-          <div className="exit-steps">
-            <div className="step">
-              <span className="step-num">1</span>
-              <div className="step-content">
-                <h3>Initiate Exit</h3>
-                <p>Start the cooldown period</p>
-                <button className="btn-danger">Initiate Exit</button>
-              </div>
-            </div>
-            <div className="step">
-              <span className="step-num">2</span>
-              <div className="step-content">
-                <h3>Wait Cooldown</h3>
-                <p>Remaining: -- days</p>
-              </div>
-            </div>
-            <div className="step">
-              <span className="step-num">3</span>
-              <div className="step-content">
-                <h3>Withdraw All</h3>
-                <p>Claim collateral and rewards</p>
-                <button className="btn-secondary" disabled>Withdraw All</button>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+        )}
+      </div>
     </div>
   );
 };
