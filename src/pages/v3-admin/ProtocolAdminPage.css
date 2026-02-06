@@ -163,6 +163,95 @@
   word-break: break-all;
 }
 
+/* Role Configuration Display */
+.role-config-display {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-color);
+}
+
+.role-config-display h3 {
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.role-card {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.role-card h4 {
+  margin: 0 0 12px 0;
+  color: var(--accent-primary);
+  font-size: 0.9rem;
+  font-family: monospace;
+}
+
+.role-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+
+.role-details div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.role-details span {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Form Rows */
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.form-group small {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Success and TX Link */
+.success {
+  color: #10b981;
+  padding: 12px;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #10b981;
+  margin: 16px 0;
+}
+
+.tx-link {
+  margin: 8px 0;
+}
+
+.tx-link a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tx-link a:hover {
+  text-decoration: underline;
+}
+
+
 .danger-zone {
   border: 1px solid #f87171;
 }
