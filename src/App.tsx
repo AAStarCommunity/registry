@@ -23,6 +23,12 @@ import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
 import { LaunchPaymaster } from "./pages/resources/LaunchPaymaster";
 import { ConfigureSuperPaymaster } from "./pages/resources/ConfigureSuperPaymaster";
 import { AdminBatchMint } from "./pages/admin/AdminBatchMint";
+import { 
+  AdminPortal, 
+  ProtocolAdminPage, 
+  SuperPaymasterAdminPage, 
+  PaymasterV4AdminPage 
+} from "./pages/v3-admin";
 import TermsOfService from "./pages/legal/TermsOfService";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import Security from "./pages/legal/Security";
@@ -83,6 +89,11 @@ function App() {
               path="/configure-superpaymaster"
               element={<ConfigureSuperPaymaster />}
             />
+            {/* V3 Admin Pages */}
+            <Route path="/v3-admin" element={<AdminPortal />} />
+            <Route path="/v3-admin/protocol" element={<ProtocolAdminPage />} />
+            <Route path="/v3-admin/superpaymaster" element={<SuperPaymasterAdminPage />} />
+            <Route path="/v3-admin/paymaster-v4" element={<PaymasterV4AdminPage />} />
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/privacy" element={<PrivacyPolicy />} />
