@@ -11,17 +11,8 @@ import { OperationGuide } from "./pages/OperationGuide";
 import { ExplorerHub } from "./pages/ExplorerHub";
 import { PaymasterDetail } from "./pages/analytics/PaymasterDetail";
 import { CommunityDetail } from "./pages/explorer/CommunityDetail";
-import { DeployWizard } from "./pages/operator/DeployWizard";
-import { CompletePage } from "./pages/operator/Complete/CompletePage";
-import ManagePaymaster from "./pages/operator/ManagePaymaster";
-import { SuperPaymasterConfig } from "./pages/operator/SuperPaymasterConfig";
-import GetGToken from "./pages/resources/GetGToken";
-import { GetSBT } from "./pages/resources/GetSBT"; // Bind MySBT page
+import { GetSBT } from "./pages/resources/GetSBT";
 import { MySBT } from "./pages/resources/MySBT";
-import { GetXPNTs } from "./pages/resources/GetXPNTs";
-import { RegisterCommunity } from "./pages/resources/RegisterCommunity";
-import { LaunchPaymaster } from "./pages/resources/LaunchPaymaster";
-import { ConfigureSuperPaymaster } from "./pages/resources/ConfigureSuperPaymaster";
 import { AdminBatchMint } from "./pages/admin/AdminBatchMint";
 import { 
   AdminPortal, 
@@ -36,32 +27,23 @@ import Contact from "./pages/legal/Contact";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { WalletProvider } from "./contexts/WalletContext";
 import "./App.css";
 
 function App() {
   return (
-    <Router>
-      <div className="app">
-        <ThemeToggle />
-        <Header />
+    <WalletProvider>
+      <Router>
+        <div className="app">
+          <ThemeToggle />
+          <Header />
         <main className="app-content">
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/developer" element={<DeveloperPortal />} />
             <Route path="/operator" element={<OperatorsPortal />} />
             <Route path="/operation-guide" element={<OperationGuide />} />
-            <Route path="/operator/wizard" element={<DeployWizard />} />
-            <Route path="/operator/complete" element={<CompletePage />} />
-            <Route path="/operator/manage" element={<ManagePaymaster />} />
-            <Route
-              path="/operator/superpaymaster"
-              element={<SuperPaymasterConfig />}
-            />
-            <Route
-              path="/demo"
-              element={<Navigate to="/operator" replace />}
-            />
-            {/* Explorer Hub - with 3 sub-views */}
+            {/* Explorer Hub */}
             <Route path="/explorer" element={<ExplorerHub />} />
             <Route path="/explorer/dashboard" element={<ExplorerHub />} />
             <Route path="/explorer/user" element={<ExplorerHub />} />
@@ -76,19 +58,11 @@ function App() {
             <Route path="/analytics/user" element={<ExplorerHub />} />
             <Route path="/analytics/user/:address" element={<ExplorerHub />} />
             <Route path="/paymaster/:address" element={<PaymasterDetail />} />
-            <Route path="/get-gtoken" element={<GetGToken />} />
+            {/* User Resources - Keep basic pages */}
             <Route path="/get-sbt" element={<GetSBT />} />
-            <Route path="/admin-batch-mint" element={<AdminBatchMint />} />
-            <Route path="/get-sbt" element={<GetSBT />} />{" "}
-            {/* Legacy redirect */}
             <Route path="/my-sbt" element={<MySBT />} />
-            <Route path="/get-xpnts" element={<GetXPNTs />} />
-            <Route path="/register-community" element={<RegisterCommunity />} />
-            <Route path="/launch-paymaster" element={<LaunchPaymaster />} />
-            <Route
-              path="/configure-superpaymaster"
-              element={<ConfigureSuperPaymaster />}
-            />
+            {/* Admin */}
+            <Route path="/admin-batch-mint" element={<AdminBatchMint />} />
             {/* V3 Admin Pages */}
             <Route path="/v3-admin" element={<AdminPortal />} />
             <Route path="/v3-admin/protocol" element={<ProtocolAdminPage />} />
@@ -104,6 +78,7 @@ function App() {
         <Footer />
       </div>
     </Router>
+  </WalletProvider>
   );
 }
 

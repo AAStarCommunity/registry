@@ -1,8 +1,5 @@
-// Legacy exports - files removed, keeping for backward compatibility
-// export { OperatorPortal } from './OperatorPortal';
-// export { DeployPaymaster } from './DeployPaymaster';
-// export { ConfigurePaymaster } from './ConfigurePaymaster';
-// export { StakeEntryPoint } from './StakeEntryPoint';
-// export { RegisterToRegistry } from './RegisterToRegistry';
-export { default as ManagePaymaster } from './ManagePaymaster';
-export { SuperPaymasterConfig } from './SuperPaymasterConfig';
+// Operator pages now part of V3 Admin System
+// Legacy pages moved to deprecated/operator/
+// Export only Complete page which is still used
+export { CompletePage } from './Complete/CompletePage';
+export { OperateGuide } from './OperateGuide';
