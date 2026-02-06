@@ -21,17 +21,46 @@ export const ProtocolAdminPage: React.FC = () => {
     entryPoint: string;
     minStake: string;
   } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // TODO: Implement with SDK
-  // useEffect(() => {
-  //   const loadParams = async () => {
-  //     const governance = new ProtocolGovernance({ registryAddress, entryPointAddress, signer });
-  //     const params = await governance.getProtocolParams();
-  //     setProtocolParams(params);
-  //   };
-  //   loadParams();
-  // }, []);
+  // Load protocol params from Registry using SDK
+  useEffect(() => {
+    if (!isConnected || !network) {
+      setProtocolParams(null);
+      setLoading(false);
+      return;
+    }
+
+    const loadProtocolData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Import SDK contracts module
+        const { getContracts } = await import('@aastar/core');
+        
+        // Get contracts for current network
+        const contracts = getContracts(network as 'sepolia');
+        
+        // For demo: display contract addresses from SDK
+        // TODO: Use ProtocolClient to query actual on-chain state
+        setProtocolParams({
+          superPaymaster: contracts.core.superPaymaster,
+          treasury: contracts.core.registry, // Registry acts as treasury in current setup
+          entryPoint: contracts.official.entryPoint,
+          minStake: '50', // TODO: Query from Registry contract
+        });
+      } catch (err) {
+        console.error('Failed to load protocol data:', err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProtocolData();
+  }, [isConnected, network]);
 
   if (!isConnected) {
     return (
@@ -54,20 +83,27 @@ export const ProtocolAdminPage: React.FC = () => {
       {/* Protocol Status */}
       <section className="admin-section">
         <h2>📊 Protocol Status</h2>
-        <div className="status-grid">
-          <div className="status-item">
-            <label>SuperPaymaster</label>
-            <span className="value">{protocolParams?.superPaymaster || 'Loading...'}</span>
-          </div>
-          <div className="status-item">
-            <label>Treasury</label>
-            <span className="value">{protocolParams?.treasury || 'Loading...'}</span>
-          </div>
-          <div className="status-item">
-            <label>EntryPoint</label>
-            <span className="value">{protocolParams?.entryPoint || 'Loading...'}</span>
-          </div>
-        </div>
+        {loading && <p className="loading">Loading contract addresses...</p>}
+        {error && <p className="error">❌ Error: {error}</p>}
+        {!loading && !error && protocolParams && (
+          <>
+            <p className="network-info">Network: <strong>{network}</strong> (Chain ID: {chainId})</p>
+            <div className="status-grid">
+              <div className="status-item">
+                <label>SuperPaymaster</label>
+                <span className="value monospace">{protocolParams.superPaymaster}</span>
+              </div>
+              <div className="status-item">
+                <label>Treasury (Registry)</label>
+                <span className="value monospace">{protocolParams.treasury}</span>
+              </div>
+              <div className="status-item">
+                <label>EntryPoint</label>
+                <span className="value monospace">{protocolParams.entryPoint}</span>
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Role Configuration */}
