@@ -1,0 +1,35 @@
+.network-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.network-switcher label {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.network-switcher select {
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.network-switcher select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.safe-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useWallet } from '../../contexts/WalletContext';
 import './ProtocolAdminPage.css';
 
 /**
@@ -13,8 +14,7 @@ import './ProtocolAdminPage.css';
  *   - transferToDAO()
  */
 export const ProtocolAdminPage: React.FC = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { address, isConnected, chainId, network } = useWallet();
   const [protocolParams, setProtocolParams] = useState<{
     superPaymaster: string;
     treasury: string;

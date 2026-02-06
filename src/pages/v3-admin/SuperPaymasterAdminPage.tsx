@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useWallet } from '../../contexts/WalletContext';
 import './SuperPaymasterAdminPage.css';
 
 /**
@@ -18,8 +19,7 @@ import './SuperPaymasterAdminPage.css';
  *   - withdrawAllFunds()
  */
 export const SuperPaymasterAdminPage: React.FC = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { address, isConnected, chainId, network } = useWallet();
   const [activeTab, setActiveTab] = useState<'register' | 'manage' | 'exit'>('register');
 
   if (!isConnected) {

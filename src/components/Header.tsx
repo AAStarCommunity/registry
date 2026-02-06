@@ -1,11 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "./LanguageToggle";
+import { NetworkSwitcher } from "./NetworkSwitcher";
+import { useWallet } from "../contexts/WalletContext";
 import "./Header.css";
 
 export function Header() {
   const location = useLocation();
   const { t } = useTranslation();
+  const { address, isConnected, connect } = useWallet();
 
   const navItems: Array<{ path: string; labelKey: string; external?: boolean }> = [
     { path: "/", labelKey: "header.home" },
@@ -57,9 +60,19 @@ export function Header() {
         </nav>
 
         <div className="header-actions">
+          <NetworkSwitcher />
           <LanguageToggle />
-          <Link to="/operator/wizard" className="cta-button">
-            {t("header.launchPaymaster")}
+          {isConnected ? (
+            <div className="wallet-info">
+              {address?.slice(0, 6)}...{address?.slice(-4)}
+            </div>
+          ) : (
+            <button onClick={connect} className="connect-button">
+              Connect Wallet
+            </button>
+          )}
+          <Link to="/v3-admin" className="cta-button">
+            Admin Portal
           </Link>
         </div>
       </div>

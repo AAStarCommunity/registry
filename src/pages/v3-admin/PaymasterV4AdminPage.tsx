@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useWallet } from '../../contexts/WalletContext';
 import './PaymasterV4AdminPage.css';
 
 /**
@@ -11,8 +12,7 @@ import './PaymasterV4AdminPage.css';
  *   - getTokenPrice()
  */
 export const PaymasterV4AdminPage: React.FC = () => {
-  const [address, setAddress] = useState<string | null>(null);
-  const [isConnected, setIsConnected] = useState(false);
+  const { address, isConnected, chainId, network } = useWallet();
   const [deployedPaymasters, setDeployedPaymasters] = useState<string[]>([]);
 
   if (!isConnected) {
