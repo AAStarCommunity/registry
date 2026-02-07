@@ -98,7 +98,7 @@ export function usePaymasterV4() {
       if (!paymaster) throw new Error('No paymaster found');
 
       const signer = await getSigner();
-      const tx = await signer.sendTransaction({
+      const tx = await (signer as any).sendTransaction({
         to: paymaster,
         value: parseEther(amount)
       });
