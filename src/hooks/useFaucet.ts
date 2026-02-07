@@ -2,9 +2,11 @@ import { useState, useCallback } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { parseEther, type Address, type Hash } from 'viem';
 import { SepoliaFaucetAPI, GTOKEN_ADDRESS, REGISTRY_ADDRESS } from '@aastar/sdk';
+import { useRegistry } from './useRegistry';
 
 export const useFaucet = () => {
-  const { getSigner, address } = useWallet();
+  const { address } = useWallet();
+  const { getPublicClient, getWalletClient } = useRegistry();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,15 +25,14 @@ export const useFaucet = () => {
     setError(null);
 
     try {
-      const signer = await getSigner();
+      const publicClient = getPublicClient();
+      const walletClient = await getWalletClient();
       
       console.log(`🚰 Minting ${amount} GTokens to ${address}...`);
       
-      // Note: SepoliaFaucetAPI expects viem clients, but we have ethers signer
-      // This is a temporary shim until SDK fully supports ethers
       const success = await SepoliaFaucetAPI.mintTestTokens(
-        signer as any,
-        signer as any, // Use signer as both wallet and public client (SDK will adapt)
+        walletClient,
+        publicClient,
         GTOKEN_ADDRESS,
         address as Address,
         parseEther(amount)
@@ -48,7 +49,7 @@ export const useFaucet = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getSigner, address]);
+  }, [address, getPublicClient, getWalletClient]);
 
   /**
    * Orchestrates complete test account setup (ETH, Role, GTokens)
@@ -64,13 +65,14 @@ export const useFaucet = () => {
     setError(null);
 
     try {
-      const signer = await getSigner();
+      const publicClient = getPublicClient();
+      const walletClient = await getWalletClient();
       
       console.log(`🚀 QuickStart: Setting up test account ${address}...`);
 
       const result = await SepoliaFaucetAPI.prepareTestAccount(
-        signer as any,
-        signer as any,
+        walletClient,
+        publicClient,
         {
           targetAA: address as Address,
           token: GTOKEN_ADDRESS,
@@ -87,7 +89,7 @@ export const useFaucet = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [getSigner, address]);
+  }, [address, getPublicClient, getWalletClient]);
 
   return {
     mintGTokens,
