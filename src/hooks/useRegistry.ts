@@ -284,6 +284,8 @@ export function useRegistry() {
     transferOwnership,
     hasRole,
     getContractAddresses,
+    getPublicClient,
+    getWalletClient,
     clearCache,
   };
 }
