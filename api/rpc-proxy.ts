@@ -36,8 +36,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Get private RPC URL from environment variable (NOT exposed to frontend)
-  const privateRpcUrl = process.env.SEPOLIA_RPC_URL;
+  // Get chainId from query parameters (default to Sepolia)
+  const chainId = req.query.chainId ? String(req.query.chainId) : "11155111";
+
+  // Get private RPC URL based on chainId (NOT exposed to frontend)
+  let privateRpcUrl: string | undefined;
+  if (chainId === "11155420") {
+    privateRpcUrl = process.env.OP_SEPOLIA_RPC_URL;
+  } else {
+    // Default to Sepolia (11155111)
+    privateRpcUrl = process.env.SEPOLIA_RPC_URL;
+  }
 
   // Debug: Log environment variable status (without revealing the full URL)
   if (privateRpcUrl) {

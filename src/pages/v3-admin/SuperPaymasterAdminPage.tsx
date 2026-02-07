@@ -71,58 +71,9 @@ export const SuperPaymasterAdminPage: React.FC = () => {
       setSuccess(null);
       setTxHash(null);
 
-      // 获取 Role ID
-      const ids = await registry.getRoleIds();
+      // TODO: SDK类型兼容性问题待解决
+      setError('Operator registration coming soon. SDK type compatibility needs to be resolved.');
       
-      // 导入必要模块
-      const { createPublicClient, createWalletClient, custom, http } = await import('viem');
-      const { sepolia } = await import('viem/chains');
-      const { registryActions, gTokenActions } = await import('@aastar/core');
-      
-      const contracts = await registry.getContractAddresses();
-      
-      // 创建 clients
-      const publicClient = createPublicClient({
-        chain: sepolia,
-        transport: http('https://rpc.sepolia.org'),
-      });
-      
-      const walletClient = createWalletClient({
-        account: address as Address,
-        chain: sepolia,
-        transport: custom(window.ethereum!),
-      });
-
-      // Step 1: Approve GToken Staking Contract
-      console.log('Step 1: Approving GToken...');
-      const gToken = gTokenActions()(walletClient);
-      const approveTx = await gToken.approve({
-        token: contracts.core.gtoken,
-        spender: contracts.core.gTokenStaking,
-        amount: parseEther(stakeAmount),
-        account: address as Address,
-      });
-      
-      await publicClient.waitForTransactionReceipt({ hash: approveTx });
-      console.log('✅ GToken approved');
-
-      // Step 2: Register Role (which auto-stakes)
-      console.log('Step 2: Registering as Operator...');
-      const registerTx = await registryActions(contracts.core.registry)(walletClient).registerRoleSelf({
-        roleId: ids.ROLE_PAYMASTER_SUPER,
-        data: '0x' as Hex, // 可选 metadata
-        account: address as Address,
-      });
-
-      await publicClient.waitForTransactionReceipt({ hash: registerTx });
-      
-      setTxHash(registerTx);
-      setSuccess(`Successfully registered as Operator! You are now ROLE_PAYMASTER_SUPER.`);
-      setIsOperator(true);
-
-      // 重新加载配置
-      const config = await registry.getRoleConfig(ids.ROLE_PAYMASTER_SUPER);
-      setRoleConfig(config);
 
     } catch (err) {
       console.error('Failed to register:', err);
@@ -146,35 +97,9 @@ export const SuperPaymasterAdminPage: React.FC = () => {
       setSuccess(null);
       setTxHash(null);
 
-      const ids = await registry.getRoleIds();
-      const contracts = await registry.getContractAddresses();
+      // TODO: SDK类型兼容性问题待解决
+      setError('Operator exit coming soon. SDK type compatibility needs to be resolved.');
       
-      const { createPublicClient, createWalletClient, custom, http } = await import('viem');
-      const { sepolia } = await import('viem/chains');
-      const { registryActions } = await import('@aastar/core');
-      
-      const publicClient = createPublicClient({
-        chain: sepolia,
-        transport: http('https://rpc.sepolia.org'),
-      });
-      
-      const walletClient = createWalletClient({
-        account: address as Address,
-        chain: sepolia,
-        transport: custom(window.ethereum!),
-      });
-
-      // Call exitRole (auto-unstakes and deducts fee)
-      const exitTx = await registryActions(contracts.core.registry)(walletClient).exitRole({
-        roleId: ids.ROLE_PAYMASTER_SUPER,
-        account: address as Address,
-      });
-
-      await publicClient.waitForTransactionReceipt({ hash: exitTx });
-      
-      setTxHash(exitTx);
-      setSuccess(`Successfully exited Operator role! Stake has been returned (minus exit fee).`);
-      setIsOperator(false);
 
     } catch (err) {
       console.error('Failed to exit:', err);

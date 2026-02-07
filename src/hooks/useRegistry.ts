@@ -7,7 +7,7 @@
 import { useState, useCallback } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { createPublicClient, createWalletClient, custom, http, type Address, type Hash, type Hex } from 'viem';
-import { sepolia } from 'viem/chains';
+import { sepolia, optimismSepolia } from 'viem/chains';
 import type { RoleConfigDetailed } from '@aastar/core';
 
 export function useRegistry() {
@@ -26,11 +26,19 @@ export function useRegistry() {
 
   // 创建PublicClient
   const getPublicClient = useCallback(() => {
+    const targetChain = network === 'op-sepolia' ? optimismSepolia : sepolia;
+    const rpcBase = process.env.SEPOLIA_RPC_URL || '/api/rpc-proxy';
+    
+    // If using proxy, append chainId query param
+    const rpcUrl = rpcBase.includes('rpc-proxy') 
+      ? `${rpcBase}?chainId=${targetChain.id}`
+      : rpcBase;
+
     return createPublicClient({
-      chain: sepolia,
-      transport: http(process.env.SEPOLIA_RPC_URL || '/api/rpc-proxy'),
+      chain: targetChain,
+      transport: http(rpcUrl),
     });
-  }, []);
+  }, [network]);
 
   // 创建WalletClient
   const getWalletClient = useCallback(async () => {
@@ -38,12 +46,14 @@ export function useRegistry() {
       throw new Error('No wallet connected');
     }
     
+    const targetChain = network === 'op-sepolia' ? optimismSepolia : sepolia;
+
     return createWalletClient({
       account: address as Address,
-      chain: sepolia,
+      chain: targetChain,
       transport: custom(window.ethereum),
     });
-  }, [address]);
+  }, [address, network]);
 
   /**
    * 查询Role配置

@@ -52,11 +52,11 @@ export const WalletProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setIsSafeApp(true);
         setSafeInfo(safe);
         setAddress(safe.safeAddress);
-        setChainId(parseInt(safe.chainId));
+        setChainId(Number(safe.chainId));
         setIsConnected(true);
         
         // 根据 chainId 设置网络名称
-        const networkName = getNetworkName(parseInt(safe.chainId));
+        const networkName = getNetworkName(Number(safe.chainId));
         setNetwork(networkName);
       } catch (error) {
         // 不在 Safe 环境，使用普通钱包
