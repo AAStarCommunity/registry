@@ -10,13 +10,13 @@ export const SUPPORTED_NETWORKS = {
     rpcUrl: 'https://rpc.sepolia.org',
     explorer: 'https://sepolia.etherscan.io',
   },
-  // OP Sepolia（等SDK支持后启用）
-  // optimismSepolia: {
-  //   chainId: 11155420,
-  //   name: 'OP Sepolia',
-  //   rpcUrl: 'https://sepolia.optimism.io',
-  //   explorer: 'https://sepolia-optimism.etherscan.io',
-  // },
+  // OP Sepolia
+  optimismSepolia: {
+    chainId: 11155420,
+    name: 'OP Sepolia',
+    rpcUrl: 'https://sepolia.optimism.io',
+    explorer: 'https://sepolia-optimism.etherscan.io',
+  },
 } as const;
 
 export type SupportedChainId = (typeof SUPPORTED_NETWORKS)[keyof typeof SUPPORTED_NETWORKS]['chainId'];
