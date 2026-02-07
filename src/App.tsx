@@ -17,6 +17,7 @@ import { AdminBatchMint } from "./pages/admin/AdminBatchMint";
 import { 
   AdminPortal, 
   ProtocolAdminPage, 
+  SuperPaymasterProtocolPage,
   SuperPaymasterAdminPage, 
   PaymasterV4AdminPage 
 } from "./pages/v3-admin";
@@ -66,6 +67,7 @@ function App() {
             {/* V3 Admin Pages */}
             <Route path="/v3-admin" element={<AdminPortal />} />
             <Route path="/v3-admin/protocol" element={<ProtocolAdminPage />} />
+            <Route path="/v3-admin/superpaymaster-protocol" element={<SuperPaymasterProtocolPage />} />
             <Route path="/v3-admin/superpaymaster" element={<SuperPaymasterAdminPage />} />
             <Route path="/v3-admin/paymaster-v4" element={<PaymasterV4AdminPage />} />
             {/* Legal Pages */}

@@ -152,16 +152,32 @@ export function useRegistry() {
         
         const actions = registryActions(contracts.core.registry)(publicClient as any);
         
-        const [paymasterSuper, community, enduser] = await Promise.all([
+        const [
+          paymasterSuper, 
+          community, 
+          enduser,
+          paymasterAOA,
+          dvt,
+          anode,
+          kms
+        ] = await Promise.all([
           actions.ROLE_PAYMASTER_SUPER(),
           actions.ROLE_COMMUNITY(),
           actions.ROLE_ENDUSER(),
+          actions.ROLE_PAYMASTER_AOA(),
+          actions.ROLE_DVT(),
+          actions.ROLE_ANODE(),
+          actions.ROLE_KMS(),
         ]);
 
         return {
           ROLE_PAYMASTER_SUPER: paymasterSuper,
           ROLE_COMMUNITY: community,
           ROLE_ENDUSER: enduser,
+          ROLE_PAYMASTER_AOA: paymasterAOA,
+          ROLE_DVT: dvt,
+          ROLE_ANODE: anode,
+          ROLE_KMS: kms,
         };
       } catch (err) {
         const errorMsg = err instanceof Error ? err.message : 'Unknown error';

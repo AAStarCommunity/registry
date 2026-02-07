@@ -25,15 +25,9 @@ export const ProtocolAdminPage: React.FC = () => {
   } | null>(null);
   
   // Role配置状态
-  const [roleConfigs, setRoleConfigs] = useState<{
-    ROLE_PAYMASTER_SUPER?: RoleConfigDetailed;
-    ROLE_COMMUNITY?: RoleConfigDetailed;
-  }>({});
+  const [roleConfigs, setRoleConfigs] = useState<Record<string, RoleConfigDetailed>>({});
   
-  const [roleIds, setRoleIds] = useState<{
-    ROLE_PAYMASTER_SUPER?: Hex;
-    ROLE_COMMUNITY?: Hex;
-  }>({});
+  const [roleIds, setRoleIds] = useState<Record<string, Hex>>({});
   
   // UI状态
   const [loading, setLoading] = useState(true);
@@ -42,7 +36,7 @@ export const ProtocolAdminPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   
   // 表单状态
-  const [selectedRole, setSelectedRole] = useState<'ROLE_PAYMASTER_SUPER' | 'ROLE_COMMUNITY'>('ROLE_PAYMASTER_SUPER');
+  const [selectedRoleKey, setSelectedRoleKey] = useState<string>('ROLE_PAYMASTER_SUPER');
   const [formData, setFormData] = useState({
     minStake: '',
     entryBurn: '',
@@ -77,25 +71,28 @@ export const ProtocolAdminPage: React.FC = () => {
         const ids = await registry.getRoleIds();
         setRoleIds(ids);
 
-        // 查询真实的Role配置
-        const [superConfig, communityConfig] = await Promise.all([
-          registry.getRoleConfig(ids.ROLE_PAYMASTER_SUPER),
-          registry.getRoleConfig(ids.ROLE_COMMUNITY),
-        ]);
+        // 并行查询所有Role配置
+        const keys = Object.keys(ids);
+        const configs = await Promise.all(
+          keys.map(key => registry.getRoleConfig(ids[key as keyof typeof ids]))
+        );
 
-        setRoleConfigs({
-          ROLE_PAYMASTER_SUPER: superConfig,
-          ROLE_COMMUNITY: communityConfig,
+        const newRoleConfigs: Record<string, RoleConfigDetailed> = {};
+        keys.forEach((key, index) => {
+          newRoleConfigs[key] = configs[index];
         });
 
-        // 初始化表单
-        if (superConfig) {
-          setFormData({
-            minStake: formatEther(superConfig.minStake),
-            entryBurn: formatEther(superConfig.entryBurn),
-            exitFeePercent: superConfig.exitFeePercent.toString(),
-            minExitFee: formatEther(superConfig.minExitFee),
-          });
+        setRoleConfigs(newRoleConfigs);
+
+        // 初始化表单 (默认选中 ROLE_PAYMASTER_SUPER)
+        if (newRoleConfigs['ROLE_PAYMASTER_SUPER']) {
+            const config = newRoleConfigs['ROLE_PAYMASTER_SUPER'];
+            setFormData({
+                minStake: formatEther(config.minStake),
+                entryBurn: formatEther(config.entryBurn),
+                exitFeePercent: config.exitFeePercent.toString(),
+                minExitFee: formatEther(config.minExitFee),
+            });
         }
       } catch (err) {
         console.error('Failed to load protocol data:', err);
@@ -110,7 +107,7 @@ export const ProtocolAdminPage: React.FC = () => {
 
   // 当切换Role时更新表单
   useEffect(() => {
-    const config = roleConfigs[selectedRole];
+    const config = roleConfigs[selectedRoleKey];
     if (config) {
       setFormData({
         minStake: formatEther(config.minStake),
@@ -119,11 +116,11 @@ export const ProtocolAdminPage: React.FC = () => {
         minExitFee: formatEther(config.minExitFee),
       });
     }
-  }, [selectedRole, roleConfigs]);
+  }, [selectedRoleKey, roleConfigs]);
 
   // 处理Role配置更新
   const handleUpdateRoleConfig = async () => {
-    if (!roleIds[selectedRole]) {
+    if (!roleIds[selectedRoleKey]) {
       setError('Role ID not loaded');
       return;
     }
@@ -134,7 +131,7 @@ export const ProtocolAdminPage: React.FC = () => {
       setTxHash(null);
 
       const txHash = await registry.adminConfigureRole({
-        roleId: roleIds[selectedRole]!,
+        roleId: roleIds[selectedRoleKey]!,
         minStake: parseEther(formData.minStake),
         entryBurn: parseEther(formData.entryBurn),
         exitFeePercent: BigInt(formData.exitFeePercent),
@@ -144,16 +141,12 @@ export const ProtocolAdminPage: React.FC = () => {
       setTxHash(txHash);
       setSuccess(`Role configuration updated! TX: ${txHash.slice(0, 10)}...`);
 
-      // 重新加载配置
-      const ids = await registry.getRoleIds();
-      const [superConfig, communityConfig] = await Promise.all([
-        registry.getRoleConfig(ids.ROLE_PAYMASTER_SUPER),
-        registry.getRoleConfig(ids.ROLE_COMMUNITY),
-      ]);
-      setRoleConfigs({
-        ROLE_PAYMASTER_SUPER: superConfig,
-        ROLE_COMMUNITY: communityConfig,
-      });
+      // Re-fetch config for just this role to be efficient (or reload all)
+      const newConfig = await registry.getRoleConfig(roleIds[selectedRoleKey]!);
+      setRoleConfigs(prev => ({
+          ...prev,
+          [selectedRoleKey]: newConfig
+      }));
     } catch (err) {
       console.error('Failed to update role config:', err);
       setError(err instanceof Error ? err.message : 'Failed to update');
@@ -240,36 +233,23 @@ export const ProtocolAdminPage: React.FC = () => {
             </div>
 
             {/* Role Configs Display */}
-            {roleConfigs.ROLE_PAYMASTER_SUPER && (
-              <div className="role-config-display">
+            <div className="role-config-display">
                 <h3>Current Role Configurations</h3>
                 <div className="role-cards">
-                  <div className="role-card">
-                    <h4>ROLE_PAYMASTER_SUPER</h4>
-                    <div className="role-details">
-                      <div><span>Min Stake:</span> {formatEther(roleConfigs.ROLE_PAYMASTER_SUPER.minStake)} GToken</div>
-                      <div><span>Entry Burn:</span> {formatEther(roleConfigs.ROLE_PAYMASTER_SUPER.entryBurn)} GToken</div>
-                      <div><span>Exit Fee:</span> {roleConfigs.ROLE_PAYMASTER_SUPER.exitFeePercent}%</div>
-                      <div><span>Min Exit Fee:</span> {formatEther(roleConfigs.ROLE_PAYMASTER_SUPER.minExitFee)} GToken</div>
-                      <div><span>Active:</span> {roleConfigs.ROLE_PAYMASTER_SUPER.isActive ? '✅ Yes' : '❌ No'}</div>
-                    </div>
-                  </div>
-                  
-                  {roleConfigs.ROLE_COMMUNITY && (
-                    <div className="role-card">
-                      <h4>ROLE_COMMUNITY</h4>
-                      <div className="role-details">
-                        <div><span>Min Stake:</span> {formatEther(roleConfigs.ROLE_COMMUNITY.minStake)} GToken</div>
-                        <div><span>Entry Burn:</span> {formatEther(roleConfigs.ROLE_COMMUNITY.entryBurn)} GToken</div>
-                        <div><span>Exit Fee:</span> {roleConfigs.ROLE_COMMUNITY.exitFeePercent}%</div>
-                        <div><span>Min Exit Fee:</span> {formatEther(roleConfigs.ROLE_COMMUNITY.minExitFee)} GToken</div>
-                        <div><span>Active:</span> {roleConfigs.ROLE_COMMUNITY.isActive ? '✅ Yes' : '❌ No'}</div>
-                      </div>
-                    </div>
-                  )}
+                    {Object.entries(roleConfigs).map(([key, config]) => (
+                        <div className="role-card" key={key}>
+                            <h4>{key}</h4>
+                            <div className="role-details">
+                                <div><span>Min Stake:</span> {formatEther(config.minStake)} GToken</div>
+                                <div><span>Entry Burn:</span> {formatEther(config.entryBurn)} GToken</div>
+                                <div><span>Exit Fee:</span> {config.exitFeePercent}%</div>
+                                <div><span>Min Exit Fee:</span> {formatEther(config.minExitFee)} GToken</div>
+                                <div><span>Active:</span> {config.isActive ? '✅ Yes' : '❌ No'}</div>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-              </div>
-            )}
+            </div>
           </>
         )}
       </section>
@@ -283,12 +263,13 @@ export const ProtocolAdminPage: React.FC = () => {
           <div className="form-group">
             <label>Role</label>
             <select 
-              value={selectedRole} 
-              onChange={(e) => setSelectedRole(e.target.value as any)}
-              disabled={registry.loading}
+              value={selectedRoleKey} 
+              onChange={(e) => setSelectedRoleKey(e.target.value)}
+              disabled={loading}
             >
-              <option value="ROLE_PAYMASTER_SUPER">ROLE_PAYMASTER_SUPER</option>
-              <option value="ROLE_COMMUNITY">ROLE_COMMUNITY</option>
+                {Object.keys(roleIds).map(key => (
+                    <option key={key} value={key}>{key}</option>
+                ))}
             </select>
           </div>
           

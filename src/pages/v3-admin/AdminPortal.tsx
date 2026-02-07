@@ -17,19 +17,30 @@ export const AdminPortal: React.FC = () => {
       <div className="admin-cards">
         <Link to="/v3-admin/protocol" className="admin-card protocol">
           <div className="admin-card-icon">⚙️</div>
-          <h2>Protocol Admin</h2>
-          <p>Configure global protocol parameters, roles, and DAO transfer.</p>
+          <h2>Registry Protocol Admin</h2>
+          <p>Configure global Registry roles and ownership.</p>
           <ul className="admin-card-features">
-            <li>Set Treasury & Staking</li>
-            <li>Configure Role Parameters</li>
-            <li>Transfer to DAO</li>
+            <li>Dynamic Role Config</li>
+            <li>Role Management</li>
+            <li>DAO Transfer</li>
+          </ul>
+        </Link>
+        
+        <Link to="/v3-admin/superpaymaster-protocol" className="admin-card protocol">
+          <div className="admin-card-icon">💎</div>
+          <h2>SP Protocol Admin</h2>
+          <p>Manage SuperPaymaster global settings.</p>
+          <ul className="admin-card-features">
+            <li>Set Protocol Fee</li>
+            <li>Set Treasury</li>
+            <li>Emergency Pause</li>
           </ul>
         </Link>
 
         <Link to="/v3-admin/superpaymaster" className="admin-card superpaymaster">
-          <div className="admin-card-icon">💎</div>
-          <h2>SuperPaymaster Admin</h2>
-          <p>Manage SuperPaymaster operator lifecycle.</p>
+          <div className="admin-card-icon">🛠️</div>
+          <h2>SuperPaymaster Operator Dashboard</h2>
+          <p>Manage your own Operator (Paymaster) lifecycle.</p>
           <ul className="admin-card-features">
             <li>Register as Operator</li>
             <li>Manage Collateral</li>
@@ -39,7 +50,7 @@ export const AdminPortal: React.FC = () => {
 
         <Link to="/v3-admin/paymaster-v4" className="admin-card paymasterv4">
           <div className="admin-card-icon">🚀</div>
-          <h2>PaymasterV4 Admin</h2>
+          <h2>PaymasterV4 Operator Dashboard</h2>
           <p>Deploy and manage PaymasterV4 contracts.</p>
           <ul className="admin-card-features">
             <li>Deploy New Paymaster</li>
