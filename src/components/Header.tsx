@@ -3,12 +3,14 @@ import { useTranslation } from "react-i18next";
 import { LanguageToggle } from "./LanguageToggle";
 import { NetworkSwitcher } from "./NetworkSwitcher";
 import { useWallet } from "../contexts/WalletContext";
+import { useRegistry } from "../hooks/useRegistry";
 import "./Header.css";
 
 export function Header() {
   const location = useLocation();
   const { t } = useTranslation();
   const { address, isConnected, connect } = useWallet();
+  const { clearCache } = useRegistry(); // For refresh button
 
   const navItems: Array<{ path: string; labelKey: string; external?: boolean }> = [
     { path: "/", labelKey: "header.home" },
@@ -61,6 +63,16 @@ export function Header() {
 
         <div className="header-actions">
           <NetworkSwitcher />
+          
+          <button 
+            className="icon-button refresh-btn" 
+            onClick={clearCache} 
+            title="Force Refresh Data"
+            style={{ fontSize: '1.2rem', background: 'none', border: 'none', cursor: 'pointer', marginRight: '8px' }}
+          >
+            🔄
+          </button>
+
           <LanguageToggle />
           {isConnected ? (
             <div className="wallet-info">

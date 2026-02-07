@@ -20,14 +20,6 @@ const PUBLIC_SEPOLIA_RPCS = [
   "https://eth-sepolia.public.blastapi.io",
 ] as const;
 
-// Use global variable to persist cache across Vercel Dev Server 
-// (which might reload module per request)
-const globalAny: any = global;
-if (!globalAny._rpcCache) {
-  globalAny._rpcCache = new Map<string, { data: any; timestamp: number }>();
-}
-const rpcCache = globalAny._rpcCache as Map<string, { data: any; timestamp: number }>;
-
 async function tryRpcRequest(rpcUrl: string, body: any): Promise<Response> {
   return fetch(rpcUrl, {
     method: "POST",
@@ -64,33 +56,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.log(`⚠️ SEPOLIA_RPC_URL environment variable not found`);
   }
 
-  // --- Caching Logic ---
-  const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes
-  
-  // Clean body for cache key (remove ID and jsonrpc version which vary per request)
-  const { id, jsonrpc, ...cleanBody } = req.body;
-  
-  // Custom replacer for BigInt support in cache key
-  const replacer = (_key: string, value: any) =>
-    typeof value === 'bigint' ? value.toString() : value;
-    
-  const cacheKey = `${chainId}:${JSON.stringify(cleanBody, replacer)}`;
-  
-  console.log(`🔍 Cache Key: ${cacheKey.slice(0, 100)}...`);
-  console.log(`📦 Cache Size: ${rpcCache.size}`);
-  
-  const forceRefresh = req.query.refresh === 'true';
-
-  if (!forceRefresh && rpcCache.has(cacheKey)) {
-    const cached = rpcCache.get(cacheKey)!;
-    if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
-      console.log(`⚡ Serving from cache (Chain: ${chainId})`);
-      return res.status(200).json(cached.data);
-    } else {
-      rpcCache.delete(cacheKey); // Expired
-    }
-  }
-
   let lastError: Error | null = null;
 
   // Try private RPC first if configured
@@ -102,12 +67,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (response.ok) {
         const data = await response.json();
         console.log("✅ Private RPC request successful");
-        
-        // Cache the successful response
-        if (req.body.method === 'eth_call' || req.body.method === 'eth_chainId' || req.body.method === 'eth_blockNumber') {
-             rpcCache.set(cacheKey, { data, timestamp: Date.now() });
-        }
-        
         return res.status(response.status).json(data);
       }
 

@@ -15,6 +15,64 @@ export function useRegistry() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Cache Keys Prefix & TTL
+  const CACHE_PREFIX = 'reg-v3-';
+  const CACHE_TTL = 30 * 60 * 1000; // 30 minutes
+
+  // Helper: Cached Call Wrapper
+  const cachedCall = useCallback(async <T>(
+    keySuffix: string, 
+    fetcher: () => Promise<T>, 
+    ttl = CACHE_TTL
+  ): Promise<T> => {
+    const fullKey = CACHE_PREFIX + keySuffix;
+    
+    // 1. Try Cache
+    try {
+      const item = localStorage.getItem(fullKey);
+      if (item) {
+        const parsed = JSON.parse(item);
+        if (Date.now() - parsed.timestamp < ttl) {
+          console.log(`⚡ [Cache Hit] ${keySuffix}`, parsed.data);
+          return parsed.data as T;
+        } else {
+          localStorage.removeItem(fullKey); // Expired
+        }
+      }
+    } catch (e) {
+      console.warn('Cache read failed', e);
+    }
+
+    // 2. Fetch
+    const data = await fetcher();
+
+    // 3. Set Cache
+    try {
+      const replacer = (_key: string, value: any) => 
+        typeof value === 'bigint' ? value.toString() : value;
+        
+      localStorage.setItem(fullKey, JSON.stringify({
+        timestamp: Date.now(),
+        data
+      }, replacer));
+    } catch (e) {
+      console.warn('Cache write failed', e);
+    }
+
+    return data;
+  }, []);
+
+  // Action: Clear Registry Cache
+  const clearCache = useCallback(() => {
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith(CACHE_PREFIX)) {
+        localStorage.removeItem(key);
+      }
+    });
+    console.log('🧹 Registry cache cleared');
+    window.location.reload();
+  }, []);
+
   // 获取合约地址 (使用 SDK 真实数据)
   const getContractAddresses = useCallback(async () => {
     // 动态导入以避免初始化时的 SSR/构建 问题，尝试隔离依赖
@@ -36,7 +94,7 @@ export function useRegistry() {
 
     return createPublicClient({
       chain: targetChain,
-      transport: http(rpcUrl),
+      transport: http(rpcUrl, { timeout: 30_000 }), // 30s timeout
     });
   }, [network]);
 
@@ -59,57 +117,59 @@ export function useRegistry() {
    * 查询Role配置
    */
   const getRoleConfig = useCallback(async (roleId: Hex): Promise<RoleConfigDetailed> => {
-    try {
-      setLoading(true);
-      setError(null);
+    return cachedCall(`role-config-${roleId}-${chainId}`, async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-      const contracts = await getContractAddresses();
-      const publicClient = getPublicClient();
-      const { registryActions } = await import('@aastar/core');
+        const contracts = await getContractAddresses();
+        const publicClient = getPublicClient();
+        const { registryActions } = await import('@aastar/core');
 
-      // 使用 as any 规避 viem 版本不一致导致的类型检查错误，但逻辑是真实的
-      const config = await registryActions(contracts.core.registry)(publicClient as any).getRoleConfig({
-        roleId,
-      });
-
-      return config;
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMsg);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, [getContractAddresses, getPublicClient]);
+        // 使用 as any 规避 viem 版本不一致导致的类型检查错误，但逻辑是真实的
+        return await registryActions(contracts.core.registry)(publicClient as any).getRoleConfig({
+          roleId,
+        });
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMsg);
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    });
+  }, [getContractAddresses, getPublicClient, cachedCall, chainId]);
 
   /**
    * 获取Role ID常量
    */
   const getRoleIds = useCallback(async () => {
-    try {
-      const contracts = await getContractAddresses();
-      const publicClient = getPublicClient();
-      const { registryActions } = await import('@aastar/core');
-      
-      const actions = registryActions(contracts.core.registry)(publicClient as any);
-      
-      const [paymasterSuper, community, enduser] = await Promise.all([
-        actions.ROLE_PAYMASTER_SUPER(),
-        actions.ROLE_COMMUNITY(),
-        actions.ROLE_ENDUSER(),
-      ]);
+    return cachedCall(`role-ids-${chainId}`, async () => {
+      try {
+        const contracts = await getContractAddresses();
+        const publicClient = getPublicClient();
+        const { registryActions } = await import('@aastar/core');
+        
+        const actions = registryActions(contracts.core.registry)(publicClient as any);
+        
+        const [paymasterSuper, community, enduser] = await Promise.all([
+          actions.ROLE_PAYMASTER_SUPER(),
+          actions.ROLE_COMMUNITY(),
+          actions.ROLE_ENDUSER(),
+        ]);
 
-      return {
-        ROLE_PAYMASTER_SUPER: paymasterSuper,
-        ROLE_COMMUNITY: community,
-        ROLE_ENDUSER: enduser,
-      };
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'Unknown error';
-      setError(errorMsg);
-      throw err;
-    }
-  }, [getContractAddresses, getPublicClient]);
+        return {
+          ROLE_PAYMASTER_SUPER: paymasterSuper,
+          ROLE_COMMUNITY: community,
+          ROLE_ENDUSER: enduser,
+        };
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : 'Unknown error';
+        setError(errorMsg);
+        throw err;
+      }
+    });
+  }, [getContractAddresses, getPublicClient, cachedCall, chainId]);
 
   /**
    * 修改Role配置（仅Admin）
@@ -207,6 +267,8 @@ export function useRegistry() {
     adminConfigureRole,
     transferOwnership,
     hasRole,
+    hasRole,
     getContractAddresses,
+    clearCache,
   };
 }
