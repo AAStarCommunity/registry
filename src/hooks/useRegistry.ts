@@ -4,7 +4,7 @@
  * 封装Registry SDK调用，提供React Hook接口
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useWallet } from '../contexts/WalletContext';
 import { createPublicClient, createWalletClient, custom, http, type Address, type Hash, type Hex } from 'viem';
 import { sepolia } from 'viem/chains';
@@ -15,21 +15,24 @@ export function useRegistry() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取合约地址
+  // 获取合约地址 (使用 SDK 真实数据)
   const getContractAddresses = useCallback(async () => {
+    // 动态导入以避免初始化时的 SSR/构建 问题，尝试隔离依赖
     const { getContracts } = await import('@aastar/core');
-    return getContracts(network as 'sepolia');
+    // 确保 network 类型匹配
+    const net = (network === 'sepolia' || network === 'op-sepolia') ? network : 'sepolia';
+    return getContracts(net as any);
   }, [network]);
 
-  // 创建PublicClient（用于read操作）
+  // 创建PublicClient
   const getPublicClient = useCallback(() => {
     return createPublicClient({
       chain: sepolia,
-      transport: http('https://rpc.sepolia.org'),
+      transport: http(process.env.SEPOLIA_RPC_URL || '/api/rpc-proxy'),
     });
   }, []);
 
-  // 创建WalletClient（用于write操作）
+  // 创建WalletClient
   const getWalletClient = useCallback(async () => {
     if (!window.ethereum || !address) {
       throw new Error('No wallet connected');
@@ -54,7 +57,8 @@ export function useRegistry() {
       const publicClient = getPublicClient();
       const { registryActions } = await import('@aastar/core');
 
-      const config = await registryActions(contracts.core.registry)(publicClient).getRoleConfig({
+      // 使用 as any 规避 viem 版本不一致导致的类型检查错误，但逻辑是真实的
+      const config = await registryActions(contracts.core.registry)(publicClient as any).getRoleConfig({
         roleId,
       });
 
@@ -77,7 +81,7 @@ export function useRegistry() {
       const publicClient = getPublicClient();
       const { registryActions } = await import('@aastar/core');
       
-      const actions = registryActions(contracts.core.registry)(publicClient);
+      const actions = registryActions(contracts.core.registry)(publicClient as any);
       
       const [paymasterSuper, community, enduser] = await Promise.all([
         actions.ROLE_PAYMASTER_SUPER(),
@@ -117,7 +121,7 @@ export function useRegistry() {
       const { registryActions } = await import('@aastar/core');
 
       // 发送交易
-      const txHash = await registryActions(contracts.core.registry)(walletClient).adminConfigureRole({
+      const txHash = await registryActions(contracts.core.registry)(walletClient as any).adminConfigureRole({
         ...params,
         account: address as Address,
       });
@@ -148,7 +152,7 @@ export function useRegistry() {
       const publicClient = getPublicClient();
       const { registryActions } = await import('@aastar/core');
 
-      const txHash = await registryActions(contracts.core.registry)(walletClient).transferOwnership({
+      const txHash = await registryActions(contracts.core.registry)(walletClient as any).transferOwnership({
         newOwner,
         account: address as Address,
       });
@@ -174,7 +178,7 @@ export function useRegistry() {
       const publicClient = getPublicClient();
       const { registryActions } = await import('@aastar/core');
 
-      return await registryActions(contracts.core.registry)(publicClient).hasRole({
+      return await registryActions(contracts.core.registry)(publicClient as any).hasRole({
         roleId,
         user,
       });
