@@ -1,16 +1,11 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { 
-    createPublicClient, 
-    createWalletClient, 
-    http, 
-    parseEther, 
-    type Address 
-} from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
-import { sepolia } from 'viem/chains';
-import { SepoliaFaucetAPI } from '@aastar/sdk';
-import { getCoreContracts } from '@aastar/shared-config';
 
+/**
+ * Faucet API Proxy
+ * 
+ * Proxies requests to the remote AAStar Faucet Service (https://faucet-aastar.vercel.app).
+ * This avoids requiring a local PRIVATE_KEY and ensures the latest contract logic is used.
+ */
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -22,58 +17,40 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(400).json({ error: "Target address is required" });
   }
 
-  // Admin Private Key must be set in Environment Variables (Vercel/Local)
-  // This key must have both MINTER_ROLE on GToken and funds for gas.
-  const PRIVATE_KEY = process.env.PRIVATE_KEY || process.env.PRIVATE_KEY_SUPPLIER;
+  const FAUCET_SECRET = process.env.FAUCET_SECRET;
+  const FAUCET_API_URL = "https://faucet.aastar.io/faucet";
   
-  if (!PRIVATE_KEY) {
-    console.error("❌ PRIVATE_KEY is not configured in environment variables");
-    return res.status(500).json({ error: "Faucet backend: Admin key not configured" });
+  if (!FAUCET_SECRET) {
+    console.error("❌ FAUCET_SECRET is not configured in environment variables");
+    return res.status(500).json({ error: "Faucet service not configured (Missing Secret)" });
   }
 
   try {
-    const network = 'sepolia';
-    const rpcUrl = process.env.SEPOLIA_RPC_URL || "https://rpc.sepolia.org";
-    const contracts = getCoreContracts(network);
-
-    console.log(`🚰 Initiating SDK Faucet Setup for ${target}...`);
-    console.log(`   Network: ${network}, Registry: ${contracts.registry}`);
-
-    const adminAccount = privateKeyToAccount(PRIVATE_KEY as `0x${string}`);
-    const adminWallet = createWalletClient({ 
-        account: adminAccount, 
-        chain: sepolia, 
-        transport: http(rpcUrl) 
-    });
-    const publicClient = createPublicClient({ 
-        chain: sepolia, 
-        transport: http(rpcUrl) 
-    });
-
-    // Execute full L4 onboarding setup (ETH, Role, GTokens)
-    // SepoliaFaucetAPI.prepareTestAccount handles the orchestration logic from SDK
-    const results = await SepoliaFaucetAPI.prepareTestAccount(
-        adminWallet,
-        publicClient as any,
-        {
-          targetAA: target as Address,
-          token: contracts.gToken as Address,
-          registry: contracts.registry as Address,
-          ethAmount: parseEther('0.05'), // Sufficient for many test operations
-          tokenAmount: parseEther('1000') // Standard test allocation
-        }
-    );
-
-    console.log("✅ SDK Faucet setup complete:", results);
-    return res.status(200).json({
-        success: true,
-        results,
+    console.log(`🚰 Proxying faucet request for ${target} to remote service...`);
+    
+    const response = await fetch(FAUCET_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${FAUCET_SECRET}`,
+      },
+      body: JSON.stringify({
         target,
-        registry: contracts.registry
+        ownerKey, // Optional: for full L4 registration/staking
+      }),
     });
 
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("❌ Remote Faucet Error:", data);
+      return res.status(response.status).json(data);
+    }
+
+    console.log("✅ Remote Faucet request successful:", data);
+    return res.status(200).json(data);
   } catch (error) {
-    console.error("❌ SDK Faucet Error:", error);
+    console.error("❌ Faucet Proxy Error:", error);
     return res.status(500).json({ 
       error: "Internal Server Error", 
       message: error instanceof Error ? error.message : String(error) 
