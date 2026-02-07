@@ -1,29 +1,50 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useWallet } from '../../contexts/WalletContext';
+import { usePaymasterV4 } from '../../hooks/usePaymasterV4';
+import { OnboardingWizard } from '../../components/v3-admin/OnboardingWizard';
+import { FaucetCard } from '../../components/v3-admin/FaucetCard';
+import { parseEther } from 'viem';
 import './PaymasterV4AdminPage.css';
 
 /**
- * PaymasterV4 Admin Page - Simplified Implementation
+ * PaymasterV4 Admin Page
  * 
  * 功能:
- * - 部署 PaymasterV4 合约（通过 OperatorLifecycle）
+ * - 部署 PaymasterV4 合约（通过 OperatorLifecycle/PaymasterOperatorClient）
  * - 查询已部署的 Paymaster 列表
  * - 基础管理功能（充值、查询状态）
  */
 export const PaymasterV4AdminPage: React.FC = () => {
   const { address, isConnected, network } = useWallet();
+  const v4 = usePaymasterV4();
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   
-  const [stakeAmount, setStakeAmount] = useState('10');
-  const [deployedPaymasters] = useState<string[]>([]);
+  const [stakeAmount, setStakeAmount] = useState('30'); // Default for AOA is 30
+  const [ownedPaymaster, setOwnedPaymaster] = useState<string | null>(null);
   
   const explorerUrl = network === 'sepolia' 
     ? 'https://sepolia.etherscan.io'
-    : 'https://etherscan.io';
+    : 'https://opsepolia.explorer.alchemy.com'; // Adjust for OP Sepolia
+
+  // Load owned paymaster on mount
+  useEffect(() => {
+    if (isConnected && address) {
+      loadOwnedPaymaster();
+    }
+  }, [isConnected, address]);
+
+  const loadOwnedPaymaster = async () => {
+    try {
+      const addr = await v4.getOwnedPaymaster();
+      setOwnedPaymaster(addr);
+    } catch (err) {
+      console.error('Failed to load paymaster', err);
+    }
+  };
 
   // 部署 PaymasterV4
   const handleDeploy = async () => {
@@ -35,10 +56,13 @@ export const PaymasterV4AdminPage: React.FC = () => {
       setSuccess(null);
       setTxHash(null);
 
-      // TODO: 完整实现需要解决SDK类型兼容性
-      // 当前为简化版本，展示UI流程 UI only
-      await new Promise(resolve => setTimeout(resolve, 1000)); // fake delay
-      setError('PaymasterV4 deployment coming soon. SDK integration requires additional type compatibility work.');
+      const result = await v4.deployPaymaster({
+        stakeAmount: parseEther(stakeAmount)
+      });
+      
+      setTxHash(result.deployHash);
+      setSuccess(`Paymaster deployed at ${result.paymasterAddress}! Role registration: ${result.registerHash}`);
+      setOwnedPaymaster(result.paymasterAddress);
 
     } catch (err) {
       console.error('Deployment failed:', err);
@@ -77,81 +101,94 @@ export const PaymasterV4AdminPage: React.FC = () => {
         </p>
       )}
 
-      {/* Deploy New Paymaster */}
-      <section className="admin-section">
-        <h2>🆕 Deploy New PaymasterV4</h2>
-        <p>Deploy a new PaymasterV4 contract. This will create an independent paymaster instance for your operations.</p>
-        
-        <div className="info-box">
-          <h3>What is PaymasterV4?</h3>
-          <p>PaymasterV4 is a standalone paymaster contract that allows you to:</p>
-          <ul>
-            <li>Sponsor gasless transactions for your users</li>
-            <li>Accept ERC-20 tokens for gas payment</li>
-            <li>Configure custom pricing oracles</li>
-            <li>Full control over your paymaster's budget and policies</li>
-          </ul>
+      {/* Onboarding Wizard - Show if not deployed */}
+      {!ownedPaymaster && (
+        <div className="mb-10">
+          <OnboardingWizard />
         </div>
+      )}
 
-        <div className="config-form">
-          <div className="form-group">
-            <label>Stake Amount (GToken)</label>
-            <input
-              type="number"
-              step="0.01"
-              value={stakeAmount}
-              onChange={(e) => setStakeAmount(e.target.value)}
-              placeholder="10"
-              disabled={loading}
-            />
-            <small>Minimum stake required for V4 registration</small>
+      {/* Faucet - Show for testnet users */}
+      <div className="mb-10">
+        <FaucetCard />
+      </div>
+
+      {/* Manual Deploy Section - Optional/Advanced */}
+      {!ownedPaymaster && (
+        <section className="admin-section">
+          <h2>🛠️ Advanced: Manual Deployment</h2>
+          <p>If you prefer to manually configure your Paymaster V4 instance.</p>
+          
+          <div className="info-box">
+            <h3>What is PaymasterV4?</h3>
+            <p>PaymasterV4 is a standalone paymaster contract that allows you to:</p>
+            <ul>
+              <li>Sponsor gasless transactions for your users</li>
+              <li>Accept ERC-20 tokens for gas payment</li>
+              <li>Configure custom pricing oracles</li>
+              <li>Full control over your paymaster's budget and policies</li>
+            </ul>
           </div>
 
-          <button
-            className="btn-primary"
-            onClick={handleDeploy}
-            disabled={loading || !stakeAmount}
-          >
-            {loading ? 'Deploying...' : '🚀 Deploy PaymasterV4'}
-          </button>
-        </div>
-      </section>
+          <div className="config-form">
+            <div className="form-group">
+              <label>Stake Amount (GToken)</label>
+              <input
+                type="number"
+                step="0.01"
+                value={stakeAmount}
+                onChange={(e) => setStakeAmount(e.target.value)}
+                placeholder="30"
+                disabled={loading}
+              />
+              <small>Minimum stake required: 30 GToken for AOA Status</small>
+            </div>
+
+            <button
+              className="btn-primary"
+              onClick={handleDeploy}
+              disabled={loading || !stakeAmount}
+            >
+              {loading ? 'Deploying...' : '🚀 Deploy PaymasterV4'}
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* My Paymasters */}
       <section className="admin-section">
         <h2>📋 My PaymasterV4 Contracts</h2>
-        <p><em>Coming soon: Query and display your deployed PaymasterV4 contracts.</em></p>
         
-        {deployedPaymasters.length === 0 ? (
+        {!ownedPaymaster ? (
           <div className="empty-state">
             <p>💡 No PaymasterV4 contracts found. Deploy your first one above!</p>
             <small>Note: After deployment, contracts will appear here automatically.</small>
           </div>
         ) : (
           <div className="paymaster-list">
-            {deployedPaymasters.map((addr, i) => (
-              <div key={i} className="paymaster-card">
-                <div className="card-header">
-                  <span className="address">{addr}</span>
-                  <span className="status active">✅ Active</span>
+            <div className="paymaster-card">
+              <div className="card-header">
+                <span className="address monospace">{ownedPaymaster}</span>
+                <span className="status active">✅ Active</span>
+              </div>
+              <div className="card-body">
+                <div className="stat">
+                  <label>Role:</label>
+                  <span>ROLE_PAYMASTER_AOA</span>
                 </div>
-                <div className="card-body">
-                  <div className="stat">
-                    <label>Deposit:</label>
-                    <span>-- ETH</span>
-                  </div>
-                  <div className="stat">
-                    <label>Configured Tokens:</label>
-                    <span>--</span>
-                  </div>
-                </div>
-                <div className="card-actions">
-                  <button className="btn-sm">Deposit</button>
-                  <button className="btn-sm">Configure</button>
-                  <button className="btn-sm">Withdraw</button>
+                <div className="stat">
+                  <label>Type:</label>
+                  <span>Standalone Paymaster V4</span>
                 </div>
               </div>
-            ))}
+              <div className="card-actions">
+                <button className="btn-sm btn-outline">Deposit ETH</button>
+                <button className="btn-sm btn-outline" onClick={() => window.open(`${explorerUrl}/address/${ownedPaymaster}`, '_blank')}>
+                  View Info ↗
+                </button>
+                <button className="btn-sm btn-outline">Settings</button>
+              </div>
+            </div>
           </div>
         )}
       </section>

@@ -283,7 +283,6 @@ export function useRegistry() {
     adminConfigureRole,
     transferOwnership,
     hasRole,
-    hasRole,
     getContractAddresses,
     clearCache,
   };

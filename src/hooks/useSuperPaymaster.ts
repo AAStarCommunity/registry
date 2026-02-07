@@ -71,6 +71,7 @@ export function useSuperPaymaster() {
         address: contracts.core.superPaymaster as Address,
         abi: SuperPaymasterABI,
         functionName: 'protocolFeeBPS',
+        args: [],
       });
       
       return fee as bigint;
@@ -97,6 +98,7 @@ export function useSuperPaymaster() {
         address: contracts.core.superPaymaster as Address,
         abi: SuperPaymasterABI,
         functionName: 'treasury',
+        args: [],
       });
       
       return treasury as Address;
