@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useWallet } from '../contexts/WalletContext';
-import { createPublicClient, http, type Address, type Hash } from 'viem';
+import { createPublicClient, http, parseEther, type Address, type Hash } from 'viem';
 import { sepolia, optimismSepolia } from 'viem/chains';
 import { useRegistry } from './useRegistry';
 
@@ -88,10 +88,80 @@ export function usePaymasterV4() {
     }
   }, [address, getContractAddresses, getPublicClient]);
 
+  /**
+   * Deposit ETH to Paymaster
+   */
+  const deposit = useCallback(async (amount: string) => {
+    try {
+      setLoading(true);
+      const paymaster = await getOwnedPaymaster();
+      if (!paymaster) throw new Error('No paymaster found');
+
+      const signer = await getSigner();
+      const tx = await signer.sendTransaction({
+        to: paymaster,
+        value: parseEther(amount)
+      });
+      
+      return tx;
+    } catch (err: any) {
+      setError(err.message || 'Deposit failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [getOwnedPaymaster, getSigner]);
+
+  /**
+   * Withdraw ETH from Paymaster
+   */
+  const withdraw = useCallback(async (to: Address, amount: string) => {
+    try {
+      setLoading(true);
+      const paymaster = await getOwnedPaymaster();
+      if (!paymaster) throw new Error('No paymaster found');
+
+      const contracts = await getContractAddresses(); // ensure contracts loaded if needed for ABI
+      const { PaymasterOperatorClient } = await import('@aastar/operator');
+      const signer = await getSigner();
+      
+      // We can use the generic client or a specific contract instance
+      // For V4, withdrawal might be a function on the contract 'withdrawTo'
+      // Assuming PaymasterV4 has withdrawTo(address, uint256)
+      
+      // Quickest way: use a raw contract call via signer or client
+      // Let's use the PaymasterOperatorClient helper if available, or raw call
+      
+      const { parseEther } = await import('viem');
+      
+      // Using raw contract call for simplicity if method exists
+      // const tx = await contract.withdrawTo(to, parseEther(amount));
+      
+      // Alternatively, use PaymasterOperatorClient if it exposes it. 
+      // Checking SDK... BasePaymaster usually has withdrawTo.
+      
+      /* 
+       * Ideally we should use the SDK client, but for now let's leave this blank 
+       * or simple until we confirm the V4 ABI. 
+       * User complained about Settings being invalid. settings usually implies config.
+       */
+       
+       throw new Error('Withdrawal not yet implemented in UI');
+
+    } catch (err: any) {
+      setError(err.message || 'Withdrawal failed');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [getOwnedPaymaster, getSigner, getContractAddresses]);
+
   return {
     loading,
     error,
     deployPaymaster,
     getOwnedPaymaster,
+    deposit,
+    withdraw
   };
 }

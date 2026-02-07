@@ -181,12 +181,50 @@ export const PaymasterV4AdminPage: React.FC = () => {
                   <span>Standalone Paymaster V4</span>
                 </div>
               </div>
-              <div className="card-actions">
-                <button className="btn-sm btn-outline">Deposit ETH</button>
+              
+              {/* Deposit Section (Simple wrapper) */}
+              <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-4">
+                 <div className="flex space-x-2">
+                    <input 
+                      type="number" 
+                      placeholder="ETH Amount" 
+                      className="flex-1 px-3 py-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-sm"
+                      id="deposit-input"
+                    />
+                    <button 
+                      className="btn-sm btn-primary"
+                      onClick={async () => {
+                        const input = document.getElementById('deposit-input') as HTMLInputElement;
+                        const val = input.value;
+                        if (!val) return;
+                        try {
+                           setLoading(true);
+                           const tx = await v4.deposit(val);
+                           setSuccess(`Deposit submitted: ${tx.hash}`);
+                           input.value = '';
+                        } catch(e: any) {
+                           setError(e.message);
+                        } finally {
+                           setLoading(false);
+                        }
+                      }}
+                      disabled={loading}
+                    >
+                      {loading ? 'Depositing...' : 'Deposit ETH'}
+                    </button>
+                 </div>
+              </div>
+
+              <div className="card-actions mt-4">
                 <button className="btn-sm btn-outline" onClick={() => window.open(`${explorerUrl}/address/${ownedPaymaster}`, '_blank')}>
                   View Info ↗
                 </button>
-                <button className="btn-sm btn-outline">Settings</button>
+                <button 
+                  className="btn-sm btn-outline"
+                  onClick={() => alert('Settings configuration coming in next update (Oracles & Withdrawal)')}
+                >
+                  Settings ⚙️
+                </button>
               </div>
             </div>
           </div>
