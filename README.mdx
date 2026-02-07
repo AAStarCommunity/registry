@@ -1,6 +1,8 @@
 # SuperPaymaster Registry
 
-Registry is SuperPaymaster operation interface based on PRD version contracts.
+> **English** | [中文](#superpaymaster-registry-中文版)
+
+Registry is the SuperPaymaster operation interface based on PRD version contracts.
 
 ## 🚀 Quick Start
 
@@ -150,5 +152,164 @@ vercel --prod
 5. Create a Pull Request
 
 ## 📄 License
+
+MIT
+
+---
+
+# SuperPaymaster Registry (中文版)
+
+> [English](#superpaymaster-registry) | **中文**
+
+Registry 是基于 PRD 版本合约开发的 SuperPaymaster 运营管理后台。
+
+## 🚀 快速开始
+
+### 开发模式
+
+**重要提示**: 请务必使用 `pnpm run dev` 启动开发服务器，**不要**单用 `pnpm run dev:vite`。
+
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发服务器 (Vite + Vercel)
+pnpm run dev
+```
+
+该命令将启动 **两个服务**:
+- **Vite Dev Server** (端口 5173) - 前端应用
+- **Vercel Dev Server** (端口 3000) - API 端点和 RPC 代理
+
+### 为什么要双服务模式?
+
+为了实现以下目标，应用采用了双服务架构:
+
+1. **保护 API Keys**: RPC 端点 (Alchemy/Infura) 通过 Vercel Serverless Function 进行代理，私钥被安全地保存在服务端，永远不会暴露给前端。
+
+2. **混合模式**:
+   - **本地开发**: 使用 Vercel 提供的 `/api/rpc-proxy` 代理服务
+   - **生产环境**: Vercel 会根据请求 URI 自动路由到 API 路由
+
+### 访问应用
+
+- **前端**: http://localhost:5173
+- **API 代理**: http://localhost:3000 (通过 Vite 配置代理)
+
+## 📋 可用脚本
+
+| 命令 | 描述 |
+|---------|-------------|
+| `pnpm run dev` | **推荐** - 同时启动 Vite 和 Vercel 开发服务器 |
+| `pnpm run dev:vite` | ❌ **请勿单独使用** - 仅启动 Vite (会导致 RPC 代理失效) |
+| `pnpm run dev:vercel` | 仅启动 Vercel 开发服务器 (端口 3000) |
+| `pnpm run build` | 构建生产版本 |
+| `pnpm run preview` | 预览生产构建 |
+| `pnpm test` | 运行 Playwright 测试 |
+
+## 🔧 配置
+
+### 环境变量
+
+创建一个 `.env.local` 文件 (不要提交到 git)，填入你的私有 RPC 端点:
+
+```bash
+# 可选: 私有 RPC URL (推荐以获得更好的稳定性)
+SEPOLIA_RPC_URL=https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY
+
+# 如果未设置，代理将回退到公共 RPC
+```
+
+### 公共 RPC 回退机制
+
+如果未设置 `SEPOLIA_RPC_URL`，代理会自动回退到公共 Sepolia RPC 端点:
+- https://rpc.sepolia.org
+- https://ethereum-sepolia.publicnode.com
+- https://sepolia.drpc.org
+- 更多...
+
+## 🧪 测试
+
+```bash
+# 运行所有测试
+pnpm test
+
+# 在有头模式下运行测试 (可见浏览器)
+pnpm playwright test --headed
+
+# 运行特定测试文件
+pnpm playwright test tests/deploy-wizard.spec.ts
+
+# 打开测试报告
+pnpm playwright show-report
+```
+
+## 📁 项目结构
+
+```
+registry/
+├── api/                    # Vercel serverless functions
+│   ├── rpc-proxy.ts       # RPC 端点代理 (保护 API keys)
+│   └── gas-events.ts      # Gas 事件端点
+├── src/
+│   ├── pages/             # React 页面
+│   ├── components/        # 可复用组件
+│   └── utils/             # 工具函数
+├── tests/                 # Playwright e2e 测试
+└── docs/                  # 文档
+```
+
+## 🐛 故障排除
+
+### RPC 代理错误
+
+如果你在控制台看到 `Failed to load resource: the server responded with a status of 500`:
+
+**问题**: 你可能运行的是 `pnpm run dev:vite` 而不是 `pnpm run dev`
+
+**解决方案**:
+1. 停止当前服务器 (Ctrl+C)
+2. 运行 `pnpm run dev` 替代
+
+### 端口已被占用
+
+如果端口 3000 或 5173 已被占用:
+
+```bash
+# 终止端口 3000 的进程
+lsof -ti :3000 | xargs kill -9
+
+# 终止端口 5173 的进程
+lsof -ti :5173 | xargs kill -9
+
+# 然后重启
+pnpm run dev
+```
+
+## 🌐 部署
+
+应用部署在 Vercel 上。推送到 `main` 分支将触发自动部署。
+
+```bash
+# 手动部署
+vercel --prod
+```
+
+## 📚 文档
+
+- [变更日志](./docs/Changes.md) - 开发进度与变更记录
+- [用户指南](./docs/USER_GUIDE_WITH_SCREENSHOTS.md) - 带截图的用户操作手册
+- [多链支持](./docs/multi-chain-support.md) - 网络配置与添加新链指南
+- [架构设计 (KMS)](./docs/architecture-kms.md) - 本地/KMS 混合签名架构方案
+
+## 🤝 贡献指南
+
+1. 为你的功能/修复创建一个新分支
+2. 进行修改
+3. 运行测试: `pnpm test`
+4. 提交并推送
+5. 创建 Pull Request
+
+## 📄 许可证
 
 MIT
