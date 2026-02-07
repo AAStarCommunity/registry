@@ -1,12 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useWallet } from '../contexts/WalletContext';
-import { parseEther, type Address, type Hash } from 'viem';
-import { SepoliaFaucetAPI, GTOKEN_ADDRESS, REGISTRY_ADDRESS } from '@aastar/sdk';
-import { useRegistry } from './useRegistry';
+import { type Hash } from 'viem';
 
 export const useFaucet = () => {
   const { address } = useWallet();
-  const { getPublicClient, getWalletClient } = useRegistry();
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,35 +22,38 @@ export const useFaucet = () => {
     setError(null);
 
     try {
-      const publicClient = getPublicClient();
-      const walletClient = await getWalletClient();
+      console.log(`🚰 Requesting airdrop for ${address}...`);
       
-      console.log(`🚰 Minting ${amount} GTokens to ${address}...`);
-      
-      const success = await SepoliaFaucetAPI.mintTestTokens(
-        walletClient,
-        publicClient as any, // viem version mismatch between registry and SDK
-        GTOKEN_ADDRESS,
-        address as Address,
-        parseEther(amount)
-      );
+      const response = await fetch('/api/faucet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target: address,
+        }),
+      });
 
-      if (success) {
-        console.log('✅ GTokens minted successfully');
-      } else {
-        console.log('ℹ️ GToken balance already adequate');
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'Faucet request failed');
       }
+
+      console.log('✅ Airdrop successful:', result);
+      // Optional: you could set the lastTxHash if the API returns one
+      if (result.hash) setLastTxHash(result.hash);
+      
     } catch (err: any) {
-      console.error('❌ Faucet Error (Mint):', err);
-      setError(err.message || 'Failed to mint tokens');
+      console.error('❌ Faucet Error:', err);
+      setError(err.message || 'Failed to request tokens');
     } finally {
       setIsLoading(false);
     }
-  }, [address, getPublicClient, getWalletClient]);
+  }, [address]);
 
   /**
    * Orchestrates complete test account setup (ETH, Role, GTokens)
-   * Uses SepoliaFaucetAPI.prepareTestAccount
    */
   const quickStart = useCallback(async () => {
     if (!address) {
@@ -65,22 +65,25 @@ export const useFaucet = () => {
     setError(null);
 
     try {
-      const publicClient = getPublicClient();
-      const walletClient = await getWalletClient();
-      
       console.log(`🚀 QuickStart: Setting up test account ${address}...`);
 
-      const result = await SepoliaFaucetAPI.prepareTestAccount(
-        walletClient,
-        publicClient as any, // viem version mismatch between registry and SDK
-        {
-          targetAA: address as Address,
-          token: GTOKEN_ADDRESS,
-          registry: REGISTRY_ADDRESS,
-          ethAmount: parseEther('0.1'),
-          tokenAmount: parseEther('1000')
-        }
-      );
+      const response = await fetch('/api/faucet', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          target: address,
+          // If we had the ownerKey (e.g. from local storage or generated), we would pass it here
+          // For MetaMask users, we usually only fund the target
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || result.message || 'QuickStart failed');
+      }
 
       console.log('✅ QuickStart Complete:', result);
     } catch (err: any) {
@@ -89,7 +92,7 @@ export const useFaucet = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [address, getPublicClient, getWalletClient]);
+  }, [address]);
 
   return {
     mintGTokens,
