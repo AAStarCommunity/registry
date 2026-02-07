@@ -32,7 +32,7 @@ export const useFaucet = () => {
       
       const success = await SepoliaFaucetAPI.mintTestTokens(
         walletClient,
-        publicClient,
+        publicClient as any, // viem version mismatch between registry and SDK
         GTOKEN_ADDRESS,
         address as Address,
         parseEther(amount)
@@ -72,7 +72,7 @@ export const useFaucet = () => {
 
       const result = await SepoliaFaucetAPI.prepareTestAccount(
         walletClient,
-        publicClient,
+        publicClient as any, // viem version mismatch between registry and SDK
         {
           targetAA: address as Address,
           token: GTOKEN_ADDRESS,
