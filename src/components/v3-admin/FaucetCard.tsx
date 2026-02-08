@@ -4,7 +4,7 @@ import { useWallet } from '../../contexts/WalletContext';
 
 export const FaucetCard: React.FC = () => {
   const { network } = useWallet();
-  const { mintGTokens, quickStart, isLoading, error } = useFaucet();
+  const { fundAssets, mintGTokens, quickStart, isLoading, error } = useFaucet();
 
   const isTestnet = network === 'sepolia' || network === 'op-sepolia';
 
@@ -31,25 +31,30 @@ export const FaucetCard: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <button
-          onClick={() => mintGTokens()}
+          onClick={() => fundAssets()}
           disabled={isLoading}
           className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all group"
         >
           <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🪙</span>
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Mint 1,000 GToken</span>
-          <span className="text-xs text-slate-500 mt-1">Direct Minting</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Fund Gas Assets</span>
+          <span className="text-xs text-slate-500 mt-1">Get ETH & aPNTs</span>
         </button>
 
         <button
-          onClick={() => quickStart()}
+          onClick={() => fundAssets()}
           disabled={isLoading}
-          className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all group"
+          className="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-slate-100 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all group relative overflow-hidden"
         >
           <span className="text-2xl mb-2 group-hover:scale-110 transition-transform">🚀</span>
-          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Quick Start</span>
-          <span className="text-xs text-slate-500 mt-1">ETH + Role + Tokens</span>
+          <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Complete Kit</span>
+          <span className="text-xs text-slate-500 mt-1">Full Operator Seeding</span>
+          <div className="absolute top-0 right-0 bg-blue-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg">ZERO GAS</div>
         </button>
       </div>
+
+      <p className="mt-4 text-[10px] text-slate-400 italic text-center">
+        Assets are provided directly by the background supplier. No MetaMask signature required for funding.
+      </p>
 
       {isLoading && (
         <div className="mt-4 flex items-center justify-center space-x-2 text-sm text-blue-600 dark:text-blue-400">

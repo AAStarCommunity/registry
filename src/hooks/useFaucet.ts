@@ -10,9 +10,10 @@ export const useFaucet = () => {
   const [lastTxHash, setLastTxHash] = useState<Hash | null>(null);
 
   /**
-   * Mint Test GTokens for the current account
+   * Basic Asset Funding (Zero-Gas Background Process)
+   * Fetches ETH and Gas Tokens from the backend supplier.
    */
-  const mintGTokens = useCallback(async (amount: string = '1000') => {
+  const fundAssets = useCallback(async () => {
     if (!address) {
       setError('Wallet not connected');
       return;
@@ -22,7 +23,7 @@ export const useFaucet = () => {
     setError(null);
 
     try {
-      console.log(`🚰 Requesting airdrop for ${address}...`);
+      console.log(`🚰 Requesting test assets for ${address}...`);
       
       const response = await fetch('/api/faucet', {
         method: 'POST',
@@ -31,6 +32,7 @@ export const useFaucet = () => {
         },
         body: JSON.stringify({
           target: address,
+          // No ownerKey sent to backend - backend only handles supplier-funded assets
         }),
       });
 
@@ -40,61 +42,23 @@ export const useFaucet = () => {
         throw new Error(result.error || result.message || 'Faucet request failed');
       }
 
-      console.log('✅ Airdrop successful:', result);
-      // Optional: you could set the lastTxHash if the API returns one
+      console.log('✅ Asset funding successful:', result);
       if (result.hash) setLastTxHash(result.hash);
       
     } catch (err: any) {
       console.error('❌ Faucet Error:', err);
-      setError(err.message || 'Failed to request tokens');
+      setError(err.message || 'Failed to fund assets');
     } finally {
       setIsLoading(false);
     }
   }, [address]);
 
-  /**
-   * Orchestrates complete test account setup (ETH, Role, GTokens)
-   */
-  const quickStart = useCallback(async () => {
-    if (!address) {
-      setError('Wallet not connected');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      console.log(`🚀 QuickStart: Setting up test account ${address}...`);
-
-      const response = await fetch('/api/faucet', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          target: address,
-          // If we had the ownerKey (e.g. from local storage or generated), we would pass it here
-          // For MetaMask users, we usually only fund the target
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || result.message || 'QuickStart failed');
-      }
-
-      console.log('✅ QuickStart Complete:', result);
-    } catch (err: any) {
-      console.error('❌ QuickStart Error:', err);
-      setError(err.message || 'QuickStart failed');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [address]);
+  // Alias for backward compatibility or specific token minting needs
+  const mintGTokens = fundAssets;
+  const quickStart = fundAssets;
 
   return {
+    fundAssets,
     mintGTokens,
     quickStart,
     isLoading,
