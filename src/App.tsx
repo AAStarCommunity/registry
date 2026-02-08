@@ -19,7 +19,9 @@ import {
   ProtocolAdminPage, 
   SuperPaymasterProtocolPage,
   SuperPaymasterAdminPage, 
-  PaymasterV4AdminPage 
+  PaymasterV4AdminPage,
+  PaymasterLaunchPage,
+  FaucetPage
 } from "./pages/v3-admin";
 import { GTokenSalePage } from "./pages/v3-admin/GTokenSalePage";
 import TermsOfService from "./pages/legal/TermsOfService";
@@ -71,6 +73,8 @@ function App() {
             <Route path="/v3-admin/superpaymaster-protocol" element={<SuperPaymasterProtocolPage />} />
             <Route path="/v3-admin/superpaymaster" element={<SuperPaymasterAdminPage />} />
             <Route path="/v3-admin/paymaster-v4" element={<PaymasterV4AdminPage />} />
+            <Route path="/v3-admin/launch" element={<PaymasterLaunchPage />} />
+            <Route path="/v3-admin/faucet" element={<FaucetPage />} />
             <Route path="/v3-admin/gtoken-market" element={<GTokenSalePage />} />
             {/* Legal Pages */}
             <Route path="/terms" element={<TermsOfService />} />

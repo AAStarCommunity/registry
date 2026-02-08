@@ -37,7 +37,7 @@ export const OnboardingWizard: React.FC = () => {
     return (
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl overflow-hidden border border-slate-200 dark:border-slate-800 transition-all">
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-8 py-10 text-white">
+            <div className="bg-gradient-to-r from-blue-500 to-violet-500 px-8 py-10 text-white">
                 <h2 className="text-2xl font-bold mb-2">Operator Onboarding</h2>
                 <p className="text-blue-100 opacity-90">
                     Follow these steps to set up your Paymaster node.

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useWallet } from '../../contexts/WalletContext';
 import { useRegistry } from '../../hooks/useRegistry';
 import { parseEther, formatEther, type Address, type Hex } from 'viem';
 import './SuperPaymasterAdminPage.css';
 
-type Tab = 'register' | 'manage' | 'exit';
+type Tab = 'manage' | 'exit';
 
 /**
  * SuperPaymaster Admin Page - REAL Implementation
@@ -18,7 +19,8 @@ export const SuperPaymasterAdminPage: React.FC = () => {
   const { address, isConnected, chainId, network } = useWallet();
   const registry = useRegistry();
   
-  const [activeTab, setActiveTab] = useState<Tab>('register');
+  
+  const [activeTab, setActiveTab] = useState<Tab>('manage');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -60,28 +62,6 @@ export const SuperPaymasterAdminPage: React.FC = () => {
 
     checkOperatorStatus();
   }, [isConnected, address, network]);
-
-  // 注册成为 Operator
-  const handleRegister = async () => {
-    if (!address) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(null);
-      setTxHash(null);
-
-      // TODO: SDK类型兼容性问题待解决
-      setError('Operator registration coming soon. SDK type compatibility needs to be resolved.');
-      
-
-    } catch (err) {
-      console.error('Failed to register:', err);
-      setError(err instanceof Error ? err.message : 'Registration failed');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // 退出 Operator
   const handleExit = async () => {
@@ -138,13 +118,19 @@ export const SuperPaymasterAdminPage: React.FC = () => {
             </div>
           </>
         ) : (
-          <>
-            <span className="status-icon">⚪</span>
-            <div>
-              <strong>Operator Status: Not Registered</strong>
-              <p>Register below to become an Operator</p>
-            </div>
-          </>
+          <div className="launchpad-redirect">
+             <div className="info-box" style={{ textAlign: 'center', padding: '40px' }}>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💎</div>
+                <h2>Not Registered as Operator</h2>
+                <p style={{ marginBottom: '2rem' }}>
+                  You are not a SuperPaymaster Operator yet. <br/>
+                  Visit the Launchpad to get started.
+                </p>
+                <Link to="/v3-admin/launch" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                  Go to Launchpad
+                </Link>
+              </div>
+          </div>
         )}
       </div>
 
@@ -160,75 +146,26 @@ export const SuperPaymasterAdminPage: React.FC = () => {
       )}
 
       {/* Tab Navigation */}
-      <div className="tabs">
-        <button
-          className={`tab ${activeTab === 'register' ? 'active' : ''}`}
-          onClick={() => setActiveTab('register')}
-        >
-          📝 Register
-        </button>
-        <button
-          className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
-          onClick={() => setActiveTab('manage')}
-          disabled={!isOperator}
-        >
-          ⚙️ Manage
-        </button>
-        <button
-          className={`tab ${activeTab === 'exit' ? 'active' : ''}`}
-          onClick={() => setActiveTab('exit')}
-          disabled={!isOperator}
-        >
-          🚪 Exit
-        </button>
-      </div>
+      {isOperator && (
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === 'manage' ? 'active' : ''}`}
+            onClick={() => setActiveTab('manage')}
+          >
+            ⚙️ Manage
+          </button>
+          <button
+            className={`tab ${activeTab === 'exit' ? 'active' : ''}`}
+            onClick={() => setActiveTab('exit')}
+          >
+            🚪 Exit
+          </button>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="tab-content">
-        {activeTab === 'register' && (
-          <section className="admin-section">
-            <h2>📝 Register as Operator</h2>
-            <p>Stake GToken to register as a SuperPaymaster Operator (ROLE_PAYMASTER_SUPER).</p>
-            
-            {roleConfig && (
-              <div className="info-box">
-                <h3>Requirements</h3>
-                <ul>
-                  <li><strong>Min Stake:</strong> {formatEther(roleConfig.minStake)} GToken</li>
-                  <li><strong>Entry Burn:</strong> {formatEther(roleConfig.entryBurn)} GToken (burned on registration)</li>
-                  <li><strong>Exit Fee:</strong> {roleConfig.exitFeePercent}% (deducted when exiting)</li>
-                </ul>
-              </div>
-            )}
 
-            <div className="form-group">
-              <label>Stake Amount (GToken)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                placeholder="50"
-                disabled={loading || isOperator}
-              />
-              <small>
-                {roleConfig && `Minimum: ${formatEther(roleConfig.minStake)} GToken`}
-              </small>
-            </div>
-
-            <button
-              className="btn-primary"
-              onClick={handleRegister}
-              disabled={loading || isOperator || !stakeAmount}
-            >
-              {loading ? 'Registering...' : isOperator ? 'Already Registered' : 'Register as Operator'}
-            </button>
-
-            {isOperator && (
-              <p className="info-text">✅ You are already registered. Switch to Manage or Exit tabs.</p>
-            )}
-          </section>
-        )}
 
         {activeTab === 'manage' && (
           <section className="admin-section">

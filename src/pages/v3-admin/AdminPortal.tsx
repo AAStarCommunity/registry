@@ -36,6 +36,39 @@ export const AdminPortal: React.FC = () => {
             <li>Emergency Pause</li>
           </ul>
         </Link>
+        
+        <Link to="/v3-admin/launch" className="admin-card protocol">
+          <div className="admin-card-icon">🚀</div>
+          <h2>Launchpad</h2>
+          <p>Deploy Paymaster V4 or Register as Operator.</p>
+          <ul className="admin-card-features">
+            <li>Deploy PaymasterV4</li>
+            <li>Register Operator</li>
+            <li>Get Started</li>
+          </ul>
+        </Link>
+        
+         <Link to="/v3-admin/gtoken-market" className="admin-card protocol">
+          <div className="admin-card-icon">🛒</div>
+          <h2>GToken Market</h2>
+          <p>Purchase GToken for protocol participation.</p>
+           <ul className="admin-card-features">
+            <li>Buy GToken</li>
+            <li>Approve Tokens</li>
+            <li>Manage Holdings</li>
+          </ul>
+        </Link>
+
+         <Link to="/v3-admin/faucet" className="admin-card protocol">
+          <div className="admin-card-icon">🚰</div>
+          <h2>Testnet Faucet</h2>
+          <p>Get test assets for development.</p>
+           <ul className="admin-card-features">
+            <li>Get ETH</li>
+            <li>Get aPNTs</li>
+            <li>Testnet Only</li>
+          </ul>
+        </Link>
 
         <Link to="/v3-admin/superpaymaster" className="admin-card superpaymaster">
           <div className="admin-card-icon">🛠️</div>

@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useWallet } from '../../contexts/WalletContext';
 import { usePaymasterV4 } from '../../hooks/usePaymasterV4';
-import { OnboardingWizard } from '../../components/v3-admin/OnboardingWizard';
-import { FaucetCard } from '../../components/v3-admin/FaucetCard';
+import { Link } from 'react-router-dom';
 import { parseEther } from 'viem';
 import './PaymasterV4AdminPage.css';
 
@@ -20,7 +19,8 @@ export const PaymasterV4AdminPage: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   
-  const [stakeAmount, setStakeAmount] = useState('30');
+
+  
   const [ownedPaymaster, setOwnedPaymaster] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState('');
   
@@ -43,25 +43,7 @@ export const PaymasterV4AdminPage: React.FC = () => {
     }
   };
 
-  const handleDeploy = async () => {
-    if (!address) return;
-    try {
-      setLoading(true);
-      setError(null);
-      setSuccess(null);
-      setTxHash(null);
-      const result = await v4.deployPaymaster({
-        stakeAmount: parseEther(stakeAmount)
-      });
-      setTxHash(result.deployHash);
-      setSuccess(`Paymaster deployed at ${result.paymasterAddress}!`);
-      setOwnedPaymaster(result.paymasterAddress);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Deployment failed');
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   const handleDeposit = async () => {
     if (!depositAmount) return;
@@ -108,57 +90,21 @@ export const PaymasterV4AdminPage: React.FC = () => {
         </p>
       )}
 
-      {/* Onboarding Wizard - Show if not deployed */}
+      {/* Redirect to Launchpad if not deployed */}
       {!ownedPaymaster && (
-        <div style={{ marginBottom: '40px' }}>
-          <OnboardingWizard />
+        <div className="launchpad-redirect">
+          <div className="info-box" style={{ textAlign: 'center', padding: '40px' }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🚀</div>
+            <h2>No Paymaster V4 Found</h2>
+            <p style={{ marginBottom: '2rem' }}>
+              You don't have a Paymaster V4 contract deployed yet. <br/>
+              Visit the Launchpad to get started.
+            </p>
+            <Link to="/v3-admin/launch" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+              Go to Launchpad
+            </Link>
+          </div>
         </div>
-      )}
-
-      {/* Faucet - Always available for testnet */}
-      <div style={{ marginBottom: '40px' }}>
-        <FaucetCard />
-      </div>
-
-      {/* Manual Deploy Section */}
-      {!ownedPaymaster && (
-        <section className="admin-section">
-          <h2>🛠️ Manual Deployment</h2>
-          <p>Configure and deploy a standalone Paymaster V4 instance.</p>
-          
-          <div className="info-box">
-            <h3>What is PaymasterV4?</h3>
-            <p>PaymasterV4 is a standalone contract that allows you to:</p>
-            <ul>
-              <li>Sponsor gasless transactions for your users</li>
-              <li>Accept ERC-20 tokens for gas payment</li>
-              <li>Maintain full control over your budget and policies</li>
-            </ul>
-          </div>
-
-          <div className="config-form">
-            <div className="form-group">
-              <label>Stake Amount (sGT)</label>
-              <input
-                type="number"
-                step="1"
-                value={stakeAmount}
-                onChange={(e) => setStakeAmount(e.target.value)}
-                placeholder="30"
-                disabled={loading}
-              />
-              <small>Minimum stake required: 30 sGT for AOA Status.</small>
-            </div>
-
-            <button
-              className="btn-primary"
-              onClick={handleDeploy}
-              disabled={loading || !stakeAmount}
-            >
-              {loading ? 'Deploying...' : '🚀 Deploy PaymasterV4'}
-            </button>
-          </div>
-        </section>
       )}
 
       {/* My Paymasters */}
